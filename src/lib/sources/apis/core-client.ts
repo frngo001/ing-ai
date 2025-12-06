@@ -1,0 +1,80 @@
+// CORE API Client - 270M+ Open Access Papers
+
+import { BaseApiClient } from '../api-client'
+import { ApiConfig, ApiResponse } from '../types'
+
+export class CoreClient extends BaseApiClient {
+    constructor(apiKey?: string) {
+        const config: ApiConfig = {
+            name: 'CORE',
+            baseUrl: 'https://api.core.ac.uk/v3',
+            apiKey,
+            rateLimit: {
+                requestsPerSecond: apiKey ? 10 : 0.5,
+            },
+            timeout: 15000,
+            retries: 3,
+        }
+        super(config)
+    }
+
+    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
+        return this.search(title, limit)
+    }
+
+    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
+        return this.search(`authors:"${author}"`, limit)
+    }
+
+    async searchByDoi(doi: string): Promise<ApiResponse<any>> {
+        return this.search(`doi:"${doi}"`, 1)
+    }
+
+    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
+        return this.search(keyword, limit)
+    }
+
+    private async search(query: string, limit: number): Promise<ApiResponse<any>> {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        }
+
+        if (this.config.apiKey) {
+            headers['Authorization'] = `Bearer ${this.config.apiKey}`
+        }
+
+        const body = JSON.stringify({
+            q: query,
+            limit,
+        })
+
+        return this.executeRequest(
+            () => fetch(`${this.config.baseUrl}/search/works`, {
+                method: 'POST',
+                headers,
+                body,
+            })
+        )
+    }
+
+    transformResponse(response: any): any[] {
+        if (!response?.results) return []
+
+        return response.results.map((work: any) => ({
+            id: work.id,
+            doi: work.doi,
+            title: work.title,
+            authors: work.authors?.map((a: string) => ({ fullName: a })),
+            year: work.yearPublished,
+            publicationDate: work.publishedDate,
+            type: work.documentType || 'journal',
+            journal: work.journals?.[0],
+            publisher: work.publisher,
+            url: work.downloadUrl,
+            pdfUrl: work.downloadUrl,
+            isOpenAccess: true,
+            abstract: work.abstract,
+            citationCount: work.citationCount,
+        }))
+    }
+}

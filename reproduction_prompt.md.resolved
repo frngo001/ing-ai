@@ -1,0 +1,85 @@
+# Prompt zur Reproduktion des Launch UI Designs für Jenni AI Clone
+
+Du bist ein erfahrener Senior Frontend Engineer und UX Designer, spezialisiert auf moderne, hochperformante Landing Pages mit Next.js, Tailwind CSS und Framer Motion.
+
+## Ziel
+Erstelle eine pixel-perfekte, hochmoderne Landing Page für unsere App "Jenni AI Clone", die das Design, die Ästhetik und die Animationen von [Launch UI](https://www.launchuicomponents.com/) exakt reproduziert. Der Inhalt soll jedoch vollständig auf die Features unserer AI-Writing-App angepasst sein.
+
+## Tech Stack
+- **Framework:** Next.js 16 (App Router)
+- **Styling:** Tailwind CSS 4
+- **Components:** shadcn/ui (Radix UI Primitives)
+- **Icons:** Lucide React / React Icons
+- **Animations:** Framer Motion (für komplexe Transitions), Tailwind Animate (für einfache Effekte)
+- **Fonts:** Inter (oder Geist Sans) für einen cleanen, modernen Look.
+
+## Design Spezifikationen (Launch UI Style)
+
+### 1. Farbpalette & Theme
+- **Background:**
+  - Light Mode: Sehr helles Grau/Weiß (`bg-stone-50` oder `#FFFFFF`).
+  - Dark Mode: Tiefes Schwarz/Dunkelgrau (`bg-stone-950`).
+- **Typography:** Dunkles Grau (`text-stone-900`) für Headings, etwas helleres Grau (`text-stone-600`) für Body.
+- **Accents:** Verwende lebendige, moderne Gradienten für Buttons und Highlights.
+  - *Primary Gradient:* Violett zu Fuchsia (z.B. `from-violet-600 to-fuchsia-600`).
+  - *Glow Effects:* Subtile farbige Schatten hinter Cards und Buttons.
+
+### 2. Layout & Spacing
+- **Container:** Zentrierter Content mit `max-w-7xl` und großzügigem Padding (`px-4 sm:px-6 lg:px-8`).
+- **Whitespace:** Nutze sehr viel Whitespace zwischen den Sektionen (`gap-24` oder `py-24`), um dem Design "Luft" zu geben.
+- **Grid:** Nutze CSS Grid für die Feature-Sektionen (Bento Grid Style).
+
+### 3. Animationen (Kritisch!)
+Das Design lebt von seinen Animationen. Implementiere folgende Effekte:
+- **Hero Background:** Ein subtiler, fließender Hintergrund-Effekt (z.B. animierte Gradienten-Blobs oder ein "Flowing Lines" Canvas-Effekt), der nicht ablenkt, aber Tiefe erzeugt.
+- **Scroll Reveals:** Alle Sektionen (besonders die Feature-Cards) sollen beim Scrollen sanft einblenden und sich leicht nach oben bewegen (`y: 20 -> y: 0`, `opacity: 0 -> opacity: 1`).
+- **Hover Effects:**
+  - **Cards:** Beim Hovern soll ein subtiler "Glow"-Rahmen erscheinen oder die Karte leicht skalieren.
+  - **Buttons:** Smooth Transition der Hintergrundfarbe/Gradienten.
+- **Micro-Interactions:** Buttons und Links sollen auf Klicks mit einem leichten "Press"-Effekt reagieren (`scale-95`).
+
+## Struktur & Inhalt (Mapping auf Jenni AI)
+
+Erstelle die Landing Page mit folgenden Sektionen, die das Layout von Launch UI spiegeln:
+
+1.  **Hero Section:**
+    *   *Headline:* "Supercharge your writing with AI" (Groß, Bold, Gradient Text).
+    *   *Subheadline:* "The most advanced AI writing assistant for researchers and creators. Write faster, cite instantly, and never face writer's block again."
+    *   *CTAs:* "Start Writing for Free" (Primary Gradient Button), "View Demo" (Secondary Outline Button).
+    *   *Visual:* Ein abstraktes, hochwertiges Mockup des Editors oder eine animierte Demo, die "schwebt".
+
+2.  **Social Proof (Logos):**
+    *   "Trusted by researchers at..." mit Logos von Top-Universitäten (Harvard, MIT, Oxford, etc.) in Graustufen, die beim Hover farbig werden.
+
+3.  **Bento Grid Features (The "Blocks" Section):**
+    *   Nutze das Bento-Grid-Layout von Launch UI, um unsere Core-Features zu zeigen:
+        *   **AI Autocomplete:** Eine große Karte, die zeigt, wie der Text vervollständigt wird.
+        *   **Citation Generator:** Eine Karte, die APA/MLA/Chicago Support zeigt.
+        *   **AskJenni Assistant:** Eine Chat-Interface Karte.
+        *   **PDF Management:** Eine Karte, die den Upload und die Analyse von PDFs symbolisiert.
+        *   **Multilingual:** Kleine Karte für "Support for 10+ Languages".
+
+4.  **Interactive Demo / "How it works":**
+    *   Eine Sektion, die den Schreibfluss visualisiert (ähnlich der "Code is yours" Sektion, aber für Text).
+
+5.  **Testimonials:**
+    *   Masonry-Layout oder Carousel mit Feedback von Nutzern (Studenten, Professoren, Content Creators).
+
+6.  **Pricing:**
+    *   "Simple, transparent pricing".
+    *   **Free:** Basic AI features.
+    *   **Pro:** Unlimited AI, Citations, Priority Support (Hervorgehoben mit Gradient Border).
+
+7.  **FAQ:**
+    *   Accordion-Style Fragen zu Plagiat, Datenschutz und Abos.
+
+8.  **Footer:**
+    *   Clean, Multi-Column mit Links zu "Product", "Company", "Resources".
+
+## Wichtige Anweisungen
+- Nutze **keine** Platzhalter-Bilder. Generiere CSS-basierte Visuals oder nutze Icons von Lucide React.
+- Der Code muss vollständig responsive sein (Mobile-First).
+- Achte extrem auf Performance (Lighthouse Score > 95).
+- Halte den Code modular: Jede Sektion sollte eine eigene Komponente sein (`src/components/landing/...`).
+
+Beginne mit der Erstellung der `Hero`-Komponente und arbeite dich dann nach unten vor.
