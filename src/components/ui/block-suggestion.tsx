@@ -75,6 +75,14 @@ const TYPE_TEXT_MAP: Record<string, (node?: TElement) => string> = {
   [KEYS.video]: () => 'Video',
 };
 
+const formatSuggestionText = (value?: string) => {
+  if (value === undefined || value === null) return 'Zeilenumbruch';
+  if (value === BLOCK_SUGGESTION) return 'Zeilenumbruch';
+  if (value.length === 0) return 'Zeilenumbruch';
+  if (/^\s+$/.test(value)) return 'Leerzeichen';
+  return value;
+};
+
 export function BlockSuggestionCard({
   idx,
   isLast,
@@ -100,8 +108,6 @@ export function BlockSuggestionCard({
     });
   };
 
-  const [hovering, setHovering] = React.useState(false);
-
   const suggestionText2Array = (text: string) => {
     if (text === BLOCK_SUGGESTION) return ['line breaks'];
 
@@ -111,12 +117,7 @@ export function BlockSuggestionCard({
   const [editingId, setEditingId] = React.useState<string | null>(null);
 
   return (
-    <div
-      key={`${suggestion.suggestionId}-${idx}`}
-      className="relative"
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-    >
+    <div key={`${suggestion.suggestionId}-${idx}`} className="relative">
       <div className="flex flex-col p-4">
         <div className="relative flex items-center">
           {/* Replace to your own backend or refer to potion */}
@@ -139,10 +140,10 @@ export function BlockSuggestionCard({
             {suggestion.type === 'remove' &&
               suggestionText2Array(suggestion.text!).map((text, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Delete:</span>
+                  <span className="text-muted-foreground text-sm">Löschen:</span>
 
                   <span key={index} className="text-sm">
-                    {text}
+                    {formatSuggestionText(text)}
                   </span>
                 </div>
               ))}
@@ -150,16 +151,29 @@ export function BlockSuggestionCard({
             {suggestion.type === 'insert' &&
               suggestionText2Array(suggestion.newText!).map((text, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Add:</span>
+                  <span className="text-muted-foreground text-sm">Hinzufügen:</span>
 
                   <span key={index} className="text-sm">
-                    {text || 'line breaks'}
+                    {formatSuggestionText(text)}
                   </span>
                 </div>
               ))}
 
             {suggestion.type === 'replace' && (
               <div className="flex flex-col gap-2">
+                {suggestionText2Array(suggestion.text!).map((text, index) => (
+                  <React.Fragment key={index}>
+                    <div key={index} className="flex items-start gap-2">
+                      <span className="text-muted-foreground text-sm">
+                        {index === 0 ? 'Ersetzt:' : 'Löschen:'}
+                      </span>
+                      <span className="text-sm">
+                        {formatSuggestionText(text)}
+                      </span>
+                    </div>
+                  </React.Fragment>
+                ))}
+
                 {suggestionText2Array(suggestion.newText!).map(
                   (text, index) => (
                     <React.Fragment key={index}>
@@ -167,23 +181,14 @@ export function BlockSuggestionCard({
                         key={index}
                         className="flex items-start gap-2 text-brand/80"
                       >
-                        <span className="text-sm">with:</span>
-                        <span className="text-sm">{text || 'line breaks'}</span>
+                        <span className="text-sm">durch:</span>
+                        <span className="text-sm">
+                          {formatSuggestionText(text)}
+                        </span>
                       </div>
                     </React.Fragment>
                   )
                 )}
-
-                {suggestionText2Array(suggestion.text!).map((text, index) => (
-                  <React.Fragment key={index}>
-                    <div key={index} className="flex items-start gap-2">
-                      <span className="text-muted-foreground text-sm">
-                        {index === 0 ? 'Replace:' : 'Delete:'}
-                      </span>
-                      <span className="text-sm">{text || 'line breaks'}</span>
-                    </div>
-                  </React.Fragment>
-                ))}
               </div>
             )}
 
@@ -200,7 +205,9 @@ export function BlockSuggestionCard({
                     </span>
                   ))}
                 </span>
-                <span className="text-sm">{suggestion.newText}</span>
+                <span className="text-sm">
+                  {formatSuggestionText(suggestion.newText)}
+                </span>
               </div>
             )}
           </div>
@@ -218,25 +225,23 @@ export function BlockSuggestionCard({
           />
         ))}
 
-        {hovering && (
-          <div className="absolute top-4 right-4 flex gap-2">
-            <Button
-              variant="ghost"
-              className="size-6 p-1 text-muted-foreground"
-              onClick={() => accept(suggestion)}
-            >
-              <CheckIcon className="size-4" />
-            </Button>
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button
+            variant="ghost"
+            className="size-6 p-1 text-muted-foreground"
+            onClick={() => accept(suggestion)}
+          >
+            <CheckIcon className="size-4" />
+          </Button>
 
-            <Button
-              variant="ghost"
-              className="size-6 p-1 text-muted-foreground"
-              onClick={() => reject(suggestion)}
-            >
-              <XIcon className="size-4" />
-            </Button>
-          </div>
-        )}
+          <Button
+            variant="ghost"
+            className="size-6 p-1 text-muted-foreground"
+            onClick={() => reject(suggestion)}
+          >
+            <XIcon className="size-4" />
+          </Button>
+        </div>
 
         <CommentCreateForm discussionId={suggestion.suggestionId} />
       </div>

@@ -71,10 +71,10 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton pressed={open} tooltip="Importieren" isDropdown>
-          <ArrowUpToLineIcon className="size-4" />
+         <ArrowUpToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
-
+ 
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
           <DropdownMenuItem

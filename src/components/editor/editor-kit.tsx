@@ -22,7 +22,6 @@ import { DndKit } from '@/components/editor/plugins/dnd-kit';
 import { DocxKit } from '@/components/editor/plugins/docx-kit';
 import { EmojiKit } from '@/components/editor/plugins/emoji-kit';
 import { ExitBreakKit } from '@/components/editor/plugins/exit-break-kit';
-import { FixedToolbarKit } from '@/components/editor/plugins/fixed-toolbar-kit';
 import { FloatingToolbarKit } from '@/components/editor/plugins/floating-toolbar-kit';
 import { FontKit } from '@/components/editor/plugins/font-kit';
 import { LineHeightKit } from '@/components/editor/plugins/line-height-kit';
@@ -32,6 +31,7 @@ import { MarkdownKit } from '@/components/editor/plugins/markdown-kit';
 import { MathKit } from '@/components/editor/plugins/math-kit';
 import { MediaKit } from '@/components/editor/plugins/media-kit';
 import { MentionKit } from '@/components/editor/plugins/mention-kit';
+import { CitationKit } from '@/components/editor/plugins/citation-kit';
 import { SlashKit } from '@/components/editor/plugins/slash-kit';
 import { SuggestionKit } from '@/components/editor/plugins/suggestion-kit';
 import { TableKit } from '@/components/editor/plugins/table-kit';
@@ -55,6 +55,7 @@ export const EditorKit = [
   ...DateKit,
   ...LinkKit,
   ...MentionKit,
+  ...CitationKit,
 
   // Marks
   ...BasicMarksKit,
@@ -86,7 +87,6 @@ export const EditorKit = [
 
   // UI
   ...BlockPlaceholderKit,
-  ...FixedToolbarKit,
   ...FloatingToolbarKit,
 ];
 

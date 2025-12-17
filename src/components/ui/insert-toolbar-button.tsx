@@ -173,7 +173,7 @@ const groups: Group[] = [
       {
         focusEditor: false,
         icon: <RadicalIcon />,
-        label: 'Gleichung',
+        label: 'Formel',
         value: KEYS.equation,
       },
       {
@@ -205,7 +205,7 @@ const groups: Group[] = [
       {
         focusEditor: false,
         icon: <RadicalIcon />,
-        label: 'Inline-Gleichung',
+        label: 'Inline-Formel',
         value: KEYS.inlineEquation,
       },
     ].map((item) => ({
@@ -224,7 +224,7 @@ export function InsertToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Einfügen" isDropdown>
+        <ToolbarButton pressed={open} tooltip="Elemente einfügen" isDropdown>
           <PlusIcon />
         </ToolbarButton>
       </DropdownMenuTrigger>

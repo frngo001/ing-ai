@@ -1,13 +1,323 @@
-import { Toaster } from 'sonner';
+"use client"
 
-import { PlateEditor } from '@/components/editor/plate-editor';
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { type ImperativePanelHandle } from "react-resizable-panels"
+import { Toaster } from "sonner"
+
+import { AppSidebar } from "@/components/app-sidebar"
+import { AskAiPane } from "@/components/ask-ai-pane"
+import { DocumentsPane } from "@/components/documents-pane"
+import { PlateEditor } from "@/components/editor/plate-editor"
+import { LibraryPane } from "@/components/library-pane"
+import { SettingsDialog } from "@/components/settings-dialog"
+import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
+import { useVisibilityStore } from "@/lib/stores/visibility-store"
+import { setupEditorTextInsertion } from "@/lib/editor/insert-text"
+import { setupEditorStreaming } from "@/lib/editor/stream-text"
+
+type Pane = "documents" | "library" | "askAi"
 
 export default function Page() {
-  return (
-    <div className="h-screen w-full">
-      <PlateEditor />
+  const [panes, setPanes] = useState<Record<Pane, boolean>>({
+    documents: false,
+    library: false,
+    askAi: false,
+  })
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsInitialNav, setSettingsInitialNav] = useState<string | undefined>(undefined)
 
-      <Toaster />
-    </div>
-  );
+  // Setup Editor-Text-Einfügung beim Mount
+  useEffect(() => {
+    setupEditorTextInsertion()
+    setupEditorStreaming()
+  }, [])
+
+  const askAiPaneTransition =
+    "absolute inset-0 overflow-hidden transition-all duration-300 ease-out data-[pane-state=open]:w-full data-[pane-state=closed]:w-0 data-[pane-state=closed]:min-w-0 data-[pane-state=open]:opacity-100 data-[pane-state=closed]:opacity-0 data-[pane-state=closed]:pointer-events-none data-[pane-state=open]:animate-in data-[pane-state=open]:fade-in data-[pane-state=open]:slide-in-from-left-52 data-[pane-state=open]:zoom-in-95 data-[pane-state=closed]:animate-out data-[pane-state=closed]:fade-out data-[pane-state=closed]:slide-out-to-left-52 data-[pane-state=closed]:zoom-out-95"
+
+  return (
+    <SidebarProvider defaultOpen={false}>
+      <PageContent
+        panes={panes}
+        setPanes={setPanes}
+        settingsOpen={settingsOpen}
+        setSettingsOpen={setSettingsOpen}
+        settingsInitialNav={settingsInitialNav}
+        setSettingsInitialNav={setSettingsInitialNav}
+        askAiPaneTransition={askAiPaneTransition}
+      />
+    </SidebarProvider>
+  )
+}
+
+function PageContent({
+  panes,
+  setPanes,
+  settingsOpen,
+  setSettingsOpen,
+  settingsInitialNav,
+  setSettingsInitialNav,
+  askAiPaneTransition,
+}: {
+  panes: Record<Pane, boolean>
+  setPanes: React.Dispatch<React.SetStateAction<Record<Pane, boolean>>>
+  settingsOpen: boolean
+  setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>
+  settingsInitialNav: string | undefined
+  setSettingsInitialNav: React.Dispatch<React.SetStateAction<string | undefined>>
+  askAiPaneTransition: string
+}) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const findLatestDocId = useCallback((): string | null => {
+    if (typeof window === "undefined") return null
+
+    const STATE_PREFIX = "plate-editor-state-"
+    const CONTENT_PREFIX = "plate-editor-content-"
+
+    const seen = new Set<string>()
+    let latestId: string | null = null
+    let latestTs = -Infinity
+
+    for (let i = 0; i < window.localStorage.length; i += 1) {
+      const key = window.localStorage.key(i)
+      if (!key) continue
+
+      const isState = key.startsWith(STATE_PREFIX)
+      const isContent = key.startsWith(CONTENT_PREFIX)
+      if (!isState && !isContent) continue
+
+      const id = isState ? key.replace(STATE_PREFIX, "") : key.replace(CONTENT_PREFIX, "")
+      if (seen.has(id)) continue
+
+      const rawState = window.localStorage.getItem(`${STATE_PREFIX}${id}`)
+      const rawContent = window.localStorage.getItem(`${CONTENT_PREFIX}${id}`)
+
+      try {
+        const parsedState = rawState ? JSON.parse(rawState) : null
+        const parsedContent = rawContent ? JSON.parse(rawContent) : null
+        const hydrated = parsedState ?? (parsedContent ? { content: parsedContent } : null)
+        if (!hydrated) continue
+
+        const ts = hydrated?.updatedAt ? new Date(hydrated.updatedAt).getTime() : 0
+        if (ts >= latestTs) {
+          latestTs = ts
+          latestId = id
+        }
+        seen.add(id)
+      } catch {
+        // ignore malformed entries
+      }
+    }
+
+    return latestId
+  }, [])
+  const [storageId, setStorageId] = useState<string | null>(null)
+  const hasDecidedInitialDoc = useRef(false)
+
+  const showDocuments = panes.documents
+  const showLibrary = panes.library
+  const showAskAi = panes.askAi
+  const sidePaneOpen = showDocuments || showLibrary
+
+  const { state: sidebarState } = useSidebar()
+  const { tocEnabled, commentTocEnabled, suggestionTocEnabled } = useVisibilityStore()
+
+  const baseTocVisible = !showAskAi && !showDocuments && !showLibrary && sidebarState === "collapsed"
+  const tocVisible = tocEnabled && baseTocVisible
+  const commentTocVisible = commentTocEnabled && baseTocVisible
+  const suggestionTocVisible = suggestionTocEnabled && baseTocVisible
+  const askAiPanelRef = useRef<ImperativePanelHandle | null>(null)
+
+  useEffect(() => {
+    if (showAskAi) {
+      askAiPanelRef.current?.expand(30)
+    } else {
+      askAiPanelRef.current?.collapse()
+    }
+  }, [showAskAi])
+
+  useEffect(() => {
+    if (hasDecidedInitialDoc.current) return
+    hasDecidedInitialDoc.current = true
+
+    const paramId = searchParams.get("doc")
+    if (paramId) {
+      setStorageId(paramId)
+      window.dispatchEvent(new Event("documents:reload"))
+      return
+    }
+
+    const latestExisting = findLatestDocId()
+    if (latestExisting) {
+      setStorageId(latestExisting)
+      router.replace(`/editor?doc=${encodeURIComponent(latestExisting)}`)
+      window.dispatchEvent(new Event("documents:reload"))
+      return
+    }
+
+    const newId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `doc-${Date.now()}`
+    setStorageId(newId)
+    router.replace(`/editor?doc=${encodeURIComponent(newId)}`)
+    window.dispatchEvent(new Event("documents:reload"))
+  }, [findLatestDocId, router, searchParams])
+
+  useEffect(() => {
+    const paramId = searchParams.get("doc")
+    if (paramId && paramId !== storageId) {
+      setStorageId(paramId)
+      window.dispatchEvent(new Event("documents:reload"))
+    }
+  }, [searchParams, storageId])
+
+  const togglePane = (pane: Pane) =>
+    setPanes((prev) => {
+      const isOpening = !prev[pane]
+      if (isOpening) {
+        return {
+          documents: pane === "documents",
+          library: pane === "library",
+          askAi: pane === "askAi",
+        }
+      }
+      return { ...prev, [pane]: false }
+    })
+
+  const openDocumentsPane = () =>
+    setPanes({
+      documents: true,
+      library: false,
+      askAi: false,
+    })
+
+  const createNewDocument = () => {
+    const newId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `doc-${Date.now()}`
+
+    if (typeof window !== "undefined") {
+      const payload = {
+        content: [{ type: "p", children: [{ text: "" }] }],
+        discussions: [],
+        updatedAt: new Date().toISOString(),
+      }
+      try {
+        window.localStorage.setItem(`plate-editor-state-${newId}`, JSON.stringify(payload))
+        window.dispatchEvent(new Event("documents:reload"))
+      } catch {
+        // ignore storage failures for now
+      }
+    }
+
+    setStorageId(newId)
+    setPanes({
+      documents: true,
+      library: false,
+      askAi: false,
+    })
+    router.push(`/editor?doc=${encodeURIComponent(newId)}`)
+  }
+
+  const closePane = (pane: Pane) =>
+    setPanes((prev) => {
+      if (!prev[pane]) return prev
+      return { ...prev, [pane]: false }
+    })
+
+  return (
+    <>
+      <AppSidebar
+        documentsVisible={showDocuments}
+        onToggleDocuments={() => togglePane("documents")}
+        libraryVisible={showLibrary}
+        onToggleLibrary={() => togglePane("library")}
+        askAiVisible={showAskAi}
+        onToggleAskAi={() => togglePane("askAi")}
+        settingsOpen={settingsOpen}
+        onOpenSettings={(nav) => {
+          setSettingsInitialNav(nav)
+          setSettingsOpen(true)
+        }}
+        onCreateDocument={createNewDocument}
+      />
+      <SidebarInset className="flex min-h-screen w-0 min-w-0 flex-1 flex-col overflow-visible">
+        <div className="flex flex-1 overflow-hidden pt-0 pb-0">
+          <div
+            data-pane-state={showDocuments ? "open" : "closed"}
+            className="shrink-0 h-screen overflow-hidden transition-all duration-300 ease-out data-[pane-state=open]:w-[300px] data-[pane-state=closed]:w-0 data-[pane-state=open]:opacity-100 data-[pane-state=closed]:opacity-0 data-[pane-state=closed]:pointer-events-none data-[pane-state=open]:animate-in data-[pane-state=open]:fade-in data-[pane-state=open]:slide-in-from-left-52 data-[pane-state=open]:zoom-in-95 data-[pane-state=closed]:animate-out data-[pane-state=closed]:fade-out data-[pane-state=closed]:slide-out-to-left-52 data-[pane-state=closed]:zoom-out-95"
+          >
+            <DocumentsPane
+              className="h-full"
+              onClose={() => closePane("documents")}
+            />
+          </div>
+
+          <div
+            data-pane-state={showLibrary ? "open" : "closed"}
+            className="shrink-0 h-screen overflow-hidden transition-all duration-300 ease-out data-[pane-state=open]:w-[300px] data-[pane-state=closed]:w-0 data-[pane-state=open]:opacity-100 data-[pane-state=closed]:opacity-0 data-[pane-state=closed]:pointer-events-none data-[pane-state=open]:animate-in data-[pane-state=open]:fade-in data-[pane-state=open]:slide-in-from-left-52 data-[pane-state=open]:zoom-in-95 data-[pane-state=closed]:animate-out data-[pane-state=closed]:fade-out data-[pane-state=closed]:slide-out-to-left-52 data-[pane-state=closed]:zoom-out-95"
+          >
+            <LibraryPane
+              className="h-full"
+              onClose={() => closePane("library")}
+            />
+          </div>
+
+          <div className="relative flex-1 min-w-0">
+            <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0 items-stretch">
+              <ResizablePanel
+                ref={askAiPanelRef}
+                defaultSize={0}
+                minSize={0}
+                maxSize={45}
+                collapsedSize={0}
+                collapsible
+                className="relative h-screen transition-none"
+              >
+                <div data-pane-state={showAskAi ? "open" : "closed"} className={askAiPaneTransition}>
+                  <AskAiPane className="h-full" onClose={() => closePane("askAi")} />
+                </div>
+              </ResizablePanel>
+              <ResizableHandle
+                withHandle
+                className={`w-1 data-[panel-group-direction=horizontal]:cursor-col-resize ${showAskAi ? "hidden sm:flex" : "hidden"
+                  }`}
+              />
+              <ResizablePanel minSize={40} defaultSize={100}>
+                <div
+                  className={`h-screen overflow-hidden bg-background ${sidePaneOpen ? "border-l border-border/70" : ""
+                    }`}
+                >
+                  <div className="flex h-full flex-col overflow-hidden">
+                    <div className="flex-1 overflow-auto">
+                      {storageId && (
+                        <PlateEditor
+                          key={storageId}
+                          storageId={storageId}
+                          showToc={tocVisible}
+                          showCommentToc={commentTocVisible}
+                          showSuggestionToc={suggestionTocVisible}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+        </div>
+        <SettingsDialog
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          initialNav={settingsInitialNav}
+        />
+        <Toaster />
+      </SidebarInset>
+    </>
+  )
 }

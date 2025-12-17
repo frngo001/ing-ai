@@ -44,6 +44,7 @@ import {
   usePluginOption,
 } from 'platejs/react';
 import { type PlateEditor, useEditorRef } from 'platejs/react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -138,9 +139,6 @@ export function AIMenu() {
 
   useHotkeys('esc', () => {
     api.aiChat.stop();
-
-    // remove when you implement the route /api/ai/command
-    (chat as any)._abortFakeStream();
   });
 
   const isLoading = status === 'streaming' || status === 'submitted';
@@ -221,7 +219,11 @@ export function AIMenu() {
                 }
                 if (isHotkey('enter')(e) && !e.shiftKey && !value) {
                   e.preventDefault();
-                  void api.aiChat.submit(input);
+                  if (!input.trim()) {
+                    toast.warning('Bitte gib einen Prompt ein.');
+                    return;
+                  }
+                  void api.aiChat.submit(input.trim());
                   setInput('');
                 }
               }}
@@ -296,6 +298,10 @@ const aiChatItems = {
     label: 'Kurz kommentieren',
     value: 'comment',
     onSelect: ({ editor, input }) => {
+      if (!input.trim()) {
+        toast.warning('Bitte tippe einen Text ein, bevor du kommentierst.');
+        return;
+      }
       editor.getApi(AIChatPlugin).aiChat.submit(input, {
         mode: 'insert',
         prompt:
@@ -311,7 +317,10 @@ const aiChatItems = {
     onSelect: ({ editor, input }) => {
       const ancestorNode = editor.api.block({ highest: true });
 
-      if (!ancestorNode) return;
+      if (!ancestorNode) {
+        toast.warning('Setze den Cursor in einen Block, bevor du fortsetzt.');
+        return;
+      }
 
       const isEmpty = NodeApi.string(ancestorNode[0]).trim().length === 0;
 
@@ -342,6 +351,10 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
     label: 'Mit Emojis anreichern',
     value: 'emojify',
     onSelect: ({ editor, input }) => {
+      if (!input.trim()) {
+        toast.warning('Bitte gib einen Text ein, bevor du Emojis hinzufügst.');
+        return;
+      }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: 'Emojify',
         toolName: 'edit',
@@ -353,6 +366,10 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
     label: 'Kurz erklären',
     value: 'explain',
     onSelect: ({ editor, input }) => {
+      if (!input.trim()) {
+        toast.warning('Bitte gib einen Text ein, bevor du erklärst.');
+        return;
+      }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: {
           default: 'Erkläre den folgenden Text knapp: {editor}',
@@ -367,34 +384,17 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
     label: 'Rechtschreibung & Grammatik korrigieren',
     value: 'fixSpelling',
     onSelect: ({ editor, input }) => {
+      if (!input.trim()) {
+        toast.warning('Bitte gib einen Text ein, bevor du korrigierst.');
+        return;
+      }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: 'Fix spelling and grammar',
         toolName: 'edit',
       });
     },
   },
-  generateMarkdownSample: {
-    icon: <BookOpenCheck />,
-    label: 'Markdown-Beispiel erstellen',
-    value: 'generateMarkdownSample',
-    onSelect: ({ editor, input }) => {
-      void editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        prompt: 'Erstelle ein kurzes Markdown-Beispiel.',
-        toolName: 'generate',
-      });
-    },
-  },
-  generateMdxSample: {
-    icon: <BookOpenCheck />,
-    label: 'MDX-Beispiel erstellen',
-    value: 'generateMdxSample',
-    onSelect: ({ editor, input }) => {
-      void editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        prompt: 'Erstelle ein kurzes MDX-Beispiel.',
-        toolName: 'generate',
-      });
-    },
-  },
+  
   improveWriting: {
     icon: <Wand />,
     label: 'Stil verfeinern',
@@ -514,8 +514,6 @@ const menuStateItems: Record<
     {
       items: [
         aiChatItems.comment,
-        aiChatItems.generateMdxSample,
-        aiChatItems.generateMarkdownSample,
         aiChatItems.continueWrite,
         aiChatItems.summarize,
         aiChatItems.explain,
@@ -593,7 +591,7 @@ export const AIMenuItems = ({
           {group.items.map((menuItem) => (
             <CommandItem
               key={menuItem.value}
-              className="[&_svg]:text-muted-foreground"
+              className="[&_svg]:text-emerald-500 dark:[&_svg]:text-emerald-400"
               value={menuItem.value}
               onSelect={() => {
                 menuItem.onSelect?.({

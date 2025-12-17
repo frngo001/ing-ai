@@ -5,13 +5,23 @@ import * as React from 'react';
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 
 import {
+  DropletsIcon,
+  HighlighterIcon,
   KeyboardIcon,
+  ListIcon,
+  ListOrderedIcon,
   MoreHorizontalIcon,
+  PaintBucketIcon,
+  PilcrowIcon,
+  QuoteIcon,
   SubscriptIcon,
   SuperscriptIcon,
+  TypeIcon,
+  Heading2Icon,
 } from 'lucide-react';
 import { KEYS } from 'platejs';
 import { useEditorRef } from 'platejs/react';
+import { ListStyleType, toggleList } from '@platejs/list';
 
 import {
   DropdownMenu,
@@ -36,10 +46,20 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        className="ignore-click-outside/toolbar flex max-h-[500px] min-w-[180px] flex-col overflow-y-auto"
+        className="ignore-click-outside/toolbar flex max-h-[300px] min-w-[200px] flex-col overflow-y-scroll scrollbar-thin scrollbar-thumb-muted scrollbar-track-muted/40 hover:scrollbar-thumb-muted hover:scrollbar-track-muted/60"
         align="start"
+        style={{ scrollbarGutter: 'stable both-edges', overflowY: 'scroll' }}
       >
         <DropdownMenuGroup>
+          <DropdownMenuItem
+            onSelect={() => {
+              editor.tf.toggleMark(KEYS.highlight);
+              editor.tf.focus();
+            }}
+          >
+            <HighlighterIcon />
+            Hervorheben
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               editor.tf.toggleMark(KEYS.kbd);
@@ -74,6 +94,42 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             <SubscriptIcon />
             Tiefgestellt
             {/* (⌘+.) */}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              toggleList(editor, { listStyleType: ListStyleType.Disc });
+              editor.tf.focus();
+            }}
+          >
+            <ListIcon />
+            Aufzählungsliste
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              toggleList(editor, { listStyleType: ListStyleType.Decimal });
+              editor.tf.focus();
+            }}
+          >
+            <ListOrderedIcon />
+            Nummerierte Liste
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              editor.tf.setNodes({ type: KEYS.blockquote });
+              editor.tf.focus();
+            }}
+          >
+            <QuoteIcon />
+            Zitat
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              editor.tf.setNodes({ type: KEYS.p });
+              editor.tf.focus();
+            }}
+          >
+            <PilcrowIcon />
+            Absatz
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

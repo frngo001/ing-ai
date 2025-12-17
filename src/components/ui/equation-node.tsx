@@ -27,12 +27,52 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { MathLiveInput } from '@/components/ui/mathlive-input';
 import { cn } from '@/lib/utils';
 
 export function EquationElement(props: PlateElementProps<TEquationElement>) {
+  const editor = useEditorRef();
   const selected = useSelected();
   const [open, setOpen] = React.useState(selected);
   const katexRef = React.useRef<HTMLDivElement | null>(null);
+  const hasContent = props.element.texExpression.length > 0;
+  const isMountedRef = React.useRef(true);
+
+  React.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (selected && isMountedRef.current) {
+      // Prüfe ob das Element noch existiert
+      try {
+        const path = editor.api.findPath(props.element);
+        if (path) {
+          // Verwende requestAnimationFrame, um sicherzustellen, dass das Element noch im DOM ist
+          requestAnimationFrame(() => {
+            if (isMountedRef.current) {
+              try {
+                const currentPath = editor.api.findPath(props.element);
+                if (currentPath) {
+                  setOpen(true);
+                }
+              } catch (e) {
+                // Element existiert nicht mehr
+              }
+            }
+          });
+        }
+      } catch (e) {
+        // Element existiert nicht mehr, schließe das Popover
+        setOpen(false);
+      }
+    } else if (!selected) {
+      setOpen(false);
+    }
+  }, [selected, editor, props.element]);
 
   useEquationElement({
     element: props.element,
@@ -42,7 +82,12 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
       errorColor: '#cc0000',
       fleqn: false,
       leqno: false,
-      macros: { '\\f': '#1f(#2)' },
+      macros: { 
+        '\\f': '#1f(#2)',
+        '\\binom': '\\genfrac{(}{)}{0pt}{}{#1}{#2}',
+        // Makro für Multinomial-Summation
+        '\\multisum': '\\sum\\limits',
+      },
       output: 'htmlAndMathml',
       strict: 'warn',
       throwOnError: false,
@@ -50,29 +95,50 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
     },
   });
 
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    // Prüfe ob das Element noch existiert, bevor wir den State ändern
+    try {
+      const path = editor.api.findPath(props.element);
+      if (!path && newOpen) {
+        // Element existiert nicht mehr, öffne das Popover nicht
+        return;
+      }
+      if (isMountedRef.current) {
+        setOpen(newOpen);
+      }
+    } catch (e) {
+      // Element existiert nicht mehr, ignoriere Fehler
+      if (!newOpen) {
+        setOpen(false);
+      }
+    }
+  }, [editor, props.element]);
+
   return (
-    <PlateElement className="my-1" {...props}>
-      <Popover open={open} onOpenChange={setOpen} modal={false}>
+    <PlateElement className="my-1 w-full" {...props}>
+      <Popover open={open} onOpenChange={handleOpenChange} modal={false}>
         <PopoverTrigger asChild>
           <div
             className={cn(
-              'group flex cursor-pointer select-none items-center justify-center rounded-sm hover:bg-primary/10 data-[selected=true]:bg-primary/10',
-              props.element.texExpression.length === 0
-                ? 'bg-muted p-3 pr-9'
-                : 'px-2 py-1'
+              'group flex w-full cursor-pointer select-none items-center rounded-sm hover:bg-primary/10 data-[selected=true]:bg-primary/10',
+              hasContent ? 'equation-counter px-2 py-1' : 'bg-muted p-3 pr-9'
             )}
             data-selected={selected}
             contentEditable={false}
             role="button"
           >
-            {props.element.texExpression.length > 0 ? (
-              <span ref={katexRef} />
-            ) : (
-              <div className="flex h-7 w-full items-center gap-2 whitespace-nowrap text-muted-foreground text-sm">
-                <RadicalIcon className="size-6 text-muted-foreground/80" />
-                <div>Add a Tex equation</div>
-              </div>
-            )}
+            <div className="flex flex-1 items-center justify-center">
+              {hasContent ? (
+                <span ref={katexRef} />
+              ) : (
+                <div className="flex h-7 w-full items-center gap-2 whitespace-nowrap text-muted-foreground text-sm">
+                  <RadicalIcon className="size-6 text-muted-foreground/80" />
+                  <div>Add a Tex equation</div>
+                </div>
+              )}
+            </div>
+
+            {hasContent && <span className="equation-number" aria-hidden="true" />}
           </div>
         </PopoverTrigger>
 
@@ -82,7 +148,7 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
             'f(x) = \\begin{cases}\n  x^2, &\\quad x > 0 \\\\\n  0, &\\quad x = 0 \\\\\n  -x^2, &\\quad x < 0\n\\end{cases}'
           }
           isInline={false}
-          setOpen={setOpen}
+          setOpen={handleOpenChange}
         />
       </Popover>
 
@@ -94,6 +160,7 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
 export function InlineEquationElement(
   props: PlateElementProps<TEquationElement>
 ) {
+  const editor = useEditorRef();
   const element = props.element;
   const katexRef = React.useRef<HTMLDivElement | null>(null);
   const selected = useSelected();
@@ -102,12 +169,43 @@ export function InlineEquationElement(
     []
   );
   const [open, setOpen] = React.useState(selected && isCollapsed);
+  const isMountedRef = React.useRef(true);
 
   React.useEffect(() => {
-    if (selected && isCollapsed) {
-      setOpen(true);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (selected && isCollapsed && isMountedRef.current) {
+      // Prüfe ob das Element noch existiert
+      try {
+        const path = editor.api.findPath(element);
+        if (path) {
+          // Verwende requestAnimationFrame, um sicherzustellen, dass das Element noch im DOM ist
+          requestAnimationFrame(() => {
+            if (isMountedRef.current) {
+              try {
+                const currentPath = editor.api.findPath(element);
+                if (currentPath) {
+                  setOpen(true);
+                }
+              } catch (e) {
+                // Element existiert nicht mehr
+              }
+            }
+          });
+        }
+      } catch (e) {
+        // Element existiert nicht mehr, schließe das Popover
+        setOpen(false);
+      }
+    } else if (!selected) {
+      setOpen(false);
     }
-  }, [selected, isCollapsed]);
+  }, [selected, isCollapsed, editor, element]);
 
   useEquationElement({
     element,
@@ -117,13 +215,37 @@ export function InlineEquationElement(
       errorColor: '#cc0000',
       fleqn: false,
       leqno: false,
-      macros: { '\\f': '#1f(#2)' },
+      macros: { 
+        '\\f': '#1f(#2)',
+        '\\binom': '\\genfrac{(}{)}{0pt}{}{#1}{#2}',
+        // Makro für Multinomial-Summation
+        '\\multisum': '\\sum\\limits',
+      },
       output: 'htmlAndMathml',
       strict: 'warn',
       throwOnError: false,
       trust: false,
     },
   });
+
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    // Prüfe ob das Element noch existiert, bevor wir den State ändern
+    try {
+      const path = editor.api.findPath(element);
+      if (!path && newOpen) {
+        // Element existiert nicht mehr, öffne das Popover nicht
+        return;
+      }
+      if (isMountedRef.current) {
+        setOpen(newOpen);
+      }
+    } catch (e) {
+      // Element existiert nicht mehr, ignoriere Fehler
+      if (!newOpen) {
+        setOpen(false);
+      }
+    }
+  }, [editor, element]);
 
   return (
     <PlateElement
@@ -132,7 +254,7 @@ export function InlineEquationElement(
         'mx-1 inline-block select-none rounded-sm [&_.katex-display]:my-0!'
       )}
     >
-      <Popover open={open} onOpenChange={setOpen} modal={false}>
+      <Popover open={open} onOpenChange={handleOpenChange} modal={false}>
         <PopoverTrigger asChild>
           <div
             className={cn(
@@ -165,7 +287,7 @@ export function InlineEquationElement(
           className="my-auto"
           open={open}
           placeholder="E = mc^2"
-          setOpen={setOpen}
+          setOpen={handleOpenChange}
           isInline
         />
       </Popover>
@@ -193,45 +315,129 @@ const EquationPopoverContent = ({
   const editor = useEditorRef();
   const readOnly = useReadOnly();
   const element = useElement<TEquationElement>();
+  const [useMathLive, setUseMathLive] = React.useState(true);
+  const [latexValue, setLatexValue] = React.useState(element.texExpression);
+
+  // Entferne diesen useEffect, da er zu Problemen führen kann
+  // Das Popover sollte nur durch den Parent-State gesteuert werden
 
   React.useEffect(() => {
-    if (isInline && open) {
-      setOpen(true);
+    setLatexValue(element.texExpression);
+  }, [element.texExpression, open]);
+
+  // Schließe das Popover, wenn das Element nicht mehr im Editor existiert
+  React.useEffect(() => {
+    const path = editor.api.findPath(element);
+    if (!path && open) {
+      setOpen(false);
     }
-  }, [isInline, open, setOpen]);
+  }, [editor, element, open, setOpen]);
 
   if (readOnly) return null;
 
+  const handleValueChange = (newValue: string) => {
+    setLatexValue(newValue);
+    // Aktualisiere das Element direkt
+    try {
+      const path = editor.api.findPath(element);
+      if (path) {
+        editor.tf.setNodes(
+          { texExpression: newValue } as Partial<TEquationElement>,
+          { at: path }
+        );
+      }
+    } catch (e) {
+      // Element existiert nicht mehr, ignoriere Fehler
+    }
+  };
+
   const onClose = () => {
+    // Prüfe ob das Element noch existiert, bevor wir versuchen zu schließen
+    const path = editor.api.findPath(element);
+    if (!path) {
+      // Element existiert nicht mehr, schließe das Popover direkt
+      setOpen(false);
+      return;
+    }
+    
     setOpen(false);
 
-    if (isInline) {
-      editor.tf.select(element, { focus: true, next: true });
-    } else {
-      editor
-        .getApi(BlockSelectionPlugin)
-        .blockSelection.set(element.id as string);
-    }
+    // Verwende requestAnimationFrame, um sicherzustellen, dass das Element noch im DOM ist
+    requestAnimationFrame(() => {
+      const currentPath = editor.api.findPath(element);
+      if (!currentPath) return; // Element wurde entfernt
+      
+      if (isInline) {
+        try {
+          editor.tf.select(element, { focus: true, next: true });
+        } catch (e) {
+          // Element existiert nicht mehr, ignoriere Fehler
+        }
+      } else {
+        try {
+          editor
+            .getApi(BlockSelectionPlugin)
+            .blockSelection.set(element.id as string);
+        } catch (e) {
+          // Element existiert nicht mehr, ignoriere Fehler
+        }
+      }
+    });
   };
 
   return (
     <PopoverContent
-      className="flex gap-2"
+      className="flex flex-col gap-2 p-4"
       onEscapeKeyDown={(e) => {
         e.preventDefault();
       }}
       contentEditable={false}
     >
-      <EquationInput
-        className={cn('max-h-[50vh] grow resize-none p-2 text-sm', className)}
-        state={{ isInline, open, onClose }}
-        autoFocus
-        {...props}
-      />
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium">Formel bearbeiten</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={useMathLive ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setUseMathLive(true)}
+            className="h-7 text-xs"
+          >
+            MathLive
+          </Button>
+          <Button
+            variant={!useMathLive ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setUseMathLive(false)}
+            className="h-7 text-xs"
+          >
+            LaTeX
+          </Button>
+        </div>
+      </div>
 
-      <Button variant="secondary" className="px-3" onClick={onClose}>
-        Done <CornerDownLeftIcon className="size-3.5" />
-      </Button>
+      {useMathLive ? (
+        <MathLiveInput
+          value={latexValue}
+          onChange={handleValueChange}
+          placeholder={props.placeholder}
+          className={cn('min-h-[120px]', className)}
+          autoFocus
+          open={open}
+        />
+      ) : (
+        <EquationInput
+          className={cn('max-h-[50vh] grow resize-none p-2 text-sm', className)}
+          state={{ isInline, open, onClose }}
+          autoFocus
+          {...props}
+        />
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" className="px-3" onClick={onClose}>
+          Fertig <CornerDownLeftIcon className="size-3.5" />
+        </Button>
+      </div>
     </PopoverContent>
   );
 };

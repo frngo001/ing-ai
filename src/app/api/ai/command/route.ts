@@ -1,10 +1,6 @@
-import type {
-  ChatMessage,
-  ToolName,
-} from '@/components/editor/use-chat';
+import type { ChatMessage, ToolName } from '@/components/editor/use-chat';
 import type { NextRequest } from 'next/server';
 
-import { createGateway } from '@ai-sdk/gateway';
 import {
   type LanguageModel,
   type UIMessageStreamWriter,
@@ -20,6 +16,7 @@ import { type SlateEditor, createSlateEditor, nanoid } from 'platejs';
 import { z } from 'zod';
 
 import { BaseEditorKit } from '@/components/editor/editor-base-kit';
+import { DEEPSEEK_CHAT_MODEL, deepseek } from '@/lib/ai/deepseek';
 import { markdownJoinerTransform } from '@/lib/markdown-joiner-transform';
 
 import {
@@ -28,6 +25,24 @@ import {
   getEditPrompt,
   getGeneratePrompt,
 } from './prompts';
+
+const RATE_LIMIT_WINDOW_MS =
+  Number(process.env.AI_COMMAND_RATE_LIMIT_WINDOW_MS) || 60_000;
+const RATE_LIMIT_MAX =
+  Number(process.env.AI_COMMAND_RATE_LIMIT_MAX) || 60;
+
+// Simple in-memory rate limit bucket; per-process only.
+const rateBuckets = new Map<string, number[]>();
+
+const isRateLimited = (key: string) => {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  const entries = (rateBuckets.get(key) || []).filter((ts) => ts > windowStart);
+  if (entries.length >= RATE_LIMIT_MAX) return true;
+  entries.push(now);
+  rateBuckets.set(key, entries);
+  return false;
+};
 
 export async function POST(req: NextRequest) {
   const {
@@ -39,25 +54,43 @@ export async function POST(req: NextRequest) {
 
   const { children, selection, toolName: toolNameParam } = ctx;
 
+  const requester =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+
+  if (isRateLimited(requester)) {
+    return NextResponse.json(
+      { error: 'Zu viele Anfragen. Bitte kurz warten.' },
+      { status: 429 }
+    );
+  }
+
   const editor = createSlateEditor({
     plugins: BaseEditorKit,
     selection,
     value: children,
   });
 
-  const apiKey = key || process.env.AI_GATEWAY_API_KEY;
+  const modelName = model || DEEPSEEK_CHAT_MODEL;
+  const apiKey =
+    (typeof key === 'string' && key) || process.env.DEEPSEEK_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'Missing AI Gateway API key.' },
+      { error: 'Missing DeepSeek API key.' },
       { status: 401 }
     );
   }
 
+  const getModel = () => deepseek(modelName);
+
   const isSelecting = editor.api.isExpanded();
 
-  const gatewayProvider = createGateway({
-    apiKey,
+  console.info('ai/command request', {
+    ip: requester,
+    model: modelName,
+    toolName: toolNameParam ?? 'auto',
+    selecting: isSelecting,
+    messages: messagesRaw.length,
   });
 
   try {
@@ -65,33 +98,24 @@ export async function POST(req: NextRequest) {
       execute: async ({ writer }) => {
         let toolName = toolNameParam;
 
-        if (!toolName) {
-          const { object: AIToolName } = await generateObject({
-            enum: isSelecting
-              ? ['generate', 'edit', 'comment']
-              : ['generate', 'comment'],
-            model: gatewayProvider(model || 'google/gemini-2.5-flash'),
-            output: 'enum',
-            prompt: getChooseToolPrompt(messagesRaw),
-          });
-
-          writer.write({
-            data: AIToolName as ToolName,
-            type: 'data-toolName',
-          });
-
-          toolName = AIToolName;
-        }
+    // Default: wenn kein Tool gewählt wurde, wähle basierend auf Auswahl
+    if (!toolName) {
+      const hasSelection = editor.api.isExpanded();
+      toolName = hasSelection ? 'edit' : 'generate';
+      writer.write({
+        data: toolName as ToolName,
+        type: 'data-toolName',
+      });
+    }
 
         const stream = streamText({
           experimental_transform: markdownJoinerTransform(),
-          model: gatewayProvider(model || 'openai/gpt-4o-mini'),
-          // Not used
+          model: getModel(),
           prompt: '',
           tools: {
             comment: getCommentTool(editor, {
               messagesRaw,
-              model: gatewayProvider(model || 'google/gemini-2.5-flash'),
+              model: getModel(),
               writer,
             }),
           },
@@ -135,7 +159,7 @@ export async function POST(req: NextRequest) {
                     role: 'user',
                   },
                 ],
-                model: gatewayProvider(model || 'openai/gpt-4o-mini'),
+                model: getModel(),
               };
             }
           },

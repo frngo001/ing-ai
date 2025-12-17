@@ -144,10 +144,10 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton
-          className="min-w-[125px]"
+          className="min-w-[100px]"
           pressed={open}
-          tooltip="Umwandeln in"
           isDropdown
+          tooltip="Textformat ändern"
         >
           {selectedItem.label}
         </ToolbarButton>
@@ -166,7 +166,7 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
           onValueChange={(type) => {
             setBlockType(editor, type);
           }}
-          label="Umwandeln in"
+          label="Textformat ändern"
         >
           {turnIntoItems.map(({ icon, label, value: itemValue }) => (
             <DropdownMenuRadioItem

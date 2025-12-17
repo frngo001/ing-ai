@@ -13,6 +13,7 @@ export function EquationElementStatic(
   props: SlateElementProps<TEquationElement>
 ) {
   const { element } = props;
+  const hasContent = element.texExpression.length > 0;
 
   const html = getEquationHtml({
     element,
@@ -21,7 +22,10 @@ export function EquationElementStatic(
       errorColor: '#cc0000',
       fleqn: false,
       leqno: false,
-      macros: { '\\f': '#1f(#2)' },
+      macros: { 
+        '\\f': '#1f(#2)',
+        '\\binom': '\\genfrac{(}{)}{0pt}{}{#1}{#2}',
+      },
       output: 'htmlAndMathml',
       strict: 'warn',
       throwOnError: false,
@@ -30,25 +34,29 @@ export function EquationElementStatic(
   });
 
   return (
-    <SlateElement className="my-1" {...props}>
+    <SlateElement className="my-1 w-full" {...props}>
       <div
         className={cn(
-          'group flex select-none items-center justify-center rounded-sm hover:bg-primary/10 data-[selected=true]:bg-primary/10',
-          element.texExpression.length === 0 ? 'bg-muted p-3 pr-9' : 'px-2 py-1'
+          'group flex w-full select-none items-center rounded-sm hover:bg-primary/10 data-[selected=true]:bg-primary/10',
+          hasContent ? 'equation-counter px-2 py-1' : 'bg-muted p-3 pr-9'
         )}
       >
-        {element.texExpression.length > 0 ? (
-          <span
-            dangerouslySetInnerHTML={{
-              __html: html,
-            }}
-          />
-        ) : (
-          <div className="flex h-7 w-full items-center gap-2 whitespace-nowrap text-muted-foreground text-sm">
-            <RadicalIcon className="size-6 text-muted-foreground/80" />
-            <div>Add a Tex equation</div>
-          </div>
-        )}
+        <div className="flex flex-1 items-center justify-center">
+          {hasContent ? (
+            <span
+              dangerouslySetInnerHTML={{
+                __html: html,
+              }}
+            />
+          ) : (
+            <div className="flex h-7 w-full items-center gap-2 whitespace-nowrap text-muted-foreground text-sm">
+              <RadicalIcon className="size-6 text-muted-foreground/80" />
+              <div>Add a Tex equation</div>
+            </div>
+          )}
+        </div>
+
+        {hasContent && <span className="equation-number" aria-hidden="true" />}
       </div>
       {props.children}
     </SlateElement>
@@ -65,7 +73,10 @@ export function InlineEquationElementStatic(
       errorColor: '#cc0000',
       fleqn: false,
       leqno: false,
-      macros: { '\\f': '#1f(#2)' },
+      macros: { 
+        '\\f': '#1f(#2)',
+        '\\binom': '\\genfrac{(}{)}{0pt}{}{#1}{#2}',
+      },
       output: 'htmlAndMathml',
       strict: 'warn',
       throwOnError: false,

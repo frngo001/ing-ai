@@ -13,15 +13,18 @@ import {
   useReadOnly,
   useSelected,
 } from 'platejs/react';
+import { BookOpenIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
+import { useCitationStore } from '@/lib/stores/citation-store';
 
 import {
   InlineCombobox,
   InlineComboboxContent,
   InlineComboboxEmpty,
   InlineComboboxGroup,
+  InlineComboboxGroupLabel,
   InlineComboboxInput,
   InlineComboboxItem,
 } from './inline-combobox';
@@ -82,6 +85,17 @@ export function MentionInputElement(
 ) {
   const { editor, element } = props;
   const [search, setSearch] = React.useState('');
+  const { openSearch } = useCitationStore();
+
+  const handleCiteSelect = React.useCallback(() => {
+    // Remove the @cite input from the editor
+    editor.tf.delete({ unit: 'block' });
+    // Open the citation search dialog
+    openSearch();
+  }, [editor, openSearch]);
+
+  // Check if user is typing "cite"
+  const isCiteSearch = search.toLowerCase().startsWith('cite') || 'cite'.startsWith(search.toLowerCase());
 
   return (
     <PlateElement {...props} as="span">
@@ -92,14 +106,29 @@ export function MentionInputElement(
         showTrigger={false}
         trigger="@"
       >
-        <span className="inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm ring-ring focus-within:ring-2">
+        <span className="inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm ring-ring">
           <InlineComboboxInput />
         </span>
 
         <InlineComboboxContent className="my-1.5">
-          <InlineComboboxEmpty>No results</InlineComboboxEmpty>
+          <InlineComboboxEmpty>Keine Ergebnisse</InlineComboboxEmpty>
+
+          {isCiteSearch && (
+            <InlineComboboxGroup>
+              <InlineComboboxGroupLabel>Zitation</InlineComboboxGroupLabel>
+              <InlineComboboxItem
+                value="cite"
+                onClick={handleCiteSelect}
+                keywords={['citation', 'quelle', 'source', 'reference', 'zitat']}
+              >
+                <BookOpenIcon className="mr-2 size-4 text-muted-foreground" />
+                Quellen suchen
+              </InlineComboboxItem>
+            </InlineComboboxGroup>
+          )}
 
           <InlineComboboxGroup>
+            <InlineComboboxGroupLabel>Erwähnungen</InlineComboboxGroupLabel>
             {MENTIONABLES.map((item) => (
               <InlineComboboxItem
                 key={item.key}

@@ -43,6 +43,7 @@ export interface NormalizedSource {
     abstract?: string
     keywords?: string[]
     citationCount?: number
+    impactFactor?: number
     references?: string[]
 
     // Quality indicators

@@ -4,14 +4,28 @@ import { cn } from '@/lib/utils';
 
 import { Toolbar } from './toolbar';
 
-export function FixedToolbar(props: React.ComponentProps<typeof Toolbar>) {
+type FixedToolbarProps = React.ComponentProps<typeof Toolbar> & {
+  position?: 'top' | 'bottom';
+};
+
+export function FixedToolbar({
+  className,
+  position = 'top',
+  ...props
+}: FixedToolbarProps) {
+  const positionClasses =
+    position === 'bottom'
+      ? 'sticky bottom-0 top-auto inset-x-0 border-t border-t-border border-b-0'
+      : 'sticky top-0 inset-x-0 border-b border-b-border';
+
   return (
     <Toolbar
-      {...props}
       className={cn(
-        'scrollbar-hide sticky top-0 left-0 z-50 w-full justify-between overflow-x-auto rounded-t-lg border-b border-b-border bg-background/95 p-1 backdrop-blur-sm supports-backdrop-blur:bg-background/60',
-        props.className
+        'scrollbar-hide z-20 w-full max-w-full justify-between overflow-x-auto bg-background/95 p-1 shadow-sm backdrop-blur-sm supports-backdrop-blur:bg-background/60',
+        positionClasses,
+        className
       )}
+      {...props}
     />
   );
 }

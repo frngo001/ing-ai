@@ -38,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { BasicMarksKit } from '@/components/editor/plugins/basic-marks-kit';
 import {
@@ -54,6 +55,7 @@ export type TComment = {
   discussionId: string;
   isEdited: boolean;
   userId: string;
+  updatedAt?: Date;
 };
 
 export function Comment(props: {
@@ -195,17 +197,23 @@ export function Comment(props: {
           {comment.isEdited && <span>(edited)</span>}
         </div>
 
-        {isMyComment && (hovering || dropdownOpen) && (
+        {isMyComment && (
           <div className="absolute top-0 right-0 flex space-x-1">
             {index === 0 && (
-              <Button
-                variant="ghost"
-                className="h-6 p-1 text-muted-foreground"
-                onClick={onResolveComment}
-                type="button"
-              >
-                <CheckIcon className="size-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="h-6 p-1 text-muted-foreground"
+                    onClick={onResolveComment}
+                    type="button"
+                    aria-label="Diskussion auflösen"
+                  >
+                    <CheckIcon className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Diskussion auflösen</TooltipContent>
+              </Tooltip>
             )}
 
             <CommentMoreDropdown
@@ -256,28 +264,27 @@ export function Comment(props: {
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="size-[28px]"
+                  aria-label="Abbrechen"
+                  className="size-7 rounded-full text-red-500 hover:text-red-600 focus-visible:ring-2 focus-visible:ring-red-500/60"
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                     e.stopPropagation();
                     void onCancel();
                   }}
                 >
-                  <div className="flex size-5 shrink-0 items-center justify-center rounded-[50%] bg-primary/40">
-                    <XIcon className="size-3 stroke-[3px] text-background" />
-                  </div>
+                  <XIcon className="size-4 stroke-[2.5px]" />
                 </Button>
 
                 <Button
                   size="icon"
                   variant="ghost"
+                  aria-label="Speichern"
+                  className="size-7 rounded-full text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 hover:dark:text-emerald-300 focus-visible:ring-2 focus-visible:ring-emerald-500/60"
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                     e.stopPropagation();
                     void onSave();
                   }}
                 >
-                  <div className="flex size-5 shrink-0 items-center justify-center rounded-[50%] bg-brand">
-                    <CheckIcon className="size-3 stroke-[3px] text-background" />
-                  </div>
+                  <CheckIcon className="size-4 stroke-[2.5px]" />
                 </Button>
               </div>
             )}
@@ -357,11 +364,23 @@ function CommentMoreDropdown(props: {
       onOpenChange={setDropdownOpen}
       modal={false}
     >
-      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-        <Button variant="ghost" className={cn('h-6 p-1 text-muted-foreground')}>
-          <MoreHorizontalIcon className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger
+            asChild
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              variant="ghost"
+              className={cn('h-6 p-1 text-muted-foreground')}
+              aria-label="Löschen oder Bearbeiten"
+            >
+              <MoreHorizontalIcon className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Löschen oder Bearbeiten</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent
         className="w-48"
         onCloseAutoFocus={(e) => {
@@ -374,13 +393,19 @@ function CommentMoreDropdown(props: {
         }}
       >
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={onEditComment}>
-            <PencilIcon className="size-4" />
-            Edit comment
+          <DropdownMenuItem
+            className="hover:bg-muted focus:bg-muted"
+            onClick={onEditComment}
+          >
+            <PencilIcon className="size-4 text-emerald-500 dark:text-emerald-400" />
+            Bearbeiten
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDeleteComment}>
-            <TrashIcon className="size-4" />
-            Delete comment
+          <DropdownMenuItem
+            className="hover:bg-muted focus:bg-muted"
+            onClick={onDeleteComment}
+          >
+            <TrashIcon className="size-4 text-emerald-500 dark:text-emerald-400" />
+            Kommentar löschen
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -574,7 +599,7 @@ export function CommentCreateForm({
                   onAddComment();
                 }
               }}
-              placeholder="Reply..."
+              placeholder="Kommentieren ..."
               autoComplete="off"
               autoFocus={autoFocus}
             />

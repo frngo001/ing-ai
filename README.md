@@ -111,13 +111,7 @@ jenni-ai-clone/
 The AI autocomplete feature uses streaming responses from Deepseek to provide real-time writing suggestions based on document context.
 
 ### Citation Generator
-Supports 6 major citation styles with proper formatting:
-- APA 7th Edition
-- MLA 9th Edition
-- Chicago 17th Edition
-- IEEE
-- Harvard
-- Vancouver
+Unterstützt 6 vordefinierte Stile (APA, MLA, Chicago, IEEE, Harvard, Vancouver) und kann via **Bibify** (>9000 CSL-Stile) weitere Zitierstile sowie Buch- und Webseiten-Metadaten beziehen.
 
 ### Rich Text Editor
 Built with Tiptap, includes:

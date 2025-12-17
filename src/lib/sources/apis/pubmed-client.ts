@@ -99,7 +99,8 @@ export class PubMedClient extends BaseApiClient {
         }
 
         return this.executeRequest(
-            () => fetch(`${this.config.baseUrl}/efetch.fcgi?${params}`)
+            () => fetch(`${this.config.baseUrl}/efetch.fcgi?${params}`),
+            { parseAs: 'text' }
         )
     }
 

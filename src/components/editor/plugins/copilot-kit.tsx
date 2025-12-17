@@ -2,7 +2,6 @@
 
 import type { TElement } from 'platejs';
 
-import { faker } from '@faker-js/faker';
 import { CopilotPlugin } from '@platejs/ai/react';
 import { serializeMd, stripMarkdown } from '@platejs/markdown';
 
@@ -17,6 +16,7 @@ export const CopilotKit = [
       completeOptions: {
         api: '/api/ai/copilot',
         body: {
+          model: 'deepseek-chat',
           system: `You are an advanced AI writing assistant, similar to VSCode Copilot but for general text. Your task is to predict and generate the next part of the text based on the given context.
   
   Rules:
@@ -29,11 +29,10 @@ export const CopilotKit = [
   - CRITICAL: Avoid starting a new block. Do not use block formatting like >, #, 1., 2., -, etc. The suggestion should continue in the same block as the context.
   - If no context is provided or you can't generate a continuation, return "0" without explanation.`,
         },
-        onError: () => {
-          // Mock the API response. Remove it when you implement the route /api/ai/copilot
-          api.copilot.setBlockSuggestion({
-            text: stripMarkdown(faker.lorem.sentence()),
-          });
+        onError: (error) => {
+          console.error('Copilot autocomplete error', error);
+          // Kein Platzhalter-Text mehr ausgeben, nur stilles Leeren.
+          api.copilot.setBlockSuggestion({ text: 'Fehler beim Generieren der Vorschläge.' });
         },
         onFinish: (_, completion) => {
           if (completion === '0') return;
@@ -48,7 +47,10 @@ export const CopilotKit = [
       getPrompt: ({ editor }) => {
         const contextEntry = editor.api.block({ highest: true });
 
-        if (!contextEntry) return '';
+        if (!contextEntry) {
+          // Fallback, damit der Prompt nie leer ist.
+          return 'Continue the text naturally up to the next punctuation mark.';
+        }
 
         const prompt = serializeMd(editor, {
           value: [contextEntry[0] as TElement],

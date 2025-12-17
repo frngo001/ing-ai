@@ -1,10 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FileText, Trash2, Plus, Quote } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
 import { PdfUpload } from './pdf-upload'
 import {
     Dialog,
@@ -15,7 +23,6 @@ import {
 } from '@/components/ui/dialog'
 import { parseBibTex } from '@/lib/citations/bib-parser'
 import { toast } from 'sonner'
-import { useRef } from 'react'
 
 interface Source {
     id: string
@@ -31,29 +38,88 @@ interface LibraryPanelProps {
     onInsertCitation?: (citation: string) => void
 }
 
+type Library = {
+    id: string
+    name: string
+    sources: Source[]
+}
+
+const STORAGE_KEY = 'library-panel.libraries'
+
 export function LibraryPanel({ onSourcesChange, onInsertCitation }: LibraryPanelProps) {
-    const [sources, setSources] = useState<Source[]>([])
+    const [libraries, setLibraries] = useState<Library[]>([])
+    const [selectedLibraryId, setSelectedLibraryId] = useState<string | null>(null)
     const [isUploadOpen, setIsUploadOpen] = useState(false)
+    const [isCreateLibraryOpen, setIsCreateLibraryOpen] = useState(false)
+    const [newLibraryName, setNewLibraryName] = useState('')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const currentLibrary = useMemo(
+        () => libraries.find(lib => lib.id === selectedLibraryId) ?? null,
+        [libraries, selectedLibraryId]
+    )
+
+    const updateCurrentLibrarySources = (updater: (prev: Source[]) => Source[]) => {
+        if (!selectedLibraryId) return
+        setLibraries(prev =>
+            prev.map(lib =>
+                lib.id === selectedLibraryId ? { ...lib, sources: updater(lib.sources) } : lib
+            )
+        )
+    }
+
+    useEffect(() => {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored) as Library[]
+                if (Array.isArray(parsed) && parsed.length) {
+                    setLibraries(parsed)
+                    setSelectedLibraryId(parsed[0]?.id ?? null)
+                    return
+                }
+            } catch {
+                // ignore invalid storage
+            }
+        }
+
+        const initial: Library = { id: 'default-library', name: 'Standardbibliothek', sources: [] }
+        setLibraries([initial])
+        setSelectedLibraryId(initial.id)
+    }, [])
+
+    useEffect(() => {
+        if (!libraries.length) return
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(libraries))
+    }, [libraries])
+
+    useEffect(() => {
+        if (!libraries.length) return
+        if (!selectedLibraryId || !libraries.some(l => l.id === selectedLibraryId)) {
+            setSelectedLibraryId(libraries[0].id)
+        }
+    }, [libraries, selectedLibraryId])
+
+    useEffect(() => {
+        onSourcesChange(currentLibrary?.sources ?? [])
+    }, [currentLibrary, onSourcesChange])
+
     const handlePdfUpload = (id: string, text: string) => {
+        updateCurrentLibrarySources(prev => {
+            const nextIndex = prev.length + 1
         const newSource: Source = {
             id,
-            title: `Uploaded PDF ${sources.length + 1}`, // In real app, get filename
+                title: `Uploaded PDF ${nextIndex}`,
             type: 'pdf',
             content: text,
         }
-
-        const updatedSources = [...sources, newSource]
-        setSources(updatedSources)
-        onSourcesChange(updatedSources)
+            return [...prev, newSource]
+        })
         setIsUploadOpen(false)
     }
 
     const removeSource = (id: string) => {
-        const updatedSources = sources.filter(s => s.id !== id)
-        setSources(updatedSources)
-        onSourcesChange(updatedSources)
+        updateCurrentLibrarySources(prev => prev.filter(s => s.id !== id))
     }
 
     const handleBibUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,9 +148,7 @@ URL: ${entry.url}
           `.trim()
                 }))
 
-                const updatedSources = [...sources, ...newSources]
-                setSources(updatedSources)
-                onSourcesChange(updatedSources)
+                updateCurrentLibrarySources(prev => [...prev, ...newSources])
                 toast.success(`Imported ${entries.length} citations`)
             } catch (error) {
                 toast.error('Failed to parse BibTeX file')
@@ -93,6 +157,27 @@ URL: ${entry.url}
         reader.readAsText(file)
         e.target.value = '' // Reset input
     }
+
+    const handleCreateLibrary = () => {
+        const name = newLibraryName.trim()
+        if (!name) {
+            toast.error('Bitte einen Bibliotheksnamen eingeben')
+            return
+        }
+
+        const newLib: Library = {
+            id: `lib_${Date.now()}`,
+            name,
+            sources: [],
+        }
+
+        setLibraries(prev => [...prev, newLib])
+        setSelectedLibraryId(newLib.id)
+        setNewLibraryName('')
+        setIsCreateLibraryOpen(false)
+    }
+
+    const displayedSources = currentLibrary?.sources ?? []
 
     return (
         <Card className="flex flex-col h-full border-0 shadow-none">
@@ -103,6 +188,40 @@ URL: ${entry.url}
                         Manage your sources
                     </p>
                 </div>
+
+                <div className="flex items-center gap-3">
+                    <Select
+                        value={selectedLibraryId ?? undefined}
+                        onValueChange={(value) => {
+                            if (value === '__new__') {
+                                setIsCreateLibraryOpen(true)
+                                return
+                            }
+                            setSelectedLibraryId(value)
+                        }}
+                    >
+                        <SelectTrigger className="w-[190px]" aria-label="Bibliothek auswählen">
+                            <SelectValue placeholder="Bibliothek wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {libraries.map(lib => (
+                                <SelectItem key={lib.id} value={lib.id}>
+                                    {lib.name}
+                                </SelectItem>
+                            ))}
+                            <SelectItem value="__new__">+ Neue Bibliothek</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsCreateLibraryOpen(true)}
+                        aria-label="Neue Bibliothek anlegen"
+                    >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Neue Bibliothek
+                    </Button>
 
                 <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
                     <DialogTrigger asChild>
@@ -145,18 +264,19 @@ URL: ${entry.url}
                         </div>
                     </DialogContent>
                 </Dialog>
+                </div>
             </div>
 
             <ScrollArea className="flex-1 p-4">
                 <div className="space-y-4">
-                    {sources.length === 0 && (
+                    {displayedSources.length === 0 && (
                         <div className="text-center text-muted-foreground py-8">
                             <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             <p>No sources added yet</p>
                         </div>
                     )}
 
-                    {sources.map((source) => (
+                    {displayedSources.map((source) => (
                         <Card key={source.id} className="p-3 flex items-center justify-between group">
                             <div className="flex items-center gap-3 overflow-hidden">
                                 <div className="p-2 bg-muted rounded">
@@ -191,6 +311,28 @@ URL: ${entry.url}
                     ))}
                 </div>
             </ScrollArea>
+
+            <Dialog open={isCreateLibraryOpen} onOpenChange={setIsCreateLibraryOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Neue Bibliothek</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                        <Input
+                            value={newLibraryName}
+                            onChange={(e) => setNewLibraryName(e.target.value)}
+                            placeholder="Name der Bibliothek"
+                            aria-label="Bibliotheksname"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setIsCreateLibraryOpen(false)}>
+                                Abbrechen
+                            </Button>
+                            <Button onClick={handleCreateLibrary}>Anlegen</Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </Card>
     )
 }

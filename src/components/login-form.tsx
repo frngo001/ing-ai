@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import GithubMark from "@/components/logos/github";
 import GoogleLogo from "@/components/logos/google";
+import { LoginTransition } from "@/components/login-transition";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -26,7 +27,7 @@ type LoginFormProps = React.ComponentProps<"div"> & {
   nextPath?: string;
 };
 
-export function LoginForm({ className, nextPath = "/dashboard", ...props }: LoginFormProps) {
+export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFormProps) {
   const router = useRouter();
   const supabase = createClient();
   const [email, setEmail] = useState("");
@@ -34,6 +35,7 @@ export function LoginForm({ className, nextPath = "/dashboard", ...props }: Logi
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<"google" | "github" | null>(null);
+  const [showTransition, setShowTransition] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,16 +43,18 @@ export function LoginForm({ className, nextPath = "/dashboard", ...props }: Logi
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      toast.success("Eingeloggt");
-      router.replace(nextPath);
-      router.refresh();
+      setShowTransition(true);
     } catch (error: any) {
       toast.error("Login fehlgeschlagen", {
         description: error?.message ?? "Bitte Eingaben prüfen.",
       });
-    } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTransitionComplete = () => {
+    router.replace(nextPath);
+    router.refresh();
   };
 
   const handleOAuth = async (provider: "google" | "github") => {
@@ -74,7 +78,9 @@ export function LoginForm({ className, nextPath = "/dashboard", ...props }: Logi
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <>
+      <LoginTransition isVisible={showTransition} onComplete={handleTransitionComplete} />
+      <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form className="p-6 md:p-8" onSubmit={handleLogin}>
@@ -205,5 +211,6 @@ export function LoginForm({ className, nextPath = "/dashboard", ...props }: Logi
         zu.
       </FieldDescription>
     </div>
+    </>
   );
 }

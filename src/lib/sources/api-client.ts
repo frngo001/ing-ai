@@ -30,11 +30,13 @@ export abstract class BaseApiClient {
         options: {
             retries?: number
             timeout?: number
+            parseAs?: 'json' | 'text'
         } = {}
     ): Promise<ApiResponse<T>> {
         const startTime = Date.now()
         const retries = options.retries ?? this.config.retries
         const timeout = options.timeout ?? this.config.timeout
+        const parseAs = options.parseAs ?? 'json'
 
         try {
             // Wait for rate limit
@@ -54,7 +56,10 @@ export abstract class BaseApiClient {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`)
             }
 
-            const data = await response.json()
+            const data =
+                parseAs === 'text'
+                    ? ((await response.text()) as unknown as T)
+                    : await response.json()
 
             // Update metrics
             this.metrics.successfulRequests++

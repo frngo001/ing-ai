@@ -3,10 +3,10 @@
 import * as React from 'react';
 
 import {
-  ArrowUpToLineIcon,
   BaselineIcon,
   BoldIcon,
   Code2Icon,
+  FileCode2Icon,
   HighlighterIcon,
   ItalicIcon,
   PaintBucketIcon,
@@ -21,11 +21,9 @@ import { AIToolbarButton } from './ai-toolbar-button';
 import { AlignToolbarButton } from './align-toolbar-button';
 import { CommentToolbarButton } from './comment-toolbar-button';
 import { EmojiToolbarButton } from './emoji-toolbar-button';
-import { ExportToolbarButton } from './export-toolbar-button';
 import { FontColorToolbarButton } from './font-color-toolbar-button';
 import { FontSizeToolbarButton } from './font-size-toolbar-button';
 import { RedoToolbarButton, UndoToolbarButton } from './history-toolbar-button';
-import { ImportToolbarButton } from './import-toolbar-button';
 import {
   IndentToolbarButton,
   OutdentToolbarButton,
@@ -40,8 +38,14 @@ import {
 } from './list-toolbar-button';
 import { MarkToolbarButton } from './mark-toolbar-button';
 import { MediaToolbarButton } from './media-toolbar-button';
-import { ModeToolbarButton } from './mode-toolbar-button';
 import { MoreToolbarButton } from './more-toolbar-button';
+import { CitationStyleToolbarButton } from './citation-style-toolbar-button';
+import { CitationFormatToolbarButton } from './citation-format-toolbar-button';
+import {
+  BlockEquationToolbarButton,
+  InlineEquationToolbarButton,
+} from './equation-toolbar-button';
+import { CodeBlockToolbarButton } from './code-block-toolbar-button';
 import { TableToolbarButton } from './table-toolbar-button';
 import { ToggleToolbarButton } from './toggle-toolbar-button';
 import { ToolbarGroup } from './toolbar';
@@ -66,14 +70,6 @@ export function FixedToolbarButtons() {
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <ExportToolbarButton>
-              <ArrowUpToLineIcon />
-            </ExportToolbarButton>
-
-            <ImportToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
             <InsertToolbarButton />
             <TurnIntoToolbarButton />
             <FontSizeToolbarButton />
@@ -94,33 +90,33 @@ export function FixedToolbarButtons() {
             >
               <UnderlineIcon />
             </MarkToolbarButton>
-
-            <MarkToolbarButton
-              nodeType={KEYS.strikethrough}
-              tooltip="Durchgestrichen (⌘+⇧+M)"
-            >
+            <MarkToolbarButton  nodeType={KEYS.strikethrough} tooltip="Durchgestrichen (⌘+⇧+M)">
               <StrikethroughIcon />
             </MarkToolbarButton>
-
-            <MarkToolbarButton nodeType={KEYS.code} tooltip="Code (⌘+E)">
-              <Code2Icon />
-            </MarkToolbarButton>
-
             <FontColorToolbarButton nodeType={KEYS.color} tooltip="Textfarbe">
               <BaselineIcon />
             </FontColorToolbarButton>
-
             <FontColorToolbarButton
               nodeType={KEYS.backgroundColor}
               tooltip="Hintergrundfarbe"
             >
-              <PaintBucketIcon />
+            <PaintBucketIcon />
             </FontColorToolbarButton>
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <AlignToolbarButton />
+            <MarkToolbarButton nodeType={KEYS.code} tooltip="Inline Code (⌘+E)">
+              <Code2Icon />
+            </MarkToolbarButton>
+            <CodeBlockToolbarButton tooltip="Codeblock einfügen">
+              <FileCode2Icon />
+            </CodeBlockToolbarButton>
+            <InlineEquationToolbarButton />
+            <BlockEquationToolbarButton tooltip="Formelblock einfügen" />
+          </ToolbarGroup>
 
+          <ToolbarGroup>
+            <AlignToolbarButton />
             <NumberedListToolbarButton />
             <BulletedListToolbarButton />
             <TodoListToolbarButton />
@@ -155,14 +151,15 @@ export function FixedToolbarButtons() {
       <div className="grow" />
 
       <ToolbarGroup>
+        <CitationStyleToolbarButton />
+        <CitationFormatToolbarButton />
+      </ToolbarGroup>
+
+      <ToolbarGroup>
         <MarkToolbarButton nodeType={KEYS.highlight} tooltip="Hervorheben">
           <HighlighterIcon />
         </MarkToolbarButton>
         <CommentToolbarButton />
-      </ToolbarGroup>
-
-      <ToolbarGroup>
-        <ModeToolbarButton />
       </ToolbarGroup>
     </div>
   );

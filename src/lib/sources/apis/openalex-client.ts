@@ -118,6 +118,7 @@ export class OpenAlexClient extends BaseApiClient {
             isOpenAccess: work.open_access?.is_oa || false,
             abstract: work.abstract_inverted_index ? this.reconstructAbstract(work.abstract_inverted_index) : undefined,
             citationCount: work.cited_by_count,
+            impactFactor: work.primary_location?.source?.summary_stats?.['2yr_mean_citedness'],
             keywords: work.concepts?.map((c: any) => c.display_name),
         }))
     }

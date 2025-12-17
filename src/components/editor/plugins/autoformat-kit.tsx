@@ -10,8 +10,10 @@ import {
   AutoformatPlugin,
   autoformatPunctuation,
   autoformatSmartQuotes,
+  getMatchPoints,
 } from '@platejs/autoformat';
 import { insertEmptyCodeBlock } from '@platejs/code-block';
+import { insertEquation, insertInlineEquation } from '@platejs/math';
 import { toggleList } from '@platejs/list';
 import { KEYS } from 'platejs';
 
@@ -155,6 +157,16 @@ const autoformatBlocks: AutoformatRule[] = [
   },
 ];
 
+const autoformatEquations: AutoformatRule[] = [
+  {
+    match: '$$',
+    mode: 'block',
+    type: 'equation',
+    format: (editor) => {
+      insertEquation(editor, { select: true });
+    },
+  }
+];
 const autoformatLists: AutoformatRule[] = [
   {
     match: ['* ', '- '],
@@ -215,6 +227,7 @@ export const AutoformatKit = [
       rules: [
         ...autoformatBlocks,
         ...autoformatMarks,
+        ...autoformatEquations,
         ...autoformatSmartQuotes,
         ...autoformatPunctuation,
         ...autoformatLegal,

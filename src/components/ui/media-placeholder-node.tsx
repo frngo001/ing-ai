@@ -92,28 +92,60 @@ export const PlaceholderElement = withHOC(
     React.useEffect(() => {
       if (!uploadedFile) return;
 
-      const path = editor.api.findPath(element);
+      // Verwende requestAnimationFrame, um sicherzustellen, dass der Editor bereit ist
+      const rafId = requestAnimationFrame(() => {
+        const path = editor.api.findPath(element);
+        if (!path) return;
 
-      editor.tf.withoutSaving(() => {
-        editor.tf.removeNodes({ at: path });
+        // Prüfe, ob editor.tf verfügbar ist
+        if (!editor.tf || !editor.tf.withoutSaving) return;
 
-        const node = {
-          children: [{ text: '' }],
-          initialHeight: imageRef.current?.height,
-          initialWidth: imageRef.current?.width,
-          isUpload: true,
-          name: element.mediaType === KEYS.file ? uploadedFile.name : '',
-          placeholderId: element.id as string,
-          type: element.mediaType!,
-          url: uploadedFile.url,
-        };
+        // Prüfe, ob das Element noch im Editor existiert
+        const node = editor.api.node(path);
+        if (!node) return;
 
-        editor.tf.insertNodes(node, { at: path });
+        try {
+          // Prüfe, ob editor.tf vollständig initialisiert ist
+          if (!editor.tf.operations) {
+            console.warn('Editor transforms not fully initialized, skipping upload history update');
+            return;
+          }
 
-        updateUploadHistory(editor, node);
+          editor.tf.withoutSaving(() => {
+            editor.tf.removeNodes({ at: path });
+
+            const newNode = {
+              children: [{ text: '' }],
+              initialHeight: imageRef.current?.height,
+              initialWidth: imageRef.current?.width,
+              isUpload: true,
+              name: element.mediaType === KEYS.file ? uploadedFile.name : '',
+              placeholderId: element.id as string,
+              type: element.mediaType!,
+              url: uploadedFile.url,
+            };
+
+            editor.tf.insertNodes(newNode, { at: path });
+
+            // Rufe updateUploadHistory nur auf, wenn editor.tf vollständig initialisiert ist
+            if (editor.tf.operations) {
+              try {
+                updateUploadHistory(editor, newNode);
+              } catch (historyError) {
+                console.warn('Failed to update upload history:', historyError);
+              }
+            }
+          });
+
+          api.placeholder.removeUploadingFile(element.id as string);
+        } catch (error) {
+          console.error('Error replacing placeholder:', error);
+        }
       });
 
-      api.placeholder.removeUploadingFile(element.id as string);
+      return () => {
+        cancelAnimationFrame(rafId);
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [uploadedFile, element.id]);
 

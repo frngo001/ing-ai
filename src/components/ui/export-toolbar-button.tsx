@@ -31,21 +31,144 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
   const getCanvas = async () => {
     const { default: html2canvas } = await import('html2canvas-pro');
 
+    const editorNode = editor.api.toDOMNode(editor)!;
+    
+    // Warte, bis alle Formeln vollständig gerendert sind
+    // Prüfe auf KaTeX SVG-Elemente und warte, bis sie geladen sind
+    const waitForFormulas = async () => {
+      const katexElements = editorNode.querySelectorAll('.katex svg, .katex-mathml');
+      const promises: Promise<void>[] = [];
+      
+      katexElements.forEach((element) => {
+        // Warte, bis SVG vollständig geladen ist
+        if (element.tagName === 'svg') {
+          const svg = element as SVGSVGElement;
+          const promise = new Promise<void>((resolve) => {
+            // Prüfe ob SVG bereits Inhalt hat
+            if (svg.children.length > 0) {
+              // Versuche getBBox zu verwenden, um zu prüfen ob SVG gerendert ist
+              try {
+                if (svg.getBBox) {
+                  svg.getBBox();
+                }
+                resolve();
+              } catch {
+                // SVG ist noch nicht vollständig gerendert
+                const checkInterval = setInterval(() => {
+                  try {
+                    if (svg.children.length > 0) {
+                      if (svg.getBBox) {
+                        svg.getBBox();
+                      }
+                      clearInterval(checkInterval);
+                      resolve();
+                    }
+                  } catch {
+                    // Noch nicht bereit
+                  }
+                }, 50);
+                
+                // Timeout nach 2 Sekunden
+                setTimeout(() => {
+                  clearInterval(checkInterval);
+                  resolve();
+                }, 2000);
+              }
+            } else {
+              const checkInterval = setInterval(() => {
+                if (svg.children.length > 0) {
+                  try {
+                    if (svg.getBBox) {
+                      svg.getBBox();
+                    }
+                  } catch {
+                    // Ignoriere Fehler
+                  }
+                  clearInterval(checkInterval);
+                  resolve();
+                }
+              }, 50);
+              
+              // Timeout nach 2 Sekunden
+              setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve();
+              }, 2000);
+            }
+          });
+          promises.push(promise);
+        }
+      });
+      
+      await Promise.all(promises);
+      
+      // Zusätzliche Wartezeit, um sicherzustellen, dass alles gerendert ist
+      await new Promise(resolve => setTimeout(resolve, 200));
+    };
+
+    await waitForFormulas();
+
     const style = document.createElement('style');
     document.head.append(style);
 
-    const canvas = await html2canvas(editor.api.toDOMNode(editor)!, {
-      onclone: (document: Document) => {
-        const editorElement = document.querySelector(
+    const canvas = await html2canvas(editorNode, {
+      backgroundColor: '#ffffff',
+      scale: 2, // Höhere Auflösung für bessere Formel-Qualität
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      onclone: (clonedDoc: Document) => {
+        const editorElement = clonedDoc.querySelector(
           '[contenteditable="true"]'
         );
         if (editorElement) {
+          // Setze Hintergrundfarbe auf weiß für den Editor-Container
+          const existingEditorStyle = editorElement.getAttribute('style') || '';
+          editorElement.setAttribute(
+            'style',
+            `${existingEditorStyle}; background-color: #ffffff !important; color: #000000 !important;`
+          );
+
+          // Stelle sicher, dass KaTeX-Styles korrekt angewendet werden
+          const katexElements = editorElement.querySelectorAll('.katex, .katex *');
+          katexElements.forEach((element) => {
+            const htmlElement = element as HTMLElement;
+            // Stelle sicher, dass SVG-Elemente sichtbar sind
+            if (htmlElement.tagName === 'svg') {
+              htmlElement.setAttribute('style', 'display: block !important;');
+            }
+            // Stelle sicher, dass Text-Elemente in SVG schwarz sind
+            const textElements = htmlElement.querySelectorAll('text, tspan');
+            textElements.forEach((textEl) => {
+              textEl.setAttribute('fill', '#000000');
+            });
+          });
+
+          // Setze Hintergrundfarbe für alle Kindelemente
           Array.from(editorElement.querySelectorAll('*')).forEach((element) => {
             const existingStyle = element.getAttribute('style') || '';
-            element.setAttribute(
-              'style',
-              `${existingStyle}; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important`
-            );
+            const elementTag = (element as HTMLElement).tagName.toLowerCase();
+            
+            // Überspringe KaTeX-Elemente (werden oben behandelt)
+            if (element.classList.contains('katex') || element.closest('.katex')) {
+              return;
+            }
+            
+            // Überspringe Elemente, die bereits einen eigenen Hintergrund haben sollten
+            // (z.B. Code-Blöcke, Callouts, etc.)
+            const shouldKeepBackground = ['pre', 'code', 'blockquote'].includes(elementTag);
+            
+            if (!shouldKeepBackground) {
+              element.setAttribute(
+                'style',
+                `${existingStyle}; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; background-color: transparent !important;`
+              );
+            } else {
+              element.setAttribute(
+                'style',
+                `${existingStyle}; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important`
+              );
+            }
           });
         }
       },
@@ -77,15 +200,91 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
 
     const PDFLib = await import('pdf-lib');
     const pdfDoc = await PDFLib.PDFDocument.create();
-    const page = pdfDoc.addPage([canvas.width, canvas.height]);
-    const imageEmbed = await pdfDoc.embedPng(canvas.toDataURL('PNG'));
-    const { height, width } = imageEmbed.scale(1);
-    page.drawImage(imageEmbed, {
-      height,
-      width,
-      x: 0,
-      y: 0,
-    });
+    
+    // A4-Format in points (72 DPI)
+    const a4Width = 595.28;
+    const a4Height = 841.89;
+    
+    // Margin für jede Seite (in points)
+    const margin = 40;
+    const contentWidth = a4Width - (margin * 2);
+    const contentHeight = a4Height - (margin * 2);
+    
+    // Skaliere das Canvas-Bild auf die verfügbare Breite
+    // Berücksichtige, dass canvas mit scale: 2 erstellt wurde
+    const scaleFactor = contentWidth / canvas.width;
+    const scaledCanvasHeight = canvas.height * scaleFactor;
+    
+    // Berechne die Anzahl der benötigten Seiten
+    const numberOfPages = Math.ceil(scaledCanvasHeight / contentHeight);
+    
+    // Höhe einer Seite im Canvas-Koordinatensystem (unskaliert)
+    const pageHeightInCanvas = contentHeight / scaleFactor;
+    
+    // Erstelle Seiten und fülle sie mit Inhalt
+    for (let pageIndex = 0; pageIndex < numberOfPages; pageIndex++) {
+      const page = pdfDoc.addPage([a4Width, a4Height]);
+      
+      // Berechne den Y-Offset für diese Seite im Canvas (unskaliert)
+      // Verwende exakte Multiplikation, um Rundungsfehler zu vermeiden
+      const sourceY = pageIndex * pageHeightInCanvas;
+      
+      // Berechne die tatsächliche Höhe für diese Seite
+      // Für alle Seiten außer der letzten: exakt pageHeightInCanvas
+      // Für die letzte Seite: verbleibende Höhe
+      const isLastPage = pageIndex === numberOfPages - 1;
+      const sourceHeight = isLastPage
+        ? canvas.height - sourceY
+        : pageHeightInCanvas;
+      
+      // Erstelle temporäres Canvas für diese Seite mit exakter Höhe
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = Math.ceil(sourceHeight); // Aufrunden für saubere Pixel
+      const tempCtx = tempCanvas.getContext('2d');
+      
+      if (!tempCtx) {
+        throw new Error('Konnte Canvas-Kontext nicht erstellen');
+      }
+      
+      // Setze weißen Hintergrund
+      tempCtx.fillStyle = '#ffffff';
+      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+      
+      // Kopiere den entsprechenden Teil des Original-Canvas
+      tempCtx.drawImage(
+        canvas,
+        0, // sourceX
+        Math.floor(sourceY), // sourceY - abrunden für saubere Pixel
+        canvas.width, // sourceWidth
+        sourceHeight, // sourceHeight
+        0, // destX
+        0, // destY
+        canvas.width, // destWidth
+        sourceHeight // destHeight
+      );
+      
+      // Konvertiere temporäres Canvas zu PNG
+      const pageImageData = tempCanvas.toDataURL('PNG', 1.0);
+      const pageImageEmbed = await pdfDoc.embedPng(pageImageData);
+      
+      // Für alle Seiten außer der letzten: verwende exakt contentHeight
+      // Für die letzte Seite: berechne die tatsächliche skalierte Höhe
+      const scaledHeight = isLastPage
+        ? sourceHeight * scaleFactor
+        : contentHeight;
+      
+      // Zeichne das Bild auf die PDF-Seite
+      // In PDF-Lib wird Y von unten gemessen, daher: a4Height - margin - scaledHeight
+      // Das platziert das Bild oben auf der Seite (margin vom oberen Rand)
+      page.drawImage(pageImageEmbed, {
+        x: margin,
+        y: a4Height - margin - scaledHeight,
+        width: contentWidth,
+        height: scaledHeight,
+      });
+    }
+    
     const pdfBase64 = await pdfDoc.saveAsBase64({ dataUri: true });
 
     await downloadFile(pdfBase64, 'plate.pdf');
@@ -151,7 +350,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton pressed={open} tooltip="Exportieren" isDropdown>
-          <ArrowDownToLineIcon className="size-4" />
+        <ArrowDownToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
 

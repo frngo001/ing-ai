@@ -209,7 +209,7 @@ const BlockCommentContent = ({
           side="bottom"
         >
           {isCommenting ? (
-            <CommentCreateForm className="p-4" focusOnMount />
+            <CommentCreateForm className="p-4 bg-muted" focusOnMount />
           ) : noneActive ? (
             sortedMergedData.map((item, index) =>
               isResolvedSuggestion(item) ? (
@@ -246,11 +246,11 @@ const BlockCommentContent = ({
         </PopoverContent>
 
         {totalCount > 0 && (
-          <div className="relative left-0 size-0 select-none">
+          <div className="relative -left-4 size-0 select-none">
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
-                className="!px-1.5 mt-1 ml-1 flex h-6 gap-1 py-0 text-muted-foreground/80 hover:text-muted-foreground/80 data-[active=true]:bg-muted"
+                className="!px-1.5 mt-1 flex h-6 gap-1 py-0 text-muted-foreground/80 hover:text-muted-foreground/80 hover:bg-muted data-[active=true]:bg-muted cursor-pointer"
                 data-active={open}
                 contentEditable={false}
               >
@@ -300,7 +300,7 @@ function BlockComment({
             showDocumentContent
           />
         ))}
-        <CommentCreateForm discussionId={discussion.id} />
+        <CommentCreateForm discussionId={discussion.id} className="bg-muted/60" />
       </div>
 
       {!isLast && <div className="h-px w-full bg-muted" />}
@@ -316,28 +316,36 @@ const useResolvedDiscussion = (
 
   const discussions = usePluginOption(discussionPlugin, 'discussions');
 
-  commentNodes.forEach(([node]) => {
-    const id = api.comment.nodeId(node);
-    const map = getOption('uniquePathMap');
+  const map = getOption('uniquePathMap');
 
-    if (!id) return;
+  const updatedMap = React.useMemo(() => {
+    let changed = false;
+    const next = new Map(map);
 
-    const previousPath = map.get(id);
+    commentNodes.forEach(([node]) => {
+      const id = api.comment.nodeId(node);
+      if (!id) return;
 
-    // If there are no comment nodes in the corresponding path in the map, then update it.
-    if (PathApi.isPath(previousPath)) {
-      const nodes = api.comment.node({ id, at: previousPath });
+      const previousPath = next.get(id);
 
-      if (!nodes) {
-        setOption('uniquePathMap', new Map(map).set(id, blockPath));
-        return;
+      if (PathApi.isPath(previousPath)) {
+        const nodes = api.comment.node({ id, at: previousPath });
+        if (nodes) return;
       }
 
-      return;
+      // If no path stored or previous path no longer valid, map to current block
+      next.set(id, blockPath);
+      changed = true;
+    });
+
+    return changed ? next : null;
+  }, [api.comment, blockPath, commentNodes, map]);
+
+  React.useEffect(() => {
+    if (updatedMap) {
+      setOption('uniquePathMap', updatedMap);
     }
-    // TODO: fix throw error
-    setOption('uniquePathMap', new Map(map).set(id, blockPath));
-  });
+  }, [setOption, updatedMap]);
 
   const commentsIds = new Set(
     commentNodes.map(([node]) => api.comment.nodeId(node)).filter(Boolean)

@@ -206,6 +206,7 @@ export class SourceNormalizer {
             abstract: rawSource.abstract || rawSource.Abstract,
             keywords: this.extractKeywords(rawSource.keywords || rawSource.tags),
             citationCount: rawSource.citationCount || rawSource.citation_count || rawSource.cited_by_count,
+            impactFactor: rawSource.impactFactor || rawSource.impact_factor,
 
             completeness: 0, // Will be calculated
             sourceApi: apiName,

@@ -2,11 +2,12 @@
 
 import * as React from 'react';
 
+import { AIChatPlugin } from '@platejs/ai/react';
 import { DndPlugin, useDraggable, useDropLine } from '@platejs/dnd';
 import { expandListItemsWithChildren } from '@platejs/list';
 import { BlockSelectionPlugin } from '@platejs/selection/react';
-import { GripVertical } from 'lucide-react';
-import { type TElement, getPluginByType, isType, KEYS } from 'platejs';
+import { GripVertical, Plus, Sparkles } from 'lucide-react';
+import { PathApi, type TElement, getPluginByType, isType, KEYS } from 'platejs';
 import {
   type PlateEditor,
   type PlateElementProps,
@@ -33,6 +34,16 @@ export const BlockDraggable: RenderNodeWrapper = (props) => {
 
   const enabled = React.useMemo(() => {
     if (editor.dom.readOnly) return false;
+    const elementPath = editor.api.findPath(element);
+    const isBibliography = elementPath
+      ? editor.api.some({
+          at: elementPath,
+          match: (node) => (node as any).bibliography === true,
+          mode: 'all',
+        })
+      : (element as any).bibliography;
+
+    if (isBibliography) return false;
 
     if (path.length === 1 && !isType(editor, element, UNDRAGGABLE_KEYS)) {
       return true;
@@ -141,16 +152,20 @@ function Draggable(props: PlateElementProps) {
           >
             <div
               className={cn(
-                'slate-blockToolbar relative w-4.5',
+                'slate-blockToolbar relative w-[5.25rem]',
                 'pointer-events-auto mr-1 flex items-center',
                 isInColumn && 'mr-1.5'
               )}
             >
+              <div
+                className="absolute left-0 flex items-center gap-1"
+                style={{ top: `${dragButtonTop + 3}px` }}
+            >
               <Button
                 ref={handleRef}
                 variant="ghost"
-                className="-left-0 absolute h-6 w-full p-0"
-                style={{ top: `${dragButtonTop + 3}px` }}
+                  size="icon"
+                  className="h-6 w-6 p-0"
                 data-plate-prevent-deselect
               >
                 <DragHandle
@@ -160,6 +175,9 @@ function Draggable(props: PlateElementProps) {
                   setPreviewTop={setPreviewTop}
                 />
               </Button>
+                <AddBlockButton />
+                <AiAssistantButton />
+              </div>
             </div>
           </div>
         </Gutter>
@@ -239,7 +257,7 @@ const DragHandle = React.memo(function DragHandle({
     <Tooltip>
       <TooltipTrigger asChild>
         <div
-          className="flex size-full items-center justify-center"
+          className="flex size-full items-center justify-center cursor-grab active:cursor-grabbing"
           onClick={(e) => {
             e.preventDefault();
             editor.getApi(BlockSelectionPlugin).blockSelection.focus();
@@ -328,7 +346,88 @@ const DragHandle = React.memo(function DragHandle({
           <GripVertical className="text-muted-foreground" />
         </div>
       </TooltipTrigger>
-      <TooltipContent>Ziehen zum Verschieben</TooltipContent>
+      <TooltipContent side="bottom">Ziehen zum Verschieben</TooltipContent>
+    </Tooltip>
+  );
+});
+
+const AiAssistantButton = React.memo(function AiAssistantButton() {
+  const editor = useEditorRef();
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    editor.getApi(AIChatPlugin).aiChat.show();
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 p-0 cursor-pointer"
+          onClick={handleClick}
+          data-plate-prevent-deselect
+          aria-label="KI-Assistent öffnen"
+        >
+          <Sparkles className="text-primary cursor-pointer" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">KI-Assistent öffnen</TooltipContent>
+    </Tooltip>
+  );
+});
+
+const AddBlockButton = React.memo(function AddBlockButton() {
+  const editor = useEditorRef();
+  const element = useElement();
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const path = editor.api.findPath(element);
+    if (!path) return;
+
+    const nextPath = PathApi.next(path);
+    editor.tf.insertNodes(editor.api.create.block({ type: KEYS.p }), {
+      at: nextPath,
+      select: true,
+    });
+    const start = editor.api.start(nextPath);
+    if (start) {
+      editor.tf.select(start);
+    }
+    editor.tf.focus();
+
+    requestAnimationFrame(() => {
+      editor.tf.insertText('/');
+      editor.tf.focus();
+    });
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 p-0 cursor-copy"
+          onClick={handleClick}
+          onMouseDown={(e) => {
+            // Prevent Fokusverlust, damit das Slash-Menü offen bleibt.
+            e.preventDefault();
+          }}
+          data-plate-prevent-deselect
+          aria-label="Block unterhalb einfügen"
+        >
+          <Plus className="text-muted-foreground" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">Neuen Block unterhalb einfügen</TooltipContent>
     </Tooltip>
   );
 });
