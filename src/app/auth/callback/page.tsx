@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoginTransition } from "@/components/login-transition";
 import { createClient } from "@/lib/supabase/client";
 
-export default function CallbackPage() {
+function CallbackPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showTransition, setShowTransition] = useState(false);
@@ -69,5 +69,19 @@ export default function CallbackPage() {
   }
 
   return <LoginTransition isVisible={showTransition} onComplete={handleTransitionComplete} />;
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-svh items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground text-sm">Lade...</p>
+        </div>
+      </div>
+    }>
+      <CallbackPageContent />
+    </Suspense>
+  );
 }
 

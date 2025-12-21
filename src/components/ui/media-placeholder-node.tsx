@@ -105,12 +105,6 @@ export const PlaceholderElement = withHOC(
         if (!node) return;
 
         try {
-          // Prüfe, ob editor.tf vollständig initialisiert ist
-          if (!editor.tf.operations) {
-            console.warn('Editor transforms not fully initialized, skipping upload history update');
-            return;
-          }
-
           editor.tf.withoutSaving(() => {
             editor.tf.removeNodes({ at: path });
 
@@ -127,13 +121,10 @@ export const PlaceholderElement = withHOC(
 
             editor.tf.insertNodes(newNode, { at: path });
 
-            // Rufe updateUploadHistory nur auf, wenn editor.tf vollständig initialisiert ist
-            if (editor.tf.operations) {
-              try {
-                updateUploadHistory(editor, newNode);
-              } catch (historyError) {
-                console.warn('Failed to update upload history:', historyError);
-              }
+            try {
+              updateUploadHistory(editor, newNode);
+            } catch (historyError) {
+              console.warn('Failed to update upload history:', historyError);
             }
           });
 

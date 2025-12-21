@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { type ImperativePanelHandle } from "react-resizable-panels"
 import { Toaster } from "sonner"
@@ -39,15 +39,23 @@ export default function Page() {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <PageContent
-        panes={panes}
-        setPanes={setPanes}
-        settingsOpen={settingsOpen}
-        setSettingsOpen={setSettingsOpen}
-        settingsInitialNav={settingsInitialNav}
-        setSettingsInitialNav={setSettingsInitialNav}
-        askAiPaneTransition={askAiPaneTransition}
-      />
+      <Suspense fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground text-sm">Lade...</p>
+          </div>
+        </div>
+      }>
+        <PageContent
+          panes={panes}
+          setPanes={setPanes}
+          settingsOpen={settingsOpen}
+          setSettingsOpen={setSettingsOpen}
+          settingsInitialNav={settingsInitialNav}
+          setSettingsInitialNav={setSettingsInitialNav}
+          askAiPaneTransition={askAiPaneTransition}
+        />
+      </Suspense>
     </SidebarProvider>
   )
 }

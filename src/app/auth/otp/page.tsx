@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { OTPForm } from "@/components/otp-form";
 import { createClient } from "@/lib/supabase/client";
 
-export default function OTPPage() {
+function OTPPageContent() {
   const router = useRouter();
   const params = useSearchParams();
   const supabase = createClient();
@@ -83,6 +83,20 @@ export default function OTPPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OTPPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm md:max-w-4xl space-y-4">
+          <div className="text-center">Lade...</div>
+        </div>
+      </div>
+    }>
+      <OTPPageContent />
+    </Suspense>
   );
 }
 

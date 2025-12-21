@@ -23,10 +23,14 @@ export function ParagraphElement(props: PlateElementProps) {
       )}
       data-bibliography={isBibliography || undefined}
       data-bibliography-entry={isBibliographyEntry || undefined}
-      contentEditable={isReadOnly ? false : undefined}
-      suppressContentEditableWarning={isReadOnly ? true : undefined}
     >
-      {props.children}
+      {isReadOnly ? (
+        <div contentEditable={false} suppressContentEditableWarning>
+          {props.children}
+        </div>
+      ) : (
+        props.children
+      )}
     </PlateElement>
   );
 }

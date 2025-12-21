@@ -11,6 +11,9 @@ import { useCitationStore } from '@/lib/stores/citation-store';
 
 type InsertCitationInput = Omit<TCitationElement, 'type' | 'children'> & {
   children?: TCitationElement['children'];
+  sourceId: string;
+  authors: Array<{ fullName?: string; firstName?: string; lastName?: string }>;
+  title: string;
 };
 
 const debug = (...args: unknown[]) => {

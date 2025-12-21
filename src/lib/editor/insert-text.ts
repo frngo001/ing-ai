@@ -56,8 +56,9 @@ export function insertMarkdownText(
       const endPath = editor.api.end([])
       if (endPath) {
         // Füge einen leeren Paragraph vorher ein, wenn nötig
-        const lastNode = editor.api.node(endPath.path)
-        if (lastNode && lastNode.type !== 'p') {
+        const lastNodeEntry = editor.api.node(endPath.path)
+        const lastNode = lastNodeEntry ? lastNodeEntry[0] : null
+        if (lastNode && 'type' in lastNode && lastNode.type !== 'p') {
           editor.tf.insertNodes(
             editor.api.create.block({ type: 'p', children: [{ text: '' }] }),
             { at: endPath.path, select: false }

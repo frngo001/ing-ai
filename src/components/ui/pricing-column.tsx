@@ -37,7 +37,7 @@ export interface PricingColumnProps
   discountCode?: string;
   priceNote: string;
   cta: {
-    variant: "glow" | "default";
+    variant?: "default" | "link" | "destructive" | "outline" | "secondary" | "ghost";
     label: string;
     href: string;
   };
@@ -124,13 +124,13 @@ export function PricingColumn({
               {discountCode && (
                 <p className="text-brand-foreground text-sm font-medium">
                   {discountPercentage}% off with code{" "}
-                  <Badge variant="brand-secondary">{discountCode}</Badge>
+                  <Badge variant="secondary">{discountCode}</Badge>
                 </p>
               )}
             </div>
           )}
         </section>
-        <Button variant={cta.variant} size="lg" asChild>
+        <Button variant={cta.variant || "default"} size="lg" asChild>
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
         <p className="text-muted-foreground min-h-[40px] max-w-[220px] text-sm">
