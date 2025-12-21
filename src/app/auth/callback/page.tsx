@@ -28,13 +28,18 @@ function CallbackPageContent() {
       try {
         const supabase = createClient();
         
+        // PKCE Flow: exchangeCodeForSession holt automatisch den Code Verifier aus localStorage
+        // Der Code Verifier wurde beim signInWithOAuth() automatisch gespeichert
         const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
         
         if (exchangeError) {
           console.error("Exchange error details:", exchangeError);
-
+          
           if (exchangeError.message?.includes("code verifier")) {
-            setError("Authentifizierungssitzung abgelaufen. Bitte versuche es erneut.");
+            // Code Verifier fehlt - möglicherweise wurde localStorage geleert oder Domain-Wechsel
+            setError(
+              "Authentifizierungssitzung abgelaufen. Bitte versuche es erneut."
+            );
             setTimeout(() => {
               router.replace("/auth/login?error=session_expired");
             }, 2000);
