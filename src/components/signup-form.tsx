@@ -82,7 +82,9 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo },
+        options: { 
+          redirectTo,
+        },
       });
       if (error) throw error;
     } catch (error: any) {

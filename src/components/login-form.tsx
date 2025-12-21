@@ -70,7 +70,9 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo },
+        options: { 
+          redirectTo,
+        },
       });
       if (error) throw error;
     } catch (error: any) {
