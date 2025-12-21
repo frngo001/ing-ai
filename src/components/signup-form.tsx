@@ -73,10 +73,13 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
   const handleOAuth = async (provider: "google" | "github") => {
     setSocialLoading(provider);
     try {
-      const redirectTo =
+      const baseUrl =
         typeof window !== "undefined"
-          ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
-          : undefined;
+          ? window.location.origin
+          : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      
+      const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(nextPath)}`;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo },
