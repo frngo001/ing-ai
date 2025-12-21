@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { citeWithBibify } from '@/lib/bibify';
 import { ExternalLink, Trash2, Unlink } from 'lucide-react';
+import { getNormalizedDoi } from '@/lib/citations/link-utils';
 
 export function CitationElement(
   props: PlateElementProps<TCitationElement & Record<string, unknown>>
@@ -43,7 +44,7 @@ export function CitationElement(
 
   // Ensure title is a string
   const title = typeof element.title === 'string' ? element.title : String(element.title || '');
-  const doi = typeof element.doi === 'string' ? element.doi : undefined;
+  const doi = getNormalizedDoi(element.doi);
   const url = typeof element.url === 'string' ? element.url : undefined;
 
   const citationData = {
@@ -378,8 +379,7 @@ export function CitationElement(
                   const entryLanguage = (entry.node as any)?.language;
                   const entryIsbn = (entry.node as any)?.isbn;
                   const entryIssn = (entry.node as any)?.issn;
-                  const entryDoi =
-                    typeof entry.node.doi === 'string' ? entry.node.doi : undefined;
+                  const entryDoi = getNormalizedDoi(entry.node.doi);
                   const entryUrl =
                     typeof entry.node.url === 'string' ? entry.node.url : undefined;
                   const entryAuthors =

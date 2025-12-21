@@ -2,11 +2,23 @@ import type { ChatMessage, StoredConversation, SlashCommand, SavedMessage } from
 import { SLASH_STORAGE_KEY, CHAT_HISTORY_STORAGE_KEY, SAVED_MESSAGES_STORAGE_KEY } from './constants'
 import { deriveConversationTitle } from './message-utils'
 
+/**
+ * Prüft, ob localStorage im aktuellen Kontext verfügbar ist
+ * (nur im Browser, nicht während SSR)
+ */
+const isLocalStorageAvailable = (): boolean => {
+  return typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+}
+
 export const saveSlashCommands = (commands: SlashCommand[]) => {
+  if (!isLocalStorageAvailable()) return
   localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(commands))
 }
 
 export const loadSlashCommands = (): SlashCommand[] => {
+  if (!isLocalStorageAvailable()) {
+    return getDefaultSlashCommands()
+  }
   const stored = localStorage.getItem(SLASH_STORAGE_KEY)
   if (stored) {
     try {
@@ -38,12 +50,17 @@ export const persistConversation = (msgs: ChatMessage[], id: string, setHistory:
     }
     const filtered = prev.filter((item) => item.id !== id)
     const next = [nextConversation, ...filtered].slice(0, 50)
-    localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(next))
+    if (isLocalStorageAvailable()) {
+      localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(next))
+    }
     return next
   })
 }
 
 export const loadChatHistory = (): StoredConversation[] => {
+  if (!isLocalStorageAvailable()) {
+    return []
+  }
   try {
     const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY)
     if (stored) {
@@ -71,17 +88,23 @@ export const saveMessage = (message: ChatMessage, conversationId: string): Saved
   
   const saved = loadSavedMessages()
   const updated = [savedMessage, ...saved.filter(m => m.messageId !== message.id)]
-  localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
+  if (isLocalStorageAvailable()) {
+    localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
+  }
   return savedMessage
 }
 
 export const removeSavedMessage = (messageId: string): void => {
+  if (!isLocalStorageAvailable()) return
   const saved = loadSavedMessages()
   const updated = saved.filter(m => m.messageId !== messageId)
   localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
 }
 
 export const loadSavedMessages = (): SavedMessage[] => {
+  if (!isLocalStorageAvailable()) {
+    return []
+  }
   try {
     const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
     if (stored) {
@@ -97,6 +120,9 @@ export const loadSavedMessages = (): SavedMessage[] => {
 }
 
 export const isMessageSaved = (messageId: string): boolean => {
+  if (!isLocalStorageAvailable()) {
+    return false
+  }
   const saved = loadSavedMessages()
   return saved.some(m => m.messageId === messageId)
 }

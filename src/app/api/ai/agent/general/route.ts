@@ -13,149 +13,21 @@ import { GENERAL_AGENT_PROMPT } from './prompts'
 // Wechsel zu Node.js Runtime für bessere Tool-Call-Verarbeitung
 export const runtime = 'nodejs'
 
-// Helper: Quellen nach Relevanz, Impact-Faktor und Zitaten sortieren
-function analyzeAndRankSources(
-    sources: NormalizedSource[],
-    thema: string,
-    keywords: string[]
-): Array<NormalizedSource & { relevanceScore: number; rankingScore: number }> {
-    const themaLower = thema.toLowerCase()
-    const keywordsLower = keywords.map((k) => k.toLowerCase())
 
-    // Extrahiere wichtige Begriffe aus dem Thema
-    const themaWords = themaLower
-        .split(/\s+/)
-        .filter((w) => w.length > 3) // Nur Wörter länger als 3 Zeichen
-        .filter((w) => !['von', 'aus', 'der', 'die', 'das', 'und', 'oder'].includes(w))
-
-    console.log('🔍 [AGENT DEBUG] Relevanz-Analyse:', {
-        thema,
-        themaWords,
-        keywords,
-        sourcesCount: sources.length,
-    })
-
-    return sources
-        .map((source) => {
-            let relevanceScore = 0
-            const titleLower = source.title?.toLowerCase() || ''
-            const abstractLower = source.abstract?.toLowerCase() || ''
-
-            // Titel-Relevanz (höchste Gewichtung)
-            if (themaWords.some((word) => titleLower.includes(word))) {
-                relevanceScore += 30
-            }
-            keywordsLower.forEach((keyword) => {
-                if (titleLower.includes(keyword.toLowerCase())) {
-                    relevanceScore += 20
-                }
-            })
-            const keywordMatches = keywordsLower.filter((k) => titleLower.includes(k.toLowerCase())).length
-            if (keywordMatches > 1) {
-                relevanceScore += 10 * (keywordMatches - 1)
-            }
-
-            // Abstract-Relevanz
-            if (themaWords.some((word) => abstractLower.includes(word))) {
-                relevanceScore += 20
-            }
-            keywordsLower.forEach((keyword) => {
-                if (abstractLower.includes(keyword.toLowerCase())) {
-                    relevanceScore += 10
-                }
-            })
-
-            // Keywords-Relevanz
-            source.keywords?.forEach((keyword) => {
-                const kwLower = keyword.toLowerCase()
-                if (keywordsLower.some((k) => kwLower.includes(k.toLowerCase()) || k.toLowerCase().includes(kwLower))) {
-                    relevanceScore += 10
-                }
-            })
-
-            // Penalty für offensichtlich irrelevante Quellen
-            const irrelevantTerms = ['solar', 'energy', 'renewable', 'photovoltaic']
-            if (irrelevantTerms.some((term) => titleLower.includes(term) && !keywordsLower.some((k) => k.includes(term)))) {
-                relevanceScore -= 50
-            }
-
-            const impactScore = source.impactFactor ? source.impactFactor * 2 : 0
-            const citationScore = source.citationCount
-                ? Math.min(source.citationCount / 10, 20)
-                : 0
-            const openAccessBonus = source.isOpenAccess ? 5 : 0
-            const completenessBonus = source.completeness * 5
-
-            const rankingScore =
-                relevanceScore + impactScore + citationScore + openAccessBonus + completenessBonus
-
-            return {
-                ...source,
-                relevanceScore,
-                rankingScore,
-            }
-        })
-        .sort((a, b) => b.rankingScore - a.rankingScore)
-}
-
-// Helper: Begründung für Quelle generieren
-function generateSourceReason(source: NormalizedSource & { relevanceScore: number }, thema: string): string {
-    const reasons: string[] = []
-
-    if (source.relevanceScore > 50) {
-        reasons.push('Sehr hohe Relevanz zum Thema')
-    } else if (source.relevanceScore > 30) {
-        reasons.push('Gute Relevanz zum Thema')
-    }
-
-    if (source.impactFactor && source.impactFactor > 5) {
-        reasons.push(`Hoher Impact-Faktor (${source.impactFactor.toFixed(1)})`)
-    }
-
-    if (source.citationCount && source.citationCount > 50) {
-        reasons.push(`Viele Zitate (${source.citationCount})`)
-    } else if (source.citationCount && source.citationCount > 20) {
-        reasons.push(`Moderate Zitate (${source.citationCount})`)
-    }
-
-    if (source.isOpenAccess) {
-        reasons.push('Open Access verfügbar')
-    }
-
-    if (source.completeness > 0.8) {
-        reasons.push('Vollständige Metadaten')
-    }
-
-    return reasons.length > 0 ? reasons.join(', ') : 'Relevante Quelle zum Thema'
-}
-
-// Tool: Quellen suchen und automatisch analysieren
+// Tool: Quellen suchen
 const searchSourcesTool = tool({
     description:
-        'Suche nach wissenschaftlichen Quellen für die Literaturrecherche. Durchsucht 14+ Datenbanken parallel und analysiert automatisch die besten Quellen. GIB IMMER das Thema mit an für die automatische Analyse!',
+        'Suche nach wissenschaftlichen Quellen für die Literaturrecherche. Durchsucht 14+ Datenbanken parallel. WICHTIG: Nach der Suche MUSST du das Tool "analyzeSources" verwenden, um die Quellen zu analysieren und die besten auszuwählen!',
     inputSchema: z.object({
         query: z.string().describe('Suchbegriff oder Thema'),
-        thema: z.string().describe('Thema der Arbeit (für Relevanz-Bewertung bei autoAnalyze)'),
         type: z.enum(['keyword', 'title', 'author', 'doi']).optional().describe('Suchtyp (Standard: keyword)'),
         limit: z.number().min(10).max(100).optional().describe('Anzahl der Suchergebnisse (Standard: 50)'),
-        keywords: z.array(z.string()).optional().describe('Zusätzliche Keywords für bessere Relevanz'),
-        autoAnalyze: z.boolean().optional().describe('Automatisch die besten Quellen analysieren und auswählen (Standard: true)'),
-        maxResults: z.number().min(10).max(50).optional().describe('Maximale Anzahl analysierter und ausgewählter Quellen (Standard: 30)'),
-        preferHighImpact: z.boolean().optional().describe('Bevorzuge Quellen mit hohem Impact-Faktor (Standard: true)'),
-        preferHighCitations: z.boolean().optional().describe('Bevorzuge Quellen mit vielen Zitaten (Standard: true)'),
     }),
     execute: async ({
         query,
-        thema,
         type = 'keyword',
         limit = 50,
-        keywords = [],
-        autoAnalyze = true,
-        maxResults = 30,
-        preferHighImpact = true,
-        preferHighCitations = true,
     }) => {
-        console.log('🔍 [AGENT DEBUG] searchSources Tool aufgerufen')
         try {
             const fetcher = new SourceFetcher({
                 maxParallelRequests: 5,
@@ -163,73 +35,8 @@ const searchSourcesTool = tool({
                 excludedApis: ['semanticscholar', 'biorxiv', 'arxiv', 'opencitations', 'zenodo', 'pubmed'],
             })
 
-            const startTime = Date.now()
             const results = await fetcher.search({ query, type, limit })
-            const searchTime = Date.now() - startTime
             const validApis = results.apis?.filter((api): api is string => typeof api === 'string' && api.length > 0) || []
-
-            if (autoAnalyze && thema) {
-                const analyzed = analyzeAndRankSources(results.sources as NormalizedSource[], thema, keywords)
-                let filtered = analyzed.filter((s) => s.relevanceScore >= 20)
-
-                if (preferHighImpact) {
-                    filtered = filtered.sort((a, b) => {
-                        const impactA = a.impactFactor || 0
-                        const impactB = b.impactFactor || 0
-                        if (impactB !== impactA) return impactB - impactA
-                        return b.rankingScore - a.rankingScore
-                    })
-                }
-
-                if (preferHighCitations) {
-                    filtered = filtered.sort((a, b) => {
-                        const citationsA = a.citationCount || 0
-                        const citationsB = b.citationCount || 0
-                        if (citationsB !== citationsA) return citationsB - citationsA
-                        return b.rankingScore - a.rankingScore
-                    })
-                }
-
-                const maxSelected = Math.min(maxResults, 15)
-                const selected = filtered.slice(0, maxSelected)
-
-                const selectedWithReason = selected.map((source) => {
-                    const authorsString = source.authors
-                        ?.map((a) => a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim())
-                        .filter(Boolean)
-                        .join(', ') || 'Unbekannt'
-
-                    const authorsShort = authorsString.length > 200 ? authorsString.substring(0, 197) + '...' : authorsString
-                    const titleShort = (source.title || 'Ohne Titel').length > 200 ? (source.title || 'Ohne Titel').substring(0, 197) + '...' : (source.title || 'Ohne Titel')
-                    const reasonShort = generateSourceReason(source, thema)
-                    const reason = reasonShort.length > 150 ? reasonShort.substring(0, 147) + '...' : reasonShort
-
-                    return {
-                        id: source.id || `src-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                        title: titleShort,
-                        authors: authorsShort,
-                        year: source.publicationYear || null,
-                        doi: source.doi || null,
-                        url: source.url || null,
-                        citationCount: source.citationCount || 0,
-                        impactFactor: source.impactFactor || null,
-                        relevanceScore: source.relevanceScore || 0,
-                        rankingScore: Math.round(source.rankingScore * 100) / 100,
-                        reason: reason,
-                    }
-                })
-
-                return {
-                    success: true,
-                    totalResults: results.totalResults,
-                    sourcesFound: results.sources.length,
-                    selected: selectedWithReason,
-                    totalSelected: selectedWithReason.length,
-                    message: `Ich habe ${selectedWithReason.length} relevante Quellen für dein Thema gefunden und analysiert.`,
-                    apis: validApis,
-                    searchTime: results.searchTime,
-                }
-            }
 
             return {
                 success: true,
@@ -237,9 +44,9 @@ const searchSourcesTool = tool({
                 sources: results.sources.slice(0, limit),
                 apis: validApis,
                 searchTime: results.searchTime,
+                message: `Ich habe ${results.sources.length} Quellen gefunden. Verwende jetzt das Tool "analyzeSources" um die besten Quellen auszuwählen.`,
             }
         } catch (error) {
-            console.error('Source search error:', error)
             return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
         }
     },
@@ -247,7 +54,7 @@ const searchSourcesTool = tool({
 
 // Tool: Quellen analysieren
 const analyzeSourcesTool = tool({
-    description: 'Analysiere gefundene Quellen nach Relevanz, Impact-Faktor und Zitaten. Wählt die besten Quellen aus.',
+    description: 'Analysiere gefundene Quellen nach Relevanz, Impact-Faktor und Zitaten. Wählt die besten Quellen aus. WICHTIG: Dieses Tool MUSS IMMER nach "searchSources" verwendet werden! Das Tool verwendet ein LLM zur semantischen Bewertung der Quellen.',
     inputSchema: z.object({
         sources: z.array(z.object({}).passthrough()),
         thema: z.string(),
@@ -257,32 +64,140 @@ const analyzeSourcesTool = tool({
         preferHighCitations: z.boolean().optional(),
         maxResults: z.number().min(10).max(50).optional(),
     }),
-    execute: async ({ sources, thema, keywords = [], minRelevanceScore = 30, preferHighImpact = false, preferHighCitations = true, maxResults = 30 }) => {
+    execute: async ({ sources, thema, keywords = [], minRelevanceScore = 50, preferHighImpact = false, preferHighCitations = true, maxResults = 30 }) => {
         try {
-            const analyzed = analyzeAndRankSources(sources as unknown as NormalizedSource[], thema, keywords)
-            let filtered = analyzed.filter((s) => s.relevanceScore >= minRelevanceScore)
+            const model = deepseek(DEEPSEEK_CHAT_MODEL)
+            
+            // Bereite Quellen für LLM-Bewertung vor
+            const sourcesForEvaluation = (sources as unknown as NormalizedSource[]).map((source) => ({
+                id: source.id || `src-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                title: source.title || 'Ohne Titel',
+                abstract: source.abstract?.substring(0, 500) || '',
+                authors: source.authors?.map((a) => a.fullName || `${a.firstName || ''} ${a.lastName || ''}`).filter(Boolean).join(', ') || 'Unbekannt',
+                year: source.publicationYear || null,
+                keywords: source.keywords?.join(', ') || '',
+                citationCount: source.citationCount || 0,
+                impactFactor: source.impactFactor || null,
+                isOpenAccess: source.isOpenAccess || false,
+                doi: source.doi || null,
+                url: source.url || null,
+            }))
 
+            // LLM-basierte Bewertung der Quellen
+            const prompt = `Bewerte die folgenden wissenschaftlichen Quellen hinsichtlich ihrer Relevanz für das Thema: "${thema}".
+${keywords.length > 0 ? `Zusätzliche Keywords: ${keywords.join(', ')}` : ''}
+
+Bewertungskriterien:
+1. **Themenpassung** (0-100): Wie gut passt die Quelle zum Thema? Berücksichtige Titel, Abstract und Keywords.
+2. **Aktualität** (0-100): Wie aktuell ist die Quelle? Bevorzuge neuere Publikationen (letzte 5-10 Jahre), außer es handelt sich um klassische Grundlagenwerke.
+3. **Wissenschaftlichkeit** (0-100): Wie wissenschaftlich fundiert ist die Quelle? Berücksichtige Impact-Faktor, Zitationsanzahl und Publikationsart.
+4. **Gesamtrelevanz** (0-100): Gesamtbewertung basierend auf allen Kriterien.
+
+Quellen:
+${JSON.stringify(sourcesForEvaluation.map(s => ({
+    id: s.id,
+    title: s.title,
+    abstract: s.abstract,
+    authors: s.authors,
+    year: s.year,
+    keywords: s.keywords,
+    citationCount: s.citationCount,
+    impactFactor: s.impactFactor,
+    isOpenAccess: s.isOpenAccess
+})), null, 2)}`
+
+            const { object } = await generateObject({
+                model,
+                schema: z.object({
+                    evaluations: z.array(z.object({
+                        id: z.string(),
+                        relevanceScore: z.number().min(0).max(100).describe('Gesamtrelevanz-Score (0-100)'),
+                        themeMatch: z.number().min(0).max(100).describe('Themenpassung (0-100)'),
+                        currency: z.number().min(0).max(100).describe('Aktualität (0-100)'),
+                        scientificQuality: z.number().min(0).max(100).describe('Wissenschaftlichkeit (0-100)'),
+                        isRelevant: z.boolean().describe('Ist die Quelle relevant für das Thema?'),
+                        reason: z.string().describe('Begründung für die Bewertung'),
+                    }))
+                }),
+                prompt,
+            })
+
+            // Kombiniere LLM-Bewertung mit Metadaten
+            const analyzed = sourcesForEvaluation.map((source) => {
+                const evaluation = object.evaluations.find((e) => e.id === source.id)
+                
+                if (!evaluation) {
+                    return {
+                        ...source,
+                        relevanceScore: 0,
+                        rankingScore: 0,
+                        isRelevant: false,
+                        reason: 'Keine Bewertung verfügbar',
+                    }
+                }
+
+                // Berechne Ranking-Score: LLM-Bewertung + Metadaten-Bonus
+                const llmScore = evaluation.relevanceScore
+                
+                // Metadaten-Bonus (max. 30 Punkte)
+                const impactBonus = source.impactFactor ? Math.min(source.impactFactor * 2, 10) : 0
+                const citationBonus = source.citationCount ? Math.min(source.citationCount / 10, 10) : 0
+                const openAccessBonus = source.isOpenAccess ? 5 : 0
+                const completenessBonus = (source.title && source.abstract) ? 5 : 0
+                
+                const metadataBonus = impactBonus + citationBonus + openAccessBonus + completenessBonus
+                const rankingScore = llmScore + metadataBonus
+
+                return {
+                    ...source,
+                    relevanceScore: evaluation.relevanceScore,
+                    themeMatch: evaluation.themeMatch,
+                    currency: evaluation.currency,
+                    scientificQuality: evaluation.scientificQuality,
+                    isRelevant: evaluation.isRelevant,
+                    rankingScore: Math.round(rankingScore * 100) / 100,
+                    reason: evaluation.reason,
+                }
+            })
+
+            // Filtere nach minRelevanceScore
+            let filtered = analyzed.filter((s) => s.relevanceScore >= minRelevanceScore && s.isRelevant)
+
+            // Sortiere nach Präferenzen
             if (preferHighImpact) {
-                filtered = filtered.sort((a, b) => (b.impactFactor || 0) - (a.impactFactor || 0))
-            }
-            if (preferHighCitations) {
-                filtered = filtered.sort((a, b) => (b.citationCount || 0) - (a.citationCount || 0))
+                filtered = filtered.sort((a, b) => {
+                    const impactA = a.impactFactor || 0
+                    const impactB = b.impactFactor || 0
+                    if (impactB !== impactA) return impactB - impactA
+                    return b.rankingScore - a.rankingScore
+                })
+            } else if (preferHighCitations) {
+                filtered = filtered.sort((a, b) => {
+                    const citationsA = a.citationCount || 0
+                    const citationsB = b.citationCount || 0
+                    if (citationsB !== citationsA) return citationsB - citationsA
+                    return b.rankingScore - a.rankingScore
+                })
+            } else {
+                // Standard: Sortiere nach Ranking-Score
+                filtered = filtered.sort((a, b) => b.rankingScore - a.rankingScore)
             }
 
             const selected = filtered.slice(0, maxResults)
 
+            // Formatiere Ergebnisse
             const selectedWithReason = selected.map((source) => ({
                 id: source.id,
                 title: source.title,
-                authors: source.authors?.map((a) => a.fullName || `${a.firstName} ${a.lastName}`).filter(Boolean),
-                year: source.publicationYear,
+                authors: source.authors,
+                year: source.year,
                 doi: source.doi,
                 url: source.url,
                 citationCount: source.citationCount,
                 impactFactor: source.impactFactor,
                 relevanceScore: source.relevanceScore,
                 rankingScore: source.rankingScore,
-                reason: generateSourceReason(source, thema),
+                reason: source.reason,
             }))
 
             return {
@@ -290,6 +205,7 @@ const analyzeSourcesTool = tool({
                 selected: selectedWithReason,
                 totalAnalyzed: analyzed.length,
                 totalSelected: selectedWithReason.length,
+                message: `Ich habe ${selectedWithReason.length} relevante Quellen aus ${analyzed.length} gefundenen Quellen ausgewählt (bewertet mit LLM).`,
             }
         } catch (error) {
             return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
@@ -461,14 +377,27 @@ export async function POST(req: NextRequest) {
     try {
         const { messages, agentState } = await req.json()
 
-        if (!agentState || !agentState.thema) {
-            return NextResponse.json({ error: 'Agent State mit Thema erforderlich' }, { status: 400 })
+        if (!agentState) {
+            return NextResponse.json({ error: 'Agent State erforderlich' }, { status: 400 })
+        }
+
+        // Für general-Modus: Wenn kein Thema vorhanden ist, extrahiere es aus der ersten Nachricht
+        let thema = agentState.thema
+        if (!thema && messages && messages.length > 0) {
+            const firstUserMessage = messages.find((m: any) => m.role === 'user')
+            if (firstUserMessage?.content) {
+                thema = firstUserMessage.content.substring(0, 200) || 'Allgemeine Schreibarbeit'
+            } else {
+                thema = 'Allgemeine Schreibarbeit'
+            }
+        } else if (!thema) {
+            thema = 'Allgemeine Schreibarbeit'
         }
 
         const model = deepseek(DEEPSEEK_CHAT_MODEL)
         const systemPrompt = GENERAL_AGENT_PROMPT.replace(
             '{{THEMA}}',
-            agentState.thema || ''
+            thema
         ).replace('{{CURRENT_DATE}}', new Date().toLocaleDateString('de-DE', { dateStyle: 'full' }))
 
         const agent = new Agent({
@@ -500,7 +429,6 @@ export async function POST(req: NextRequest) {
 
         return stream.toTextStreamResponse()
     } catch (error) {
-        console.error('Agent error:', error)
         return NextResponse.json({ error: 'Failed to process agent request' }, { status: 500 })
     }
 }

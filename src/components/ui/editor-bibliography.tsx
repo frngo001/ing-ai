@@ -8,6 +8,7 @@ import { useEditorRef, useEditorSelector } from 'platejs/react';
 import { useCitationStore } from '@/lib/stores/citation-store';
 import type { TCitationElement } from '@/components/editor/plugins/citation-kit';
 import { citeWithBibify } from '@/lib/bibify';
+import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils';
 
 type BibliographyItem = {
   path: Path;
@@ -91,10 +92,15 @@ export function EditorBibliography({ className: _className }: { className?: stri
       const authors = formatAuthors(item.authors || []);
       const year = item.year ?? 'n.d.';
 
-      const doiValue = item.doi
-        ? String(item.doi).replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
-        : '';
-      const doiUrl = doiValue ? `https://doi.org/${doiValue}` : '';
+      // Verwende die gemeinsame Utility-Funktion für Link-Generierung
+      // Priorität: direkter URL-Link > DOI-Link
+      const link = getCitationLink({
+        url: item.url,
+        doi: item.doi,
+        pdfUrl: (item as any).pdfUrl,
+      });
+
+      const doiValue = getNormalizedDoi(item.doi);
       const url = item.url || '';
 
       const accessDate = formatAccessDate(
@@ -142,7 +148,6 @@ export function EditorBibliography({ className: _className }: { className?: stri
         .filter(Boolean)
         .join('; ');
 
-      const link = doiUrl || url || undefined;
       const build = (rest: string) => ({
         authors,
         rest: rest.trim(),
@@ -253,12 +258,14 @@ export function EditorBibliography({ className: _className }: { className?: stri
     if (isExternalStyle && externalEntries) {
       // Nur Reihenfolge beibehalten, Text aus externem Renderer
       return items.map((item, index) => {
-        const doiValue = item.data.doi
-          ? String(item.data.doi).replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
-          : '';
-        const doiUrl = doiValue ? `https://doi.org/${doiValue}` : '';
+        // Verwende die gemeinsame Utility-Funktion für Link-Generierung
+        const link = getCitationLink({
+          url: item.data.url,
+          doi: item.data.doi,
+          pdfUrl: (item.data as any).pdfUrl,
+        });
+        const doiValue = getNormalizedDoi(item.data.doi);
         const url = item.data.url || '';
-        const link = doiUrl || url || undefined;
         const accessDate = formatAccessDate(
           item.data.accessedAt,
           item.data.accessed?.['date-parts']?.[0]

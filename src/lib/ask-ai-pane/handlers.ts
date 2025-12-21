@@ -146,17 +146,31 @@ export const createHandlers = (deps: HandlerDependencies) => {
       // Determine Endpoint based on Agent Mode
       // WICHTIG: Wenn Modus 'standard' ist, immer Ask-Endpoint verwenden, auch wenn Agent noch aktiv ist
       let apiEndpoint = "/api/ai/ask"
+      const currentArbeitType = agentStore.arbeitType || (context.agentMode === 'general' ? 'general' : (context.agentMode === 'bachelor' ? 'bachelor' : null))
+      
       if (context.agentMode === 'standard') {
         // Standard Chat Modus - immer Ask-Endpoint verwenden
         apiEndpoint = "/api/ai/ask"
-      } else if (agentStore.isActive) {
+      } else if (agentStore.isActive && currentArbeitType) {
         // Use the mode stored in agentStore if active
-        apiEndpoint = agentStore.arbeitType === 'general' ? "/api/ai/agent/general" : "/api/ai/agent/bachelorarbeit"
+        apiEndpoint = currentArbeitType === 'general' ? "/api/ai/agent/general" : "/api/ai/agent/bachelorarbeit"
       } else if (context.agentMode === 'bachelor') {
         apiEndpoint = "/api/ai/agent/bachelorarbeit"
       } else if (context.agentMode === 'general') {
         apiEndpoint = "/api/ai/agent/general"
       }
+
+      // Debug-Logging für Endpoint-Auswahl
+      console.log('[HANDLER DEBUG] Endpoint-Auswahl:', {
+        agentMode: context.agentMode,
+        isActive: agentStore.isActive,
+        arbeitType: agentStore.arbeitType,
+        currentArbeitType,
+        selectedEndpoint: apiEndpoint,
+      })
+
+      // Für general-Modus: Wenn kein Thema vorhanden ist, verwende die erste Nachricht oder einen Standard-Wert
+      const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
 
       const requestBody = context.agentMode !== 'standard'
         ? {
@@ -167,8 +181,8 @@ export const createHandlers = (deps: HandlerDependencies) => {
           useWeb: context.web,
           agentState: {
             isActive: agentStore.isActive,
-            arbeitType: agentStore.arbeitType || (context.agentMode === 'general' ? 'general' : arbeitType),
-            thema: agentStore.thema || thema,
+            arbeitType: currentArbeitType,
+            thema: resolvedThema,
             currentStep: agentStore.currentStep,
           },
         }
@@ -193,8 +207,35 @@ export const createHandlers = (deps: HandlerDependencies) => {
         body: JSON.stringify(requestBody),
       })
 
-      if (!res.ok || !res.body) {
-        throw new Error("Antwort fehlgeschlagen")
+      if (!res.ok) {
+        // Versuche, die Fehlermeldung aus der Response zu extrahieren
+        let errorMessage = "Antwort fehlgeschlagen"
+        try {
+          const errorData = await res.json().catch(() => null)
+          if (errorData?.error) {
+            errorMessage = errorData.error
+          } else if (typeof errorData === "string") {
+            errorMessage = errorData
+          } else {
+            errorMessage = `Fehler ${res.status}: ${res.statusText}`
+          }
+        } catch {
+          // Falls JSON-Parsing fehlschlägt, verwende Status-Text
+          errorMessage = `Fehler ${res.status}: ${res.statusText || "Unbekannter Fehler"}`
+        }
+        const errorDetails = {
+          status: res.status,
+          statusText: res.statusText,
+          message: errorMessage,
+          endpoint: apiEndpoint,
+        }
+        console.error(`API-Fehler (${apiEndpoint}):`, errorDetails)
+        throw new Error(errorMessage)
+      }
+
+      if (!res.body) {
+        console.error(`Kein Response-Body erhalten von ${apiEndpoint}`)
+        throw new Error("Keine Antwortdaten erhalten")
       }
 
       const reader = res.body.getReader()
@@ -218,18 +259,22 @@ export const createHandlers = (deps: HandlerDependencies) => {
       }
     } catch (error) {
       if ((error as any)?.name !== "AbortError") {
+        const errorMessage =
+          error instanceof Error && error.message !== "Antwort fehlgeschlagen"
+            ? error.message
+            : "Entschuldigung, die Antwort konnte nicht geladen werden. Bitte versuche es erneut."
+        
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
               ? {
                   ...m,
-                  content:
-                    "Entschuldigung, die Antwort konnte nicht geladen werden. Bitte versuche es erneut.",
+                  content: errorMessage,
                 }
               : m
           )
         )
-        console.error(error)
+        console.error("Fehler in handleSend:", error)
       }
     } finally {
       setSending(false)
@@ -285,8 +330,33 @@ export const createHandlers = (deps: HandlerDependencies) => {
         }),
       })
 
-      if (!res.ok || !res.body) {
-        throw new Error("Antwort fehlgeschlagen")
+      if (!res.ok) {
+        // Versuche, die Fehlermeldung aus der Response zu extrahieren
+        let errorMessage = "Antwort fehlgeschlagen"
+        try {
+          const errorData = await res.json().catch(() => null)
+          if (errorData?.error) {
+            errorMessage = errorData.error
+          } else if (typeof errorData === "string") {
+            errorMessage = errorData
+          } else {
+            errorMessage = `Fehler ${res.status}: ${res.statusText}`
+          }
+        } catch {
+          // Falls JSON-Parsing fehlschlägt, verwende Status-Text
+          errorMessage = `Fehler ${res.status}: ${res.statusText || "Unbekannter Fehler"}`
+        }
+        console.error("API-Fehler (/api/ai/ask):", {
+          status: res.status,
+          statusText: res.statusText,
+          message: errorMessage,
+        })
+        throw new Error(errorMessage)
+      }
+
+      if (!res.body) {
+        console.error("Kein Response-Body erhalten von /api/ai/ask")
+        throw new Error("Keine Antwortdaten erhalten")
       }
 
       const reader = res.body.getReader()
@@ -304,18 +374,22 @@ export const createHandlers = (deps: HandlerDependencies) => {
       }
     } catch (error) {
       if ((error as any)?.name !== "AbortError") {
+        const errorMessage =
+          error instanceof Error && error.message !== "Antwort fehlgeschlagen"
+            ? error.message
+            : "Entschuldigung, die Antwort konnte nicht geladen werden. Bitte versuche es erneut."
+        
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
               ? {
-                ...m,
-                content:
-                  "Entschuldigung, die Antwort konnte nicht geladen werden. Bitte versuche es erneut.",
-              }
+                  ...m,
+                  content: errorMessage,
+                }
               : m
           )
         )
-        console.error(error)
+        console.error("Fehler in handleRegenerate:", error)
       }
     } finally {
       setSending(false)

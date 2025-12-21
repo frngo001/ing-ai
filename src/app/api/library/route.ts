@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import type { SavedCitation, CitationLibrary } from '@/lib/stores/citation-store'
+import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
 
 // In-Memory Store für Bibliotheken (später kann das in Supabase/DB gespeichert werden)
 // TODO: Migriere zu Supabase für persistente Speicherung
@@ -18,6 +19,15 @@ function convertSourceToCitation(source: any): SavedCitation {
         : [])
     : []
 
+  // Verwende die gemeinsame Utility-Funktion für Link-Generierung
+  // Priorität: direkter URL-Link > PDF-URL > DOI-Link
+  const externalUrl = getCitationLink({
+    url: source.url,
+    doi: source.doi,
+    pdfUrl: source.pdfUrl,
+  });
+  const validDoi = getNormalizedDoi(source.doi);
+
   return {
     id: source.id || `cite_${Date.now()}_${Math.random().toString(36).substring(7)}`,
     title: source.title || 'Ohne Titel',
@@ -25,8 +35,8 @@ function convertSourceToCitation(source: any): SavedCitation {
     year: source.publicationYear || source.year || undefined,
     lastEdited: new Date().toLocaleDateString('de-DE', { dateStyle: 'short' }),
     href: '/editor',
-    externalUrl: source.url || source.doi ? `https://doi.org/${source.doi}` : undefined,
-    doi: source.doi || undefined,
+    externalUrl,
+    doi: validDoi || undefined,
     authors: authors.filter(Boolean),
     abstract: source.abstract || undefined,
   }

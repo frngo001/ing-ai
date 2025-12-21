@@ -66,6 +66,7 @@ import {
   type ContextSelection,
   type Mentionable,
   type SlashCommand,
+  type SavedMessage,
   defaultContext,
   addSourcesToLibrary,
   saveSlashCommands,
@@ -125,6 +126,7 @@ export function AskAiPane({
   const [sourcesDialogOpen, setSourcesDialogOpen] = useState<Record<string, boolean>>({})
   const [reasoningOpen, setReasoningOpen] = useState<Record<string, boolean>>({})
   const [savedMessages, setSavedMessages] = useState<Set<string>>(new Set())
+  const [savedMessagesList, setSavedMessagesList] = useState<SavedMessage[]>([])
   const [favoritesDialogOpen, setFavoritesDialogOpen] = useState(false)
   const autoClosedReasoning = useRef<Set<string>>(new Set())
   const lastAssistantId = useMemo(
@@ -153,6 +155,7 @@ export function AskAiPane({
     // Lade gespeicherte Nachrichten
     const saved = loadSavedMessages()
     setSavedMessages(new Set(saved.map((m: { messageId: string }) => m.messageId)))
+    setSavedMessagesList(saved)
     
     setIsHydrated(true)
   }, [])
@@ -194,6 +197,22 @@ export function AskAiPane({
       agentStore.stopAgent()
     }
   }, [context.agentMode, agentStore])
+
+  // Event-Listener für set-agent-thema
+  useEffect(() => {
+    const handleSetThema = (event: CustomEvent<{ thema: string }>) => {
+      const { thema } = event.detail
+      if (thema && agentStore.setThema) {
+        agentStore.setThema(thema)
+        console.log('📝 [ASK-AI-PANE] Thema gesetzt:', thema)
+      }
+    }
+
+    window.addEventListener('set-agent-thema', handleSetThema as EventListener)
+    return () => {
+      window.removeEventListener('set-agent-thema', handleSetThema as EventListener)
+    }
+  }, [agentStore])
 
   // Create handlers
   const handlers = createHandlers({
@@ -257,10 +276,12 @@ export function AskAiPane({
         next.delete(messageId)
         return next
       })
-                    } else {
+      setSavedMessagesList(prev => prev.filter(m => m.messageId !== messageId))
+    } else {
       // Füge zu Favoriten hinzu
-      saveMessage(message, conversationId)
+      const saved = saveMessage(message, conversationId)
       setSavedMessages(prev => new Set(prev).add(messageId))
+      setSavedMessagesList(prev => [saved, ...prev.filter(m => m.messageId !== message.id)])
     }
   }
 
@@ -785,8 +806,8 @@ export function AskAiPane({
               <DialogTitle>Favoriten</DialogTitle>
             </DialogHeader>
             <div className="space-y-2 text-sm text-muted-foreground max-h-64 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {loadSavedMessages().length > 0 ? (
-                loadSavedMessages().map((saved) => {
+              {savedMessagesList.length > 0 ? (
+                savedMessagesList.map((saved) => {
                   const conversation = history.find(c => c.id === saved.conversationId)
                   const conversationTitle = conversation?.title || "Unbekannter Chat"
                   

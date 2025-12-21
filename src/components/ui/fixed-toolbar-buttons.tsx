@@ -5,6 +5,7 @@ import * as React from 'react';
 import {
   BaselineIcon,
   BoldIcon,
+  CalendarIcon,
   Code2Icon,
   FileCode2Icon,
   HighlighterIcon,
@@ -46,11 +47,11 @@ import {
   InlineEquationToolbarButton,
 } from './equation-toolbar-button';
 import { CodeBlockToolbarButton } from './code-block-toolbar-button';
+import { DateToolbarButton } from './date-toolbar-button';
 import { TableToolbarButton } from './table-toolbar-button';
 import { ToggleToolbarButton } from './toggle-toolbar-button';
 import { ToolbarGroup } from './toolbar';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button';
-
 export function FixedToolbarButtons() {
   const readOnly = useEditorReadOnly();
 
@@ -125,6 +126,9 @@ export function FixedToolbarButtons() {
 
           <ToolbarGroup>
             <LinkToolbarButton />
+            <DateToolbarButton>
+              <CalendarIcon />
+            </DateToolbarButton>
             <TableToolbarButton />
             <EmojiToolbarButton />
           </ToolbarGroup>

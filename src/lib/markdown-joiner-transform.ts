@@ -36,7 +36,9 @@ export const markdownJoinerTransform =
               ...chunk,
               text: processedText,
             });
-            await delay(joiner.delayInMs);
+            if (joiner.delayInMs > 0) {
+              await delay(joiner.delayInMs);
+            }
           }
         } else if (chunk.type === 'text-end') {
           // Flush any remaining buffer before text-end
@@ -57,8 +59,8 @@ export const markdownJoinerTransform =
     });
   };
 
-const DEFAULT_DELAY_IN_MS = 10;
-const NEST_BLOCK_DELAY_IN_MS = 100;
+const DEFAULT_DELAY_IN_MS = 0;
+const NEST_BLOCK_DELAY_IN_MS = 0;
 
 const BOLD_PATTERN = /\*\*.*?\*\*/;
 const CODE_LINE_PATTERN = /```[^\s]+/;

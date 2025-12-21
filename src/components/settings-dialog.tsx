@@ -42,12 +42,12 @@ import {
 const data = {
   nav: [
     { name: "General", icon: Settings },
-    { name: "Notifications", icon: Bell },
+    { name: "Benachrichtigungen", icon: Bell },
     { name: "Personalisierung", icon: Paintbrush },
-    { name: "Data Control", icon: Database },
+    { name: "Datenkontrolle", icon: Database },
     { name: "Abrechnung", icon: CreditCard },
     { name: "Sicherheit", icon: ShieldCheck },
-    { name: "Account", icon: User },
+    { name: "Konto", icon: User },
   ],
 }
 
@@ -422,7 +422,7 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                   </div>
                 )}
 
-                {activeNav === "Notifications" && (
+                {activeNav === "Benachrichtigungen" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
                     {notificationToggles.map((item) => (
                       <ToggleRow key={item.title} {...item} />
@@ -614,7 +614,7 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                   </div>
                 )}
 
-                {activeNav === "Data Control" && (
+                {activeNav === "Datenkontrolle" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
                     {dataControlToggles.map((item) => (
                       <ToggleRow key={item.title} {...item} />
@@ -666,7 +666,7 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                   </div>
                 )}
 
-                {activeNav === "Account" && (
+                {activeNav === "Konto" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
                     {accountActions.map((item) => (
                       <AccountRow key={item.title} {...item} />

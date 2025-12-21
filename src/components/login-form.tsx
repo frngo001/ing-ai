@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -80,7 +81,18 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
   return (
     <>
       <LoginTransition isVisible={showTransition} onComplete={handleTransitionComplete} />
-      <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <motion.div
+        className={cn("flex flex-col gap-6", className)}
+        initial={{ opacity: 1, scale: 1 }}
+        animate={{ 
+          opacity: showTransition ? 0 : 1,
+          scale: showTransition ? 0.95 : 1,
+        }}
+        transition={{ 
+          duration: 0.4,
+          ease: [0.16, 1, 0.3, 1],
+        }}
+      >
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form className="p-6 md:p-8" onSubmit={handleLogin}>
@@ -183,7 +195,7 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                Noch kein Account?{" "}
+                Noch kein Konto?{" "}
                 <Link href="/auth/signup" className="underline underline-offset-4">
                   Jetzt registrieren
                 </Link>
@@ -210,7 +222,7 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
         </Link>{" "}
         zu.
       </FieldDescription>
-    </div>
+      </motion.div>
     </>
   );
 }

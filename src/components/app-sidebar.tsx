@@ -2,9 +2,6 @@
 
 import * as React from "react"
 import {
-  AudioWaveform,
-  Command,
-  GalleryVerticalEnd,
   LayoutDashboard,
   Plus,
   Settings2,
@@ -12,7 +9,6 @@ import {
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +16,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import Image from "next/image"
 import {
   Card,
   CardContent,
@@ -31,7 +28,6 @@ import { Button } from "@/components/ui/button"
 import Particles from "@/components/Particles"
 import { createClient } from "@/lib/supabase/client"
 
-// Sidebar data tailored for the editor workspace.
 const defaultUser = {
   name: "Ing AI",
   email: "support@ing.ai",
@@ -39,23 +35,6 @@ const defaultUser = {
 }
 
 const data = {
-  teams: [
-    {
-      name: "Ing AI Team",
-      logo: GalleryVerticalEnd,
-      plan: "Produktiv",
-    },
-    {
-      name: "Content Ops",
-      logo: AudioWaveform,
-      plan: "Review",
-    },
-    {
-      name: "Labs",
-      logo: Command,
-      plan: "Beta",
-    },
-  ],
   navMain: [
     {
       title: "Workspace",
@@ -166,7 +145,15 @@ export function AppSidebar({
     <div suppressHydrationWarning>
       <Sidebar collapsible="icon" {...props}>
         <SidebarHeader className="space-y-2">
-          <TeamSwitcher teams={data.teams} />
+          <div className="flex items-center justify-center px-2 py-2">
+            <Image
+              src="/logos/logosApp/ing_AI.png"
+              alt="Ing AI Logo"
+              width={64}
+              height={64}
+              className="object-contain"
+            />
+          </div>
           <Button
             size="sm"
             className="w-full justify-center gap-2"

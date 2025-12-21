@@ -49,7 +49,7 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
       });
       if (error) throw error;
 
-      toast.success("Account erstellt", {
+      toast.success("Konto erstellt", {
         description: data.session
           ? "Du bist angemeldet."
           : "Bitte bestätige deine E-Mail.",

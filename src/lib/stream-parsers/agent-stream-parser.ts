@@ -140,6 +140,19 @@ export async function parseAgentStream(
               }
             }
             buffer = buffer.replace(/\[TOOL_RESULT_B64:[^\]]+\]/, '')
+          } else if (toolResult.type === 'tool-result' && toolResult.toolName === 'addThema' && toolResult.thema) {
+            // Setze das Thema im Agent Store
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('set-agent-thema', {
+                  detail: {
+                    thema: toolResult.thema,
+                  },
+                })
+              )
+              toolResultProcessed = true
+            }
+            buffer = buffer.replace(/\[TOOL_RESULT_B64:[^\]]+\]/, '')
           }
         } catch (error) {
           console.error('Fehler beim Parsen von Base64 Tool-Result:', error)

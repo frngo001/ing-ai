@@ -214,11 +214,27 @@ export function getGeneratePrompt(
       - <Selection> is the text highlighted by the user.
       - backgroundData represents the user's current Markdown context.
       - You may only use backgroundData and <Selection> as input; never ask for more data.
+      - CRITICAL: LANGUAGE - You MUST respond in the same language as the text in backgroundData, <Selection>, or the user's message. Analyze the language of the input text and match it exactly in your response. If the text is in German, respond in German. If the text is in English, respond in English. If the text is in French, respond in French, etc.
       - CRITICAL: You MUST use Markdown styling for all output. Always format your output using proper Markdown syntax (headings, lists, bold, italic, tables, etc.).
-      - CRITICAL: For numbering and hierarchical structure, you MUST use Markdown headings (# H1, ## H2, ### H3, #### H4, ##### H5, ###### H6) instead of numbered lists when creating document structure, sections, or chapters. Use numbered lists (1., 2., 3.) only for sequential steps or simple enumerations, not for document sections.
+      - CRITICAL: Use headings ONLY when necessary:
+        * Use headings when the user explicitly requests structured content, sections, chapters, or document organization.
+        * Use headings when backgroundData already contains headings and you need to maintain or extend that structure.
+        * Use headings when creating long-form content (multiple paragraphs, sections) that benefits from organization.
+        * DO NOT use headings for simple responses, short paragraphs, single ideas, or when the user asks for plain text.
+        * DO NOT use headings for simple lists, summaries, or brief explanations unless explicitly requested.
+        * When in doubt, prefer plain text or lists over headings.
+      - CRITICAL: If headings are necessary, use Markdown headings (# H1, ## H2, ### H3, #### H4, ##### H5, ###### H6) instead of numbered lists when creating document structure, sections, or chapters. Use numbered lists (1., 2., 3.) only for sequential steps or simple enumerations, not for document sections.
       - CRITICAL: The editor automatically displays hierarchical numbering for headings (H1: "1", H2: "1.1", H3: "1.1.1", H4: "1.1.1.1", H5: "1.1.1.1.1", H6: "1.1.1.1.1.1"). You do NOT need to include numbers in the heading text itself - just use the appropriate heading level (# for H1, ## for H2, ### for H3, etc.) and the numbering will be displayed automatically.
       - CRITICAL: When creating structured content with multiple levels, use appropriate heading levels (H1 for main sections, H2 for subsections, H3 for sub-subsections, H4 for deeper levels, etc.) to establish proper hierarchy. The numbering will automatically reflect the hierarchical structure.
       - CRITICAL: Maintain consistent heading hierarchy - do not skip levels (e.g., do not go from H1 directly to H3 without H2 in between, unless the document structure truly requires it).
+      - CRITICAL: HEADING RELATIONSHIPS - When using headings, ensure they are logically connected and form a coherent structure:
+        * Analyze existing headings in backgroundData to understand the document's heading structure and maintain consistency.
+        * H2 headings must be related to and expand upon their parent H1 heading.
+        * H3 headings must be related to and expand upon their parent H2 heading.
+        * Each heading level should represent a logical subdivision of its parent heading.
+        * Headings should form a semantic hierarchy where each level provides more specific detail about the level above it.
+        * When creating new headings, ensure they fit naturally into the existing heading structure and maintain thematic coherence.
+        * Related topics should be grouped under the same parent heading level.
       - CRITICAL: DO NOT remove or alter custom MDX tags such as <u>, <callout>, <kbd>, <toc>, <sub>, <sup>, <mark>, <del>, <date>, <span>, <column>, <column_group>, <file>, <audio>, <video> unless explicitly requested.
       - CRITICAL: when writing Markdown or MDX, do NOT wrap output in code fences.
       - Preserve indentation and line breaks when editing within columns or structured layouts.
@@ -227,8 +243,18 @@ export function getGeneratePrompt(
       You are an advanced content generation assistant.
       Generate content based on the user's instructions, using the background data as context.
       If the instruction requests creation or transformation (e.g., summarize, translate, rewrite, create a table), directly produce the final result using only the provided background data.
-      Always format your output using proper Markdown styling, and use headings for document structure.
+      IMPORTANT: Always respond in the same language as the input text (backgroundData, <Selection>, or user message). Match the language exactly.
+      Always format your output using proper Markdown styling.
+      IMPORTANT: Use headings ONLY when necessary - for simple responses, short paragraphs, or brief explanations, use plain text or lists instead. Only use headings when:
+      - The user explicitly requests structured content, sections, or document organization
+      - backgroundData already contains headings and you need to maintain that structure
+      - You are creating long-form content that benefits from clear organization
       Remember: The editor automatically displays hierarchical numbering for headings (1, 1.1, 1.1.1, etc.) based on the heading level, so you should NOT include numbers in the heading text itself - just use the appropriate heading level (# for H1, ## for H2, ### for H3, etc.).
+      When creating headings, analyze the existing heading structure in backgroundData and ensure new headings are logically connected:
+      - H2 headings should be sub-topics of their parent H1
+      - H3 headings should be sub-topics of their parent H2
+      - Maintain thematic coherence - related content should be grouped under appropriate parent headings
+      - Ensure headings form a semantic hierarchy where each level provides more specific detail
       Do not ask the user for additional content.
     `,
   });
@@ -261,17 +287,43 @@ export function getEditPrompt(
         - Do not Write <backgroundData> tags in your response.
         - <backgroundData> represents the full blocks of text the user has selected and wants to modify or ask about.
         - Your response should be a direct replacement for the entire <backgroundData>.
+        - CRITICAL: LANGUAGE - You MUST respond in the same language as the text in <backgroundData> or the user's message. Analyze the language of the input text and match it exactly in your response. If the text is in German, respond in German. If the text is in English, respond in English. If the text is in French, respond in French, etc.
         - CRITICAL: You MUST use Markdown styling for all output. Always format your output using proper Markdown syntax (headings, lists, bold, italic, tables, etc.).
-        - CRITICAL: For numbering and hierarchical structure, you MUST use Markdown headings (# H1, ## H2, ### H3, #### H4, ##### H5, ###### H6) instead of numbered lists when creating document structure, sections, or chapters. Use numbered lists (1., 2., 3.) only for sequential steps or simple enumerations, not for document sections.
+        - CRITICAL: Use headings ONLY when necessary:
+          * Preserve existing headings in backgroundData if they are present and relevant.
+          * Only add new headings if backgroundData already contains headings and you need to extend that structure.
+          * Only add headings if the user explicitly requests structured content or document organization.
+          * DO NOT add headings to simple text, short paragraphs, or when editing content that doesn't require structure.
+          * When in doubt, maintain the existing structure without adding headings.
+        - CRITICAL: If headings are necessary, use Markdown headings (# H1, ## H2, ### H3, #### H4, ##### H5, ###### H6) instead of numbered lists when creating document structure, sections, or chapters. Use numbered lists (1., 2., 3.) only for sequential steps or simple enumerations, not for document sections.
         - CRITICAL: The editor automatically displays hierarchical numbering for headings (H1: "1", H2: "1.1", H3: "1.1.1", H4: "1.1.1.1", H5: "1.1.1.1.1", H6: "1.1.1.1.1.1"). You do NOT need to include numbers in the heading text itself - just use the appropriate heading level (# for H1, ## for H2, ### for H3, etc.) and the numbering will be displayed automatically.
         - CRITICAL: When creating structured content with multiple levels, use appropriate heading levels (H1 for main sections, H2 for subsections, H3 for sub-subsections, H4 for deeper levels, etc.) to establish proper hierarchy. Pay attention to existing heading levels in the background data and maintain or improve the heading structure accordingly. The numbering will automatically reflect the hierarchical structure.
         - CRITICAL: Maintain consistent heading hierarchy - do not skip levels unnecessarily (e.g., do not go from H1 directly to H3 without H2 in between, unless the document structure truly requires it).
+        - CRITICAL: HEADING RELATIONSHIPS - When editing or creating headings, ensure they are logically connected:
+          * Analyze the existing heading structure in backgroundData to understand the document's semantic hierarchy.
+          * H2 headings must be related to and expand upon their parent H1 heading.
+          * H3 headings must be related to and expand upon their parent H2 heading.
+          * Each heading level should represent a logical subdivision of its parent heading.
+          * Headings should form a semantic hierarchy where each level provides more specific detail about the level above it.
+          * When modifying headings, maintain thematic coherence and ensure related topics remain grouped appropriately.
+          * Preserve the logical relationships between headings when editing - do not break the semantic structure.
         - Maintain the overall structure and formatting of the background data, unless explicitly instructed otherwise.
         - CRITICAL: Provide only the content to replace <backgroundData>. Do not add additional blocks or change the block structure unless specifically requested.
       `,
       task: `The following <backgroundData> is user-provided Markdown content that needs improvement. Modify it according to the user's instruction.
-      Always format your output using proper Markdown styling, and use headings for document structure.
+      IMPORTANT: Always respond in the same language as the text in <backgroundData> or the user's message. Match the language exactly.
+      Always format your output using proper Markdown styling.
+      IMPORTANT: Use headings ONLY when necessary - preserve existing headings if present, but do NOT add headings to simple text or short content unless explicitly requested. Only use headings when:
+      - backgroundData already contains headings and you need to maintain that structure
+      - The user explicitly requests structured content or document organization
+      - You are extending long-form content that benefits from clear organization
       Remember: The editor automatically displays hierarchical numbering for headings (1, 1.1, 1.1.1, etc.) based on the heading level, so you should NOT include numbers in the heading text itself - just use the appropriate heading level (# for H1, ## for H2, ### for H3, etc.).
+      When working with headings, ensure they maintain logical relationships:
+      - Analyze the existing heading structure to understand semantic connections
+      - H2 headings should be sub-topics of their parent H1
+      - H3 headings should be sub-topics of their parent H2
+      - Maintain thematic coherence - related content should be grouped under appropriate parent headings
+      - Preserve the semantic hierarchy when editing headings
       Unless explicitly stated otherwise, your output should be a seamless replacement of the original content.`,
     });
   }
@@ -312,15 +364,27 @@ export function getEditPrompt(
     history: formatTextFromMessages(messages),
     outputFormatting: 'markdown',
     prefilledResponse,
-    rules: dedent`
+      rules: dedent`
       - <Selection> contains the text segment selected by the user and allowed to be modified.
       - Your response will be directly concatenated with the prefilledResponse, so please make sure the result is smooth and coherent.
       - You may only edit the content inside <Selection> and must not reference or retain any external context.
       - The output must be text that can directly replace <Selection>.
       - Do not include the <Selection> tags or any surrounding text in the output.
+      - CRITICAL: LANGUAGE - You MUST respond in the same language as the text in <Selection>, prefilledResponse, or the user's message. Analyze the language of the input text and match it exactly in your response. If the text is in German, respond in German. If the text is in English, respond in English. If the text is in French, respond in French, etc.
       - CRITICAL: You MUST use Markdown styling when appropriate. If the selected text contains Markdown formatting or if the replacement should include formatting, use proper Markdown syntax (headings, lists, bold, italic, etc.).
+      - CRITICAL: Use headings ONLY when necessary:
+        * Only preserve or modify headings if <Selection> already contains headings.
+        * Only add headings if the surrounding context (prefilledResponse) contains headings and you need to maintain that structure.
+        * DO NOT add headings to simple text, short selections, or plain content.
+        * When editing headings, maintain the existing heading structure unless explicitly asked to change it.
       - CRITICAL: If the selection involves document structure or numbering, use Markdown headings (# H1, ## H2, ### H3, #### H4, ##### H5, ###### H6) instead of numbered lists for sections. The editor automatically displays hierarchical numbering for headings (H1: "1", H2: "1.1", H3: "1.1.1", etc.), so you do NOT need to include numbers in the heading text itself. Pay attention to the heading levels in the surrounding context and use appropriate heading levels.
       - CRITICAL: Maintain consistent heading hierarchy - do not skip levels unnecessarily when editing headings.
+      - CRITICAL: HEADING RELATIONSHIPS - When editing headings within <Selection>, ensure they maintain logical connections:
+        * If the selection contains headings, analyze the heading structure in the surrounding context (prefilledResponse) to understand parent-child relationships.
+        * H2 headings must relate to and expand upon their parent H1 heading.
+        * H3 headings must relate to and expand upon their parent H2 heading.
+        * Maintain thematic coherence - ensure edited headings fit logically into the existing semantic hierarchy.
+        * Preserve the logical relationships between headings when editing - do not break the semantic structure.
       - Ensure the replacement is grammatically correct and reads naturally.
       - If the input is invalid or cannot be improved, return it unchanged.
     `,
@@ -328,8 +392,16 @@ export function getEditPrompt(
       The following background data is user-provided text that contains one or more <Selection> tags marking the editable parts.
       You must only modify the text inside <Selection>.
       Your output should be a direct replacement for the selected text, without including any tags or surrounding content.
-      Always use proper Markdown styling when appropriate, and use headings for document structure.
+      IMPORTANT: Always respond in the same language as the text in <Selection>, prefilledResponse, or the user's message. Match the language exactly.
+      Always use proper Markdown styling when appropriate.
+      IMPORTANT: Use headings ONLY when necessary - only preserve or modify headings if <Selection> already contains headings, or if the surrounding context has headings and you need to maintain that structure. DO NOT add headings to simple text or short selections.
       Remember: The editor automatically displays hierarchical numbering for headings (1, 1.1, 1.1.1, etc.) based on the heading level, so you should NOT include numbers in the heading text itself - just use the appropriate heading level (# for H1, ## for H2, ### for H3, etc.).
+      When editing headings within <Selection>, ensure they maintain logical relationships with surrounding headings:
+      - Analyze the heading structure in the surrounding context to understand parent-child relationships
+      - H2 headings should be sub-topics of their parent H1
+      - H3 headings should be sub-topics of their parent H2
+      - Maintain thematic coherence - ensure edited headings fit logically into the existing semantic hierarchy
+      - Preserve the semantic structure when editing headings
       Ensure the replacement is grammatically correct and fits naturally when substituted back into the original text.
     `,
   });

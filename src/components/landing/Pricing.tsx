@@ -99,7 +99,7 @@ const pricingPlans: PricingPlan[] = [
       "Kollaboratives Schreiben",
       "Admin-Dashboard & Statistiken",
       "SSO-Integration verfügbar",
-      "Dedizierter Account Manager",
+      "Dedizierter Konto Manager",
       "Unbegrenzter Versionsverlauf",
     ],
   },

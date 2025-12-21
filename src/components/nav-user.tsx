@@ -145,7 +145,7 @@ export function NavUser({
               <DropdownMenuItem
                 onSelect={() => {
                   setDropdownOpen(false)
-                  onOpenSettings?.("Account")
+                  onOpenSettings?.("Konto")
                 }}
               >
                 <BadgeCheck />
@@ -163,7 +163,7 @@ export function NavUser({
               <DropdownMenuItem
                 onSelect={() => {
                   setDropdownOpen(false)
-                  onOpenSettings?.("Notifications")
+                  onOpenSettings?.("Benachrichtigungen")
                 }}
               >
                 <Bell />

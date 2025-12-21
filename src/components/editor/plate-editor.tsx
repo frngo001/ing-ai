@@ -28,6 +28,7 @@ import { FixedToolbar } from '@/components/ui/fixed-toolbar';
 import { FixedToolbarButtons } from '@/components/ui/fixed-toolbar-buttons';
 import { useCitationStore } from '@/lib/stores/citation-store';
 import { insertCitationWithMerge } from '@/components/editor/utils/insert-citation-with-merge';
+import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils';
 import {
   type TDiscussion,
   discussionPlugin,
@@ -250,11 +251,14 @@ export function PlateEditor({
             source.sourceApi ||
             'Quelle'
 
-          const externalUrl =
-            (typeof source.url === 'string' && source.url) ||
-            (typeof source.pdfUrl === 'string' && source.pdfUrl) ||
-            (typeof source.doi === 'string' && `https://doi.org/${source.doi}`) ||
-            undefined
+          // Verwende die gemeinsame Utility-Funktion für Link-Generierung
+          // Priorität: direkter URL-Link > PDF-URL > DOI-Link
+          const externalUrl = getCitationLink({
+            url: source.url,
+            doi: source.doi,
+            pdfUrl: source.pdfUrl,
+          });
+          const validDoi = getNormalizedDoi(source.doi);
 
           const authors =
             source.authors?.map((a) => a.fullName || [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean) ?? []
@@ -272,7 +276,7 @@ export function PlateEditor({
             lastEdited: timestamp,
             href: '/editor',
             externalUrl,
-            doi: typeof source.doi === 'string' ? source.doi : undefined,
+            doi: validDoi || undefined,
             authors,
             abstract:
               (typeof (source as any).abstract === 'string' && (source as any).abstract) ||

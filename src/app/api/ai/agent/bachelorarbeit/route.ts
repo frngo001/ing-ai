@@ -605,9 +605,40 @@ function generateSourceReason(source: NormalizedSource & { relevanceScore: numbe
   return reasons.length > 0 ? reasons.join(', ') : 'Relevante Quelle zum Thema'
 }
 
+// Tool: Thema setzen
+const addThemaTool = tool({
+  description: 'Setzt das Thema der Bachelorarbeit oder Masterarbeit. Nutze dies, wenn der Nutzer das Thema angibt oder wenn du es aus der Konversation ableiten kannst.',
+  inputSchema: z.object({
+    thema: z.string().describe('Das Thema der Bachelorarbeit oder Masterarbeit (z.B. "Künstliche Intelligenz in der Medizin")'),
+  }),
+  execute: async ({ thema }) => {
+    console.log('📝 [AGENT DEBUG] addThema Tool aufgerufen')
+    console.log('📥 [AGENT DEBUG] Thema:', thema)
+    
+    // Erstelle Base64-kodiertes Tool-Result für Client-Verarbeitung
+    const toolResult = {
+      type: 'tool-result',
+      toolName: 'addThema',
+      thema,
+    }
+    const jsonString = JSON.stringify(toolResult)
+    const base64Payload = Buffer.from(jsonString).toString('base64')
+    
+    const response = {
+      success: true,
+      message: `Thema "${thema}" wurde gesetzt`,
+      thema,
+      // Base64-kodiertes Result für Client-Verarbeitung
+      encodedResult: `[TOOL_RESULT_B64:${base64Payload}]`,
+    }
+    console.log('📤 [AGENT DEBUG] addThema Response:', response)
+    return response
+  },
+})
+
 // Tool: Aktuellen Schritt abrufen
 const getCurrentStepTool = tool({
-  description: 'Ruft den aktuellen Schritt im Bachelorarbeit-Prozess ab',
+  description: 'Ruft den aktuellen Schritt im Bachelor- oder Masterarbeit-Prozess ab',
   inputSchema: z.object({
     _placeholder: z.string().optional().describe('Placeholder parameter'),
   }),
@@ -909,23 +940,54 @@ export async function POST(req: NextRequest) {
       lastMessage: messages?.[messages.length - 1]?.content?.substring(0, 100) + '...',
     })
 
-    if (!agentState || !agentState.thema) {
-      console.error('❌ [AGENT DEBUG] Fehler: Agent State mit Thema erforderlich')
+    if (!agentState) {
+      console.error('❌ [AGENT DEBUG] Fehler: Agent State erforderlich')
       return NextResponse.json(
-        { error: 'Agent State mit Thema erforderlich' },
+        { error: 'Agent State erforderlich' },
         { status: 400 }
       )
     }
 
+    // Thema ist optional - kann vom Agent bestimmt werden
+    const arbeitType = agentState.arbeitType || 'bachelor'
+    const arbeitTypeText = arbeitType === 'master' ? 'Masterarbeit' : 'Bachelorarbeit'
+    
+    // Wenn kein Thema vorhanden ist, versuche es aus der ersten Nachricht zu extrahieren
+    let thema = agentState.thema
+    if (!thema && messages && messages.length > 0) {
+      const firstUserMessage = messages.find((m: any) => m.role === 'user')
+      if (firstUserMessage?.content) {
+        // Extrahiere das Thema aus der ersten Nachricht (max. 200 Zeichen)
+        thema = firstUserMessage.content.substring(0, 200).trim()
+        // Entferne häufige Begriffe, die nicht zum Thema gehören
+        thema = thema.replace(/^(Hallo|Hi|Hey|Ich möchte|Ich will|Ich schreibe|Ich arbeite|Meine (Bachelor|Master)arbeit|Meine Arbeit)/i, '').trim()
+        if (thema.length < 10) {
+          thema = null // Zu kurz, nicht sinnvoll
+        }
+      }
+    }
+    
+    // Wenn immer noch kein Thema vorhanden ist, verwende einen generischen Platzhalter
+    if (!thema) {
+      thema = 'Thema wird bestimmt'
+    }
+
     const model = deepseek(DEEPSEEK_CHAT_MODEL)
-    const systemPrompt = BACHELORARBEIT_AGENT_PROMPT.replace(
+    let systemPrompt = BACHELORARBEIT_AGENT_PROMPT.replace(
       '{{THEMA}}',
-      agentState.thema || ''
+      thema
     ).replace('{{CURRENT_DATE}}', new Date().toLocaleDateString('de-DE', { dateStyle: 'full' }))
+    
+    // Ersetze Platzhalter für Arbeitstyp
+    systemPrompt = systemPrompt.replace(/{{ARBEIT_TYPE}}/g, arbeitTypeText)
+    systemPrompt = systemPrompt.replace(/{{ARBEIT_TYPE_LOWER}}/g, arbeitTypeText.toLowerCase())
 
     console.log('🤖 [AGENT DEBUG] Model:', DEEPSEEK_CHAT_MODEL)
     console.log('📝 [AGENT DEBUG] System Prompt Länge:', systemPrompt.length)
+    console.log('📋 [AGENT DEBUG] Arbeitstyp:', arbeitTypeText)
+    console.log('📋 [AGENT DEBUG] Thema:', thema)
     console.log('🔧 [AGENT DEBUG] Tools verfügbar:', Object.keys({
+      addThema: addThemaTool,
       searchSources: searchSourcesTool,
       analyzeSources: analyzeSourcesTool,
       createLibrary: createLibraryTool,
@@ -1008,6 +1070,7 @@ export async function POST(req: NextRequest) {
       model,
       system: systemPrompt,
       tools: {
+        addThema: addThemaTool,
         searchSources: searchSourcesTool,
         analyzeSources: analyzeSourcesTool,
         evaluateSources: evaluateSourcesTool,

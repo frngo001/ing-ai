@@ -31,17 +31,26 @@ export function AudioVisualizer({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | undefined>(undefined)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Cleanup function to stop visualization and close audio context
   const cleanup = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = undefined
     }
     if (audioContextRef.current) {
-      audioContextRef.current.close()
+      // Prüfe, ob der AudioContext noch nicht geschlossen ist
+      if (audioContextRef.current.state !== "closed") {
+        audioContextRef.current.close().catch((error) => {
+          // Ignoriere Fehler beim Schließen (z.B. bereits geschlossen)
+          console.warn("Fehler beim Schließen des AudioContext:", error)
+        })
+      }
+      audioContextRef.current = null
     }
+    analyserRef.current = null
   }
 
   // Cleanup on unmount
@@ -89,6 +98,11 @@ export function AudioVisualizer({
   // Initialize audio context and start visualization
   const startVisualization = async () => {
     try {
+      // Bereinige vorherigen AudioContext, falls vorhanden
+      if (audioContextRef.current) {
+        cleanup()
+      }
+
       const audioContext = new AudioContext()
       audioContextRef.current = audioContext
 
@@ -103,6 +117,10 @@ export function AudioVisualizer({
       draw()
     } catch (error) {
       console.error("Error starting visualization:", error)
+      // Stelle sicher, dass bei Fehlern der AudioContext bereinigt wird
+      if (audioContextRef.current) {
+        cleanup()
+      }
     }
   }
 
