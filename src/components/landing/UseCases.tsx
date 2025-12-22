@@ -63,12 +63,12 @@ const useCases: UseCase[] = [
         icon: FileText,
     },
     {
-        title: "Consultants",
+        title: "Berater",
         description: "Analysen, Berichte und Präsentationen strukturiert aufbauen.",
         icon: Briefcase,
     },
     {
-        title: "Tech Writer",
+        title: "Technischer Redakteur",
         description: "Technische Dokumentationen klar und verständlich schreiben.",
         icon: Code2,
     },

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, User, Users, Crown, ArrowRight } from "lucide-react";
+import { Check, User, Users, Crown, ArrowRight, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { siteConfig } from "@/config/site";
@@ -43,7 +43,7 @@ const pricingPlans: PricingPlan[] = [
     description: "Perfekt zum Ausprobieren und für gelegentliches Schreiben",
     monthlyPrice: 0,
     yearlyPrice: 0,
-    icon: undefined,
+    icon: <Gift className="h-5 w-5" />,
     cta: {
       label: "Kostenlos starten",
       href: siteConfig.pricing.free,
@@ -61,8 +61,8 @@ const pricingPlans: PricingPlan[] = [
     id: "pro",
     name: "Pro",
     description: "Für Studierende und Forscher mit regelmäßigem Schreibbedarf",
-    monthlyPrice: 12,
-    yearlyPrice: 8,
+    monthlyPrice: 20,
+    yearlyPrice: 13,
     icon: <User className="h-5 w-5" />,
     popular: true,
     highlight: true,
@@ -85,8 +85,8 @@ const pricingPlans: PricingPlan[] = [
     id: "team",
     name: "Team",
     description: "Für Forschungsgruppen und akademische Institutionen",
-    monthlyPrice: 25,
-    yearlyPrice: 19,
+    monthlyPrice: 40,
+    yearlyPrice: 27,
     icon: <Users className="h-5 w-5" />,
     cta: {
       label: "Team starten",
