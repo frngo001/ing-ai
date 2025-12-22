@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: 'Ing AI - KI-gestützter Schreibassistent',
   description:
     'Ing AI ist dein KI-Co-Pilot für wissenschaftliches Schreiben und Forschung. Erhalte intelligente Vorschläge, verwalte Zitate und schreibe mit Selbstvertrauen.',
+  icons: {
+    icon: '/logos/logosApp/ing_AI.png',
+    apple: '/logos/logosApp/ing_AI.png',
+  },
 }
 
 export default function RootLayout({

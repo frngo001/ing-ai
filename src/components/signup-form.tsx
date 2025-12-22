@@ -102,7 +102,7 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
           <form className="p-6 md:p-8" onSubmit={handleSignup}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-3 text-center">
-                <div className="relative h-28 w-28">
+                <Link href="/" className="relative h-28 w-28">
                   <Image
                     src="/logos/logosApp/ing_AI.png"
                     alt="Ing AI"
@@ -111,7 +111,7 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
                     className="object-contain"
                     priority
                   />
-                </div>
+                </Link>
                 <div className="space-y-1">
                   <h1 className="text-2xl font-bold">Konto bei Ing AI erstellen</h1>
                   <p className="text-muted-foreground text-sm text-balance">
