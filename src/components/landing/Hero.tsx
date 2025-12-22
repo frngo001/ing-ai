@@ -4,7 +4,6 @@ import { ArrowRight, Sparkles, Zap, FileText, Quote } from "lucide-react"
 import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
-import { useCTAHref } from "@/hooks/use-auth"
 
 import Glow, { Spotlight } from "@/components/ui/glow"
 import { Mockup, MockupFrame, FloatingCard, PerspectiveWrapper } from "@/components/ui/mockup"
@@ -17,15 +16,12 @@ import {
   AnnouncementTag,
   AnnouncementTitle,
 } from "@/components/ui/announcement"
-import { Shine } from "@/components/animate-ui/primitives/effects/shine"
 
 // =============================================================================
 // HERO COMPONENT - Premium Design with Glassmorphism & 3D Effects
 // =============================================================================
 
 export default function Hero() {
-  const ctaHref = useCTAHref()
-
   return (
     <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0 sm:py-0 md:py-0">
       <div className="max-w-7xl line-y line-dashed relative mx-auto flex flex-col gap-0 pt-12 sm:pt-32 md:pt-10">
@@ -36,7 +32,7 @@ export default function Hero() {
             <Link href="/auth/login">
               <Announcement movingBorder className="px-2.5 py-0 h-6">
                 <AnnouncementTitle className="gap-1 text-[11px] font-medium">
-                  <span className="text-muted-foreground">Jenni AI v2.0 - Jetzt verfügbar</span>
+                  <span className="text-muted-foreground">Ing AI v1.0 - Jetzt verfügbar</span>
                   <ArrowRight className="size-2.5 text-muted-foreground" />
                 </AnnouncementTitle>
               </Announcement>
@@ -52,36 +48,36 @@ export default function Hero() {
           </h1>
           {/* Subtext */}
           <p className="text-md animate-appear text-muted-foreground max-w-[840px] font-medium text-balance opacity-0 delay-100 lg:text-xl">
-            Der intelligenteste KI-Schreibassistent für Forscher und Studenten.
+            Der intelligenteste KI-Schreibassistent für akademische Arbeiten.
             Schreibe schneller, zitiere sofort und überwinde jede Schreibblockade.
           </p>
 
-          {/* Buttons */}
-          <div className="animate-appear flex gap-4 opacity-0 delay-300 justify-center">
-            <Shine asChild duration={1500} loop delay={2000} color="rgba(255, 255, 255, 0.4)">
-              <Link
-                href={ctaHref}
-                className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-white shadow-sm hover:from-primary/90 hover:to-primary/90 bg-gradient-to-b from-primary/80 to-primary/100 border-t border-white/20 h-10 rounded-md px-8"
-              >
-                Kostenlos starten
-              </Link>
-            </Shine>
-
-          </div>
-
-          {/* Social Proof (Optional - keeping simplified version if needed, or removing to match exact visual if requested. 
-              The user asked for 1-1, Launch UI has avatars. I'll include avatars but with Jenni context) */}
-          <div className="animate-appear flex gap-4 opacity-0 delay-300 justify-center items-center">
-            <div className="flex -space-x-2.5">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-background overflow-hidden bg-muted">
-                  <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" className="w-full h-full object-cover" />
-                </div>
-              ))}
+          {/* Social Proof */}
+          <div className="animate-appear opacity-0 delay-300 flex justify-center items-center mt-8">
+            <div className="group relative flex items-center gap-3 px-4 py-2.5 rounded-full bg-background/60 backdrop-blur-md border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 hover:border-border/80">
+              <div className="flex -space-x-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div 
+                    key={i} 
+                    className="relative w-10 h-10 rounded-full border-2 border-background overflow-hidden bg-muted shadow-sm hover:scale-110 transition-transform duration-200 z-0 hover:z-10"
+                  >
+                    <img 
+                      src={`https://i.pravatar.cc/100?img=${i + 10}`} 
+                      alt="User" 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col">
+                <p className="text-xs font-semibold text-foreground leading-tight">
+                  <span className="text-primary font-bold">2M+</span> Forscher
+                </p>
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  vertrauen auf Ing AI
+                </p>
+              </div>
             </div>
-            <p className="text-muted-foreground text-left text-xs font-medium">
-              Genutzt von <span className="text-foreground font-bold">2M+</span> Forschern
-            </p>
           </div>
         </div>
 

@@ -124,6 +124,20 @@ function Logo() {
 }
 
 function DesktopNav() {
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <nav className="hidden flex-1 md:flex">
+        <div className="flex items-center justify-center gap-1" />
+      </nav>
+    )
+  }
+
   return (
     <NavigationMenu className="hidden flex-1 md:flex">
       <NavigationMenuList className="flex items-center justify-center gap-1">
