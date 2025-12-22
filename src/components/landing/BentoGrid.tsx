@@ -11,6 +11,7 @@ import { Section } from "@/components/ui/section";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scroll-reveal";
 import { Button } from "@/components/ui/button";
 import { Play, X, ArrowRight, Sparkles, ShieldCheck, FileCheck, Database, FileText, Code, Code2, FileType, ArrowUpToLine, Download, Upload, FileCode } from "lucide-react";
+import { useCTAHref } from "@/hooks/use-auth";
 
 interface FeatureVideo {
     youtubeId?: string;
@@ -98,6 +99,7 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
     const [showVideo, setShowVideo] = useState(false);
     const { theme, systemTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
+    const ctaHref = useCTAHref();
 
     useEffect(() => {
         setMounted(true);
@@ -173,7 +175,7 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <Link href="/editor" className="block">
+                                                    <Link href={ctaHref} className="block">
                                                         <Button size="lg" className="w-full">
                                                             Jetzt kostenlos starten
                                                             <ArrowRight className="w-4 h-4" />

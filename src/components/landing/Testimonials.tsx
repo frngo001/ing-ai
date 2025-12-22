@@ -8,6 +8,7 @@ import { Marquee } from "@/components/ui/marquee";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useCTAHref } from "@/hooks/use-auth";
 
 const testimonials = [
     {
@@ -145,6 +146,8 @@ function TestimonialCard({
 }
 
 export function Testimonials() {
+    const ctaHref = useCTAHref()
+
     return (
         <section
             id="testimonials"
@@ -194,7 +197,7 @@ export function Testimonials() {
                     </div>
 
                     <div className="flex justify-center mt-12 relative z-20">
-                        <Link href="/editor">
+                        <Link href={ctaHref}>
                             <MorphyButton size="lg">
                                 Werde Teil der Community
                             </MorphyButton>

@@ -7,6 +7,7 @@ import { CircleCheckIcon, Menu, X } from "lucide-react"
 
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
+import { useCTAHref } from "@/hooks/use-auth"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -198,6 +199,8 @@ function DesktopNav() {
 }
 
 function AuthButtons() {
+  const ctaHref = useCTAHref()
+
   return (
     <div className="hidden items-center gap-3 md:flex">
       <Link
@@ -208,7 +211,7 @@ function AuthButtons() {
       </Link>
       <Button asChild size="sm" className="rounded-full px-4">
         <Shine asChild duration={1500} loop delay={2000} color="rgba(255, 255, 255, 0.4)">
-          <Link href="/editor">Kostenlos starten</Link>
+          <Link href={ctaHref}>Kostenlos starten</Link>
         </Shine>
       </Button>
     </div>
@@ -230,6 +233,8 @@ function MobileMenuToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
 }
 
 function MobileMenu({ onClose }: { onClose: () => void }) {
+  const ctaHref = useCTAHref()
+
   return (
     <div className="border-t bg-background px-4 py-4 md:hidden">
       <nav className="flex flex-col gap-4">
@@ -314,7 +319,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
             Login
           </Link>
           <Button asChild size="sm" className="rounded-full">
-            <Link href="/editor" onClick={onClose}>
+            <Link href={ctaHref} onClick={onClose}>
               Kostenlos starten
             </Link>
           </Button>

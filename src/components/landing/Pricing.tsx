@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { useCTAHref } from "@/hooks/use-auth";
 
 // =============================================================================
 // TYPES
@@ -118,10 +119,14 @@ function PricingCard({
   isYearly: boolean;
   index: number;
 }) {
+  const ctaHref = useCTAHref()
   const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
   const savings = plan.monthlyPrice > 0
     ? Math.round(((plan.monthlyPrice - plan.yearlyPrice) / plan.monthlyPrice) * 100)
     : 0;
+  
+  // Für Pricing-Pläne: Wenn der Plan eine spezifische URL hat (z.B. mit Plan-Parameter), diese verwenden, sonst CTA-Href
+  const href = plan.cta.href.includes("plan=") ? plan.cta.href : ctaHref;
 
   return (
     <motion.div
@@ -195,7 +200,7 @@ function PricingCard({
           plan.highlight && "shadow-lg shadow-primary/20"
         )}
       >
-        <Link href={plan.cta.href}>
+        <Link href={href}>
           {plan.cta.label}
           <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>

@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles, Zap, FileText, Quote } from "lucide-react"
 import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
+import { useCTAHref } from "@/hooks/use-auth"
 
 import Glow, { Spotlight } from "@/components/ui/glow"
 import { Mockup, MockupFrame, FloatingCard, PerspectiveWrapper } from "@/components/ui/mockup"
@@ -23,6 +24,8 @@ import { Shine } from "@/components/animate-ui/primitives/effects/shine"
 // =============================================================================
 
 export default function Hero() {
+  const ctaHref = useCTAHref()
+
   return (
     <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0 sm:py-0 md:py-0">
       <div className="max-w-7xl line-y line-dashed relative mx-auto flex flex-col gap-12 pt-24 sm:pt-32 md:pt-40">
@@ -57,7 +60,7 @@ export default function Hero() {
           <div className="animate-appear flex gap-4 opacity-0 delay-300 justify-center">
             <Shine asChild duration={1500} loop delay={2000} color="rgba(255, 255, 255, 0.4)">
               <Link
-                href="/editor"
+                href={ctaHref}
                 className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-white shadow-sm hover:from-primary/90 hover:to-primary/90 bg-gradient-to-b from-primary/80 to-primary/100 border-t border-white/20 h-10 rounded-md px-8"
               >
                 Kostenlos starten
@@ -101,7 +104,7 @@ export default function Hero() {
                   alt="Ing AI Editor"
                   width={1248}
                   height={1065}
-                  className="w-full h-[600px] sm:h-[700px] md:h-[800px] object-cover"
+                  className="object-contain h-full w-full"
                 />
               </div>
             </div>
@@ -116,8 +119,8 @@ export default function Hero() {
                   srcDark="/dashboard-dark-2.png"
                   alt="Jenni AI Dashboard 3"
                   width={1248}
-                  height={765}
-                  className="w-full h-[600px] sm:h-[700px] md:h-[800px] object-cover"
+                  height={1065}
+                  className="object-contain h-full w-full"
                 />
               </div>
             </div>
@@ -133,7 +136,7 @@ export default function Hero() {
                   alt="Jenni AI Dashboard 2"
                   width={1248}
                   height={1065}
-                  className="object-contain h-full w-full"
+                  className="object-contain max-h-full max-w-full"
                 />
               </div>
             </div>

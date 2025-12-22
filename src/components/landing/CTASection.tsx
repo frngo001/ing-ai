@@ -9,6 +9,7 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { MorphyButton } from "@/components/ui/morphy-button";
 import StatsCount from "@/components/ui/statscount";
 import Glow from "@/components/ui/glow";
+import { useCTAHref } from "@/hooks/use-auth";
 
 const stats = [
     { value: 2, suffix: "M+", label: "Aktive Nutzer" },
@@ -17,6 +18,8 @@ const stats = [
 ];
 
 export function CTASection() {
+    const ctaHref = useCTAHref()
+
     return (
         <Section className="py-24 md:py-32 bg-muted dark:bg-neutral-900 relative overflow-hidden">
             {/* Background */}
@@ -75,7 +78,7 @@ export function CTASection() {
                                     transition={{ delay: 0.4 }}
                                     className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
                                 >
-                                    <Link href="/editor">
+                                    <Link href={ctaHref}>
                                         <MorphyButton size="lg">
                                             Kostenlos starten
                                         </MorphyButton>
@@ -123,7 +126,7 @@ export function CTASection() {
                             transition={{ delay: 0.6 }}
                             className="mt-8 flex justify-center"
                         >
-                            <Link href="/editor">
+                            <Link href={ctaHref}>
                                 <MorphyButton size="lg">
                                     Jetzt kostenlos starten
                                 </MorphyButton>

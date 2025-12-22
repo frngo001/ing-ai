@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -15,6 +17,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { MorphyButton } from "@/components/ui/morphy-button"
+import { useCTAHref } from "@/hooks/use-auth"
 
 const features = [
     {
@@ -86,6 +89,8 @@ const features = [
 ]
 
 export function Features() {
+    const ctaHref = useCTAHref()
+
     return (
         <section id="features" className="py-24 bg-background relative overflow-hidden">
             <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
@@ -124,7 +129,7 @@ export function Features() {
                 </div>
 
                 <div className="flex justify-center mt-16">
-                    <Link href="/editor">
+                    <Link href={ctaHref}>
                         <MorphyButton size="lg">
                             Alle Features freischalten
                         </MorphyButton>

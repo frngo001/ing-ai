@@ -10,6 +10,7 @@ import { MorphyButton } from "@/components/ui/morphy-button";
 import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useCTAHref } from "@/hooks/use-auth";
 
 interface Tutorial {
     id: string;
@@ -187,6 +188,7 @@ export function TutorialsSection() {
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
     const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
+    const ctaHref = useCTAHref();
 
     const checkScrollButtons = () => {
         if (scrollContainerRef.current) {
@@ -282,7 +284,7 @@ export function TutorialsSection() {
                         transition={{ delay: 0.4 }}
                         className="mt-16 flex flex-col items-center gap-6"
                     >
-                        <Link href="/editor">
+                        <Link href={ctaHref}>
                             <MorphyButton size="lg">
                                 Jetzt kostenlos ausprobieren
                             </MorphyButton>

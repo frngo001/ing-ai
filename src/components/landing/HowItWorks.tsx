@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { MorphyButton } from "@/components/ui/morphy-button";
 import StatsCount from "@/components/ui/statscount";
+import { useCTAHref } from "@/hooks/use-auth";
 
 const steps = [
     {
@@ -449,6 +450,8 @@ function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: strin
 }
 
 export function HowItWorks() {
+    const ctaHref = useCTAHref()
+
     return (
         <section id="how-it-works" className="py-24 bg-white dark:bg-neutral-950 relative overflow-hidden">
             {/* Subtle background grid */}
@@ -508,7 +511,7 @@ export function HowItWorks() {
                     </div>
 
                     <div className="flex justify-center mt-12">
-                        <Link href="/editor">
+                        <Link href={ctaHref}>
                             <MorphyButton size="lg">
                                 Jetzt Workflow starten
                             </MorphyButton>
