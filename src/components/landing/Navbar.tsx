@@ -208,7 +208,7 @@ function AuthButtons() {
       </Link>
       <Button asChild size="sm" className="rounded-full px-4">
         <Shine asChild duration={1500} loop delay={2000} color="rgba(255, 255, 255, 0.4)">
-          <Link href="/auth/signup">Kostenlos starten</Link>
+          <Link href="/editor">Kostenlos starten</Link>
         </Shine>
       </Button>
     </div>
@@ -314,7 +314,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
             Login
           </Link>
           <Button asChild size="sm" className="rounded-full">
-            <Link href="/auth/signup" onClick={onClose}>
+            <Link href="/editor" onClick={onClose}>
               Kostenlos starten
             </Link>
           </Button>

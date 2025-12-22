@@ -57,7 +57,7 @@ export default function Hero() {
           <div className="animate-appear flex gap-4 opacity-0 delay-300 justify-center">
             <Shine asChild duration={1500} loop delay={2000} color="rgba(255, 255, 255, 0.4)">
               <Link
-                href={siteConfig.getStartedUrl}
+                href="/editor"
                 className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-white shadow-sm hover:from-primary/90 hover:to-primary/90 bg-gradient-to-b from-primary/80 to-primary/100 border-t border-white/20 h-10 rounded-md px-8"
               >
                 Kostenlos starten
@@ -89,31 +89,52 @@ export default function Hero() {
         </div>
 
         {/* 3D Mockup Section */}
-        <div className="group relative sm:px-24 h-[500px] sm:h-[600px] flex justify-center items-center perspective-[2000px] z-10">
+        <div className="group relative sm:px-24 h-[600px] sm:h-[700px] md:h-[800px] flex justify-center items-center perspective-[2000px] z-10">
 
           {/* Left Mockup */}
-          <div className="absolute left-[5%] sm:left-[15%] z-10 w-[70%] sm:w-[50%] md:w-[45%] transition-all delay-200 duration-1000 ease-in-out group-hover:left-[5%] sm:group-hover:left-[10%] group-hover:-translate-x-10">
+          <div className="absolute left-[5%] sm:left-[10%] z-10 w-[80%] sm:w-[60%] md:w-[55%] transition-all delay-200 duration-1000 ease-in-out group-hover:left-[5%] sm:group-hover:left-[5%] group-hover:-translate-x-10">
             <div className="bg-border/50 flex relative z-10 overflow-hidden rounded-2xl dark:bg-border/10 p-2 animate-appear shadow-2xl opacity-60">
               <div className="flex relative z-10 overflow-hidden shadow-2xl border border-border/70 dark:border-border/5 dark:border-t-border/15 rounded-md bg-background">
-                <img src="/dashboard-dark.png" alt="Jenni AI" className="w-full h-auto" />
+                <Screenshot
+                  srcLight="/dashboard-ligth-1.png"
+                  srcDark="/dashboaed-dark_1.png"
+                  alt="Ing AI Editor"
+                  width={1248}
+                  height={1065}
+                  className="w-full h-[600px] sm:h-[700px] md:h-[800px] object-cover"
+                />
               </div>
             </div>
           </div>
 
           {/* Right Mockup */}
-          <div className="absolute right-[5%] sm:right-[15%] z-10 w-[70%] sm:w-[50%] md:w-[45%] transition-all delay-200 duration-1000 ease-in-out group-hover:right-[5%] sm:group-hover:right-[10%] group-hover:translate-x-10">
+          <div className="absolute right-[5%] sm:right-[10%] z-10 w-[80%] sm:w-[60%] md:w-[55%] transition-all delay-200 duration-1000 ease-in-out group-hover:right-[5%] sm:group-hover:right-[5%] group-hover:translate-x-10">
             <div className="bg-border/50 flex relative z-10 overflow-hidden rounded-2xl dark:bg-border/10 p-2 animate-appear shadow-2xl opacity-60">
               <div className="flex relative z-10 overflow-hidden shadow-2xl border border-border/70 dark:border-border/5 dark:border-t-border/15 rounded-md bg-background">
-                <img src="/dashboard-dark.png" alt="Jenni AI" className="w-full h-auto" />
+                <Screenshot
+                  srcLight="/dashboard-ligth-2.png"
+                  srcDark="/dashboard-dark-2.png"
+                  alt="Jenni AI Dashboard 3"
+                  width={1248}
+                  height={765}
+                  className="w-full h-[600px] sm:h-[700px] md:h-[800px] object-cover"
+                />
               </div>
             </div>
           </div>
 
           {/* Center Mockup */}
-          <div className="relative z-20 w-[85%] sm:w-[65%] md:w-[60%] transition-all delay-200 duration-1000 ease-in-out hover:!scale-105 hover:!z-30">
+          <div className="relative z-20 w-[90%] sm:w-[75%] md:w-[70%] transition-all delay-200 duration-1000 ease-in-out hover:!scale-105 hover:!z-30">
             <div className="bg-border/50 flex relative z-10 overflow-hidden rounded-2xl dark:bg-border/10 p-2 animate-appear shadow-2xl opacity-100">
               <div className="flex relative z-10 overflow-hidden shadow-2xl border border-border/70 dark:border-border/5 dark:border-t-border/15 rounded-md bg-background">
-                <img src="/dashboard-dark.png" alt="Jenni AI" className="w-full h-auto" />
+                <Screenshot
+                  srcLight="/dashboard-ligth-3.png"
+                  srcDark="/dashboard-dark-3.png"
+                  alt="Jenni AI Dashboard 2"
+                  width={1248}
+                  height={1065}
+                  className="object-contain h-full w-full"
+                />
               </div>
             </div>
           </div>

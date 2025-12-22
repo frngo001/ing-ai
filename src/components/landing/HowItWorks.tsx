@@ -508,7 +508,7 @@ export function HowItWorks() {
                     </div>
 
                     <div className="flex justify-center mt-12">
-                        <Link href="/auth/signup">
+                        <Link href="/editor">
                             <MorphyButton size="lg">
                                 Jetzt Workflow starten
                             </MorphyButton>

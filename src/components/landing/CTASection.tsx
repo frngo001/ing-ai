@@ -75,7 +75,7 @@ export function CTASection() {
                                     transition={{ delay: 0.4 }}
                                     className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
                                 >
-                                    <Link href="/auth/signup">
+                                    <Link href="/editor">
                                         <MorphyButton size="lg">
                                             Kostenlos starten
                                         </MorphyButton>
@@ -123,7 +123,7 @@ export function CTASection() {
                             transition={{ delay: 0.6 }}
                             className="mt-8 flex justify-center"
                         >
-                            <Link href="/auth/signup">
+                            <Link href="/editor">
                                 <MorphyButton size="lg">
                                     Jetzt kostenlos starten
                                 </MorphyButton>

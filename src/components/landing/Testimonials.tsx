@@ -194,7 +194,7 @@ export function Testimonials() {
                     </div>
 
                     <div className="flex justify-center mt-12 relative z-20">
-                        <Link href="/auth/signup">
+                        <Link href="/editor">
                             <MorphyButton size="lg">
                                 Werde Teil der Community
                             </MorphyButton>

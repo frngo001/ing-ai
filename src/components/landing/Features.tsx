@@ -124,7 +124,7 @@ export function Features() {
                 </div>
 
                 <div className="flex justify-center mt-16">
-                    <Link href="/auth/signup">
+                    <Link href="/editor">
                         <MorphyButton size="lg">
                             Alle Features freischalten
                         </MorphyButton>

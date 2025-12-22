@@ -282,7 +282,7 @@ export function TutorialsSection() {
                         transition={{ delay: 0.4 }}
                         className="mt-16 flex flex-col items-center gap-6"
                     >
-                        <Link href="/auth/signup">
+                        <Link href="/editor">
                             <MorphyButton size="lg">
                                 Jetzt kostenlos ausprobieren
                             </MorphyButton>
