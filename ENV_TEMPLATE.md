@@ -15,3 +15,6 @@ AI_COMMAND_RATE_LIMIT_WINDOW_MS=60000
 
 # Optional: Cache configuration (if using Redis/Upstash)
 # REDIS_URL=your_redis_url_here
+
+# Optional: YouTube Data API v3 (für Video-Dauer)
+# YOUTUBE_API_KEY=your_youtube_api_key_here

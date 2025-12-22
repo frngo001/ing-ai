@@ -26,7 +26,7 @@ export function MovingLinesBackground({
   const directionValue = direction === "right" ? "200%" : "-200%"
 
   return (
-    <div className={cn("relative overflow-hidden", className)}>
+    <div className={cn("relative", className)}>
       <style jsx>{`
         @keyframes lineBackgroundMove-${id} {
           0% {
@@ -51,7 +51,7 @@ export function MovingLinesBackground({
           } as React.CSSProperties
         }
         className={cn(
-          "absolute inset-0 z-0 transition-colors duration-500",
+          "absolute inset-0 z-0 transition-colors duration-500 pointer-events-none overflow-hidden",
           "bg-[linear-gradient(45deg,transparent_45%,rgba(0,0,0,0.08)_45%,rgba(0,0,0,0.08)_55%,transparent_0)]",
           "dark:bg-[linear-gradient(45deg,transparent_45%,rgba(255,255,255,0.08)_45%,rgba(255,255,255,0.08)_55%,transparent_0)]",
           lineClassName

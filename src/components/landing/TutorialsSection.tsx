@@ -1,16 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/ui/section";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { Button } from "@/components/ui/button";
 import { MorphyButton } from "@/components/ui/morphy-button";
-import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useCTAHref } from "@/hooks/use-auth";
+import LiteYouTubeEmbed from "react-lite-youtube-embed";
+import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
 
 interface Tutorial {
     id: string;
@@ -21,120 +23,33 @@ interface Tutorial {
     youtubeId: string;
 }
 
-const tutorials: Tutorial[] = [
-    {
-        id: "1",
-        title: "Erste Schritte mit Ing AI",
-        description: "Lerne die Grundlagen und starte mit deinem ersten Dokument.",
-        duration: "5:32",
-        thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=800",
-        youtubeId: "dQw4w9WgXcQ",
-    },
-    {
-        id: "2",
-        title: "Zitationen automatisch einfügen",
-        description: "So nutzt du die automatische Zitationsfunktion richtig.",
-        duration: "8:15",
-        thumbnail: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=800",
-        youtubeId: "dQw4w9WgXcQ",
-    },
-    {
-        id: "3",
-        title: "PDF-Chat für Recherche nutzen",
-        description: "Stelle Fragen an deine Forschungsarbeiten und spare Zeit.",
-        duration: "6:48",
-        thumbnail: "https://images.unsplash.com/photo-1553484771-047a44eee27b?auto=format&fit=crop&q=80&w=800",
-        youtubeId: "dQw4w9WgXcQ",
-    },
-    {
-        id: "4",
-        title: "Gliederung mit KI erstellen",
-        description: "Lass die KI eine strukturierte Gliederung für deine Arbeit erstellen.",
-        duration: "7:22",
-        thumbnail: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800",
-        youtubeId: "dQw4w9WgXcQ",
-    },
-    {
-        id: "5",
-        title: "Export nach Word & LaTeX",
-        description: "Exportiere deine Arbeit perfekt formatiert in verschiedene Formate.",
-        duration: "4:55",
-        thumbnail: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&q=80&w=800",
-        youtubeId: "dQw4w9WgXcQ",
-    },
-    {
-        id: "6",
-        title: "Plagiatsprüfung durchführen",
-        description: "Prüfe deine Arbeit auf Plagiate bevor du sie einreichst.",
-        duration: "5:10",
-        thumbnail: "https://images.unsplash.com/photo-1471107340929-a87cd0f5b5f3?auto=format&fit=crop&q=80&w=800",
-        youtubeId: "dQw4w9WgXcQ",
-    },
+/**
+ * YouTube-Video-Links für die Tutorials
+ * 
+ * Unterstützte Formate:
+ * - https://www.youtube.com/watch?v=VIDEO_ID
+ * - https://youtu.be/VIDEO_ID
+ * - https://www.youtube.com/embed/VIDEO_ID
+ * 
+ * Die Metadaten (Titel, Beschreibung, Thumbnail, Dauer) werden automatisch
+ * aus YouTube extrahiert.
+ */
+const YOUTUBE_VIDEO_URLS = [
+    "https://youtu.be/04Qoal8et84?si=FHIVI5fKAVgez_Qn", // Beispiel - ersetze durch echte YouTube-Links
+    "https://youtu.be/JryftzFzeuk?si=rhsa5A1p3meHu_PH",
+    "https://youtu.be/LdYJgpzOvtI?si=CPv8NKeRRZBy-8cH",
+    "https://youtu.be/E4WjguR2y94?si=4BvmW1BC-etcBeiw",
+    "https://youtu.be/EGgdGLYdoLg?si=QttZCs-RvGoFuKk9",
+    "https://youtu.be/o3lbD_01JnI?si=5BnmiZuO3kjp5PRU",
 ];
-
-function VideoModal({
-    tutorial,
-    onClose
-}: {
-    tutorial: Tutorial;
-    onClose: () => void;
-}) {
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/90 backdrop-blur-sm"
-            onClick={onClose}
-        >
-            <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative w-full max-w-5xl"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute -top-12 right-0 p-2 text-white/80 hover:text-white transition-colors"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-
-                {/* Video Container */}
-                <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-950 border border-neutral-800">
-                    <iframe
-                        src={`https://www.youtube.com/embed/${tutorial.youtubeId}?autoplay=1&rel=0`}
-                        title={tutorial.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="absolute inset-0 w-full h-full"
-                    />
-                </div>
-
-                {/* Video Title */}
-                <div className="mt-4">
-                    <h3 className="text-xl font-semibold text-white">{tutorial.title}</h3>
-                    <p className="text-neutral-400 mt-1">{tutorial.description}</p>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-}
 
 function TutorialCard({
     tutorial,
-    index,
-    onPlay
+    index
 }: {
     tutorial: Tutorial;
     index: number;
-    onPlay: () => void;
 }) {
-    const [isHovered, setIsHovered] = useState(false);
-
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -142,43 +57,41 @@ function TutorialCard({
             viewport={{ once: true }}
             transition={{ delay: index * 0.1 }}
             className="flex-shrink-0 w-[320px] md:w-[380px]"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
         >
-            <button
-                onClick={onPlay}
-                className="block group text-left w-full"
-            >
-                {/* Thumbnail */}
+            <div className="block text-left w-full">
+                {/* Video Embed */}
                 <div className="relative aspect-video rounded-xl overflow-hidden mb-4 border border-neutral-200 dark:border-neutral-800">
-                    <img
-                        src={tutorial.thumbnail}
-                        alt={tutorial.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    <LiteYouTubeEmbed
+                        id={tutorial.youtubeId}
+                        title={tutorial.title}
+                        wrapperClass={cn(
+                            "rounded-xl overflow-hidden",
+                            "relative block cursor-pointer bg-black bg-center bg-cover [contain:content]",
+                            "after:block after:pb-[56.25%] after:content-['']",
+                            "[&_>_iframe]:absolute [&_>_iframe]:top-0 [&_>_iframe]:left-0 [&_>_iframe]:size-full",
+                            "[&_>_.lty-playbtn]:z-1 [&_>_.lty-playbtn]:h-[46px] [&_>_.lty-playbtn]:w-[70px] [&_>_.lty-playbtn]:rounded-[14%] [&_>_.lty-playbtn]:bg-[#212121] [&_>_.lty-playbtn]:opacity-80 [&_>_.lty-playbtn]:[transition:all_0.2s_cubic-bezier(0,_0,_0.2,_1)]",
+                            "[&:hover_>_.lty-playbtn]:bg-[#ff0000] [&:hover_>_.lty-playbtn]:opacity-100",
+                            "[&_>_.lty-playbtn]:before:border-[transparent_transparent_transparent_#fff] [&_>_.lty-playbtn]:before:border-y-[11px] [&_>_.lty-playbtn]:before:border-r-0 [&_>_.lty-playbtn]:before:border-l-[19px] [&_>_.lty-playbtn]:before:content-['']",
+                            "[&_>_.lty-playbtn]:absolute [&_>_.lty-playbtn]:top-1/2 [&_>_.lty-playbtn]:left-1/2 [&_>_.lty-playbtn]:[transform:translate3d(-50%,-50%,0)]",
+                            "[&.lyt-activated]:before:hidden"
+                        )}
                     />
-                    {/* Overlay */}
-                    <div className={cn(
-                        "absolute inset-0 bg-neutral-900/40 flex items-center justify-center transition-opacity duration-300",
-                        isHovered ? "opacity-100" : "opacity-0"
-                    )}>
-                        <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                            <Play className="w-7 h-7 text-neutral-900 ml-1" fill="currentColor" />
-                        </div>
-                    </div>
                     {/* Duration Badge */}
-                    <div className="absolute bottom-3 right-3 px-2 py-1 bg-neutral-900/80 rounded text-xs font-medium text-white">
-                        {tutorial.duration}
-                    </div>
+                    {tutorial.duration !== "N/A" && (
+                        <div className="absolute bottom-3 right-3 px-2 py-1 bg-neutral-900/80 rounded text-xs font-medium text-white pointer-events-none">
+                            {tutorial.duration}
+                        </div>
+                    )}
                 </div>
 
                 {/* Content */}
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors">
+                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
                     {tutorial.title}
                 </h3>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
                     {tutorial.description}
                 </p>
-            </button>
+            </div>
         </motion.div>
     );
 }
@@ -187,8 +100,59 @@ export function TutorialsSection() {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
-    const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
+    const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const ctaHref = useCTAHref();
+
+    // Lade YouTube-Metadaten beim Mount
+    useEffect(() => {
+        async function loadTutorials() {
+            try {
+                setIsLoading(true);
+                const response = await fetch('/api/youtube/metadata', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ videoUrls: YOUTUBE_VIDEO_URLS }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch YouTube metadata');
+                }
+
+                const data = await response.json();
+                const loadedTutorials: Tutorial[] = data.videos.map((video: any, index: number) => ({
+                    id: String(index + 1),
+                    title: video.title,
+                    description: video.description,
+                    duration: video.duration,
+                    thumbnail: video.thumbnail,
+                    youtubeId: video.youtubeId,
+                }));
+
+                setTutorials(loadedTutorials);
+            } catch (error) {
+                console.error('Error loading tutorials:', error);
+                // Fallback: Leere Liste oder Fehlerzustand
+                setTutorials([]);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        loadTutorials();
+    }, []);
+
+    // Initialisiere Scroll-Buttons wenn Tutorials geladen werden
+    useEffect(() => {
+        if (tutorials.length > 0) {
+            // Warte kurz, damit das DOM gerendert ist
+            setTimeout(() => {
+                checkScrollButtons();
+            }, 100);
+        }
+    }, [tutorials]);
 
     const checkScrollButtons = () => {
         if (scrollContainerRef.current) {
@@ -258,22 +222,37 @@ export function TutorialsSection() {
                         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-muted dark:from-neutral-900 to-transparent" />
                         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-muted dark:from-neutral-900 to-transparent" />
 
+                        {/* Loading State */}
+                        {isLoading && (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+                            </div>
+                        )}
+
                         {/* Scrollable Container */}
-                        <div
-                            ref={scrollContainerRef}
-                            onScroll={checkScrollButtons}
-                            className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4"
-                            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                        >
+                        {!isLoading && tutorials.length > 0 && (
+                            <div
+                                ref={scrollContainerRef}
+                                onScroll={checkScrollButtons}
+                                className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4"
+                                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                            >
                             {tutorials.map((tutorial, index) => (
                                 <TutorialCard
                                     key={tutorial.id}
                                     tutorial={tutorial}
                                     index={index}
-                                    onPlay={() => setSelectedTutorial(tutorial)}
                                 />
                             ))}
-                        </div>
+                            </div>
+                        )}
+
+                        {/* Empty State */}
+                        {!isLoading && tutorials.length === 0 && (
+                            <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
+                                Keine Tutorials verfügbar.
+                            </div>
+                        )}
                     </div>
 
                     {/* CTA Section */}
@@ -301,16 +280,6 @@ export function TutorialsSection() {
                     </motion.div>
                 </div>
             </Section>
-
-            {/* Video Modal */}
-            <AnimatePresence>
-                {selectedTutorial && (
-                    <VideoModal
-                        tutorial={selectedTutorial}
-                        onClose={() => setSelectedTutorial(null)}
-                    />
-                )}
-            </AnimatePresence>
         </>
     );
 }

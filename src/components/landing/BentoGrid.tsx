@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/ui/section";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scroll-reveal";
 import { Button } from "@/components/ui/button";
-import { Play, X, ArrowRight, Sparkles, ShieldCheck, FileCheck, Database, FileText, Code, Code2, FileType, ArrowUpToLine, Download, Upload, FileCode } from "lucide-react";
+import { Play, X, ShieldCheck, FileCheck, Database, FileText, Code, Code2, FileType, ArrowUpToLine, Download, Upload, FileCode } from "lucide-react";
 import { useCTAHref } from "@/hooks/use-auth";
 
 interface FeatureVideo {
@@ -160,27 +160,34 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: 0.3 }}
-                                                    className="mt-6 p-4 rounded-xl bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900 border border-neutral-200 dark:border-neutral-700"
+                                                    className="mt-6 p-6 rounded-2xl bg-neutral-900 dark:bg-neutral-950 border-2 border-neutral-800 dark:border-neutral-800 relative overflow-hidden"
                                                 >
-                                                    <div className="flex items-center gap-3 mb-3">
-                                                        <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                                                            <Sparkles className="w-5 h-5 text-neutral-900 dark:text-neutral-100" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <h4 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                                    {/* Subtle background pattern */}
+                                                    <div className="absolute inset-0 opacity-5">
+                                                        <div className="absolute inset-0" style={{
+                                                            backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)',
+                                                            backgroundSize: '24px 24px'
+                                                        }} />
+                                                    </div>
+                                                    
+                                                    <div className="relative z-10 space-y-4">
+                                                        <div className="space-y-1">
+                                                            <h4 className="text-lg font-bold text-white dark:text-neutral-100 leading-tight">
                                                                 Über 9000 Zitierstile verfügbar
                                                             </h4>
-                                                            <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                                            <p className="text-sm text-neutral-300 dark:text-neutral-400">
                                                                 Probiere es jetzt kostenlos aus
                                                             </p>
                                                         </div>
+                                                        <Link href={ctaHref} className="block">
+                                                            <Button 
+                                                                size="lg" 
+                                                                className="w-full bg-white text-neutral-900 hover:bg-neutral-100 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 font-semibold text-base py-6 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                                                            >
+                                                                Jetzt kostenlos starten
+                                                            </Button>
+                                                        </Link>
                                                     </div>
-                                                    <Link href={ctaHref} className="block">
-                                                        <Button size="lg" className="w-full">
-                                                            Jetzt kostenlos starten
-                                                            <ArrowRight className="w-4 h-4" />
-                                                        </Button>
-                                                    </Link>
                                                 </motion.div>
                                             )}
                                         </>

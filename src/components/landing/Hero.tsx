@@ -28,8 +28,8 @@ export default function Hero() {
 
   return (
     <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0 sm:py-0 md:py-0">
-      <div className="max-w-7xl line-y line-dashed relative mx-auto flex flex-col gap-12 pt-24 sm:pt-32 md:pt-40">
-        <div className="relative z-10 flex flex-col items-center text-center gap-6 sm:gap-8">
+      <div className="max-w-7xl line-y line-dashed relative mx-auto flex flex-col gap-0 pt-12 sm:pt-32 md:pt-10">
+        <div className="relative z-10 flex flex-col items-center text-center gap-2 sm:gap-3">
 
           {/* Badge */}
           <div className="animate-appear bg-background/50 backdrop-blur-sm rounded-full">
@@ -92,7 +92,7 @@ export default function Hero() {
         </div>
 
         {/* 3D Mockup Section */}
-        <div className="group relative sm:px-24 h-[600px] sm:h-[700px] md:h-[800px] flex justify-center items-center perspective-[2000px] z-10">
+        <div className="group relative sm:px-24 h-[600px] sm:h-[700px] md:h-[800px] flex justify-center items-center perspective-[2000px] z-10 -mt-8 sm:-mt-12">
 
           {/* Left Mockup */}
           <div className="absolute left-[5%] sm:left-[10%] z-10 w-[80%] sm:w-[60%] md:w-[55%] transition-all delay-200 duration-1000 ease-in-out group-hover:left-[5%] sm:group-hover:left-[5%] group-hover:-translate-x-10">

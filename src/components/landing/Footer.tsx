@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ModeToggle } from "@/components/mode-toggle"
+import { FooterThemeToggle } from "@/components/footer-theme-toggle"
 import { Twitter, Github, Linkedin, Youtube } from "lucide-react"
 import { MovingLinesBackground } from "@/components/ui/movinglines-background"
 import { siteConfig } from "@/config/site"
@@ -151,14 +151,14 @@ export function Footer() {
                     {/* Bottom Bar */}
                     <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
                         <p>© {new Date().getFullYear()} {siteConfig.name}. Alle Rechte vorbehalten.</p>
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-6 relative z-50">
                             <Link href="/privacy" className="hover:text-foreground transition-colors">
                                 Datenschutz
                             </Link>
                             <Link href="/terms" className="hover:text-foreground transition-colors">
                                 AGB
                             </Link>
-                            <ModeToggle />
+                            <FooterThemeToggle />
                         </div>
                     </div>
                 </div>
