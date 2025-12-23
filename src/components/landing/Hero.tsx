@@ -71,7 +71,7 @@ export default function Hero() {
               </div>
               <div className="flex flex-col">
                 <p className="text-xs font-semibold text-foreground leading-tight">
-                  <span className="text-primary font-bold">2M+</span> Forscher
+                  <span className="text-primary font-bold">100+</span> Studenten und Forscher
                 </p>
                 <p className="text-[10px] text-muted-foreground leading-tight">
                   vertrauen auf Ing AI
