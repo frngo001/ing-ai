@@ -188,8 +188,8 @@ export default function AboutPage() {
               <Badge variant="outline" className="mb-6 text-[10px] uppercase tracking-wider">
                 Über uns
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-                Die Zukunft des <span className="text-white">akademischen Schreibens</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-foreground">
+                Die Zukunft des <span className="text-foreground">akademischen Schreibens</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
                 Wir revolutionieren das akademische Schreiben mit künstlicher Intelligenz.

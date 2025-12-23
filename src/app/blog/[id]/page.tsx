@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { MorphyButton } from '@/components/ui/morphy-button'
 import { Badge } from '@/components/ui/badge'
 import { getBlogPost } from '@/lib/blog/data'
+import { BlogTableOfContents } from '@/components/blog/blog-table-of-contents'
 
 export default function BlogPostPage() {
   const params = useParams()
@@ -62,8 +63,10 @@ export default function BlogPostPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
-      <main className="flex-1">
-        <article className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
+      {/* Table of Contents - außerhalb des main Elements für fixierte Positionierung */}
+      <BlogTableOfContents content={blogContent.content} />
+      <main className="flex-1 relative">
+        <article className="container mx-auto px-4 py-8 md:py-12 max-w-3xl xl:mr-[280px]">
           {/* Blog Header */}
           <header className="mb-12">
             {/* Author and Date */}
