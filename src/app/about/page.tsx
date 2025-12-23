@@ -24,47 +24,19 @@ import { cn } from '@/lib/utils'
 
 const teamMembers = [
   {
-    name: "Dr. Anna Schmidt",
-    role: "CEO & Co-Founder",
-    description: "Ehemalige Professorin für Linguistik mit 15 Jahren Erfahrung in der Forschung.",
-    avatar: "AS",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
-  },
-  {
-    name: "Max Weber",
-    role: "CTO & Co-Founder",
-    description: "KI-Experte mit Hintergrund bei führenden Tech-Unternehmen.",
-    avatar: "MW",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
-  },
-  {
-    name: "Lisa Chen",
-    role: "Head of Product",
-    description: "Produktdesignerin mit Fokus auf Bildungstechnologie.",
-    avatar: "LC",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
-  },
-  {
-    name: "Dr. Thomas Müller",
-    role: "Head of AI Research",
-    description: "Führender Forscher für NLP und maschinelles Lernen.",
-    avatar: "TM",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
-  },
-  {
-    name: "Sarah Johnson",
-    role: "Head of Design",
-    description: "UX-Expertin mit Leidenschaft für intuitive Benutzeroberflächen.",
-    avatar: "SJ",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
-  },
-  {
-    name: "David Park",
-    role: "Engineering Lead",
-    description: "Full-Stack-Entwickler mit 10+ Jahren Erfahrung.",
-    avatar: "DP",
+    name: "Franc Ngongang",
+    role: "Co-Founder & CEO",
+    description: "Visionär und Gründer mit Leidenschaft für KI-gestütztes wissenschaftliches Schreiben.",
+    avatar: "FN",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
   },
+  {
+    name: "Samou Ingrid",
+    role: "Co-Founder & CTO",
+    description: "Technologie-Experte und Entwickler mit Fokus auf innovative KI-Lösungen.",
+    avatar: "SI",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
+  }
 ]
 
 const values = [
@@ -87,26 +59,26 @@ const values = [
 ]
 
 const milestones = [
-  { year: "2020", title: "Gründung", description: "Start mit einer Vision: Akademisches Schreiben revolutionieren." },
-  { year: "2021", title: "1M Nutzer", description: "Erste Million Nutzer erreicht, globale Expansion beginnt." },
-  { year: "2022", title: "KI-Update", description: "Launch unserer fortschrittlichen KI-Autocomplete-Funktion." },
-  { year: "2023", title: "5M Nutzer", description: "Fünf Millionen Forscher vertrauen auf unsere Plattform." },
-  { year: "2024", title: "Enterprise", description: "Launch von Team-Funktionen für Universitäten und Unternehmen." },
+  { year: "10 Dezember 2025", title: "Gründung", description: "Franc Ngongang und Samou Ingrid gründen das Unternehmen mit der Vision, akademisches Schreiben zu revolutionieren." },
+  { year: "20 Dezember 2025", title: "Produktentwicklung", description: "Intensive Entwicklung der ersten Version der Plattform mit KI-gestützten Funktionen für wissenschaftliches Schreiben." },
+  { year: "25 Dezember 2025", title: "Beta-Testing", description: "Erste Beta-Version wird getestet und Feedback von frühen Nutzern gesammelt." },
+  { year: "28 Dezember 2025", title: "Launch", description: "Offizieller Launch der Anwendung - der Startschuss für unsere Reise zur Demokratisierung des akademischen Schreibens." },
+  { year: "30 Dezember 2025", title: "Erste Nutzer", description: "Die ersten Nutzer entdecken unsere Plattform und beginnen, ihre wissenschaftlichen Arbeiten mit KI-Unterstützung zu erstellen." },
 ]
 
 const stats = [
-  { value: 5, suffix: "M+", label: "Aktive Nutzer" },
-  { value: 200, suffix: "+", label: "Universitäten" },
-  { value: 50, suffix: "M+", label: "Dokumente" },
-  { value: 20, suffix: "+", label: "Sprachen" },
+  { value: 200, suffix: "+", label: "Aktive Nutzer" },
+  { value: 20, suffix: "+", label: "Universitäten" },
+  { value: 10, suffix: "K+", label: "Dokumente" },
+  { value: 3, suffix: "+", label: "Sprachen" },
 ]
 
 const userGrowthData = [
-  { year: "2020", users: 0.1, label: "100K" },
-  { year: "2021", users: 1, label: "1M" },
-  { year: "2022", users: 2.5, label: "2.5M" },
-  { year: "2023", users: 4, label: "4M" },
-  { year: "2024", users: 5, label: "5M" },
+  { year: "2025", users: 0.1, label: "10" },
+  { year: "Oktober 2025", users: 1, label: "10" },
+  { year: "November 2025", users: 2.5, label: "25" },
+  { year: "Dezember 2025", users: 4, label: "40" },
+  { year: "Januar 2026", users: 5, label: "200" },
 ]
 
 function AnimatedCounter({
@@ -344,8 +316,8 @@ export default function AboutPage() {
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Die Menschen hinter {siteConfig.name}</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Ein vielfältiges Team aus Wissenschaftlern, Ingenieuren und Designern,
-                vereint durch die Leidenschaft, akademisches Schreiben zu verbessern.
+                Ein kleines, aber leidenschaftliches Team, das sich der Revolutionierung
+                des akademischen Schreibens verschrieben hat.
               </p>
             </ScrollReveal>
           </div>
@@ -379,20 +351,20 @@ export default function AboutPage() {
               <ScrollReveal delay={0.2}>
                 <div className="space-y-6 text-muted-foreground leading-relaxed">
                   <p>
-                    {siteConfig.name} wurde gegründet, als unsere Gründer während ihrer
-                    eigenen akademischen Laufbahn die Frustration des wissenschaftlichen
-                    Schreibens erlebten. Stundenlange Recherche, mühsames Zitieren und
-                    die ewige Schreibblockade – das musste doch besser gehen.
+                    {siteConfig.name} wurde von Franc Ngongang und Samou Ingrid gegründet,
+                    die während ihrer eigenen akademischen Laufbahn die Herausforderungen
+                    des wissenschaftlichen Schreibens erlebten. Stundenlange Recherche,
+                    mühsames Zitieren und die ewige Schreibblockade – das musste doch besser gehen.
                   </p>
                   <p>
-                    Mit Fortschritten in der KI-Technologie sahen wir die Möglichkeit,
+                    Mit den Fortschritten in der KI-Technologie sahen wir die Möglichkeit,
                     einen Assistenten zu schaffen, der nicht nur Texte korrigiert, sondern
                     aktiv beim Denk- und Schreibprozess unterstützt. So entstand {siteConfig.name} –
                     ein Tool, das von Forschern für Forscher entwickelt wurde.
                   </p>
                   <p>
-                    Heute nutzen über 5 Millionen Studierende und Forscher weltweit unsere
-                    Plattform. Und wir sind erst am Anfang unserer Reise. Mit jedem Update,
+                    Wir haben unsere Anwendung gerade erst vor wenigen Tagen gelauncht und
+                    sind voller Vorfreude auf die Reise, die vor uns liegt. Mit jedem Update,
                     jedem Feedback und jeder neuen Funktion kommen wir unserer Vision näher:
                     Eine Welt, in der jeder seine Ideen klar und überzeugend kommunizieren kann.
                   </p>
@@ -411,8 +383,8 @@ export default function AboutPage() {
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Unser Nutzer-Wachstum</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Von 100.000 Nutzern im Jahr 2020 zu über 5 Millionen heute –
-                eine Erfolgsgeschichte, die von unserer Community geschrieben wird.
+                Wir sind gerade erst gestartet und freuen uns darauf, gemeinsam mit unserer
+                Community zu wachsen und die Zukunft des akademischen Schreibens zu gestalten.
               </p>
             </ScrollReveal>
             <GrowthChart />
@@ -427,7 +399,8 @@ export default function AboutPage() {
                 Bereit, Ihr Schreiben zu transformieren?
               </h2>
               <p className="text-muted-foreground mb-8">
-                Schließen Sie sich Millionen von Forschern an, die bereits mit {siteConfig.name} arbeiten.
+                Werden Sie Teil unserer wachsenden Community und erleben Sie die Zukunft
+                des akademischen Schreibens mit {siteConfig.name}.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="rounded-full">
