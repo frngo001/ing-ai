@@ -1,27 +1,45 @@
 import { asBlob } from 'html-docx-js-typescript'
 import { saveAs } from 'file-saver'
+import type { Value } from 'platejs'
+import { exportToDocxAndDownload } from './docx-exporter'
 
 export type ExportFormat = 'html' | 'docx' | 'latex' | 'txt'
 
+/**
+ * Exportiert ein Dokument im angegebenen Format
+ * @param content - HTML-String oder Editor-Value (für DOCX)
+ * @param title - Dokumenttitel
+ * @param format - Export-Format
+ * @param editorValue - Optional: Editor-Value für DOCX-Export (wenn nicht übergeben, wird content als HTML behandelt)
+ */
 export async function exportDocument(
-    content: string,
+    content: string | Value,
     title: string,
-    format: ExportFormat
+    format: ExportFormat,
+    editorValue?: Value
 ) {
     const filename = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`
 
     switch (format) {
         case 'html':
-            exportHtml(content, filename)
+            exportHtml(typeof content === 'string' ? content : '', filename)
             break
         case 'docx':
-            await exportDocx(content, filename)
+            // Für DOCX: verwende editorValue falls vorhanden, sonst versuche content als Value
+            if (editorValue) {
+                await exportToDocxAndDownload(editorValue, filename)
+            } else if (typeof content !== 'string') {
+                await exportToDocxAndDownload(content, filename)
+            } else {
+                // Fallback: alter HTML-basierter Export
+                await exportDocx(content, filename)
+            }
             break
         case 'latex':
-            exportLatex(content, filename)
+            exportLatex(typeof content === 'string' ? content : '', filename)
             break
         case 'txt':
-            exportTxt(content, filename)
+            exportTxt(typeof content === 'string' ? content : '', filename)
             break
     }
 }

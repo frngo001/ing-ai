@@ -9,6 +9,8 @@ import { ArrowDownToLineIcon } from 'lucide-react';
 import { createSlateEditor } from 'platejs';
 import { useEditorRef } from 'platejs/react';
 import { serializeHtml } from 'platejs/static';
+import { exportToDocxAndDownload } from '@/lib/export/docx-exporter';
+import { useCitationStore } from '@/lib/stores/citation-store';
 
 import {
   DropdownMenu,
@@ -27,6 +29,7 @@ const siteUrl = 'https://platejs.org';
 export function ExportToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
+  const [isExporting, setIsExporting] = React.useState(false);
 
   const getCanvas = async () => {
     const { default: html2canvas } = await import('html2canvas-pro');
@@ -346,6 +349,23 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
     await downloadFile(url, 'plate.md');
   };
 
+  const exportToDocx = async () => {
+    if (isExporting) return;
+    
+    try {
+      setIsExporting(true);
+      setOpen(false);
+      const citationStore = useCitationStore.getState();
+      await exportToDocxAndDownload(editor.children, 'dokument', citationStore);
+    } catch (error) {
+      console.error('Fehler beim DOCX-Export:', error);
+      // Optional: Toast-Benachrichtigung anzeigen
+      alert('Fehler beim Export: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
@@ -356,17 +376,20 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
 
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
-          <DropdownMenuItem onSelect={exportToHtml}>
-            Als HTML exportieren
+          <DropdownMenuItem onSelect={exportToDocx} disabled={isExporting}>
+            {isExporting ? 'Exportiere...' : 'Als DOCX exportieren'}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToPdf}>
             Als PDF exportieren
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={exportToImage}>
-            Als Bild exportieren
+          <DropdownMenuItem onSelect={exportToHtml}>
+            Als HTML exportieren
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToMarkdown}>
             Als Markdown exportieren
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={exportToImage}>
+            Als Bild exportieren
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
