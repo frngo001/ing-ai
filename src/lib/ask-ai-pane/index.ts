@@ -6,7 +6,6 @@ export * from './constants'
 
 // Export utilities
 export * from './markdown-utils'
-export * from './markdown-schema'
 export * from './message-utils'
 export * from './agent-utils'
 export * from './storage-utils'
@@ -21,6 +20,5 @@ export { createHandlers, type HandlerDependencies, type AgentStore } from './han
 export { createRenderers, type RendererDependencies } from './renderers'
 
 // Export components
-export { markdownComponents } from './markdown-components'
 export { StreamingShimmer } from './streaming-shimmer'
 

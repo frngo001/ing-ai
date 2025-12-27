@@ -19,12 +19,7 @@ import {
   X,
   Bookmark,
 } from "lucide-react"
-import ReactMarkdown from "react-markdown"
-import rehypeSanitize from "rehype-sanitize"
-import rehypeHighlight from "rehype-highlight"
-import rehypeKatex from "rehype-katex"
-import remarkGfm from "remark-gfm"
-import remarkMath from "remark-math"
+import { PlateMarkdown } from "@/components/ui/plate-markdown"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -77,8 +72,6 @@ import {
   removeSavedMessage,
   loadSavedMessages,
   filterMentionables,
-  markdownComponents,
-  markdownSanitizeSchema,
   StreamingShimmer,
   useMentionables,
   useMentionQuery,
@@ -453,14 +446,10 @@ export function AskAiPane({
                                             </Button>
                                           </CollapsibleTrigger>
                                           <CollapsibleContent className="max-h-[50vh] overflow-y-auto transition-all duration-200 ease-in-out [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                                          <div className="text-xs mt-2 p-3 bg-none border-none max-w-none text-muted-foreground prose-pre:bg-muted/70 prose-pre:text-foreground prose-code:before:content-none prose-code:after:content-none dark:prose-invert">
-                                              <ReactMarkdown
-                                                remarkPlugins={[remarkMath, remarkGfm]}
-                                                rehypePlugins={[rehypeHighlight, rehypeKatex, [rehypeSanitize, markdownSanitizeSchema]]}
-                                                components={markdownComponents}
-                                              >
-                                              {reasoningPart.reasoning}
-                                              </ReactMarkdown>
+                                          <div className="text-xs mt-2 p-3 bg-none border-none max-w-none text-muted-foreground">
+                                              <PlateMarkdown>
+                                                {reasoningPart.reasoning}
+                                              </PlateMarkdown>
                                             </div>
                                           </CollapsibleContent>
                                         </Collapsible>
@@ -469,15 +458,9 @@ export function AskAiPane({
                                     {textPart && (
                                       <div className="space-y-1">
                                         <div className="text-[11px] font-semibold uppercase text-muted-foreground">Antwort</div>
-                                        <div className="prose prose-sm max-w-none prose-pre:bg-muted/70 prose-pre:text-foreground prose-code:before:content-none prose-code:after:content-none dark:prose-invert">
-                                          <ReactMarkdown
-                                            remarkPlugins={[remarkMath, remarkGfm]}
-                                            rehypePlugins={[rehypeHighlight, rehypeKatex, [rehypeSanitize, markdownSanitizeSchema]]}
-                                            components={markdownComponents}
-                                          >
-                                            {textPart.text}
-                                          </ReactMarkdown>
-                                        </div>
+                                        <PlateMarkdown>
+                                          {textPart.text}
+                                        </PlateMarkdown>
                               </div>
                                     )}
                                   </div>
@@ -496,28 +479,18 @@ export function AskAiPane({
                                       </Button>
                                     </CollapsibleTrigger>
                                     <CollapsibleContent>
-                                      <div className="px-3 bg-none border-none max-w-none text-muted-foreground prose-pre:bg-muted/70 prose-pre:text-foreground prose-code:before:content-none prose-code:after:content-none dark:prose-invert">
-                                        <ReactMarkdown
-                                          remarkPlugins={[remarkMath, remarkGfm]}
-                                          rehypePlugins={[rehypeHighlight, rehypeKatex, [rehypeSanitize, markdownSanitizeSchema]]}
-                                          components={markdownComponents}
-                                        >
+                                      <div className="px-3 bg-none border-none max-w-none text-muted-foreground">
+                                        <PlateMarkdown>
                                           {message.reasoning}
-                                        </ReactMarkdown>
+                                        </PlateMarkdown>
                                       </div>
                                     </CollapsibleContent>
                                   </Collapsible>
                                 )}
                                 {message.content ? (
-                                  <div className="prose prose-sm max-w-none prose-pre:bg-muted/70 prose-pre:text-foreground prose-code:before:content-none prose-code:after:content-none dark:prose-invert">
-                                    <ReactMarkdown
-                                      remarkPlugins={[remarkMath, remarkGfm]}
-                                      rehypePlugins={[rehypeHighlight, rehypeKatex, [rehypeSanitize, markdownSanitizeSchema]]}
-                                      components={markdownComponents}
-                                    >
-                                      {message.content}
-                                    </ReactMarkdown>
-                                  </div>
+                                  <PlateMarkdown>
+                                    {message.content}
+                                  </PlateMarkdown>
                                 ) : streamingId === message.id ? (
                                   <StreamingShimmer />
                                 ) : (

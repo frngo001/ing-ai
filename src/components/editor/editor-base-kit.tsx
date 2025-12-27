@@ -18,6 +18,7 @@ import { BaseSuggestionKit } from './plugins/suggestion-base-kit';
 import { BaseTableKit } from './plugins/table-base-kit';
 import { BaseTocKit } from './plugins/toc-base-kit';
 import { BaseToggleKit } from './plugins/toggle-base-kit';
+import { BlockPlaceholderKit } from './plugins/block-placeholder-kit';
 
 export const BaseEditorKit = [
   ...BaseBasicBlocksKit,
@@ -40,4 +41,5 @@ export const BaseEditorKit = [
   ...BaseCommentKit,
   ...BaseSuggestionKit,
   ...MarkdownKit,
+  ...BlockPlaceholderKit,
 ];
