@@ -13,6 +13,7 @@ import { LibraryPane } from "@/components/library-pane"
 import { SettingsDialog } from "@/components/settings-dialog"
 import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
+import { EditorLoading } from "@/components/ui/editor-loading"
 import { useVisibilityStore } from "@/lib/stores/visibility-store"
 import { setupEditorTextInsertion } from "@/lib/editor/insert-text"
 import { setupEditorStreaming } from "@/lib/editor/stream-text"
@@ -39,13 +40,7 @@ export default function Page() {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <Suspense fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-center">
-            <p className="text-muted-foreground text-sm">Lade...</p>
-          </div>
-        </div>
-      }>
+      <Suspense fallback={<EditorLoading />}>
         <PageContent
           panes={panes}
           setPanes={setPanes}
