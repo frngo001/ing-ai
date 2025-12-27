@@ -14,7 +14,7 @@ import {
 } from 'platejs';
 import type { TEquationElement } from '@platejs/utils';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
-import { Plate, type PlateEditor, usePlateEditor, usePluginOption } from 'platejs/react';
+import { Plate, type PlateEditor, usePlateEditor, usePluginOption, usePlateState } from 'platejs/react';
 
 import { EditorKit } from '@/components/editor/editor-kit';
 import { SourceSearchDialog, type Source } from '@/components/citations/source-search-dialog';
@@ -24,8 +24,7 @@ import { EditorTocSidebar } from '@/components/ui/editor-toc';
 import { SuggestionTocSidebar } from '@/components/ui/suggestion-toc';
 import { Editor, EditorContainer } from '@/components/ui/editor';
 import { EditorStatusBar } from '@/components/ui/editor-status-bar';
-import { FixedToolbar } from '@/components/ui/fixed-toolbar';
-import { FixedToolbarButtons } from '@/components/ui/fixed-toolbar-buttons';
+import { ConditionalFixedToolbar } from '@/components/ui/conditional-fixed-toolbar';
 import { useCitationStore } from '@/lib/stores/citation-store';
 import { insertCitationWithMerge } from '@/components/editor/utils/insert-citation-with-merge';
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils';
@@ -212,16 +211,12 @@ export function PlateEditor({
           visible={showSuggestionToc}
           className="top-[45vh]"
         />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex min-h-0 flex-1 flex-col">
-            <div ref={topToolbarRef}>
-              <FixedToolbar className="top-0 z-30 min-h-10">
-                <FixedToolbarButtons />
-              </FixedToolbar>
-            </div>
-            <div className="flex-1">
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          <div className="flex h-full flex-col min-h-0">
+            <ConditionalFixedToolbar toolbarRef={topToolbarRef} />
+            <div className="flex-1 min-h-0 overflow-hidden">
               <EditorContainer
-                className="overflow-y-auto h-[calc(100vh-var(--top-toolbar-height)-var(--bottom-toolbar-height))]"
+                className="overflow-y-auto h-full"
                 style={toolbarVars}
               >
                 <Editor variant="demo" className="overflow-y-auto"/>

@@ -20,6 +20,7 @@ import { useEditorReadOnly } from 'platejs/react';
 
 import { AIToolbarButton } from './ai-toolbar-button';
 import { AlignToolbarButton } from './align-toolbar-button';
+import { CitationToolbarButton } from './citation-toolbar-button';
 import { CommentToolbarButton } from './comment-toolbar-button';
 import { EmojiToolbarButton } from './emoji-toolbar-button';
 import { FontColorToolbarButton } from './font-color-toolbar-button';
@@ -65,9 +66,12 @@ export function FixedToolbarButtons() {
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <AIToolbarButton tooltip="KI-Befehle">
+            <AIToolbarButton tooltip="KI Fragen">
               <WandSparklesIcon />
             </AIToolbarButton>
+          </ToolbarGroup>
+          <ToolbarGroup>
+          <CitationToolbarButton />
           </ToolbarGroup>
 
           <ToolbarGroup>

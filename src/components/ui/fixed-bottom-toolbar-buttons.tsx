@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 
+import { useEditorReadOnly } from 'platejs/react';
+
 import { BottomAutocompleteToggle } from './bottom-autocomplete-toggle';
 import { BottomWordCount } from './bottom-word-count';
 import { ImportToolbarButton } from './import-toolbar-button';
@@ -11,11 +13,13 @@ import { ModeToolbarButton } from './mode-toolbar-button';
 import { BottomCommentTocToggle, BottomSuggestionTocToggle, BottomTocToggle } from './bottom-toc-toggle';
 
 export function FixedBottomToolbarButtons() {
+  const readOnly = useEditorReadOnly();
+
   return (
     <div className="flex w-full justify-between gap-2">
        <div className="flex items-start"> 
         <BottomWordCount />
-        <BottomAutocompleteToggle />
+        {!readOnly && <BottomAutocompleteToggle />}
         <BottomTocToggle />
         <BottomCommentTocToggle />
         <BottomSuggestionTocToggle />
@@ -24,9 +28,11 @@ export function FixedBottomToolbarButtons() {
       <ExportToolbarButton>
         <ArrowUpToLineIcon />
         </ExportToolbarButton>
-        <ImportToolbarButton>
-          <ArrowUpToLineIcon />
-        </ImportToolbarButton>
+        {!readOnly && (
+          <ImportToolbarButton>
+            <ArrowUpToLineIcon />
+          </ImportToolbarButton>
+        )}
       <ModeToolbarButton />
       </div>
     </div>

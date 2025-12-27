@@ -14,6 +14,7 @@ import { KEYS } from 'platejs';
 import { useEditorPlugin, useEditorReadOnly } from 'platejs/react';
 import { AIChatPlugin } from '@platejs/ai/react';
 
+import { CitationToolbarButton } from './citation-toolbar-button';
 import { CommentToolbarButton } from './comment-toolbar-button';
 import { InlineEquationToolbarButton } from './equation-toolbar-button';
 import { LinkToolbarButton } from './link-toolbar-button';
@@ -50,6 +51,8 @@ export function FloatingToolbarButtons() {
             <MarkToolbarButton nodeType={KEYS.bold} tooltip="Fett (⌘+B)">
               <BoldIcon />
             </MarkToolbarButton>
+
+            <CitationToolbarButton />
 
             <MarkToolbarButton nodeType={KEYS.italic} tooltip="Kursiv (⌘+I)">
               <ItalicIcon />

@@ -220,7 +220,13 @@ export function HeadingElement({
           {headingNumber}
         </span>
       )}
-      {props.children}
+      {isReadOnly ? (
+        <div contentEditable={false} suppressContentEditableWarning>
+          {props.children}
+        </div>
+      ) : (
+        props.children
+      )}
     </PlateElement>
   );
 }

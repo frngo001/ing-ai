@@ -1,26 +1,88 @@
-er macht das wieder falsch 
+## Basic Markdown
 
-Hallo! Ich freue mich, dass du deine Bachelorarbeit zum Thema 
-> Mapping von mEDIZINISCHEN bEGRIFFEN zu LOINC schreiben möchtest. Das ist ein sehr relevantes und aktuelles Thema im Bereich der medizinischen Informatik und Standardisierung.
+> The following node and marks is supported by the Markdown standard.
 
-Wir beginnen jetzt mit > Schritt 4: Literaturrecherche.
+Format text with **bold**, _italic_, _**combined styles**_, ~~strikethrough~~, `code` formatting, and [hyperlinks](https://en.wikipedia.org/wiki/Hypertext).
 
-Zuerst sollten wir Suchbegriffe für die Literaturrecherche definieren. Basierend auf deinem Thema schlage ich folgende Suchbegriffe vor:
+```javascript
+// Use code blocks to showcase code snippets
+function greet() {
+  console.info("Hello World!")
+}
+```
 
-1. **LOINC (Logical Observation Identifiers Names and Codes)**
-2. **Medical terminology mapping**
-3. **Clinical terminology standardization**
-4. **Semantic interoperability**
-5. **Medical concept mapping**
-6. **Laboratory data standards**
-7. **SNOMED CT to LOINC mapping**
-8. **Clinical data exchange**
-9. **Terminology services**
-10. **Healthcare data standards**
+- Simple lists for organizing content
 
-**Frage an dich:** 
-- Sind diese Suchbegriffe passend für deine Arbeit?
-- Möchtest du weitere Suchbegriffe hinzufügen oder etwas ändern?
-- Oder soll ich direkt mit der Suche mit diesen Begriffen beginnen?
+1. Numbered lists for sequential steps
 
-Bitte bestätige mir, ob ich mit der Literaturrecherche weitermachen soll!
+| **Plugin**  | **Element** | **Inline** | **Void** |
+| ----------- | ----------- | ---------- | -------- |
+| **Heading** |             |            | No       |
+| **Image**   | Yes         | No         | Yes      |
+| **Mention** | Yes         | Yes        | Yes      |
+
+![](https://images.unsplash.com/photo-1712688930249-98e1963af7bd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)
+
+- [x] Completed tasks
+
+- [ ] Pending tasks
+
+---
+
+## Advanced Features
+
+<callout>
+The following node and marks are not supported in Markdown but can be serialized and deserialized using MDX or specialized UnifiedJS plugins.
+</callout>
+
+Advanced marks: <kbd>⌘ + B</kbd>,<u>underlined</u>, <mark>highlighted</mark> text, <span style="color: #93C47D;">colored text</span> and <span style="background-color: #6C9EEB;">background highlights</span> for visual emphasis.
+
+Superscript like E=mc<sup>2</sup> and subscript like H<sub>2</sub>O demonstrate mathematical and chemical notation capabilities.
+
+Add mentions like [Aayla Sxecura](mention:mention_id) 12312
+
+
+, dates (<date>2025-05-08</date>), and math formulas (E=mc2E = mc^{2}
+E=mc2
+
+
+
+
+
+).
+
+The table of contents feature automatically generates document structure for easy navigation.
+
+<toc />
+
+Math formula support makes displaying complex mathematical expressions simple.
+
+
+
+
+
+
+
+
+Multi-column layout features enable richer page designs and content layouts.
+
+<column_group layout="[50,50]">
+<column width="50%">
+left
+</column>
+
+  <column width="50%">
+    right
+  </column>
+</column_group>
+
+PDF embedding makes document referencing simple and intuitive.
+<file name="sample.pdf" align="center" src="https://s26.q4cdn.com/900411403/files/doc_downloads/test.pdf" width="80%" isUpload="true" />
+
+Audio players can be embedded directly into documents, supporting online audio resources.
+<audio align="center" src="https://samplelib.com/lib/preview/mp3/sample-3s.mp3" width="80%" />
+
+Video playback features support embedding various online video resources, enriching document content.
+<video align="center" src="https://videos.pexels.com/video-files/6769791/6769791-uhd_2560_1440_24fps.mp4" width="80%" isUpload="true" />
+
+:smile: :heart:

@@ -225,7 +225,7 @@ export function InsertToolbarButton(props: DropdownMenuProps) {
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton pressed={open} tooltip="Elemente einfügen" isDropdown>
-          <PlusIcon />
+          Neue Elemente <PlusIcon />
         </ToolbarButton>
       </DropdownMenuTrigger>
 

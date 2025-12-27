@@ -27,6 +27,9 @@ import {
   Wand2,
 } from 'lucide-react';
 
+import { useCitationStore } from '@/lib/stores/citation-store';
+import { prepareCitationInsertion } from '@/components/editor/utils/prepare-citation-insertion';
+
 import {
   ContextMenu,
   ContextMenuContent,
@@ -48,6 +51,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
   const [readOnly] = usePlateState('readOnly');
   const openId = usePluginOption(BlockMenuPlugin, 'openId');
   const isOpen = openId === BLOCK_CONTEXT_MENU_ID;
+  const { openSearch } = useCitationStore();
   const contentClass =
     'w-64 rounded-lg border border-gray-200 bg-white text-gray-900 shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50';
   const subContentClass =
@@ -282,6 +286,11 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
     editor.tf.focus();
   }, [editor]);
 
+  const handleInsertCitation = React.useCallback(() => {
+    prepareCitationInsertion(editor);
+    openSearch();
+  }, [editor, openSearch]);
+
   if (isTouch) {
     return children;
   }
@@ -349,6 +358,13 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
             >
               <Wand2 className={iconClass} />
               KI fragen
+            </ContextMenuItem>
+            <ContextMenuItem
+              className={itemClass}
+              onClick={handleInsertCitation}
+            >
+              <Quote className={iconClass} />
+              Zitat einfügen
             </ContextMenuItem>
             <ContextMenuItem
               className={itemClass}

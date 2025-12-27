@@ -87,24 +87,40 @@ const analyzeSourcesTool = tool({
             const prompt = `Bewerte die folgenden wissenschaftlichen Quellen hinsichtlich ihrer Relevanz für das Thema: "${thema}".
 ${keywords.length > 0 ? `Zusätzliche Keywords: ${keywords.join(', ')}` : ''}
 
-Bewertungskriterien:
-1. **Themenpassung** (0-100): Wie gut passt die Quelle zum Thema? Berücksichtige Titel, Abstract und Keywords.
+WICHTIG: Du musst JEDE Quelle gründlich analysieren, indem du:
+1. Den TITEL Wort für Wort analysierst und prüfst, ob er semantisch zum Thema passt
+2. Den ABSTRACT vollständig durchliest und die Hauptaussagen, Methoden und Ergebnisse mit dem Thema abgleichst
+3. Beide Felder (Titel + Abstract) gemeinsam betrachtest, um die tatsächliche Relevanz zu bestimmen
+4. Prüfst, ob die Quelle wirklich das gleiche oder ein sehr ähnliches Forschungsgebiet behandelt
+
+Bewertungskriterien (in dieser Reihenfolge):
+1. **Themenpassung** (0-100, höchste Priorität): 
+   - Analysiere den Titel: Enthält er Schlüsselbegriffe, die zum Thema passen? Behandelt er denselben Forschungsgegenstand?
+   - Analysiere den Abstract: Beschreibt er Inhalte, Methoden oder Ergebnisse, die direkt zum Thema gehören?
+   - Prüfe, ob Titel und Abstract zusammen eine klare Verbindung zum Thema zeigen
+   - Quellen, die nur entfernt verwandt sind oder ein anderes Teilgebiet behandeln, sollten niedrig bewertet werden (unter 50)
+   - Berücksichtige auch die Keywords der Quelle, falls vorhanden
+
 2. **Aktualität** (0-100): Wie aktuell ist die Quelle? Bevorzuge neuere Publikationen (letzte 5-10 Jahre), außer es handelt sich um klassische Grundlagenwerke.
+
 3. **Wissenschaftlichkeit** (0-100): Wie wissenschaftlich fundiert ist die Quelle? Berücksichtige Impact-Faktor, Zitationsanzahl und Publikationsart.
-4. **Gesamtrelevanz** (0-100): Gesamtbewertung basierend auf allen Kriterien.
+
+4. **Gesamtrelevanz** (0-100): Gesamtbewertung basierend auf allen Kriterien, wobei Themenpassung das wichtigste Kriterium ist.
 
 Quellen:
 ${JSON.stringify(sourcesForEvaluation.map(s => ({
     id: s.id,
     title: s.title,
-    abstract: s.abstract,
+    abstract: s.abstract || 'Kein Abstract verfügbar',
     authors: s.authors,
     year: s.year,
     keywords: s.keywords,
     citationCount: s.citationCount,
     impactFactor: s.impactFactor,
     isOpenAccess: s.isOpenAccess
-})), null, 2)}`
+})), null, 2)}
+
+Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel und Abstract eingeht und erklärt, warum die Quelle relevant oder nicht relevant ist.`
 
             const { object } = await generateObject({
                 model,
@@ -231,8 +247,32 @@ const evaluateSourcesTool = tool({
             const model = deepseek(DEEPSEEK_CHAT_MODEL)
             const prompt = `
         Bewerte die folgenden wissenschaftlichen Quellen hinsichtlich ihrer Relevanz für das Thema: "${thema}".
-        Kriterien: 1. Themenpassung, 2. Aktualität, 3. Wissenschaftlichkeit.
-        Quellen: ${JSON.stringify(sources.map(s => ({ id: s.id, title: s.title, abstract: s.abstract?.substring(0, 300) })), null, 2)}
+        
+        WICHTIG: Du musst JEDE Quelle gründlich analysieren, indem du:
+        1. Den TITEL Wort für Wort analysierst und prüfst, ob er semantisch zum Thema passt
+        2. Den ABSTRACT vollständig durchliest und die Hauptaussagen mit dem Thema abgleichst
+        3. Beide Felder (Titel + Abstract) gemeinsam betrachtest, um die tatsächliche Relevanz zu bestimmen
+        
+        Bewertungskriterien (in dieser Reihenfolge):
+        1. **Themenpassung (höchste Priorität)**: 
+           - Analysiere den Titel: Enthält er Schlüsselbegriffe, die zum Thema passen? Behandelt er denselben Forschungsgegenstand?
+           - Analysiere den Abstract: Beschreibt er Inhalte, Methoden oder Ergebnisse, die direkt zum Thema gehören?
+           - Prüfe, ob Titel und Abstract zusammen eine klare Verbindung zum Thema zeigen
+           - Quellen, die nur entfernt verwandt sind oder ein anderes Teilgebiet behandeln, sollten niedrig bewertet werden
+        
+        2. **Aktualität**: Ist die Quelle aktuell genug? (Bevorzuge Publikationen der letzten 5-10 Jahre, außer es sind klassische Grundlagenwerke)
+        
+        3. **Wissenschaftlichkeit**: Scheint es eine seriöse, wissenschaftlich fundierte Quelle zu sein?
+        
+        Quellen (mit vollständigem Abstract):
+        ${JSON.stringify(sources.map(s => ({ 
+          id: s.id, 
+          title: s.title, 
+          abstract: s.abstract || 'Kein Abstract verfügbar',
+          year: s.year
+        })), null, 2)}
+        
+        Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel und Abstract eingeht und erklärt, warum die Quelle relevant oder nicht relevant ist.
       `
             const { object } = await generateObject({
                 model,

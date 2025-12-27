@@ -342,6 +342,7 @@ export function CitationElement(
               selected && 'bg-primary/20'
             )}
             contentEditable={false}
+            suppressContentEditableWarning
           >
             {displayText}
           </span>

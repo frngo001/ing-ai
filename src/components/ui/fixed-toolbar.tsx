@@ -15,8 +15,8 @@ export function FixedToolbar({
 }: FixedToolbarProps) {
   const positionClasses =
     position === 'bottom'
-      ? 'sticky bottom-0 top-auto inset-x-0 border-t border-t-border border-b-0'
-      : 'sticky top-0 inset-x-0 border-b border-b-border';
+      ? 'sticky bottom-0 left-0 right-0 border-t border-t-border border-b-0 z-50'
+      : 'sticky top-0 left-0 right-0 border-b border-b-border z-50';
 
   return (
     <Toolbar
