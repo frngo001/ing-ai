@@ -156,7 +156,7 @@ export function FixedToolbarButtons() {
         </>
       )}
 
-      <div className="grow" />
+      <div className="w-4 flex-shrink-0" />
 
       <ToolbarGroup>
         <CitationStyleToolbarButton />

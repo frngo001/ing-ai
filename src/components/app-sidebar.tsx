@@ -5,6 +5,8 @@ import {
   LayoutDashboard,
   Plus,
   Settings2,
+  Pin,
+  PinOff,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -15,6 +17,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import Image from "next/image"
 import {
@@ -92,6 +95,8 @@ export function AppSidebar({
 }) {
   const [user, setUser] = React.useState(defaultUser)
   const supabase = createClient()
+  const { addInteractionLock, removeInteractionLock, state } = useSidebar()
+  const [isPinned, setIsPinned] = React.useState(false)
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -141,18 +146,55 @@ export function AppSidebar({
     onToggleDocuments?.()
   }, [onCreateDocument, onToggleDocuments])
 
+  const handleTogglePin = React.useCallback(() => {
+    if (isPinned) {
+      removeInteractionLock()
+      setIsPinned(false)
+    } else {
+      addInteractionLock()
+      setIsPinned(true)
+    }
+  }, [isPinned, addInteractionLock, removeInteractionLock])
+
+  // Cleanup: Entferne Lock beim Unmount, falls gepinnt
+  React.useEffect(() => {
+    return () => {
+      if (isPinned) {
+        removeInteractionLock()
+      }
+    }
+  }, [isPinned, removeInteractionLock])
+
   return (
     <div suppressHydrationWarning>
       <Sidebar collapsible="icon" {...props}>
         <SidebarHeader className="space-y-2">
-          <div className="flex items-center justify-center px-2 py-2">
-            <Image
-              src="/logos/logosApp/ing_AI.png"
-              alt="Ing AI Logo"
-              width={64}
-              height={64}
-              className="object-contain"
-            />
+          <div className="flex items-center justify-between px-2 py-1">
+            <div className={`flex items-center justify-center flex-1 ${state === "expanded" ? "-mt-5" : ""}`}>
+              <Image
+                src="/logos/logosApp/ing_AI.png"
+                alt="Ing AI Logo"
+                width={64}
+                height={64}
+                className="object-contain"
+              />
+            </div>
+            {state === "expanded" && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0 -mt-5"
+                onClick={handleTogglePin}
+                aria-label={isPinned ? "Sidebar entpinnen" : "Sidebar pinnen"}
+                title={isPinned ? "Sidebar entpinnen" : "Sidebar pinnen"}
+              >
+                {isPinned ? (
+                  <Pin className="h-4 w-4" />
+                ) : (
+                  <PinOff className="h-4 w-4" />
+                )}
+              </Button>
+            )}
           </div>
           <Button
             size="sm"

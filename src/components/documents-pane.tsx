@@ -312,8 +312,7 @@ export function DocumentsPane({
               <div
                 key={doc.id}
                 className={cn(
-                  "group flex items-start gap-2 rounded-md px-2 py-2 transition hover:bg-muted/70 focus-within:outline-none border border-border/60 hover:border-border/80 focus-within:border-border/80",
-                  index !== filteredDocs.length - 1 && "border-b border-border/50"
+                  "group flex items-start gap-2 rounded-md px-2 py-2 transition hover:bg-muted/70 focus-within:outline-none"
                 )}
               >
                 <Link

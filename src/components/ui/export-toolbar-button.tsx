@@ -26,10 +26,57 @@ import { ToolbarButton } from './toolbar';
 
 const siteUrl = 'https://platejs.org';
 
+// Extrahiert Text aus einem Editor-Node
+const extractText = (node: any): string => {
+  if (!node) return "";
+  if (Array.isArray(node)) {
+    return node.map((child: any) => extractText(child)).join(" ");
+  }
+  if (typeof node.text === "string") {
+    return node.text;
+  }
+  if (Array.isArray(node.children)) {
+    return node.children.map((child: any) => extractText(child)).join(" ");
+  }
+  return "";
+};
+
+// Extrahiert den Dokumenttitel aus dem Editor-Inhalt
+const extractDocumentTitle = (editorValue: any[]): string => {
+  if (!Array.isArray(editorValue) || editorValue.length === 0) {
+    return "Unbenanntes Dokument";
+  }
+
+  for (const block of editorValue) {
+    const text = extractText(block).trim();
+    if (text) {
+      return text.slice(0, 120);
+    }
+  }
+
+  return "Unbenanntes Dokument";
+};
+
+// Sanitized einen Dateinamen (entfernt ungültige Zeichen)
+const sanitizeFilename = (filename: string): string => {
+  return filename
+    .replace(/[^a-z0-9\s-]/gi, '_')
+    .replace(/\s+/g, '_')
+    .toLowerCase()
+    .replace(/_{2,}/g, '_')
+    .replace(/^_+|_+$/g, '') || 'dokument';
+};
+
 export function ExportToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
   const [isExporting, setIsExporting] = React.useState(false);
+
+  // Extrahiere den Dokumentnamen aus dem Editor-Inhalt
+  const getDocumentName = React.useCallback(() => {
+    const title = extractDocumentTitle(editor.children);
+    return sanitizeFilename(title);
+  }, [editor.children]);
 
   const getCanvas = async () => {
     const { default: html2canvas } = await import('html2canvas-pro');
@@ -290,12 +337,14 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
     
     const pdfBase64 = await pdfDoc.saveAsBase64({ dataUri: true });
 
-    await downloadFile(pdfBase64, 'plate.pdf');
+    const filename = `${getDocumentName()}.pdf`;
+    await downloadFile(pdfBase64, filename);
   };
 
   const exportToImage = async () => {
     const canvas = await getCanvas();
-    await downloadFile(canvas.toDataURL('image/png'), 'plate.png');
+    const filename = `${getDocumentName()}.png`;
+    await downloadFile(canvas.toDataURL('image/png'), filename);
   };
 
   const exportToHtml = async () => {
@@ -340,13 +389,15 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
 
     const url = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 
-    await downloadFile(url, 'plate.html');
+    const filename = `${getDocumentName()}.html`;
+    await downloadFile(url, filename);
   };
 
   const exportToMarkdown = async () => {
     const md = editor.getApi(MarkdownPlugin).markdown.serialize();
     const url = `data:text/markdown;charset=utf-8,${encodeURIComponent(md)}`;
-    await downloadFile(url, 'plate.md');
+    const filename = `${getDocumentName()}.md`;
+    await downloadFile(url, filename);
   };
 
   const exportToDocx = async () => {
@@ -356,7 +407,8 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
       setIsExporting(true);
       setOpen(false);
       const citationStore = useCitationStore.getState();
-      await exportToDocxAndDownload(editor.children, 'dokument', citationStore);
+      const filename = getDocumentName();
+      await exportToDocxAndDownload(editor.children, filename, citationStore);
     } catch (error) {
       console.error('Fehler beim DOCX-Export:', error);
       // Optional: Toast-Benachrichtigung anzeigen
