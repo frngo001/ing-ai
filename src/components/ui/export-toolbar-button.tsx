@@ -11,6 +11,7 @@ import { useEditorRef } from 'platejs/react';
 import { serializeHtml } from 'platejs/static';
 import { exportToDocxAndDownload } from '@/lib/export/docx-exporter';
 import { useCitationStore } from '@/lib/stores/citation-store';
+import { extractTextFromNode, extractTitleFromContent } from '@/lib/supabase/utils/document-title';
 
 import {
   DropdownMenu,
@@ -26,35 +27,12 @@ import { ToolbarButton } from './toolbar';
 
 const siteUrl = 'https://platejs.org';
 
-// Extrahiert Text aus einem Editor-Node
-const extractText = (node: any): string => {
-  if (!node) return "";
-  if (Array.isArray(node)) {
-    return node.map((child: any) => extractText(child)).join(" ");
-  }
-  if (typeof node.text === "string") {
-    return node.text;
-  }
-  if (Array.isArray(node.children)) {
-    return node.children.map((child: any) => extractText(child)).join(" ");
-  }
-  return "";
-};
-
-// Extrahiert den Dokumenttitel aus dem Editor-Inhalt
+/**
+ * Extrahiert den Dokumenttitel aus dem Editor-Inhalt.
+ * Verwendet die gemeinsame Utility-Funktion für Konsistenz.
+ */
 const extractDocumentTitle = (editorValue: any[]): string => {
-  if (!Array.isArray(editorValue) || editorValue.length === 0) {
-    return "Unbenanntes Dokument";
-  }
-
-  for (const block of editorValue) {
-    const text = extractText(block).trim();
-    if (text) {
-      return text.slice(0, 120);
-    }
-  }
-
-  return "Unbenanntes Dokument";
+  return extractTitleFromContent(editorValue);
 };
 
 // Sanitized einen Dateinamen (entfernt ungültige Zeichen)

@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -18,6 +19,7 @@ import {
   Brain,
   X,
   Bookmark,
+  Trash2,
 } from "lucide-react"
 import { PlateMarkdown } from "@/components/ui/plate-markdown"
 
@@ -34,10 +36,21 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Collapsible,
   CollapsibleContent,
@@ -53,6 +66,9 @@ import {
 import { useCitationStore } from "@/lib/stores/citation-store"
 import { useBachelorarbeitAgentStore, type SelectedSource } from "@/lib/stores/bachelorarbeit-agent-store"
 import { cn } from "@/lib/utils"
+import { getCurrentUserId } from "@/lib/supabase/utils/auth"
+import * as chatConversationsUtils from "@/lib/supabase/utils/chat-conversations"
+import * as chatMessagesUtils from "@/lib/supabase/utils/chat-messages"
 import {
   type MessagePart,
   type ChatMessage,
@@ -116,12 +132,21 @@ export function AskAiPane({
   const [newSlashContent, setNewSlashContent] = useState("")
   const [historyOpen, setHistoryOpen] = useState(false)
   const [historyQuery, setHistoryQuery] = useState("")
+  const [chatToDelete, setChatToDelete] = useState<{ id: string; title: string } | null>(null)
   const [sourcesDialogOpen, setSourcesDialogOpen] = useState<Record<string, boolean>>({})
   const [reasoningOpen, setReasoningOpen] = useState<Record<string, boolean>>({})
   const [savedMessages, setSavedMessages] = useState<Set<string>>(new Set())
   const [savedMessagesList, setSavedMessagesList] = useState<SavedMessage[]>([])
   const [favoritesDialogOpen, setFavoritesDialogOpen] = useState(false)
   const autoClosedReasoning = useRef<Set<string>>(new Set())
+  const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isPersistingRef = useRef(false)
+  // Stabile Referenzen für persistConversation und setHistory
+  const persistConversationRef = useRef(persistConversation)
+  persistConversationRef.current = persistConversation
+  const setHistoryRef = useRef(setHistory)
+  setHistoryRef.current = setHistory
+  
   const lastAssistantId = useMemo(
     () => [...messages].reverse().find((m) => m.role === "assistant")?.id ?? null,
     [messages]
@@ -133,24 +158,30 @@ export function AskAiPane({
   const filteredHistory = useFilteredHistory(history, historyQuery)
 
   useEffect(() => {
-    const commands = loadSlashCommands()
-    setSlashCommands(commands)
+    const loadCommands = async () => {
+      const commands = await loadSlashCommands()
+      setSlashCommands(commands)
+    }
+    loadCommands()
   }, [])
 
   useEffect(() => {
-    const loadedHistory = loadChatHistory()
-    setHistory(loadedHistory)
-    if (loadedHistory[0]) {
-      setConversationId(loadedHistory[0].id)
-      setMessages(loadedHistory[0].messages)
+    const loadData = async () => {
+      const loadedHistory = await loadChatHistory()
+      setHistory(loadedHistory)
+      if (loadedHistory[0]) {
+        setConversationId(loadedHistory[0].id)
+        setMessages(loadedHistory[0].messages)
+      }
+      
+      // Lade gespeicherte Nachrichten
+      const saved = await loadSavedMessages()
+      setSavedMessages(new Set(saved.map((m: { messageId: string }) => m.messageId)))
+      setSavedMessagesList(saved)
+      
+      setIsHydrated(true)
     }
-    
-    // Lade gespeicherte Nachrichten
-    const saved = loadSavedMessages()
-    setSavedMessages(new Set(saved.map((m: { messageId: string }) => m.messageId)))
-    setSavedMessagesList(saved)
-    
-    setIsHydrated(true)
+    loadData()
   }, [])
 
   const filteredMentionables = useMemo(() => {
@@ -181,8 +212,38 @@ export function AskAiPane({
   useEffect(() => {
     if (!isHydrated) return
     if (!messages.length) return
-    persistConversation(messages, conversationId, setHistory)
-  }, [conversationId, isHydrated, messages, persistConversation])
+    
+    // Verhindere parallele Aufrufe
+    if (isPersistingRef.current) {
+      // Wenn bereits ein Persist-Vorgang läuft, warte bis er fertig ist
+      return
+    }
+    
+    // Lösche vorherigen Timeout
+    if (persistTimeoutRef.current) {
+      clearTimeout(persistTimeoutRef.current)
+    }
+    
+    // Debounce: Warte 500ms nach der letzten Änderung
+    persistTimeoutRef.current = setTimeout(async () => {
+      // Prüfe erneut, ob bereits ein Persist-Vorgang läuft
+      if (isPersistingRef.current) return
+      
+      isPersistingRef.current = true
+      try {
+        await persistConversationRef.current(messages, conversationId, setHistoryRef.current)
+      } finally {
+        isPersistingRef.current = false
+      }
+    }, 500)
+    
+    // Cleanup
+    return () => {
+      if (persistTimeoutRef.current) {
+        clearTimeout(persistTimeoutRef.current)
+      }
+    }
+  }, [conversationId, isHydrated, messages])
 
   // Stoppe Agent wenn Modus auf 'standard' geändert wird
   useEffect(() => {
@@ -257,13 +318,13 @@ export function AskAiPane({
   } = handlers
 
   // Handler für gespeicherte Nachrichten
-  const handleSaveMessage = (messageId: string) => {
+  const handleSaveMessage = async (messageId: string) => {
     const message = messages.find(m => m.id === messageId)
     if (!message) return
     
     if (savedMessages.has(messageId)) {
       // Entferne aus Favoriten
-      removeSavedMessage(messageId)
+      await removeSavedMessage(messageId)
       setSavedMessages(prev => {
         const next = new Set(prev)
         next.delete(messageId)
@@ -272,7 +333,7 @@ export function AskAiPane({
       setSavedMessagesList(prev => prev.filter(m => m.messageId !== messageId))
     } else {
       // Füge zu Favoriten hinzu
-      const saved = saveMessage(message, conversationId)
+      const saved = await saveMessage(message, conversationId)
       setSavedMessages(prev => new Set(prev).add(messageId))
       setSavedMessagesList(prev => [saved, ...prev.filter(m => m.messageId !== message.id)])
     }
@@ -299,6 +360,72 @@ export function AskAiPane({
           }, 2000)
         }
       }, 100)
+    }
+  }
+
+  // Handler zum Löschen eines Chats
+  const handleConfirmDeleteChat = async () => {
+    if (!chatToDelete) return
+
+    try {
+      const userId = await getCurrentUserId()
+      
+      if (userId) {
+        // Lösche Messages zuerst (wegen Foreign Key Constraint)
+        await chatMessagesUtils.deleteChatMessagesByConversation(chatToDelete.id)
+        // Lösche Conversation
+        await chatConversationsUtils.deleteChatConversation(chatToDelete.id, userId)
+      }
+
+      // Lösche auch aus localStorage falls vorhanden
+      if (typeof window !== 'undefined' && localStorage) {
+        const stored = localStorage.getItem('ask-ai-chat-history')
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as StoredConversation[]
+            if (Array.isArray(parsed)) {
+              const filtered = parsed.filter((item) => item.id !== chatToDelete.id)
+              localStorage.setItem('ask-ai-chat-history', JSON.stringify(filtered))
+            }
+          } catch {
+            // Ignoriere Fehler beim Parsen
+          }
+        }
+      }
+
+      // Lade History neu
+      const loadedHistory = await loadChatHistory()
+      setHistory(loadedHistory)
+
+      // Wenn der gelöschte Chat aktuell geladen war, starte einen neuen Chat
+      if (conversationId === chatToDelete.id) {
+        // Stoppe laufende Requests
+        if (abortController) {
+          abortController.abort()
+        }
+        // Starte neuen Chat
+        setConversationId(crypto.randomUUID())
+        setMessages([])
+        setStreamingId(null)
+        setFeedback({})
+        setSelectedMentions([])
+        setInput("")
+        setFiles(null)
+        setAbortController(null)
+        // Schließe History-Dialog falls offen
+        setHistoryOpen(false)
+        // Fokussiere Input
+        setTimeout(() => {
+          messageInputRef.current?.focus()
+        }, 100)
+      }
+
+      toast.success("Chat gelöscht")
+
+      setChatToDelete(null)
+    } catch (error) {
+      console.error('Fehler beim Löschen des Chats:', error)
+      toast.error("Der Chat konnte nicht gelöscht werden.")
     }
   }
 
@@ -703,11 +830,18 @@ export function AskAiPane({
                       ?.content ?? "Keine Nachrichten vorhanden"
 
                   return (
-                    <button
+                    <div
                       key={item.id}
-                      type="button"
-                      className="w-full rounded-md border border-border/70 bg-muted/40 px-3 py-3 text-left text-foreground hover:bg-muted/70 transition-colors"
+                      role="button"
+                      tabIndex={0}
+                      className="relative w-full rounded-md border border-border/70 bg-muted/40 px-3 py-3 text-left text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
                       onClick={() => handleLoadConversation(item.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleLoadConversation(item.id)
+                        }
+                      }}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 space-y-1">
@@ -722,7 +856,19 @@ export function AskAiPane({
                           {new Date(item.updatedAt).toLocaleString()}
                         </span>
                       </div>
-                    </button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute bottom-2 right-2 h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setChatToDelete({ id: item.id, title: item.title || "Neuer Chat" })
+                        }}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
                   )
                 })
               ) : (
@@ -764,6 +910,32 @@ export function AskAiPane({
           </DialogContent>
         </Dialog>
 
+        {/* Bestätigungsdialog zum Löschen eines Chats */}
+        <AlertDialog
+          open={!!chatToDelete}
+          onOpenChange={(open) => {
+            if (!open) setChatToDelete(null)
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Chat löschen?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {`"${chatToDelete?.title ?? "Dieser Chat"}"`} wird dauerhaft gelöscht. Alle zugehörigen Nachrichten werden ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setChatToDelete(null)}>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteChat}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Favoriten Dialog */}
         <Dialog 
           open={favoritesDialogOpen} 
@@ -777,6 +949,9 @@ export function AskAiPane({
           <DialogContent className="max-w-sm sm:max-w-sm md:max-w-sm overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <DialogHeader>
               <DialogTitle>Favoriten</DialogTitle>
+              <DialogDescription>
+                Gespeicherte Nachrichten aus deinen Chats
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-2 text-sm text-muted-foreground max-h-64 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {savedMessagesList.length > 0 ? (
@@ -834,6 +1009,9 @@ export function AskAiPane({
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Neuen Command speichern</DialogTitle>
+              <DialogDescription>
+                Erstelle einen neuen Slash-Command für schnellen Zugriff
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1">

@@ -13,6 +13,7 @@ import {
   Upload,
   Search,
   RefreshCw,
+  Trash,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -59,11 +60,13 @@ export function LibraryPane({
   const activeLibraryId = useCitationStore((state) => state.activeLibraryId)
   const setActiveLibrary = useCitationStore((state) => state.setActiveLibrary)
   const addLibrary = useCitationStore((state) => state.addLibrary)
+  const deleteLibrary = useCitationStore((state) => state.deleteLibrary)
   const syncLibrariesFromBackend = useCitationStore((state) => state.syncLibrariesFromBackend)
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const [isCreateLibraryOpen, setIsCreateLibraryOpen] = React.useState(false)
   const [newLibraryName, setNewLibraryName] = React.useState("")
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null)
+  const [libraryToDelete, setLibraryToDelete] = React.useState<{ id: string; name: string } | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [expandedAbstracts, setExpandedAbstracts] = React.useState<Record<string, boolean>>({})
   const [isSyncing, setIsSyncing] = React.useState(false)
@@ -167,13 +170,25 @@ export function LibraryPane({
 
   const handleImportClick = () => fileInputRef.current?.click()
 
-  const handleCreateLibrary = () => {
+  const handleCreateLibrary = async () => {
     const name = newLibraryName.trim() || "Neue Bibliothek"
-    const id = addLibrary(name)
+    const id = await addLibrary(name)
     setActiveLibrary(id)
     setNewLibraryName("")
     setIsCreateLibraryOpen(false)
   }
+
+  const handleConfirmDeleteLibrary = React.useCallback(async () => {
+    if (!libraryToDelete) return
+
+    try {
+      await deleteLibrary(libraryToDelete.id)
+      setLibraryToDelete(null)
+    } catch (error) {
+      console.error("Fehler beim Löschen der Bibliothek:", error)
+      setLibraryToDelete(null)
+    }
+  }, [libraryToDelete, deleteLibrary])
 
   return (
     <div
@@ -343,6 +358,28 @@ export function LibraryPane({
               </div>
             </PopoverContent>
           </Popover>
+          {activeLibraryId && 
+           activeLibraryId !== 'library_default' && 
+           libraries.filter((lib) => lib.id !== 'library_default').length > 1 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 whitespace-nowrap"
+                  onClick={() => {
+                    const library = libraries.find((lib) => lib.id === activeLibraryId)
+                    if (library) {
+                      setLibraryToDelete({ id: library.id, name: library.name })
+                    }
+                  }}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Bibliothek löschen</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
       <div className="pb-3">
@@ -540,6 +577,31 @@ export function LibraryPane({
                 if (confirmDeleteId) removeCitation(confirmDeleteId)
                 setConfirmDeleteId(null)
               }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!libraryToDelete}
+        onOpenChange={(open) => {
+          if (!open) setLibraryToDelete(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bibliothek löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`"${libraryToDelete?.name ?? "Diese Bibliothek"}"`} wird dauerhaft gelöscht. Alle zugehörigen Quellen werden ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setLibraryToDelete(null)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteLibrary}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Löschen
             </AlertDialogAction>

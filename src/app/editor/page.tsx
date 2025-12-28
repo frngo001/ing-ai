@@ -17,6 +17,9 @@ import { EditorLoading } from "@/components/ui/editor-loading"
 import { useVisibilityStore } from "@/lib/stores/visibility-store"
 import { setupEditorTextInsertion } from "@/lib/editor/insert-text"
 import { setupEditorStreaming } from "@/lib/editor/stream-text"
+import { getCurrentUserId } from "@/lib/supabase/utils/auth"
+import * as documentsUtils from "@/lib/supabase/utils/documents"
+import { extractTextFromNode } from "@/lib/supabase/utils/document-title"
 
 type Pane = "documents" | "library" | "askAi"
 
@@ -74,16 +77,46 @@ function PageContent({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const findLatestDocId = useCallback((): string | null => {
+  const findLatestDocId = useCallback(async (): Promise<string | null> => {
     if (typeof window === "undefined") return null
 
     const STATE_PREFIX = "plate-editor-state-"
     const CONTENT_PREFIX = "plate-editor-content-"
 
+    const hasContentText = (state: any): boolean => {
+      const content = Array.isArray(state?.content) ? state.content : null
+      if (!content) return false
+      return extractTextFromNode(content).trim().length > 0
+    }
+
     const seen = new Set<string>()
     let latestId: string | null = null
     let latestTs = -Infinity
 
+    // Prüfe zuerst Supabase-Dokumente, wenn User eingeloggt
+    try {
+      const userId = await getCurrentUserId()
+      if (userId) {
+        const docs = await documentsUtils.getDocuments(userId)
+        for (const doc of docs) {
+          if (seen.has(doc.id)) continue
+          seen.add(doc.id)
+
+          // Prüfe ob Content vorhanden ist
+          if (doc.content && hasContentText({ content: doc.content })) {
+            const ts = doc.updated_at ? new Date(doc.updated_at).getTime() : 0
+            if (ts >= latestTs) {
+              latestTs = ts
+              latestId = doc.id
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Fehler beim Laden der Dokumente aus Supabase:", error)
+    }
+
+    // Prüfe dann localStorage
     for (let i = 0; i < window.localStorage.length; i += 1) {
       const key = window.localStorage.key(i)
       if (!key) continue
@@ -103,6 +136,9 @@ function PageContent({
         const parsedContent = rawContent ? JSON.parse(rawContent) : null
         const hydrated = parsedState ?? (parsedContent ? { content: parsedContent } : null)
         if (!hydrated) continue
+
+        // Prüfe ob Content vorhanden ist
+        if (!hasContentText(hydrated)) continue
 
         const ts = hydrated?.updatedAt ? new Date(hydrated.updatedAt).getTime() : 0
         if (ts >= latestTs) {
@@ -149,31 +185,35 @@ function PageContent({
     const paramId = searchParams.get("doc")
     if (paramId) {
       setStorageId(paramId)
-      window.dispatchEvent(new Event("documents:reload"))
+      // Kein Event beim ersten Mount - DocumentsPane lädt bereits beim Mount
       return
     }
 
-    const latestExisting = findLatestDocId()
-    if (latestExisting) {
-      setStorageId(latestExisting)
-      router.replace(`/editor?doc=${encodeURIComponent(latestExisting)}`)
-      window.dispatchEvent(new Event("documents:reload"))
-      return
-    }
+    // findLatestDocId ist jetzt async
+    findLatestDocId().then((latestExisting) => {
+      if (latestExisting) {
+        setStorageId(latestExisting)
+        router.replace(`/editor?doc=${encodeURIComponent(latestExisting)}`)
+        // Event wird durch den nachfolgenden useEffect ausgelöst, wenn searchParams sich ändert
+        return
+      }
 
-    const newId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `doc-${Date.now()}`
-    setStorageId(newId)
-    router.replace(`/editor?doc=${encodeURIComponent(newId)}`)
-    window.dispatchEvent(new Event("documents:reload"))
+      const newId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `doc-${Date.now()}`
+      setStorageId(newId)
+      router.replace(`/editor?doc=${encodeURIComponent(newId)}`)
+      // Event wird durch den nachfolgenden useEffect ausgelöst, wenn searchParams sich ändert
+    })
   }, [findLatestDocId, router, searchParams])
 
   useEffect(() => {
     const paramId = searchParams.get("doc")
     if (paramId && paramId !== storageId) {
       setStorageId(paramId)
+      // Event nur auslösen wenn sich der doc Parameter wirklich ändert
+      // Debounce wird in DocumentsPane gehandhabt
       window.dispatchEvent(new Event("documents:reload"))
     }
   }, [searchParams, storageId])

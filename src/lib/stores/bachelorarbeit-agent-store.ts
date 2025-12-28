@@ -2,6 +2,8 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getCurrentUserId } from '@/lib/supabase/utils/auth'
+import * as agentStatesUtils from '@/lib/supabase/utils/agent-states'
 
 export type ArbeitType = 'bachelor' | 'master' | 'general' | null
 
@@ -47,23 +49,25 @@ interface BachelorarbeitAgentState {
   lastUpdated: Date | null
 
   // Actions
-  startAgent: (arbeitType: ArbeitType, thema?: string) => void
-  stopAgent: () => void
-  setThema: (thema: string) => void
-  setCurrentStep: (step: AgentStep) => void
-  updateStepData: (step: number, data: any) => void
+  startAgent: (arbeitType: ArbeitType, thema?: string) => Promise<void>
+  stopAgent: () => Promise<void>
+  setThema: (thema: string) => Promise<void>
+  setCurrentStep: (step: AgentStep) => Promise<void>
+  updateStepData: (step: number, data: any) => Promise<void>
   getStepData: (step: number) => any
 
   // Quellen-Actions
-  addSelectedSource: (source: SelectedSource) => void
-  removeSelectedSource: (id: string) => void
-  setPendingSources: (sources: SelectedSource[]) => void
-  confirmSources: () => void
-  rejectSources: () => void
+  addSelectedSource: (source: SelectedSource) => Promise<void>
+  removeSelectedSource: (id: string) => Promise<void>
+  setPendingSources: (sources: SelectedSource[]) => Promise<void>
+  confirmSources: () => Promise<void>
+  rejectSources: () => Promise<void>
 
   // Progress
   calculateProgress: () => number
-  reset: () => void
+  reset: () => Promise<void>
+  loadAgentStateFromSupabase: () => Promise<void>
+  agentStateId: string | null
 }
 
 const TOTAL_STEPS = 3 // Phase 2 hat 3 Schritte
@@ -82,48 +86,144 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
       pendingSources: [],
       startedAt: null,
       lastUpdated: null,
+      agentStateId: null,
 
       // Actions
-      startAgent: (arbeitType, thema) => {
-        set({
+      startAgent: async (arbeitType, thema) => {
+        const userId = await getCurrentUserId()
+        const now = new Date()
+        
+        const newState = {
           isActive: true,
           arbeitType,
           thema,
           currentStep: 4, // Start mit Literaturrecherche
-          startedAt: new Date(),
-          lastUpdated: new Date(),
+          startedAt: now,
+          lastUpdated: now,
           progress: 0,
-        })
+        }
+
+        set(newState)
+
+        if (userId) {
+          try {
+            // Deaktiviere alle anderen Agent States
+            await agentStatesUtils.deactivateAllAgentStates(userId)
+            
+            // Erstelle neuen Agent State
+            const agentState = await agentStatesUtils.createAgentState({
+              user_id: userId,
+              is_active: true,
+              arbeit_type: arbeitType,
+              thema: thema || null,
+              current_step: 4,
+              step_data: {},
+              progress: 0,
+              selected_sources: [],
+              pending_sources: [],
+              started_at: now.toISOString(),
+              last_updated: now.toISOString(),
+            })
+            
+            set({ agentStateId: agentState.id })
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Speichern des Agent States:', error)
+          }
+        }
       },
 
-      stopAgent: () => {
+      stopAgent: async () => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+
         set({
           isActive: false,
           currentStep: null,
         })
+
+        if (userId && stateId) {
+          try {
+            await agentStatesUtils.updateAgentState(stateId, {
+              is_active: false,
+              current_step: null,
+              last_updated: new Date().toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Stoppen des Agent States:', error)
+          }
+        }
       },
 
-      setThema: (thema) => {
-        set({ thema, lastUpdated: new Date() })
+      setThema: async (thema) => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+        const now = new Date()
+
+        set({ thema, lastUpdated: now })
+
+        if (userId && stateId) {
+          try {
+            await agentStatesUtils.updateAgentState(stateId, {
+              thema,
+              last_updated: now.toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Aktualisieren des Themas:', error)
+          }
+        }
       },
 
-      setCurrentStep: (step) => {
+      setCurrentStep: async (step) => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+        const now = new Date()
+        const progress = get().calculateProgress()
+
         set({
           currentStep: step,
-          lastUpdated: new Date(),
-          progress: get().calculateProgress(),
+          lastUpdated: now,
+          progress,
         })
+
+        if (userId && stateId) {
+          try {
+            await agentStatesUtils.updateAgentState(stateId, {
+              current_step: step,
+              progress,
+              last_updated: now.toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Aktualisieren des Schritts:', error)
+          }
+        }
       },
 
-      updateStepData: (step, data) => {
+      updateStepData: async (step, data) => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+        const now = new Date()
+        
         set((state) => {
           const newStepData = { ...state.stepData, [step]: data }
           return {
             stepData: newStepData,
-            lastUpdated: new Date(),
+            lastUpdated: now,
             progress: get().calculateProgress(),
           }
         })
+
+        if (userId && stateId) {
+          try {
+            const state = get()
+            await agentStatesUtils.updateAgentState(stateId, {
+              step_data: state.stepData,
+              progress: state.progress,
+              last_updated: now.toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Aktualisieren der Schritt-Daten:', error)
+          }
+        }
       },
 
       getStepData: (step) => {
@@ -131,40 +231,119 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
       },
 
       // Quellen-Actions
-      addSelectedSource: (source) => {
+      addSelectedSource: async (source) => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+        const now = new Date()
+
         set((state) => ({
           selectedSources: [...state.selectedSources, source],
-          lastUpdated: new Date(),
+          lastUpdated: now,
         }))
+
+        if (userId && stateId) {
+          try {
+            const state = get()
+            await agentStatesUtils.updateAgentState(stateId, {
+              selected_sources: state.selectedSources,
+              last_updated: now.toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Hinzufügen der Quelle:', error)
+          }
+        }
       },
 
-      removeSelectedSource: (id) => {
+      removeSelectedSource: async (id) => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+        const now = new Date()
+
         set((state) => ({
           selectedSources: state.selectedSources.filter((s) => s.id !== id),
-          lastUpdated: new Date(),
+          lastUpdated: now,
         }))
+
+        if (userId && stateId) {
+          try {
+            const state = get()
+            await agentStatesUtils.updateAgentState(stateId, {
+              selected_sources: state.selectedSources,
+              last_updated: now.toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Entfernen der Quelle:', error)
+          }
+        }
       },
 
-      setPendingSources: (sources) => {
+      setPendingSources: async (sources) => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+        const now = new Date()
+
         set({
           pendingSources: sources,
-          lastUpdated: new Date(),
+          lastUpdated: now,
         })
+
+        if (userId && stateId) {
+          try {
+            await agentStatesUtils.updateAgentState(stateId, {
+              pending_sources: sources,
+              last_updated: now.toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Setzen der pending Sources:', error)
+          }
+        }
       },
 
-      confirmSources: () => {
+      confirmSources: async () => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+        const now = new Date()
+
         set((state) => ({
           selectedSources: [...state.selectedSources, ...state.pendingSources],
           pendingSources: [],
-          lastUpdated: new Date(),
+          lastUpdated: now,
         }))
+
+        if (userId && stateId) {
+          try {
+            const state = get()
+            await agentStatesUtils.updateAgentState(stateId, {
+              selected_sources: state.selectedSources,
+              pending_sources: [],
+              last_updated: now.toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Bestätigen der Quellen:', error)
+          }
+        }
       },
 
-      rejectSources: () => {
+      rejectSources: async () => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+        const now = new Date()
+
         set({
           pendingSources: [],
-          lastUpdated: new Date(),
+          lastUpdated: now,
         })
+
+        if (userId && stateId) {
+          try {
+            await agentStatesUtils.updateAgentState(stateId, {
+              pending_sources: [],
+              last_updated: now.toISOString(),
+            }, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Ablehnen der Quellen:', error)
+          }
+        }
       },
 
       calculateProgress: () => {
@@ -178,7 +357,10 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
         return Math.min(stepProgress + dataProgress, 100)
       },
 
-      reset: () => {
+      reset: async () => {
+        const userId = await getCurrentUserId()
+        const stateId = get().agentStateId
+
         set({
           isActive: false,
           arbeitType: null,
@@ -190,7 +372,44 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           pendingSources: [],
           startedAt: null,
           lastUpdated: null,
+          agentStateId: null,
         })
+
+        if (userId && stateId) {
+          try {
+            await agentStatesUtils.deleteAgentState(stateId, userId)
+          } catch (error) {
+            console.error('❌ [AGENT STORE] Fehler beim Zurücksetzen des Agent States:', error)
+          }
+        }
+      },
+      loadAgentStateFromSupabase: async () => {
+        const userId = await getCurrentUserId()
+        if (!userId) {
+          console.warn('⚠️ [AGENT STORE] Kein User eingeloggt, kann keinen Agent State laden')
+          return
+        }
+
+        try {
+          const agentState = await agentStatesUtils.getAgentState(userId)
+          if (agentState && agentState.is_active) {
+            set({
+              isActive: agentState.is_active,
+              arbeitType: agentState.arbeit_type,
+              thema: agentState.thema || undefined,
+              currentStep: agentState.current_step as AgentStep | null,
+              stepData: (agentState.step_data as StepData) || {},
+              progress: agentState.progress,
+              selectedSources: (agentState.selected_sources as SelectedSource[]) || [],
+              pendingSources: (agentState.pending_sources as SelectedSource[]) || [],
+              startedAt: agentState.started_at ? new Date(agentState.started_at) : null,
+              lastUpdated: agentState.last_updated ? new Date(agentState.last_updated) : null,
+              agentStateId: agentState.id,
+            })
+          }
+        } catch (error) {
+          console.error('❌ [AGENT STORE] Fehler beim Laden des Agent States:', error)
+        }
       },
     }),
     {
@@ -204,6 +423,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
         selectedSources: state.selectedSources,
         startedAt: state.startedAt,
         lastUpdated: state.lastUpdated,
+        agentStateId: state.agentStateId,
       }),
     }
   )

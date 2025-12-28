@@ -28,6 +28,9 @@ import { ConditionalFixedToolbar } from '@/components/ui/conditional-fixed-toolb
 import { useCitationStore } from '@/lib/stores/citation-store';
 import { insertCitationWithMerge } from '@/components/editor/utils/insert-citation-with-merge';
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils';
+import { extractTitleFromContent, extractTextFromNode } from '@/lib/supabase/utils/document-title';
+import { getCurrentUserId } from '@/lib/supabase/utils/auth';
+import * as documentsUtils from '@/lib/supabase/utils/documents';
 import {
   type TDiscussion,
   discussionPlugin,
@@ -93,27 +96,75 @@ export function PlateEditor({
   React.useEffect(() => {
     if (typeof window === 'undefined' || !editor || hasHydrated.current) return;
 
-    const { content, discussions } = loadPersistedState(storageKeys);
+    const loadContent = async () => {
+      // Versuche zuerst aus Supabase zu laden, wenn storageId eine UUID ist (Supabase-Dokument)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storageId);
+      let content: Value | null = null;
+      let discussions: TDiscussion[] | null = null;
 
-    if (content) {
-      (editor as any).tf.setValue?.(content);
-      latestContentRef.current = content;
+      if (isUUID) {
+        try {
+          const userId = await getCurrentUserId();
+          if (userId) {
+            const doc = await documentsUtils.getDocumentById(storageId, userId);
+            if (doc && doc.content) {
+              const normalizedContent = normalizeNodeId(doc.content as Value);
+              // Prüfe ob Content tatsächlich Text enthält
+              const hasContent = extractTextFromNode(normalizedContent).trim().length > 0;
+              if (hasContent) {
+                content = normalizedContent;
+                // Discussions werden aktuell nicht in Supabase gespeichert, daher aus localStorage laden
+                const localData = loadPersistedState(storageKeys);
+                discussions = localData.discussions;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden des Dokuments aus Supabase:', error);
+          // Fallback auf localStorage
+          const localData = loadPersistedState(storageKeys);
+          content = localData.content;
+          discussions = localData.discussions;
+        }
+      }
+
+      // Wenn kein Content aus Supabase geladen wurde, lade aus localStorage
+      if (!content) {
+        const localData = loadPersistedState(storageKeys);
+        content = localData.content;
+        discussions = localData.discussions;
+        
+        // Prüfe ob localStorage-Content tatsächlich Text enthält
+        if (content) {
+          const hasContent = extractTextFromNode(content).trim().length > 0;
+          if (!hasContent) {
+            content = null; // Verwende DEFAULT_VALUE wenn kein Content vorhanden
+          }
+        }
+      }
+
+      // Verwende Content oder DEFAULT_VALUE
+      const finalContent = content || DEFAULT_VALUE;
+      (editor as any).tf.setValue?.(finalContent);
+      latestContentRef.current = finalContent;
       (editor as any).tf.redecorate?.();
       // stelle Anker für Kommentare/Vorschläge sofort wieder her
       syncCommentPathMap(editor);
       syncSuggestionPathMap(editor);
-    }
 
-    if (discussions) {
-      editor.setOption(discussionPlugin, 'discussions', discussions);
-      syncCommentPathMap(editor);
-      syncSuggestionPathMap(editor);
-      (editor as any).tf.redecorate?.();
-      discussionsApplied.current = true;
-    }
+      if (discussions) {
+        editor.setOption(discussionPlugin, 'discussions', discussions);
+        syncCommentPathMap(editor);
+        syncSuggestionPathMap(editor);
+        (editor as any).tf.redecorate?.();
+        discussionsApplied.current = true;
+      }
 
-    hasHydrated.current = true;
-  }, [editor, storageKeys]);
+      hasHydrated.current = true;
+    };
+
+    loadContent();
+  }, [editor, storageKeys, storageId]);
 
   const handleChange = React.useCallback(
     ({ value: nextValue }: { value: Value }) => {
@@ -128,13 +179,13 @@ export function PlateEditor({
 
       try {
         contentSaveTimeout.current = window.setTimeout(() => {
-          persistState(storageKeys, latestContentRef.current, null);
+          persistState(storageKeys, latestContentRef.current, null, storageId);
         }, SAVE_DEBOUNCE_MS);
       } catch (error) {
-        console.error('Editorinhalt konnte nicht im LocalStorage gespeichert werden.', error);
+        console.error('Editorinhalt konnte nicht gespeichert werden.', error);
       }
     },
-    [editor, storageKeys.content]
+    [editor, storageKeys, storageId]
   );
 
   React.useEffect(() => {
@@ -142,13 +193,13 @@ export function PlateEditor({
       if (contentSaveTimeout.current && hasHydrated.current) {
         window.clearTimeout(contentSaveTimeout.current);
         try {
-          persistState(storageKeys, latestContentRef.current, null);
+          persistState(storageKeys, latestContentRef.current, null, storageId);
         } catch {
           // ignore on unmount
         }
       }
     };
-  }, [storageKeys.content]);
+  }, [storageKeys, storageId]);
 
   React.useEffect(() => {
     if (!pendingCitation || !editor) return;
@@ -204,6 +255,7 @@ export function PlateEditor({
       <DiscussionPersistence
         discussionsSaveTimeout={discussionsSaveTimeout}
         storageKeys={storageKeys}
+        storageId={storageId}
       />
       <div className="flex h-full items-start gap-6">
         <CommentTocSidebar visible={showCommentToc}  className="overflow-auto max-h-[40vh]" />
@@ -269,7 +321,7 @@ export function PlateEditor({
             source: sourceLabel,
             year: source.publicationYear,
             lastEdited: timestamp,
-            href: '/editor',
+            href: externalUrl || '/editor',
             externalUrl,
             doi: validDoi || undefined,
             authors,
@@ -1078,8 +1130,17 @@ function stripOuterSquareBrackets(text: string) {
   return text;
 }
 
+// Prüft, ob eine ID eine gültige UUID ist (nicht Mock-Daten wie "discussion1")
+function isValidUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
+
 function reviveDiscussions(data: TDiscussion[]): TDiscussion[] {
-  return data.map((discussion) => ({
+  // Filtere Mock-Discussions heraus (IDs wie "discussion1", "discussion2" sind keine UUIDs)
+  const validDiscussions = data.filter((discussion) => isValidUUID(discussion.id));
+  
+  return validDiscussions.map((discussion) => ({
     ...discussion,
     createdAt: new Date(discussion.createdAt),
     comments: discussion.comments.map((comment) => ({
@@ -1094,6 +1155,7 @@ function reviveDiscussions(data: TDiscussion[]): TDiscussion[] {
 function DiscussionPersistence({
   storageKeys,
   discussionsSaveTimeout,
+  storageId,
 }: {
   storageKeys: {
     content: string;
@@ -1103,6 +1165,7 @@ function DiscussionPersistence({
     legacyDiscussions: string;
   };
   discussionsSaveTimeout: React.MutableRefObject<number | ReturnType<typeof setTimeout> | null>;
+  storageId: string;
 }) {
   const discussions = usePluginOption(discussionPlugin, 'discussions');
   const latestDiscussions = React.useRef<TDiscussion[] | null>(null);
@@ -1118,25 +1181,25 @@ function DiscussionPersistence({
     try {
       discussionsSaveTimeout.current = window.setTimeout(() => {
         if (!latestDiscussions.current) return;
-        persistState(storageKeys, null, latestDiscussions.current);
+        persistState(storageKeys, null, latestDiscussions.current, storageId);
       }, SAVE_DEBOUNCE_MS);
     } catch (error) {
-      console.error('Diskussionen konnten nicht im LocalStorage gespeichert werden.', error);
+      console.error('Diskussionen konnten nicht gespeichert werden.', error);
     }
-  }, [discussions, storageKeys, discussionsSaveTimeout]);
+  }, [discussions, storageKeys, discussionsSaveTimeout, storageId]);
 
   React.useEffect(() => {
     return () => {
       if (discussionsSaveTimeout.current && latestDiscussions.current) {
         window.clearTimeout(discussionsSaveTimeout.current);
         try {
-          persistState(storageKeys, null, latestDiscussions.current);
+          persistState(storageKeys, null, latestDiscussions.current, storageId);
         } catch {
           // ignore on unmount
         }
       }
     };
-  }, [storageKeys, discussionsSaveTimeout]);
+  }, [storageKeys, storageId]);
 
   return null;
 }
@@ -1198,7 +1261,7 @@ function loadPersistedState(keys: {
   };
 }
 
-function persistState(
+async function persistState(
   keys: {
     content: string;
     discussions: string;
@@ -1207,7 +1270,8 @@ function persistState(
     legacyDiscussions: string;
   },
   content: Value | null,
-  discussions: TDiscussion[] | null
+  discussions: TDiscussion[] | null,
+  documentId?: string
 ) {
   if (typeof window === 'undefined') return;
 
@@ -1230,14 +1294,64 @@ function persistState(
   };
 
   try {
+    // Speichere nur in keys.state (enthält bereits content und discussions)
     window.localStorage.setItem(keys.state, JSON.stringify(payload));
-
-    if (nextContent) {
-      window.localStorage.setItem(keys.content, JSON.stringify(nextContent));
+    
+    // Speichere in Supabase, wenn documentId vorhanden ist (UUID-Format) und User eingeloggt
+    if (documentId && nextContent) {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId);
+      if (isUUID) {
+        try {
+          const userId = await getCurrentUserId();
+          if (userId) {
+            const extractedTitle = extractTitleFromContent(nextContent);
+            await documentsUtils.updateDocument(
+              documentId,
+              {
+                title: extractedTitle || "Unbenanntes Dokument",
+                content: nextContent as any,
+                updated_at: updatedAt,
+              },
+              userId
+            );
+            // Cache wurde bereits in updateDocument invalidiert
+          }
+        } catch (error: any) {
+          // Spezifische Fehlerbehandlung für verschiedene Fehlertypen
+          if (error?.code === 'PGRST116') {
+            console.warn('[PLATE EDITOR] Dokument existiert nicht in der Datenbank. Wird beim nächsten Speichern erstellt.');
+          } else if (error?.code === '23505') {
+            // Unique Constraint Violation - Dokument existiert bereits
+            // Versuche erneut mit Update (kann bei Race Conditions auftreten)
+            console.warn('[PLATE EDITOR] Dokument existiert bereits. Versuche Update erneut...');
+            try {
+              const userId = await getCurrentUserId();
+              if (userId) {
+                const extractedTitle = extractTitleFromContent(nextContent);
+                await documentsUtils.updateDocument(
+                  documentId,
+                  {
+                    title: extractedTitle || "Unbenanntes Dokument",
+                    content: nextContent as any,
+                    updated_at: updatedAt,
+                  },
+                  userId
+                );
+                console.log('[PLATE EDITOR] Dokument erfolgreich aktualisiert nach Retry.');
+              }
+            } catch (retryError) {
+              console.error('[PLATE EDITOR] Fehler beim Retry des Speicherns:', retryError);
+            }
+          } else if (error?.message?.includes('406')) {
+            console.error('[PLATE EDITOR] 406 Not Acceptable - Möglicherweise RLS-Problem oder fehlerhafter Accept-Header:', error);
+          } else {
+            console.error('[PLATE EDITOR] Fehler beim Speichern des Dokuments in Supabase:', error);
+          }
+          // Weiterhin localStorage verwenden als Fallback
+        }
+      }
     }
-    if (nextDiscussions) {
-      window.localStorage.setItem(keys.discussions, JSON.stringify(nextDiscussions));
-    }
+    
     window.dispatchEvent(new Event('documents:reload'));
   } catch (error) {
     console.error('Persistierte Editor-Daten konnten nicht gespeichert werden.', error);

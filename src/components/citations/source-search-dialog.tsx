@@ -209,41 +209,58 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
             return { 'date-parts': [[y, m || undefined, d || undefined].filter(Boolean) as number[]] }
         })()
 
+        // Generiere Google Books URL falls keine URL vorhanden ist
+        const bookUrl = book.url || book.link || (() => {
+            const searchQuery = encodeURIComponent(book.title)
+            return `https://books.google.com/books?q=${searchQuery}`
+        })()
+
+        // Erfasse alle verfügbaren Metadaten aus der API
+        const isbn = book.isbn || book.ISBN
+        const issn = book.issn || book.ISSN
+        const doi = book.doi || book.DOI
+        const publisherPlace = book['publisher-place'] || book.publisherPlace || book['event-place'] || book.eventPlace
+        const containerTitle = book['container-title'] || book.containerTitle
+        const numberOfPages = book.pages || book['number-of-pages'] || book.numberOfPages
+        const page = book['page'] || (book.pages ? String(book.pages) : undefined)
+        const pageFirst = book['page-first'] || book.pageFirst
+
         return {
-            id: `${book.title}-${book.publisher ?? ''}-${book.date ?? ''}-${book.pages ?? ''}`,
+            id: book.id || `${book.title}-${book.publisher ?? ''}-${book.date ?? ''}-${book.pages ?? ''}`,
             title: book.title,
             authors: (book.authors ?? []).map((full) => ({ fullName: full })),
             publicationYear: Number.isNaN(year) ? undefined : year,
             type: 'book',
             journal: undefined,
-            containerTitle: undefined,
+            containerTitle: containerTitle,
             publisher: book.publisher,
-            abstract: undefined,
-            description: undefined,
-            url: undefined,
-            URL: undefined,
+            abstract: book.abstract,
+            description: book.description,
+            url: bookUrl,
+            URL: bookUrl,
             pdfUrl: undefined,
             isOpenAccess: true,
             completeness: 1,
             sourceApi: 'bibify.books',
             citationCount: undefined,
             impactFactor: undefined,
-            volume: undefined,
-            issue: undefined,
-            page: book.pages ? String(book.pages) : undefined,
-            pages: book.pages ? String(book.pages) : undefined,
-            numberOfPages: book.pages,
+            volume: book.volume ? String(book.volume) : undefined,
+            issue: book.issue ? String(book.issue) : undefined,
+            page: page || pageFirst,
+            pages: page || (book.pages ? String(book.pages) : undefined),
+            numberOfPages: numberOfPages,
             categories: book.categories,
             thumbnail: book.thumbnail,
             image: book.thumbnail,
-            language: undefined,
-            note: undefined,
+            language: book.language,
+            note: book.note,
             issued: dateParts,
             accessed: undefined,
-            edition: undefined,
-            isbn: undefined,
-            issn: undefined,
-            publisherPlace: undefined,
+            edition: book.edition,
+            isbn: isbn,
+            issn: issn,
+            publisherPlace: publisherPlace,
+            doi: doi,
         }
     }
 
@@ -277,7 +294,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
         // Buchsuche über Bibify (Google Books)
         if (searchType === 'book') {
             try {
-                const books = await searchBooks(searchQuery.trim())
+                const books = await searchBooks(searchQuery.trim(), 100)
                 const mapped = books.map(bookInfoToSource)
                 setResults(mapped)
             } catch (error) {
@@ -685,6 +702,31 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                                 Auflage: {edition}
                                                             </Badge>
                                                         )}
+                                                        {isbn && (
+                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                                                ISBN: {isbn}
+                                                            </Badge>
+                                                        )}
+                                                        {issn && (
+                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                                                ISSN: {issn}
+                                                            </Badge>
+                                                        )}
+                                                        {source.doi && (
+                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                                                DOI: {source.doi}
+                                                            </Badge>
+                                                        )}
+                                                        {language && (
+                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                                                {language}
+                                                            </Badge>
+                                                        )}
+                                                        {publisherPlace && (
+                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                                                {publisherPlace}
+                                                            </Badge>
+                                                        )}
                                                         {source.citationCount !== undefined && source.citationCount > 0 && (
                                                             <span className="text-[10px] text-muted-foreground">
                                                                 {source.citationCount} Zitate
@@ -704,26 +746,6 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                                 {cat}
                                                             </Badge>
                                                         ))}
-                                                        {language && (
-                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                                                {language}
-                                                            </Badge>
-                                                        )}
-                                                        {publisherPlace && (
-                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                                                {publisherPlace}
-                                                            </Badge>
-                                                        )}
-                                                        {isbn && (
-                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                                                ISBN {isbn}
-                                                            </Badge>
-                                                        )}
-                                                        {issn && (
-                                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                                                ISSN {issn}
-                                                            </Badge>
-                                                        )}
                                                     </div>
 
                                                     {description && (

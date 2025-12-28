@@ -237,3 +237,9 @@ CREATE TRIGGER update_sources_updated_at BEFORE UPDATE ON public.sources
 -- CREATE POLICY "Users can delete own PDFs"
 --   ON storage.objects FOR DELETE
 --   USING (bucket_id = 'pdfs' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- NOTE: Neue Tabellen und Erweiterungen sind in separaten Migrations-Dateien:
+-- - supabase/migrations/001_extend_schema.sql - Neue Tabellen
+-- - supabase/migrations/002_extend_existing_tables.sql - Erweiterungen bestehender Tabellen
+-- - supabase/migrations/003_add_rls_policies.sql - RLS Policies
+-- - supabase/migrations/004_add_indexes.sql - Indizes

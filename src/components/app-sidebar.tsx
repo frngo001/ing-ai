@@ -100,15 +100,16 @@ export function AppSidebar({
 
   React.useEffect(() => {
     const fetchUser = async () => {
+      // Nutze getSession() statt getUser() - kein API-Call
       const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser()
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      if (authUser) {
+      if (session?.user) {
         setUser({
-          name: authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "Benutzer",
-          email: authUser.email || "",
-          avatar: authUser.user_metadata?.avatar_url || defaultUser.avatar,
+          name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Benutzer",
+          email: session.user.email || "",
+          avatar: session.user.user_metadata?.avatar_url || defaultUser.avatar,
         })
       }
     }

@@ -52,6 +52,45 @@ export type BibifyBook = {
   categories?: string[]
   thumbnail?: string
   pages?: number
+  url?: string
+  link?: string
+  id?: string
+  isbn?: string
+  ISBN?: string
+  issn?: string
+  ISSN?: string
+  edition?: string
+  'publisher-place'?: string
+  publisherPlace?: string
+  language?: string
+  note?: string
+  abstract?: string
+  description?: string
+  volume?: string | number
+  issue?: string | number
+  subtitle?: string
+  series?: string
+  'container-title'?: string
+  containerTitle?: string
+  DOI?: string
+  doi?: string
+  'event-place'?: string
+  eventPlace?: string
+  'number-of-pages'?: number
+  numberOfPages?: number
+  'page'?: string
+  'page-first'?: string
+  pageFirst?: string
+  'original-date'?: string
+  originalDate?: string
+  'original-title'?: string
+  originalTitle?: string
+  'short-title'?: string
+  shortTitle?: string
+  'title-short'?: string
+  titleShort?: string
+  translator?: string[]
+  [key: string]: unknown // Erlaubt zusätzliche Felder, die die API zurückgeben könnte
 }
 
 export type BibifyWebsiteInfo = {
@@ -129,9 +168,13 @@ export async function citeWithBibify(request: BibifyCiteRequest): Promise<Bibify
   return fetchJson<BibifyCiteResponse>(withBase(`/api/cite?${qs}`))
 }
 
-export async function searchBooks(query: string): Promise<BibifyBook[]> {
+export async function searchBooks(query: string, limit?: number): Promise<BibifyBook[]> {
   const q = encodeURIComponent(query)
-  return fetchJson<BibifyBook[]>(withBase(`/api/books?q=${q}`))
+  const params = new URLSearchParams({ q })
+  if (limit !== undefined) {
+    params.append('limit', limit.toString())
+  }
+  return fetchJson<BibifyBook[]>(withBase(`/api/books?${params.toString()}`))
 }
 
 export async function fetchWebsiteInfo(url: string): Promise<BibifyWebsiteInfo> {

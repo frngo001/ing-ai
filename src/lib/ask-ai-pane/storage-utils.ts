@@ -1,6 +1,11 @@
 import type { ChatMessage, StoredConversation, SlashCommand, SavedMessage } from './types'
 import { SLASH_STORAGE_KEY, CHAT_HISTORY_STORAGE_KEY, SAVED_MESSAGES_STORAGE_KEY } from './constants'
 import { deriveConversationTitle } from './message-utils'
+import { getCurrentUserId } from '@/lib/supabase/utils/auth'
+import * as chatConversationsUtils from '@/lib/supabase/utils/chat-conversations'
+import * as chatMessagesUtils from '@/lib/supabase/utils/chat-messages'
+import * as savedMessagesUtils from '@/lib/supabase/utils/saved-messages'
+import * as slashCommandsUtils from '@/lib/supabase/utils/slash-commands'
 
 /**
  * Prüft, ob localStorage im aktuellen Kontext verfügbar ist
@@ -10,12 +15,68 @@ const isLocalStorageAvailable = (): boolean => {
   return typeof window !== 'undefined' && typeof localStorage !== 'undefined'
 }
 
-export const saveSlashCommands = (commands: SlashCommand[]) => {
-  if (!isLocalStorageAvailable()) return
-  localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(commands))
+export const saveSlashCommands = async (commands: SlashCommand[]) => {
+  const userId = await getCurrentUserId()
+  
+  if (userId) {
+    try {
+      // Lösche alle bestehenden Commands
+      await slashCommandsUtils.deleteAllSlashCommands(userId)
+      
+      // Erstelle neue Commands
+      if (commands.length > 0) {
+        await slashCommandsUtils.createSlashCommands(
+          commands.map(cmd => ({
+            user_id: userId,
+            label: cmd.label,
+            content: cmd.content,
+          }))
+        )
+      }
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Speichern der Slash Commands:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(commands))
+      }
+    }
+  } else {
+    // Fallback auf localStorage wenn kein User eingeloggt
+    if (isLocalStorageAvailable()) {
+      localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(commands))
+    }
+  }
 }
 
-export const loadSlashCommands = (): SlashCommand[] => {
+export const loadSlashCommands = async (): Promise<SlashCommand[]> => {
+  const userId = await getCurrentUserId()
+  
+  if (userId) {
+    try {
+      const commands = await slashCommandsUtils.getSlashCommands(userId)
+      return commands.map(cmd => ({
+        id: cmd.id,
+        label: cmd.label,
+        content: cmd.content,
+      }))
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Laden der Slash Commands:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        const stored = localStorage.getItem(SLASH_STORAGE_KEY)
+        if (stored) {
+          try {
+            return JSON.parse(stored) as SlashCommand[]
+          } catch {
+            return getDefaultSlashCommands()
+          }
+        }
+      }
+      return getDefaultSlashCommands()
+    }
+  }
+  
+  // Fallback auf localStorage wenn kein User eingeloggt
   if (!isLocalStorageAvailable()) {
     return getDefaultSlashCommands()
   }
@@ -39,8 +100,78 @@ export const getDefaultSlashCommands = (): SlashCommand[] => {
   ]
 }
 
-export const persistConversation = (msgs: ChatMessage[], id: string, setHistory: (updater: (prev: StoredConversation[]) => StoredConversation[]) => void) => {
+export const persistConversation = async (msgs: ChatMessage[], id: string, setHistory: (updater: (prev: StoredConversation[]) => StoredConversation[]) => void) => {
+  const userId = await getCurrentUserId()
   const title = deriveConversationTitle(msgs)
+  
+  if (userId) {
+    try {
+      // Erstelle oder aktualisiere Conversation
+      let conversation = await chatConversationsUtils.getChatConversationById(id, userId)
+      
+      if (!conversation) {
+        conversation = await chatConversationsUtils.createChatConversation({
+          id,
+          user_id: userId,
+          title,
+        })
+      } else {
+        conversation = await chatConversationsUtils.updateChatConversation(id, {
+          title,
+          updated_at: new Date().toISOString(),
+        }, userId)
+      }
+
+      // Lösche alte Messages und erstelle neue
+      await chatMessagesUtils.deleteChatMessagesByConversation(id)
+      
+      if (msgs.length > 0) {
+        await chatMessagesUtils.createChatMessages(
+          msgs.map(msg => ({
+            conversation_id: id,
+            role: msg.role,
+            content: msg.content,
+            reasoning: msg.reasoning || null,
+            parts: msg.parts || [],
+            tool_invocations: msg.toolInvocations || [],
+          }))
+        )
+      }
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Speichern der Conversation:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        const nextConversation: StoredConversation = {
+          id,
+          title,
+          messages: msgs,
+          updatedAt: Date.now(),
+        }
+        const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY)
+        const prev = stored ? JSON.parse(stored) as StoredConversation[] : []
+        const filtered = prev.filter((item) => item.id !== id)
+        const next = [nextConversation, ...filtered].slice(0, 50)
+        localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(next))
+      }
+    }
+  } else {
+    // Fallback auf localStorage wenn kein User eingeloggt
+    if (isLocalStorageAvailable()) {
+      const nextConversation: StoredConversation = {
+        id,
+        title,
+        messages: msgs,
+        updatedAt: Date.now(),
+      }
+      const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY)
+      const prev = stored ? JSON.parse(stored) as StoredConversation[] : []
+      const filtered = prev.filter((item) => item.id !== id)
+      const next = [nextConversation, ...filtered].slice(0, 50)
+      localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(next))
+    }
+  }
+
+  // Update lokalen State
   setHistory((prev) => {
     const nextConversation: StoredConversation = {
       id,
@@ -50,14 +181,59 @@ export const persistConversation = (msgs: ChatMessage[], id: string, setHistory:
     }
     const filtered = prev.filter((item) => item.id !== id)
     const next = [nextConversation, ...filtered].slice(0, 50)
-    if (isLocalStorageAvailable()) {
-      localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(next))
-    }
     return next
   })
 }
 
-export const loadChatHistory = (): StoredConversation[] => {
+export const loadChatHistory = async (): Promise<StoredConversation[]> => {
+  const userId = await getCurrentUserId()
+  
+  if (userId) {
+    try {
+      const conversations = await chatConversationsUtils.getChatConversations(userId)
+      
+      // Lade Messages für jede Conversation
+      const conversationsWithMessages: StoredConversation[] = await Promise.all(
+        conversations.map(async (conv) => {
+          const messages = await chatMessagesUtils.getChatMessages(conv.id)
+          return {
+            id: conv.id,
+            title: conv.title,
+            messages: messages.map(msg => ({
+              id: msg.id,
+              role: msg.role,
+              content: msg.content,
+              reasoning: msg.reasoning || undefined,
+              parts: msg.parts as ChatMessage['parts'],
+              toolInvocations: msg.tool_invocations as ChatMessage['toolInvocations'],
+            })),
+            updatedAt: new Date(conv.updated_at).getTime(),
+          }
+        })
+      )
+      
+      return conversationsWithMessages.sort((a, b) => b.updatedAt - a.updatedAt)
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Laden der Chat History:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY)
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as StoredConversation[]
+            if (Array.isArray(parsed)) {
+              return [...parsed].sort((a, b) => b.updatedAt - a.updatedAt)
+            }
+          } catch {
+            return []
+          }
+        }
+      }
+      return []
+    }
+  }
+  
+  // Fallback auf localStorage wenn kein User eingeloggt
   if (!isLocalStorageAvailable()) {
     return []
   }
@@ -75,7 +251,8 @@ export const loadChatHistory = (): StoredConversation[] => {
   return []
 }
 
-export const saveMessage = (message: ChatMessage, conversationId: string): SavedMessage => {
+export const saveMessage = async (message: ChatMessage, conversationId: string): Promise<SavedMessage> => {
+  const userId = await getCurrentUserId()
   const savedMessage: SavedMessage = {
     id: crypto.randomUUID(),
     messageId: message.id,
@@ -86,22 +263,101 @@ export const saveMessage = (message: ChatMessage, conversationId: string): Saved
     preview: message.content.substring(0, 100) + (message.content.length > 100 ? '...' : ''),
   }
   
-  const saved = loadSavedMessages()
-  const updated = [savedMessage, ...saved.filter(m => m.messageId !== message.id)]
-  if (isLocalStorageAvailable()) {
-    localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
+  if (userId) {
+    try {
+      await savedMessagesUtils.createSavedMessage({
+        user_id: userId,
+        message_id: message.id,
+        conversation_id: conversationId,
+        content: message.content,
+        role: message.role,
+        preview: savedMessage.preview,
+      })
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Speichern der Message:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+        const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
+        const updated = [savedMessage, ...saved.filter(m => m.messageId !== message.id)]
+        localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
+      }
+    }
+  } else {
+    // Fallback auf localStorage wenn kein User eingeloggt
+    if (isLocalStorageAvailable()) {
+      const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+      const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
+      const updated = [savedMessage, ...saved.filter(m => m.messageId !== message.id)]
+      localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
+    }
   }
+  
   return savedMessage
 }
 
-export const removeSavedMessage = (messageId: string): void => {
-  if (!isLocalStorageAvailable()) return
-  const saved = loadSavedMessages()
-  const updated = saved.filter(m => m.messageId !== messageId)
-  localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
+export const removeSavedMessage = async (messageId: string): Promise<void> => {
+  const userId = await getCurrentUserId()
+  
+  if (userId) {
+    try {
+      await savedMessagesUtils.deleteSavedMessageByMessageId(messageId, userId)
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Löschen der Message:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+        const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
+        const updated = saved.filter(m => m.messageId !== messageId)
+        localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
+      }
+    }
+  } else {
+    // Fallback auf localStorage wenn kein User eingeloggt
+    if (!isLocalStorageAvailable()) return
+    const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+    const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
+    const updated = saved.filter(m => m.messageId !== messageId)
+    localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
+  }
 }
 
-export const loadSavedMessages = (): SavedMessage[] => {
+export const loadSavedMessages = async (): Promise<SavedMessage[]> => {
+  const userId = await getCurrentUserId()
+  
+  if (userId) {
+    try {
+      const messages = await savedMessagesUtils.getSavedMessages(userId)
+      return messages.map(msg => ({
+        id: msg.id,
+        messageId: msg.message_id,
+        conversationId: msg.conversation_id,
+        content: msg.content,
+        role: msg.role,
+        timestamp: new Date(msg.created_at).getTime(),
+        preview: msg.preview || '',
+      }))
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Laden der Saved Messages:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as SavedMessage[]
+            if (Array.isArray(parsed)) {
+              return [...parsed].sort((a, b) => b.timestamp - a.timestamp)
+            }
+          } catch {
+            return []
+          }
+        }
+      }
+      return []
+    }
+  }
+  
+  // Fallback auf localStorage wenn kein User eingeloggt
   if (!isLocalStorageAvailable()) {
     return []
   }
@@ -119,11 +375,44 @@ export const loadSavedMessages = (): SavedMessage[] => {
   return []
 }
 
-export const isMessageSaved = (messageId: string): boolean => {
+export const isMessageSaved = async (messageId: string): Promise<boolean> => {
+  const userId = await getCurrentUserId()
+  
+  if (userId) {
+    try {
+      const message = await savedMessagesUtils.getSavedMessageByMessageId(messageId, userId)
+      return !!message
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Prüfen der Message:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+        if (stored) {
+          try {
+            const saved = JSON.parse(stored) as SavedMessage[]
+            return saved.some(m => m.messageId === messageId)
+          } catch {
+            return false
+          }
+        }
+      }
+      return false
+    }
+  }
+  
+  // Fallback auf localStorage wenn kein User eingeloggt
   if (!isLocalStorageAvailable()) {
     return false
   }
-  const saved = loadSavedMessages()
-  return saved.some(m => m.messageId === messageId)
+  const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+  if (stored) {
+    try {
+      const saved = JSON.parse(stored) as SavedMessage[]
+      return saved.some(m => m.messageId === messageId)
+    } catch {
+      return false
+    }
+  }
+  return false
 }
 

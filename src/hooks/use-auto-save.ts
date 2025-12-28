@@ -1,6 +1,8 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { getCurrentUserId } from '@/lib/supabase/utils/auth'
+import { invalidateDocumentsCache } from '@/lib/supabase/utils/documents'
 
 // Simple debounce implementation if lodash is not desired
 function simpleDebounce<T extends (...args: any[]) => any>(
@@ -43,6 +45,12 @@ export function useAutoSave(
                     .eq('id', documentId)
 
                 if (error) throw error
+
+                // Cache invalidieren nach erfolgreichem Update
+                const userId = await getCurrentUserId()
+                if (userId) {
+                    invalidateDocumentsCache(userId)
+                }
 
                 lastSavedContent.current = currentContent
                 lastSavedTitle.current = currentTitle

@@ -10,6 +10,7 @@ import { analyzeTone, type ToneAnalysis } from '@/lib/analysis/tone-analyzer'
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -59,6 +60,9 @@ export function AnalysisPanel({ content }: AnalysisPanelProps) {
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Writing Analysis</DialogTitle>
+                    <DialogDescription>
+                        Analysiere Grammatik, Rechtschreibung und Schreibstil deines Textes
+                    </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="max-h-[600px] pr-4">
                     <div className="space-y-6">
