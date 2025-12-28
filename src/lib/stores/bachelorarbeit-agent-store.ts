@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { getCurrentUserId } from '@/lib/supabase/utils/auth'
 import * as agentStatesUtils from '@/lib/supabase/utils/agent-states'
+import type { Json } from '@/lib/supabase/types'
 
 export type ArbeitType = 'bachelor' | 'master' | 'general' | null
 
@@ -97,7 +98,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           isActive: true,
           arbeitType,
           thema,
-          currentStep: 4, // Start mit Literaturrecherche
+          currentStep: 4 as AgentStep, // Start mit Literaturrecherche
           startedAt: now,
           lastUpdated: now,
           progress: 0,
@@ -117,10 +118,10 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
               arbeit_type: arbeitType,
               thema: thema || null,
               current_step: 4,
-              step_data: {},
+              step_data: {} as unknown as Json,
               progress: 0,
-              selected_sources: [],
-              pending_sources: [],
+              selected_sources: [] as unknown as Json,
+              pending_sources: [] as unknown as Json,
               started_at: now.toISOString(),
               last_updated: now.toISOString(),
             })
@@ -216,7 +217,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           try {
             const state = get()
             await agentStatesUtils.updateAgentState(stateId, {
-              step_data: state.stepData,
+              step_data: state.stepData as unknown as Json,
               progress: state.progress,
               last_updated: now.toISOString(),
             }, userId)
@@ -245,7 +246,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           try {
             const state = get()
             await agentStatesUtils.updateAgentState(stateId, {
-              selected_sources: state.selectedSources,
+              selected_sources: state.selectedSources as unknown as Json,
               last_updated: now.toISOString(),
             }, userId)
           } catch (error) {
@@ -268,7 +269,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           try {
             const state = get()
             await agentStatesUtils.updateAgentState(stateId, {
-              selected_sources: state.selectedSources,
+              selected_sources: state.selectedSources as unknown as Json,
               last_updated: now.toISOString(),
             }, userId)
           } catch (error) {
@@ -290,7 +291,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
         if (userId && stateId) {
           try {
             await agentStatesUtils.updateAgentState(stateId, {
-              pending_sources: sources,
+              pending_sources: sources as unknown as Json,
               last_updated: now.toISOString(),
             }, userId)
           } catch (error) {
@@ -314,8 +315,8 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           try {
             const state = get()
             await agentStatesUtils.updateAgentState(stateId, {
-              selected_sources: state.selectedSources,
-              pending_sources: [],
+              selected_sources: state.selectedSources as unknown as Json,
+              pending_sources: [] as unknown as Json,
               last_updated: now.toISOString(),
             }, userId)
           } catch (error) {
@@ -337,7 +338,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
         if (userId && stateId) {
           try {
             await agentStatesUtils.updateAgentState(stateId, {
-              pending_sources: [],
+              pending_sources: [] as unknown as Json,
               last_updated: now.toISOString(),
             }, userId)
           } catch (error) {
@@ -398,10 +399,10 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
               arbeitType: agentState.arbeit_type,
               thema: agentState.thema || undefined,
               currentStep: agentState.current_step as AgentStep | null,
-              stepData: (agentState.step_data as StepData) || {},
+              stepData: (agentState.step_data as unknown as StepData) || {},
               progress: agentState.progress,
-              selectedSources: (agentState.selected_sources as SelectedSource[]) || [],
-              pendingSources: (agentState.pending_sources as SelectedSource[]) || [],
+              selectedSources: (agentState.selected_sources as unknown as SelectedSource[]) || [],
+              pendingSources: (agentState.pending_sources as unknown as SelectedSource[]) || [],
               startedAt: agentState.started_at ? new Date(agentState.started_at) : null,
               lastUpdated: agentState.last_updated ? new Date(agentState.last_updated) : null,
               agentStateId: agentState.id,

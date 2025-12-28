@@ -31,7 +31,7 @@ export async function getCitationLibraryById(id: string, userId: string): Promis
 
     if (error) {
       // Wenn 406 Not Acceptable, versuche Fallback ohne .single()
-      if (error.status === 406 || error.message?.includes('406')) {
+      if (error.message?.includes('406')) {
         console.warn('[CITATION_LIBRARIES] 406 Fehler bei getCitationLibraryById, versuche Fallback')
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('citation_libraries')
@@ -53,7 +53,7 @@ export async function getCitationLibraryById(id: string, userId: string): Promis
     return data
   } catch (error: any) {
     // Fallback: Lade alle Bibliotheken und filtere manuell
-    if (error.status === 406 || error.message?.includes('406')) {
+    if (error.message?.includes('406')) {
       console.warn('[CITATION_LIBRARIES] Fallback: Lade alle Bibliotheken und filtere manuell')
       const allLibraries = await getCitationLibraries(userId)
       return allLibraries.find((lib) => lib.id === id) || null
@@ -101,7 +101,7 @@ export async function createCitationLibrary(
           
           if (retryError) {
             // Wenn immer noch Fehler, prüfe auf 409
-            if (retryError.code === '23505' || retryError.status === 409) {
+            if (retryError.code === '23505') {
               if (library.is_default && library.user_id) {
                 const defaultLib = await getDefaultCitationLibrary(library.user_id)
                 if (defaultLib) return defaultLib
@@ -118,7 +118,7 @@ export async function createCitationLibrary(
       }
       
       // 409 Conflict bedeutet, dass die Bibliothek bereits existiert (durch Unique Constraint)
-      if (error.code === '23505' || error.status === 409) {
+      if (error.code === '23505') {
         // Versuche die existierende Bibliothek zu finden
         if (library.is_default && library.user_id) {
           const defaultLib = await getDefaultCitationLibrary(library.user_id)
@@ -153,7 +153,7 @@ export async function createCitationLibrary(
     return data[0]
   } catch (error: any) {
     // Bei 409-Fehler, versuche nochmal die Bibliothek zu laden
-    if (error.code === '23505' || error.status === 409) {
+    if (error.code === '23505') {
       if (library.is_default && library.user_id) {
         const defaultLib = await getDefaultCitationLibrary(library.user_id)
         if (defaultLib) return defaultLib
@@ -219,7 +219,7 @@ export async function getDefaultCitationLibrary(userId: string): Promise<Citatio
     return data?.[0] || null
   } catch (error: any) {
     // Fallback: Lade alle Bibliotheken und filtere manuell
-    if (error.status === 406 || error.message?.includes('406') || error.code === 'PGRST116') {
+    if (error.message?.includes('406') || error.code === 'PGRST116') {
       const allLibraries = await getCitationLibraries(userId)
       return allLibraries.find((lib) => lib.is_default === true) || null
     }
