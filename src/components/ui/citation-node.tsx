@@ -59,20 +59,53 @@ export function CitationElement(
   const buildOrderMap = () => {
     if (!editor) return new Map<string, number>();
     const order = new Map<string, number>();
-    let counter = 0;
+    
+    // Sammle alle Zitate mit ihren Pfaden und sourceIds
+    const citations: Array<{ node: TCitationElement; path: number[] }> = [];
     const nodes = editor.api.nodes({
       at: [],
       match: (node) => (node as any).type === 'citation',
-    }) as any as Array<[any, any]>;
-    for (const [, path] of nodes) {
-      // Nummeriere jede Vorkommens-Position (nicht pro sourceId), damit zusammengefasste Zitate sauber neu gezählt werden
-      const key = Array.isArray(path) ? path.join('-') : undefined;
-      if (!key) continue;
-      if (!order.has(key)) {
-        counter += 1;
-        order.set(key, counter);
+    }) as any as Array<[TCitationElement, number[]]>;
+    
+    for (const [node, path] of nodes) {
+      if (Array.isArray(path)) {
+        citations.push({ node, path });
       }
     }
+    
+    // Sortiere nach Position im Dokument (basierend auf Pfad)
+    citations.sort((a, b) => {
+      const minLength = Math.min(a.path.length, b.path.length);
+      for (let i = 0; i < minLength; i++) {
+        if (a.path[i] !== b.path[i]) {
+          return (a.path[i] ?? 0) - (b.path[i] ?? 0);
+        }
+      }
+      return a.path.length - b.path.length;
+    });
+    
+    // Nummeriere basierend auf sourceId (jede eindeutige Quelle bekommt eine Nummer)
+    const sourceIdToNumber = new Map<string, number>();
+    let counter = 0;
+    
+    for (const { node, path } of citations) {
+      const sourceId = node.sourceId;
+      if (!sourceId) continue;
+      
+      // Wenn diese sourceId noch keine Nummer hat, vergeben wir eine
+      if (!sourceIdToNumber.has(sourceId)) {
+        counter += 1;
+        sourceIdToNumber.set(sourceId, counter);
+      }
+      
+      // Erstelle eine Map, die für jeden Pfad die Nummer der entsprechenden sourceId zurückgibt
+      const key = path.join('-');
+      const number = sourceIdToNumber.get(sourceId);
+      if (number !== undefined) {
+        order.set(key, number);
+      }
+    }
+    
     return order;
   };
 
@@ -109,15 +142,24 @@ export function CitationElement(
         const parent = c.path.slice(0, -1);
         return parent.length === parentPath.length && parent.every((v, i) => v === parentPath[i]);
       })
-      .sort((a, b) => (a.path[a.path.length - 1] ?? 0) - (b.path[b.path.length - 1] ?? 0));
+      .map((c) => {
+        const key = c.path.join('-');
+        const number = orderMap.get(key);
+        return { ...c, number: number ?? Infinity };
+      })
+      .sort((a, b) => {
+        // Sortiere zuerst nach Nummer (kleinste zuerst)
+        if (a.number !== b.number) {
+          return a.number - b.number;
+        }
+        // Falls Nummern gleich sind, sortiere nach Position im Dokument
+        return (a.path[a.path.length - 1] ?? 0) - (b.path[b.path.length - 1] ?? 0);
+      });
 
     const currentIdx = siblings.findIndex((c) => c.path.join(',') === path.join(','));
     if (currentIdx === -1) return null;
 
-    const numbers = siblings.map((c) => {
-      const key = c.path.join('-');
-      return orderMap.get(key) ?? undefined;
-    });
+    const numbers = siblings.map((c) => c.number !== Infinity ? c.number : undefined);
 
     return {
       isFirst: currentIdx === 0,

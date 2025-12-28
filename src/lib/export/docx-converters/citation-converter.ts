@@ -17,7 +17,7 @@ export interface CitationContext {
   citationStyle: string;
   citationFormat: 'author' | 'author-date' | 'label' | 'note' | 'numeric';
   citationNumberFormat: 'bracket' | 'parentheses' | 'superscript' | 'plain' | 'dot';
-  citationOrder: Map<string, number>; // sourceId -> order number
+  citationOrder: Map<string, number>; 
 }
 
 /**
