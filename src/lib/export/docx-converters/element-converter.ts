@@ -10,9 +10,19 @@ import {
   HeadingLevel,
   ShadingType,
   SimpleField,
+  AbstractNumbering,
+  Numbering,
+  LevelFormat,
+  AlignmentType as NumberingAlignmentType,
+  ImageRun,
+  Media,
+  Math as MathOMath,
 } from 'docx';
 import type { TElement, TText } from 'platejs';
 import type { TCitationElement } from '@/components/editor/plugins/citation-kit';
+import type { TEquationElement } from 'platejs';
+import { getEquationHtml } from '@platejs/math';
+import { convertMathMLToOMath } from './mathml-converter';
 import {
   HEADING_LEVEL_MAP,
   HEADING_STYLES,
@@ -104,13 +114,13 @@ function convertTextNode(
 }
 
 /**
- * Konvertiert verschachtelte Inline-Elemente (Links, Mentions, Citations)
+ * Konvertiert verschachtelte Inline-Elemente (Links, Mentions, Citations, Inline-Equations)
  */
 function convertInlineElements(
   children: (TText | TElement)[],
   context: ConverterContext
-): (TextRun | ExternalHyperlink | SimpleField)[] {
-  const runs: (TextRun | ExternalHyperlink | SimpleField)[] = [];
+): (TextRun | ExternalHyperlink | SimpleField | MathOMath)[] {
+  const runs: (TextRun | ExternalHyperlink | SimpleField | MathOMath)[] = [];
 
   for (const child of children) {
     if ('text' in child) {
@@ -150,6 +160,16 @@ function convertInlineElements(
         const citation = element as TCitationElement;
         runs.push(...createInlineCitation(citation, context));
       }
+      // Inline Equation
+      else if (type === 'inlineEquation' || type === 'inline_equation') {
+        const inlineMath = convertInlineEquation(element, context);
+        // MathOMath kann direkt als ParagraphChild verwendet werden
+        runs.push(inlineMath);
+      }
+      // Date (kann auch inline sein)
+      else if (type === 'date') {
+        runs.push(convertDate(element, context));
+      }
       // Mention
       else if (type === 'mention') {
         const mention = element as any;
@@ -162,6 +182,9 @@ function convertInlineElements(
       }
       // Andere Inline-Elemente als Text behandeln
       else {
+        if (type === 'equation') {
+          continue;
+        }
         const text = extractTextFromChildren(element.children || []);
         if (text) {
           runs.push(
@@ -187,7 +210,11 @@ function extractTextFromChildren(children: (TText | TElement)[]): string {
     if ('text' in child) {
       text += (child as TText).text || '';
     } else {
-      text += extractTextFromChildren((child as TElement).children || []);
+      const childElement = child as TElement;
+      if (childElement.type === 'equation' || childElement.type === 'inlineEquation' || childElement.type === 'inline_equation') {
+        continue;
+      }
+      text += extractTextFromChildren(childElement.children || []);
     }
   }
 
@@ -209,6 +236,34 @@ function convertAlignment(align?: string): (typeof AlignmentType)[keyof typeof A
     default:
       return AlignmentType.LEFT;
   }
+}
+
+/**
+ * Konvertiert einen Paragraph, der als List-Item fungiert (Plate speichert Listen als Paragraphs mit listStyleType)
+ */
+export function convertListParagraph(
+  element: TElement,
+  context: ConverterContext
+): Paragraph {
+  const listElement = element as any;
+  const listStyleType = listElement.listStyleType || 'ul';
+  const isOrdered = listStyleType === 'ol' || listStyleType === 'decimal';
+  const indent = (listElement.indent || 0) - 1;
+
+  const children = convertInlineElements(element.children || [], context);
+  const align = listElement.align || listElement.textAlign;
+
+  return new Paragraph({
+    children: children.length > 0 ? children : [new TextRun({ text: '' })],
+    alignment: convertAlignment(align),
+    numbering: {
+      reference: isOrdered ? 'default-numbering' : 'default-bullet',
+      level: Math.max(0, indent),
+    },
+    spacing: {
+      after: 120,
+    },
+  });
 }
 
 /**
@@ -330,45 +385,55 @@ export function convertList(
   depth: number = 0
 ): Paragraph[] {
   const paragraphs: Paragraph[] = [];
-  const listType = (element as any).listType || 'ul';
-  const isOrdered = listType === 'ol' || element.type === 'ol';
+  const listElement = element as any;
+  
+  const listStyleType = listElement.listStyleType || listElement.listType || 'ul';
+  const isOrdered = listStyleType === 'ol' || listStyleType === 'decimal' || element.type === 'ol';
   const items = element.children || [];
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i] as TElement;
+    
+    // Plate verwendet 'lic' (list item content) für List-Items
     if (item.type === 'li' || item.type === 'lic') {
-      const itemChildren = convertInlineElements(item.children || [], context);
+      const itemChildren: (TextRun | ExternalHyperlink | SimpleField)[] = [];
+      const nestedLists: TElement[] = [];
+      
+      // Trenne List-Items von verschachtelten Listen
+      for (const child of item.children || []) {
+        if ('type' in child) {
+          const childElement = child as TElement;
+          // Prüfe ob es eine verschachtelte Liste ist
+          if (childElement.type === 'list' || childElement.type === 'ul' || childElement.type === 'ol') {
+            nestedLists.push(childElement);
+          } else {
+            // Konvertiere Inline-Elemente
+            itemChildren.push(...convertInlineElements([child], context));
+          }
+        } else {
+          // Text-Knoten
+          itemChildren.push(...convertTextNode(child as TText, context));
+        }
+      }
+
       const indent = depth * 720; // 0.5 inch per level
 
       paragraphs.push(
         new Paragraph({
           children: itemChildren.length > 0 ? itemChildren : [new TextRun({ text: '' })],
-          bullet: isOrdered
-            ? {
-                level: depth,
-              }
-            : {
-                level: depth,
-              },
-          numbering: isOrdered
-            ? {
-                reference: 'default-numbering',
-                level: depth,
-              }
-            : undefined,
+          numbering: {
+            reference: isOrdered ? 'default-numbering' : 'default-bullet',
+            level: depth,
+          },
           indent: {
             left: indent,
           },
         })
       );
 
-      // Verschachtelte Listen
-      const nestedLists = (item.children || []).filter(
-        (child) => 'type' in child && ((child as TElement).type === 'ul' || (child as TElement).type === 'ol')
-      );
-
+      // Verschachtelte Listen verarbeiten
       for (const nestedList of nestedLists) {
-        paragraphs.push(...convertList(nestedList as TElement, context, depth + 1));
+        paragraphs.push(...convertList(nestedList, context, depth + 1));
       }
     }
   }
@@ -502,6 +567,469 @@ export function convertHorizontalRule(
 }
 
 /**
+ * Extrahiert MathML aus dem HTML-Output von getEquationHtml
+ */
+function extractMathML(html: string): string | null {
+  // Suche nach MathML-Tag im HTML (nur das erste, vollständige Match)
+  // Verwende einen robusten Ansatz, der verschachtelte Tags korrekt behandelt
+  let depth = 0;
+  let startIndex = -1;
+  let tagStart = -1;
+  
+  for (let i = 0; i < html.length; i++) {
+    if (html.slice(i).startsWith('<math')) {
+      // Finde das Ende des öffnenden Tags
+      const tagEnd = html.indexOf('>', i);
+      if (tagEnd === -1) break;
+      
+      if (startIndex === -1) {
+        startIndex = i;
+        tagStart = tagEnd + 1;
+      }
+      depth++;
+      i = tagEnd;
+    } else if (html.slice(i).startsWith('</math>')) {
+      depth--;
+      if (depth === 0 && startIndex !== -1) {
+        // Gefunden: vollständiges MathML-Tag
+        return html.slice(startIndex, i + 7); // +7 für '</math>'
+      }
+      i += 6; // Skip '</math>'
+    }
+  }
+  
+  // Fallback: Regex-basiert (wenn keine verschachtelten Tags)
+  const mathmlMatch = html.match(/<math[^>]*>[\s\S]*?<\/math>/i);
+  if (mathmlMatch) {
+    return mathmlMatch[0];
+  }
+  
+  return null;
+}
+
+/**
+ * Konvertiert eine LaTeX-Formel (Block) zu einem gerenderten Bild
+ */
+async function convertEquationToImage(
+  element: TElement,
+  context: ConverterContext
+): Promise<Paragraph> {
+  const equationElement = element as TEquationElement;
+  const texExpression = equationElement.texExpression || '';
+  
+  if (!texExpression) {
+    return new Paragraph({
+      children: [
+        new TextRun({
+          text: '[Formel]',
+          font: FONTS.code,
+          italics: true,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        before: 120,
+        after: 120,
+      },
+    });
+  }
+
+  try {
+    // Generiere HTML mit MathML
+    const html = getEquationHtml({
+      element: equationElement,
+      options: {
+        displayMode: true,
+        errorColor: '#cc0000',
+        fleqn: false,
+        leqno: false,
+        macros: { 
+          '\\f': '#1f(#2)',
+          '\\binom': '\\genfrac{(}{)}{0pt}{}{#1}{#2}',
+        },
+        output: 'htmlAndMathml',
+        strict: 'warn',
+        throwOnError: false,
+        trust: false,
+      },
+    });
+
+    // Extrahiere MathML
+    const mathml = extractMathML(html);
+    
+    if (mathml) {
+      // Für jetzt: Rendere als Text mit besserer Formatierung
+      // Später: Konvertiere MathML zu OMath oder rendere als Bild
+      return new Paragraph({
+        children: [
+          new TextRun({
+            text: texExpression,
+            font: FONTS.code,
+          }),
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: {
+          before: 120,
+          after: 120,
+        },
+      });
+    }
+  } catch (error) {
+    console.warn('Fehler beim Rendern der Formel:', error);
+  }
+
+  // Fallback: LaTeX als Text
+  return new Paragraph({
+    children: [
+      new TextRun({
+        text: texExpression,
+        font: FONTS.code,
+      }),
+    ],
+    alignment: AlignmentType.CENTER,
+    spacing: {
+      before: 120,
+      after: 120,
+    },
+  });
+}
+
+/**
+ * Konvertiert eine LaTeX-Formel (Block)
+ */
+export function convertEquation(
+  element: TElement,
+  context: ConverterContext
+): Paragraph {
+  const equationElement = element as TEquationElement;
+  const texExpression = equationElement.texExpression || '';
+  
+  if (!texExpression) {
+    return new Paragraph({
+      children: [
+        new TextRun({
+          text: '[Formel]',
+          font: FONTS.code,
+          italics: true,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        before: 120,
+        after: 120,
+      },
+    });
+  }
+
+  try {
+    // Generiere HTML mit MathML
+    const html = getEquationHtml({
+      element: equationElement,
+      options: {
+        displayMode: true,
+        errorColor: '#cc0000',
+        fleqn: false,
+        leqno: false,
+        macros: { 
+          '\\f': '#1f(#2)',
+          '\\binom': '\\genfrac{(}{)}{0pt}{}{#1}{#2}',
+        },
+        output: 'htmlAndMathml',
+        strict: 'warn',
+        throwOnError: false,
+        trust: false,
+      },
+    });
+
+    // Extrahiere MathML (nur das erste vollständige Tag)
+    const mathml = extractMathML(html);
+    
+    if (mathml) {
+      // Konvertiere MathML zu OMath
+      const omath = convertMathMLToOMath(mathml);
+      if (omath) {
+        // Verwende OMath in Paragraph - nur OMath, kein Fallback-Text
+        return new Paragraph({
+          children: [omath],
+          alignment: AlignmentType.CENTER,
+          spacing: {
+            before: 120,
+            after: 120,
+          },
+        });
+      }
+    }
+    
+    // Nur wenn MathML-Konvertierung komplett fehlschlägt: Fallback zu Text
+    
+    // Fallback: LaTeX als Text (wenn MathML-Konvertierung fehlschlägt)
+    return new Paragraph({
+      children: [
+        new TextRun({
+          text: texExpression,
+          font: FONTS.code,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        before: 120,
+        after: 120,
+      },
+    });
+  } catch (error) {
+    console.warn('Fehler beim Rendern der Formel:', error);
+    // Fallback: LaTeX als Text
+    return new Paragraph({
+      children: [
+        new TextRun({
+          text: texExpression,
+          font: FONTS.code,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        before: 120,
+        after: 120,
+      },
+    });
+  }
+}
+
+/**
+ * Konvertiert eine Inline-LaTeX-Formel zu Word OMath
+ */
+export function convertInlineEquation(
+  element: TElement,
+  context: ConverterContext
+): TextRun | MathOMath {
+  const equationElement = element as TEquationElement;
+  const texExpression = equationElement.texExpression || '';
+  
+  if (!texExpression) {
+    return new TextRun({
+      text: '[Formel]',
+      font: FONTS.code,
+      italics: true,
+    });
+  }
+
+  try {
+    // Generiere HTML mit MathML
+    const html = getEquationHtml({
+      element: equationElement,
+      options: {
+        displayMode: false, // Inline-Modus
+        errorColor: '#cc0000',
+        fleqn: false,
+        leqno: false,
+        macros: { 
+          '\\f': '#1f(#2)',
+          '\\binom': '\\genfrac{(}{)}{0pt}{}{#1}{#2}',
+        },
+        output: 'htmlAndMathml',
+        strict: 'warn',
+        throwOnError: false,
+        trust: false,
+      },
+    });
+
+    // Extrahiere MathML
+    const mathml = extractMathML(html);
+    
+    if (mathml) {
+      // Konvertiere MathML zu OMath
+      const omath = convertMathMLToOMath(mathml);
+      if (omath) {
+        return omath;
+      }
+    }
+    
+    // Fallback: LaTeX als Text
+    return new TextRun({
+      text: texExpression,
+      font: FONTS.code,
+    });
+  } catch (error) {
+    console.warn('Fehler beim Rendern der Inline-Formel:', error);
+    // Fallback: LaTeX als Text
+    return new TextRun({
+      text: texExpression,
+      font: FONTS.code,
+    });
+  }
+}
+
+/**
+ * Konvertiert ein Callout-Element
+ */
+export function convertCallout(
+  element: TElement,
+  context: ConverterContext
+): Paragraph[] {
+  const paragraphs: Paragraph[] = [];
+  const calloutElement = element as any;
+  const emoji = calloutElement.emoji || '💡';
+  
+  // Konvertiere den Inhalt
+  for (const child of element.children || []) {
+    if ('type' in child) {
+      const childElement = child as TElement;
+      if (childElement.type === 'equation' || childElement.type === 'inlineEquation' || childElement.type === 'inline_equation') {
+        continue;
+      }
+      const converted = convertElement(childElement, context);
+      if (Array.isArray(converted)) {
+        paragraphs.push(...converted.filter((c): c is Paragraph => c instanceof Paragraph));
+      } else if (converted instanceof Paragraph) {
+        paragraphs.push(converted);
+      }
+    }
+  }
+  
+  // Wenn kein Inhalt vorhanden, füge leeren Paragraph hinzu
+  if (paragraphs.length === 0) {
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `${emoji} `,
+            bold: true,
+          }),
+          new TextRun({
+            text: '[Callout]',
+            italics: true,
+          }),
+        ],
+      })
+    );
+  } else {
+    // Füge Emoji als Präfix zum ersten Paragraph hinzu
+    // Erstelle einen neuen Paragraph mit Emoji + bestehenden Children
+    const firstParagraph = paragraphs[0];
+    if (firstParagraph instanceof Paragraph) {
+      // Extrahiere Children aus dem ersten Child-Element
+      const firstChild = element.children?.[0];
+      const firstChildren = firstChild && 'children' in firstChild && Array.isArray(firstChild.children)
+        ? convertInlineElements(firstChild.children, context)
+        : [];
+      paragraphs[0] = new Paragraph({
+        children: [
+          new TextRun({
+            text: `${emoji} `,
+            bold: true,
+          }),
+          ...firstChildren,
+        ],
+      });
+    }
+  }
+  
+  return paragraphs;
+}
+
+/**
+ * Konvertiert ein Column-Element (Spalten-Layout)
+ */
+export function convertColumn(
+  element: TElement,
+  context: ConverterContext
+): Paragraph[] {
+  const paragraphs: Paragraph[] = [];
+  
+  // Konvertiere alle Spalten-Inhalte sequenziell
+  for (const child of element.children || []) {
+    if ('type' in child) {
+      const childElement = child as TElement;
+      const converted = convertElement(childElement, context);
+      if (Array.isArray(converted)) {
+        paragraphs.push(...converted.filter((c): c is Paragraph => c instanceof Paragraph));
+      } else if (converted instanceof Paragraph) {
+        paragraphs.push(converted);
+      }
+    }
+  }
+  
+  if (paragraphs.length === 0) {
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: '[Spalten-Layout]',
+            italics: true,
+          }),
+        ],
+      })
+    );
+  }
+  
+  return paragraphs;
+}
+
+/**
+ * Konvertiert ein ColumnItem-Element (einzelne Spalte)
+ */
+export function convertColumnItem(
+  element: TElement,
+  context: ConverterContext
+): Paragraph[] {
+  const paragraphs: Paragraph[] = [];
+  
+  // Konvertiere den Inhalt der Spalte
+  for (const child of element.children || []) {
+    if ('type' in child) {
+      const childElement = child as TElement;
+      if (childElement.type === 'equation' || childElement.type === 'inlineEquation' || childElement.type === 'inline_equation') {
+        continue;
+      }
+      const converted = convertElement(childElement, context);
+      if (Array.isArray(converted)) {
+        paragraphs.push(...converted.filter((c): c is Paragraph => c instanceof Paragraph));
+      } else if (converted instanceof Paragraph) {
+        paragraphs.push(converted);
+      }
+    }
+  }
+  
+  return paragraphs;
+}
+
+/**
+ * Konvertiert ein Date-Element
+ */
+export function convertDate(
+  element: TElement,
+  context: ConverterContext
+): TextRun {
+  const dateElement = element as any;
+  const date = dateElement.date;
+  
+  if (date) {
+    try {
+      const dateObj = new Date(date);
+      const formattedDate = dateObj.toLocaleDateString('de-DE', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+      return new TextRun({
+        text: formattedDate,
+        bold: true,
+      });
+    } catch (e) {
+      return new TextRun({
+        text: date,
+        bold: true,
+      });
+    }
+  }
+  
+  return new TextRun({
+    text: '[Datum]',
+    italics: true,
+  });
+}
+
+/**
  * Konvertiert ein Toggle-Element
  */
 export function convertToggle(
@@ -530,6 +1058,9 @@ export function convertToggle(
     for (const child of element.children || []) {
       if ('type' in child) {
         const childElement = child as TElement;
+        if (childElement.type === 'equation' || childElement.type === 'inlineEquation' || childElement.type === 'inline_equation') {
+          continue;
+        }
         const converted = convertElement(childElement, context);
         if (Array.isArray(converted)) {
           paragraphs.push(...converted.filter((c): c is Paragraph => c instanceof Paragraph));
@@ -560,6 +1091,11 @@ export function convertElement(
 
   // Paragraph
   if (type === 'p') {
+    // Prüfe, ob dieser Paragraph eine Liste ist (Plate speichert Listen als Paragraphs mit listStyleType)
+    const listStyleType = (element as any).listStyleType;
+    if (listStyleType) {
+      return convertListParagraph(element, context);
+    }
     return convertParagraph(element, context);
   }
 
@@ -573,9 +1109,29 @@ export function convertElement(
     return convertCodeBlock(element, context);
   }
 
-  // Listen
-  if (type === 'ul' || type === 'ol') {
+  // Listen (Plate verwendet 'list' als Typ)
+  if (type === 'list' || type === 'ul' || type === 'ol') {
     return convertList(element, context);
+  }
+
+  // LaTeX-Formel (Block)
+  if (type === 'equation') {
+    return convertEquation(element, context);
+  }
+
+  // Callout
+  if (type === 'callout') {
+    return convertCallout(element, context);
+  }
+
+  // Column (Spalten-Layout)
+  if (type === 'column') {
+    return convertColumn(element, context);
+  }
+
+  // ColumnItem (einzelne Spalte)
+  if (type === 'columnItem') {
+    return convertColumnItem(element, context);
   }
 
   // Tabelle
@@ -613,6 +1169,12 @@ export function convertElement(
   }
 
   // Fallback: als Paragraph behandeln
+  if (type === 'equation' || type === 'inlineEquation' || type === 'inline_equation') {
+    return new Paragraph({
+      children: [new TextRun({ text: '' })],
+    });
+  }
+  
   const text = extractTextFromChildren(element.children || []);
   return new Paragraph({
     children: [

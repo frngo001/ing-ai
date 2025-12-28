@@ -4,6 +4,9 @@ import {
   Paragraph,
   TextRun,
   HeadingLevel,
+  LevelFormat,
+  AlignmentType,
+  type ILevelsOptions,
 } from 'docx';
 import type { Value, TElement } from 'platejs';
 import { createSourcesXML } from './docx-converters/sources-xml';
@@ -65,23 +68,6 @@ export async function exportToDocx(
             citation.sourceId &&
             !allCitations.find((c) => c.sourceId === citation.sourceId)
           ) {
-            // Debug: Logge die gesammelten Zitate
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[DOCX Export] Collected citation:', {
-                sourceId: citation.sourceId,
-                title: citation.title,
-                authors: citation.authors,
-                year: citation.year,
-                journal: citation.journal,
-                publisher: citation.publisher,
-                pages: citation.pages,
-                volume: citation.volume,
-                issue: citation.issue,
-                doi: citation.doi,
-                url: citation.url,
-                sourceType: citation.sourceType,
-              });
-            }
             allCitations.push(citation);
           }
         }
@@ -136,9 +122,29 @@ export async function exportToDocx(
   // Konvertiere alle Elemente
   const children: (Paragraph | import('docx').Table)[] = [];
 
-  for (const node of editorValue) {
+  for (let i = 0; i < editorValue.length; i++) {
+    const node = editorValue[i];
     if ('type' in node) {
       const element = node as TElement;
+      
+      // Prüfe, ob dieser Paragraph nach einem Equation-Element kommt und möglicherweise die Formel enthält
+      if (element.type === 'p' && i > 0 && editorValue[i - 1] && 'type' in editorValue[i - 1]) {
+        const prevElement = editorValue[i - 1] as TElement;
+        if (prevElement.type === 'equation') {
+          const equationText = (prevElement as any).texExpression || '';
+          const paragraphText = (element.children || []).map((c: any) => {
+            if ('text' in c) return c.text;
+            return '';
+          }).join('').trim();
+          
+          // Wenn der Paragraph nur die Formel enthält (oder leer ist), überspringe ihn
+          if (paragraphText === equationText || paragraphText === '' || paragraphText === equationText.replace(/\s+/g, ' ').trim()) {
+            continue; // Überspringe diesen Paragraph
+          }
+        }
+      }
+      
+      
       const converted = convertElement(element, context);
 
       if (Array.isArray(converted)) {
@@ -171,6 +177,124 @@ export async function exportToDocx(
     }
   }
 
+  // Erstelle Numbering-Definitionen für nummerierte Listen
+  const numberedLevels: readonly ILevelsOptions[] = [
+    {
+      level: 0,
+      format: LevelFormat.DECIMAL,
+      text: '%1.',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 720, hanging: 260 },
+        },
+      },
+    },
+    {
+      level: 1,
+      format: LevelFormat.DECIMAL,
+      text: '%1.%2.',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 1440, hanging: 260 },
+        },
+      },
+    },
+    {
+      level: 2,
+      format: LevelFormat.DECIMAL,
+      text: '%1.%2.%3.',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 2160, hanging: 260 },
+        },
+      },
+    },
+    {
+      level: 3,
+      format: LevelFormat.DECIMAL,
+      text: '%1.%2.%3.%4.',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 2880, hanging: 260 },
+        },
+      },
+    },
+    {
+      level: 4,
+      format: LevelFormat.DECIMAL,
+      text: '%1.%2.%3.%4.%5.',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 3600, hanging: 260 },
+        },
+      },
+    },
+  ] as const;
+
+  // Erstelle Numbering-Definitionen für Bullet-Listen
+  const bulletLevels: readonly ILevelsOptions[] = [
+    {
+      level: 0,
+      format: LevelFormat.BULLET,
+      text: '•',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 720, hanging: 260 },
+        },
+      },
+    },
+    {
+      level: 1,
+      format: LevelFormat.BULLET,
+      text: '○',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 1440, hanging: 260 },
+        },
+      },
+    },
+    {
+      level: 2,
+      format: LevelFormat.BULLET,
+      text: '■',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 2160, hanging: 260 },
+        },
+      },
+    },
+    {
+      level: 3,
+      format: LevelFormat.BULLET,
+      text: '▪',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 2880, hanging: 260 },
+        },
+      },
+    },
+    {
+      level: 4,
+      format: LevelFormat.BULLET,
+      text: '▫',
+      alignment: AlignmentType.LEFT,
+      style: {
+        paragraph: {
+          indent: { left: 3600, hanging: 260 },
+        },
+      },
+    },
+  ] as const;
+
   // Erstelle DOCX-Dokument
   const doc = new Document({
     sections: [
@@ -186,6 +310,18 @@ export async function exportToDocx(
         CODE_STYLE,
         BLOCKQUOTE_STYLE,
         BIBLIOGRAPHY_STYLE,
+      ],
+    },
+    numbering: {
+      config: [
+        {
+          reference: 'default-numbering',
+          levels: numberedLevels,
+        },
+        {
+          reference: 'default-bullet',
+          levels: bulletLevels,
+        },
       ],
     },
   });
