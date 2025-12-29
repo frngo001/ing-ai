@@ -7,6 +7,38 @@ import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries
 import * as citationsUtils from '@/lib/supabase/utils/citations'
 import { logSupabaseError } from '@/lib/supabase/utils/error-handler'
 
+/**
+ * Prüft, ob die Anwendung im Development-Modus läuft
+ */
+const isDevelopment = () => process.env.NODE_ENV === 'development'
+
+/**
+ * Loggt nur im Development-Modus
+ */
+const devLog = (...args: unknown[]) => {
+  if (isDevelopment()) {
+    console.log(...args)
+  }
+}
+
+/**
+ * Warnt nur im Development-Modus
+ */
+const devWarn = (...args: unknown[]) => {
+  if (isDevelopment()) {
+    console.warn(...args)
+  }
+}
+
+/**
+ * Loggt Fehler nur im Development-Modus
+ */
+const devError = (...args: unknown[]) => {
+  if (isDevelopment()) {
+    console.error(...args)
+  }
+}
+
 // Unterstützt die bisherigen Presets plus beliebige CSL-Dateinamen aus Bibify
 export type CitationStyle =
   | 'apa'
@@ -242,7 +274,7 @@ export const useCitationStore = create<CitationState>()(
       addCitation: async (citation) => {
         const userId = await getCurrentUserId()
         if (!userId) {
-          console.warn('⚠️ [CITATION STORE] Kein User eingeloggt, Citation wird nur lokal gespeichert')
+          devWarn('⚠️ [CITATION STORE] Kein User eingeloggt, Citation wird nur lokal gespeichert')
           set((state) => {
             const libs = state.libraries.length ? [...state.libraries] : [createDefaultLibrary()]
             const activeId = state.activeLibraryId || libs[0].id
@@ -287,7 +319,7 @@ export const useCitationStore = create<CitationState>()(
                 activeLibraryId: libraryId,
               }))
             } catch (error) {
-              console.error('❌ [CITATION STORE] Fehler beim Erstellen der Standardbibliothek:', error)
+              devError('❌ [CITATION STORE] Fehler beim Erstellen der Standardbibliothek:', error)
               // Falls das Erstellen fehlschlägt, verwende null für library_id
               activeId = undefined
             }
@@ -368,7 +400,7 @@ export const useCitationStore = create<CitationState>()(
               }
             : error
           
-          console.error('❌ [CITATION STORE] Fehler beim Speichern der Citation:', {
+          devError('❌ [CITATION STORE] Fehler beim Speichern der Citation:', {
             error: errorDetails,
             citationId: citation.id,
             citationTitle: citation.title,
@@ -410,7 +442,7 @@ export const useCitationStore = create<CitationState>()(
           try {
             await citationsUtils.deleteCitation(id, userId)
           } catch (error) {
-            console.error('❌ [CITATION STORE] Fehler beim Löschen der Citation aus Supabase:', error)
+            devError('❌ [CITATION STORE] Fehler beim Löschen der Citation aus Supabase:', error)
             // Weiter mit lokalem Löschen auch wenn Supabase fehlschlägt
           }
         }
@@ -462,7 +494,7 @@ export const useCitationStore = create<CitationState>()(
         } catch (error: any) {
           // Behandle 409 Conflict (Bibliothek existiert bereits)
           if (error?.code === '23505' || error?.status === 409) {
-            console.warn('⚠️ [CITATION STORE] Bibliothek existiert bereits, versuche zu laden:', name)
+            devWarn('⚠️ [CITATION STORE] Bibliothek existiert bereits, versuche zu laden:', name)
             // Versuche die existierende Bibliothek zu finden
             const existingLibs = await citationLibrariesUtils.getCitationLibraries(userId)
             const existingLib = existingLibs.find((lib) => lib.name === name)
@@ -476,7 +508,7 @@ export const useCitationStore = create<CitationState>()(
               return existingLib.id
             }
           }
-          console.error('❌ [CITATION STORE] Fehler beim Erstellen der Library:', error)
+          devError('❌ [CITATION STORE] Fehler beim Erstellen der Library:', error)
           // Fallback: nur lokal
           const id = `library_${Date.now()}`
           const newLib: CitationLibrary = { id, name, citations: [] }
@@ -493,7 +525,7 @@ export const useCitationStore = create<CitationState>()(
         
         // Verhindere das Löschen der Standardbibliothek
         if (id === 'library_default') {
-          console.warn('⚠️ [CITATION STORE] Standardbibliothek kann nicht gelöscht werden')
+          devWarn('⚠️ [CITATION STORE] Standardbibliothek kann nicht gelöscht werden')
           return
         }
 
@@ -501,7 +533,7 @@ export const useCitationStore = create<CitationState>()(
         const state = get()
         const nonDefaultLibraries = state.libraries.filter((lib) => lib.id !== 'library_default')
         if (nonDefaultLibraries.length <= 1 && nonDefaultLibraries[0]?.id === id) {
-          console.warn('⚠️ [CITATION STORE] Mindestens eine Bibliothek muss erhalten bleiben')
+          devWarn('⚠️ [CITATION STORE] Mindestens eine Bibliothek muss erhalten bleiben')
           return
         }
 
@@ -511,7 +543,7 @@ export const useCitationStore = create<CitationState>()(
           try {
             await citationLibrariesUtils.deleteCitationLibrary(id, userId)
           } catch (error) {
-            console.error('❌ [CITATION STORE] Fehler beim Löschen der Bibliothek aus Supabase:', error)
+            devError('❌ [CITATION STORE] Fehler beim Löschen der Bibliothek aus Supabase:', error)
             // Weiter mit lokalem Löschen auch wenn Supabase fehlschlägt
           }
         }
@@ -559,12 +591,12 @@ export const useCitationStore = create<CitationState>()(
       loadLibrariesFromSupabase: async () => {
         const userId = await getCurrentUserId()
         if (!userId) {
-          console.warn('⚠️ [CITATION STORE] Kein User eingeloggt, kann keine Libraries laden')
+          devWarn('⚠️ [CITATION STORE] Kein User eingeloggt, kann keine Libraries laden')
           return
         }
 
         try {
-          console.log('🔄 [CITATION STORE] Lade Bibliotheken aus Supabase...')
+          devLog('🔄 [CITATION STORE] Lade Bibliotheken aus Supabase...')
           
           const libraries = await citationLibrariesUtils.getCitationLibraries(userId)
           
@@ -585,7 +617,7 @@ export const useCitationStore = create<CitationState>()(
                 // 23503 = Foreign Key Constraint (Profile existiert nicht)
                 // Das sollte jetzt nicht mehr passieren, da ensureProfileExists aufgerufen wird
                 if (error?.code === '23503') {
-                  console.warn('⚠️ [CITATION STORE] Profile existiert nicht, sollte automatisch erstellt werden')
+                  devWarn('⚠️ [CITATION STORE] Profile existiert nicht, sollte automatisch erstellt werden')
                   // Die createCitationLibrary Funktion sollte das bereits behandeln,
                   // aber falls nicht, versuche nochmal
                   try {
@@ -593,9 +625,9 @@ export const useCitationStore = create<CitationState>()(
                       user_id: userId,
                       name: 'Standardbibliothek',
                       is_default: true,
-                    })
+                      })
                   } catch (retryError: any) {
-                    console.warn('⚠️ [CITATION STORE] Retry fehlgeschlagen:', retryError)
+                    devWarn('⚠️ [CITATION STORE] Retry fehlgeschlagen:', retryError)
                   }
                 }
                 // 409 Conflict (bereits existiert durch Unique Constraint)
@@ -611,7 +643,7 @@ export const useCitationStore = create<CitationState>()(
                   }
                 } else {
                   // Für andere Fehler, logge sie aber wirf sie nicht (Fallback auf lokale Bibliothek)
-                  console.warn('⚠️ [CITATION STORE] Fehler beim Erstellen der Standardbibliothek:', error)
+                  devWarn('⚠️ [CITATION STORE] Fehler beim Erstellen der Standardbibliothek:', error)
                 }
               }
             }
@@ -660,7 +692,7 @@ export const useCitationStore = create<CitationState>()(
             }
           })
 
-          console.log(`✅ [CITATION STORE] ${librariesWithCitations.length} Bibliothek(en) geladen`)
+          devLog(`✅ [CITATION STORE] ${librariesWithCitations.length} Bibliothek(en) geladen`)
         } catch (error) {
           logSupabaseError('CITATION STORE', error, { userId })
           // Fallback: Verwende leere Libraries wenn Supabase fehlschlägt
