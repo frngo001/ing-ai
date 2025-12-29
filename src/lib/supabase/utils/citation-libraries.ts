@@ -67,19 +67,16 @@ export async function createCitationLibrary(
 ): Promise<CitationLibrary> {
   const supabase = createClient()
   
-  // Stelle sicher, dass ein Profile existiert, bevor wir versuchen, eine Bibliothek zu erstellen
   if (library.user_id) {
     try {
       await ensureProfileExists(library.user_id)
     } catch (error: any) {
-      // Wenn Profile nicht erstellt werden kann, ist das ein kritisches Problem
       console.error('[CITATION_LIBRARIES] Fehler beim Erstellen des Profiles:', error)
       throw new Error(`Profile für User ${library.user_id} konnte nicht erstellt werden: ${error.message}`)
     }
   }
   
   try {
-    // Verwende direkt .limit(1) statt .single() um 406-Fehler zu vermeiden
     const { data, error } = await supabase
       .from('citation_libraries')
       .insert(library)
@@ -87,12 +84,9 @@ export async function createCitationLibrary(
       .limit(1)
 
     if (error) {
-      // 23503 = Foreign Key Constraint Violation (Profile existiert nicht)
       if (error.code === '23503') {
-        // Versuche Profile zu erstellen und dann nochmal
         if (library.user_id) {
           await ensureProfileExists(library.user_id)
-          // Retry nach Profile-Erstellung
           const { data: retryData, error: retryError } = await supabase
             .from('citation_libraries')
             .insert(library)
@@ -100,7 +94,6 @@ export async function createCitationLibrary(
             .limit(1)
           
           if (retryError) {
-            // Wenn immer noch Fehler, prüfe auf 409
             if (retryError.code === '23505') {
               if (library.is_default && library.user_id) {
                 const defaultLib = await getDefaultCitationLibrary(library.user_id)
@@ -117,22 +110,18 @@ export async function createCitationLibrary(
         throw new Error(`Foreign Key Constraint: Profile für User ${library.user_id} existiert nicht`)
       }
       
-      // 409 Conflict bedeutet, dass die Bibliothek bereits existiert (durch Unique Constraint)
       if (error.code === '23505') {
-        // Versuche die existierende Bibliothek zu finden
         if (library.is_default && library.user_id) {
           const defaultLib = await getDefaultCitationLibrary(library.user_id)
           if (defaultLib) return defaultLib
         }
         
-        // Ansonsten suche nach Name
         if (library.name && library.user_id) {
           const existing = await getCitationLibraries(library.user_id)
           const found = existing.find((lib) => lib.name === library.name)
           if (found) return found
         }
         
-        // Falls nicht gefunden, lade alle und suche nach is_default
         if (library.user_id) {
           const allLibs = await getCitationLibraries(library.user_id)
           if (library.is_default) {
@@ -152,13 +141,11 @@ export async function createCitationLibrary(
     
     return data[0]
   } catch (error: any) {
-    // Bei 409-Fehler, versuche nochmal die Bibliothek zu laden
     if (error.code === '23505') {
       if (library.is_default && library.user_id) {
         const defaultLib = await getDefaultCitationLibrary(library.user_id)
         if (defaultLib) return defaultLib
         
-        // Letzter Versuch: Lade alle Bibliotheken
         const allLibs = await getCitationLibraries(library.user_id)
         const found = allLibs.find((lib) => lib.is_default === true)
         if (found) return found
@@ -200,8 +187,6 @@ export async function deleteCitationLibrary(id: string, userId: string): Promise
 export async function getDefaultCitationLibrary(userId: string): Promise<CitationLibrary | null> {
   const supabase = createClient()
   
-  // Verwende direkt .limit(1) statt .single() um 406-Fehler zu vermeiden
-  // Dies ist effizienter als erst .single() zu versuchen und dann zu fallbacken
   try {
     const { data, error } = await supabase
       .from('citation_libraries')
@@ -211,14 +196,12 @@ export async function getDefaultCitationLibrary(userId: string): Promise<Citatio
       .limit(1)
 
     if (error) {
-      // Wenn keine Daten gefunden, ist das OK
       if (error.code === 'PGRST116') return null
       throw error
     }
     
     return data?.[0] || null
   } catch (error: any) {
-    // Fallback: Lade alle Bibliotheken und filtere manuell
     if (error.message?.includes('406') || error.code === 'PGRST116') {
       const allLibraries = await getCitationLibraries(userId)
       return allLibraries.find((lib) => lib.is_default === true) || null

@@ -1,7 +1,3 @@
-// TypeScript Types für Supabase Database Schema
-// Diese Types sollten mit `supabase gen types typescript` generiert werden
-// Für jetzt manuell definiert basierend auf dem Schema
-
 export type Json =
   | string
   | number
