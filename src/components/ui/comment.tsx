@@ -45,6 +45,7 @@ import {
   type TDiscussion,
   discussionPlugin,
 } from '@/components/editor/plugins/discussion-kit';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { Editor, EditorContainer } from './editor';
 
@@ -82,6 +83,12 @@ export function Comment(props: {
   const editor = useEditorRef();
   const userInfo = usePluginOption(discussionPlugin, 'user', comment.userId);
   const currentUserId = usePluginOption(discussionPlugin, 'currentUserId');
+  const { t, language } = useLanguage();
+
+  const resolveDiscussionText = React.useMemo(() => t('toolbar.commentResolveDiscussion'), [t, language]);
+  const cancelText = React.useMemo(() => t('toolbar.commentCancel'), [t, language]);
+  const saveText = React.useMemo(() => t('toolbar.commentSave'), [t, language]);
+  const editedText = React.useMemo(() => t('toolbar.commentEdited'), [t, language]);
 
   const resolveDiscussion = async (id: string) => {
     const updatedDiscussions = editor
@@ -194,7 +201,7 @@ export function Comment(props: {
           <span className="mr-1">
             {formatCommentDate(new Date(comment.createdAt))}
           </span>
-          {comment.isEdited && <span>(edited)</span>}
+          {comment.isEdited && <span>({editedText})</span>}
         </div>
 
         {isMyComment && (
@@ -207,12 +214,12 @@ export function Comment(props: {
                     className="h-6 p-1 text-muted-foreground"
                     onClick={onResolveComment}
                     type="button"
-                    aria-label="Diskussion auflösen"
+                    aria-label={resolveDiscussionText}
                   >
                     <CheckIcon className="size-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">Diskussion auflösen</TooltipContent>
+                <TooltipContent side="bottom">{resolveDiscussionText}</TooltipContent>
               </Tooltip>
             )}
 
@@ -264,7 +271,7 @@ export function Comment(props: {
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label="Abbrechen"
+                  aria-label={cancelText}
                   className="size-7 rounded-full text-red-500 hover:text-red-600 focus-visible:ring-2 focus-visible:ring-red-500/60"
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                     e.stopPropagation();
@@ -277,7 +284,7 @@ export function Comment(props: {
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label="Speichern"
+                  aria-label={saveText}
                   className="size-7 rounded-full text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 hover:dark:text-emerald-300 focus-visible:ring-2 focus-visible:ring-emerald-500/60"
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                     e.stopPropagation();
@@ -313,6 +320,11 @@ function CommentMoreDropdown(props: {
   } = props;
 
   const editor = useEditorRef();
+  const { t, language } = useLanguage();
+
+  const deleteOrEditText = React.useMemo(() => t('toolbar.commentDeleteOrEdit'), [t, language]);
+  const editText = React.useMemo(() => t('toolbar.commentEdit'), [t, language]);
+  const deleteText = React.useMemo(() => t('toolbar.commentDelete'), [t, language]);
 
   const selectedEditCommentRef = React.useRef<boolean>(false);
 
@@ -373,13 +385,13 @@ function CommentMoreDropdown(props: {
             <Button
               variant="ghost"
               className={cn('h-6 p-1 text-muted-foreground')}
-              aria-label="Löschen oder Bearbeiten"
+              aria-label={deleteOrEditText}
             >
               <MoreHorizontalIcon className="size-4" />
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent side="bottom">Löschen oder Bearbeiten</TooltipContent>
+        <TooltipContent side="bottom">{deleteOrEditText}</TooltipContent>
       </Tooltip>
       <DropdownMenuContent
         className="w-48"
@@ -398,14 +410,14 @@ function CommentMoreDropdown(props: {
             onClick={onEditComment}
           >
             <PencilIcon className="size-4 text-emerald-500 dark:text-emerald-400" />
-            Bearbeiten
+            {editText}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="hover:bg-muted focus:bg-muted"
             onClick={onDeleteComment}
           >
             <TrashIcon className="size-4 text-emerald-500 dark:text-emerald-400" />
-            Kommentar löschen
+            {deleteText}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -448,6 +460,9 @@ export function CommentCreateForm({
   const discussionId = discussionIdProp ?? commentId;
 
   const userInfo = usePluginOption(discussionPlugin, 'currentUser');
+  const { t, language } = useLanguage();
+
+  const placeholderInputText = React.useMemo(() => t('toolbar.commentPlaceholderInput'), [t, language]);
   const [commentValue, setCommentValue] = React.useState<Value | undefined>();
   const commentContent = React.useMemo(
     () =>
@@ -599,7 +614,7 @@ export function CommentCreateForm({
                   onAddComment();
                 }
               }}
-              placeholder="Kommentieren ..."
+              placeholder={placeholderInputText}
               autoComplete="off"
               autoFocus={autoFocus}
             />

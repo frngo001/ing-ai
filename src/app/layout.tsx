@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from "@/components/theme-provider"
+import { LanguageProvider } from "@/components/language-provider"
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
@@ -40,7 +41,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
           <Toaster />
           <AnalyticsProvider />
         </ThemeProvider>

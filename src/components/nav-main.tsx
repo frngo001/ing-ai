@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 import {
   Collapsible,
@@ -51,11 +52,12 @@ export function NavMain({
   settingsOpen?: boolean
 }) {
   const pathname = usePathname()
+  const { t, language } = useLanguage()
 
   return (
     <div suppressHydrationWarning>
       <SidebarGroup>
-        <SidebarGroupLabel>Platform</SidebarGroupLabel>
+        <SidebarGroupLabel>{t('sidebar.platform')}</SidebarGroupLabel>
         <SidebarMenu>
           {items.map((item) => {
             const hasChildren = !!item.items?.length
@@ -99,7 +101,7 @@ export function NavMain({
                   <CollapsibleTrigger asChild>
                     <SidebarMenuAction className="data-[state=open]:rotate-90">
                       <ChevronRight />
-                      <span className="sr-only">Toggle</span>
+                      <span className="sr-only">{t('sidebar.toggle')}</span>
                     </SidebarMenuAction>
                   </CollapsibleTrigger>
 

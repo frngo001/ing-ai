@@ -7,6 +7,7 @@ import { useEditorRef } from 'platejs/react';
 
 import { useCitationStore } from '@/lib/stores/citation-store';
 import { prepareCitationInsertion } from '@/components/editor/utils/prepare-citation-insertion';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { ToolbarButton } from './toolbar';
 
@@ -15,6 +16,9 @@ export function CitationToolbarButton(
 ) {
   const editor = useEditorRef();
   const { openSearch } = useCitationStore();
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.insertCitation'), [t, language]);
 
   return (
     <ToolbarButton
@@ -23,7 +27,7 @@ export function CitationToolbarButton(
         prepareCitationInsertion(editor);
         openSearch();
       }}
-      tooltip="Zitat einfügen"
+      tooltip={tooltipText}
     >
       <Quote />
     </ToolbarButton>

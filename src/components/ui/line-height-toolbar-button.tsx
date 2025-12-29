@@ -16,11 +16,13 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { ToolbarButton } from './toolbar';
 
 export function LineHeightToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
+  const { t, language } = useLanguage();
   const { defaultNodeValue, validNodeValues: values = [] } =
     editor.getInjectProps(LineHeightPlugin);
 
@@ -31,10 +33,12 @@ export function LineHeightToolbarButton(props: DropdownMenuProps) {
 
   const [open, setOpen] = React.useState(false);
 
+  const tooltipText = React.useMemo(() => t('toolbar.lineHeight'), [t, language]);
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Zeilenhöhe" isDropdown>
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
           <WrapText />
         </ToolbarButton>
       </DropdownMenuTrigger>

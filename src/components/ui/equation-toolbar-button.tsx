@@ -6,12 +6,16 @@ import { insertEquation, insertInlineEquation } from '@platejs/math';
 import { RadicalIcon, Pi} from 'lucide-react';
 import { useEditorRef } from 'platejs/react';
 
+import { useLanguage } from '@/lib/i18n/use-language';
 import { ToolbarButton } from './toolbar';
 
 export function BlockEquationToolbarButton(
   props: React.ComponentProps<typeof ToolbarButton>
 ) {
   const editor = useEditorRef();
+  const { t, language } = useLanguage();
+
+  const defaultTooltip = React.useMemo(() => t('toolbar.blockEquation'), [t, language]);
 
   return (
     <ToolbarButton
@@ -19,7 +23,7 @@ export function BlockEquationToolbarButton(
       onClick={() => {
         insertEquation(editor, { select: true });
       }}
-      tooltip="Formelblock einfügen"
+      tooltip={props.tooltip || defaultTooltip}
     >
       <Pi />
     </ToolbarButton>
@@ -30,6 +34,9 @@ export function InlineEquationToolbarButton(
   props: React.ComponentProps<typeof ToolbarButton>
 ) {
   const editor = useEditorRef();
+  const { t, language } = useLanguage();
+
+  const defaultTooltip = React.useMemo(() => t('toolbar.insertEquation'), [t, language]);
 
   return (
     <ToolbarButton
@@ -37,7 +44,7 @@ export function InlineEquationToolbarButton(
       onClick={() => {
         insertInlineEquation(editor);
       }}
-      tooltip="Als Formel markieren"
+      tooltip={props.tooltip || defaultTooltip}
     >
       <RadicalIcon />
     </ToolbarButton>

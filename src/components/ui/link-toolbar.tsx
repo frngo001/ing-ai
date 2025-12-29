@@ -30,6 +30,7 @@ import {
 
 import { buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 const popoverVariants = cva(
   'z-50 w-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-hidden'
@@ -44,11 +45,16 @@ export function LinkFloatingToolbar({
 }: {
   state?: LinkFloatingToolbarState;
 }) {
+  const { t, language } = useLanguage();
   const activeCommentId = usePluginOption({ key: KEYS.comment }, 'activeId');
   const activeSuggestionId = usePluginOption(
     { key: KEYS.suggestion },
     'activeId'
   );
+
+  const pasteLinkText = React.useMemo(() => t('toolbar.linkPasteLink'), [t, language]);
+  const textToDisplayText = React.useMemo(() => t('toolbar.linkTextToDisplay'), [t, language]);
+  const editLinkText = React.useMemo(() => t('toolbar.linkEditLink'), [t, language]);
 
   const floatingOptions: UseVirtualFloatingOptions = React.useMemo(
     () => ({
@@ -107,7 +113,7 @@ export function LinkFloatingToolbar({
 
         <FloatingLinkUrlInput
           className={inputVariants()}
-          placeholder="Paste link"
+          placeholder={pasteLinkText}
           data-plate-focus
         />
       </div>
@@ -118,7 +124,7 @@ export function LinkFloatingToolbar({
         </div>
         <input
           className={inputVariants()}
-          placeholder="Text to display"
+          placeholder={textToDisplayText}
           data-plate-focus
           {...textInputProps}
         />
@@ -135,7 +141,7 @@ export function LinkFloatingToolbar({
         type="button"
         {...editButtonProps}
       >
-        Edit link
+        {editLinkText}
       </button>
 
       <Separator orientation="vertical" />
@@ -173,6 +179,9 @@ export function LinkFloatingToolbar({
 function LinkOpenButton() {
   const editor = useEditorRef();
   const selection = useEditorSelection();
+  const { t, language } = useLanguage();
+
+  const openInNewTabText = React.useMemo(() => t('toolbar.linkOpenInNewTab'), [t, language]);
 
   const attributes = React.useMemo(
     () => {
@@ -199,7 +208,7 @@ function LinkOpenButton() {
       onMouseOver={(e) => {
         e.stopPropagation();
       }}
-      aria-label="Open link in a new tab"
+      aria-label={openInNewTabText}
       target="_blank"
     >
       <ExternalLink width={18} />

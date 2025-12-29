@@ -19,11 +19,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { ToolbarButton } from './toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 export function ModeToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
   const [readOnly, setReadOnly] = usePlateState('readOnly');
   const [open, setOpen] = React.useState(false);
+  const { t, language } = useLanguage();
 
   const isSuggesting = usePluginOption(SuggestionPlugin, 'isSuggesting');
 
@@ -33,25 +35,27 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
 
   if (isSuggesting) value = 'suggestion';
 
-  const item: Record<string, { icon: React.ReactNode; label: string }> = {
+  const item: Record<string, { icon: React.ReactNode; label: string }> = React.useMemo(() => ({
     editing: {
       icon: <PenIcon />,
-      label: 'Bearbeiten',
+      label: t('toolbar.editing'),
     },
     suggestion: {
       icon: <PencilLineIcon />,
-      label: 'Vorschlag',
+      label: t('toolbar.suggestion'),
     },
     viewing: {
       icon: <EyeIcon />,
-      label: 'Ansehen',
+      label: t('toolbar.viewing'),
     },
-  };
+  }), [t, language]);
+
+  const tooltipText = React.useMemo(() => t('toolbar.mode'), [t, language]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Modus wählen" isDropdown>
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
           {item[value].icon}
           <span className="hidden lg:inline">{item[value].label}</span>
         </ToolbarButton>

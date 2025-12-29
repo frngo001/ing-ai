@@ -7,6 +7,7 @@ import { KEYS } from 'platejs';
 import { useEditorRef, useEditorSelector } from 'platejs/react';
 
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 type TocItem = {
   id: string;
@@ -23,11 +24,15 @@ type EditorTocSidebarProps = {
 
 export function EditorTocSidebar({ className, visible = true }: EditorTocSidebarProps) {
   const editor = useEditorRef();
+  const { t, language } = useLanguage();
 
   const headingTypes = React.useMemo(
     () => [KEYS.h1, KEYS.h2, KEYS.h3, KEYS.h4, KEYS.h5, KEYS.h6].map((key) => editor.getType(key)),
     [editor]
   );
+
+  const bibliographyText = React.useMemo(() => t('toolbar.bibliography'), [t, language]);
+  const tocTitle = React.useMemo(() => t('toolbar.tocTitle'), [t, language]);
 
   const items = useEditorSelector(
     (ed) => {
@@ -68,7 +73,7 @@ export function EditorTocSidebar({ className, visible = true }: EditorTocSidebar
           level,
           prefix: '',
           path,
-          text: isBibliographyHeading ? 'Quellenverzeichnis' : text,
+          text: isBibliographyHeading ? bibliographyText : text,
         });
       });
 
@@ -89,7 +94,7 @@ export function EditorTocSidebar({ className, visible = true }: EditorTocSidebar
       // Berechne Nummerierung für jedes Element
       return baseItems.map((item) => {
         // Überspringe Nummerierung für Bibliography-Überschriften
-        if (item.text === 'Quellenverzeichnis') {
+        if (item.text === bibliographyText) {
           return { ...item, prefix: '' };
         }
 
@@ -187,7 +192,7 @@ export function EditorTocSidebar({ className, visible = true }: EditorTocSidebar
         };
       });
     },
-    [headingTypes]
+    [headingTypes, bibliographyText]
   );
 
   const showContent = visible && items.length > 0;
@@ -234,7 +239,7 @@ export function EditorTocSidebar({ className, visible = true }: EditorTocSidebar
       )}
     >
       <div className="mb-2 text-sm font-semibold text-muted-foreground ml-12">
-        Inhaltsverzeichnis
+        {tocTitle}
       </div>
 
       <nav className="flex flex-col gap-1 text-sm max-h-[80vh] overflow-auto pr-0 ml-12">

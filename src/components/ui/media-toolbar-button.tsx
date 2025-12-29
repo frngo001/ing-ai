@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import {
   ToolbarSplitButton,
@@ -43,53 +44,53 @@ import {
   ToolbarSplitButtonSecondary,
 } from './toolbar';
 
-const MEDIA_CONFIG: Record<
-  string,
-  {
-    accept: string[];
-    icon: React.ReactNode;
-    title: string;
-    tooltip: string;
-  }
-> = {
-  [KEYS.audio]: {
-    accept: ['audio/*'],
-    icon: <AudioLinesIcon className="size-4" />,
-    title: 'Insert Audio',
-    tooltip: 'Audio',
-  },
-  [KEYS.file]: {
-    accept: ['*'],
-    icon: <FileUpIcon className="size-4" />,
-    title: 'Insert File',
-    tooltip: 'File',
-  },
-  [KEYS.img]: {
-    accept: ['image/*'],
-    icon: <ImageIcon className="size-4" />,
-    title: 'Insert Image',
-    tooltip: 'Image',
-  },
-  [KEYS.video]: {
-    accept: ['video/*'],
-    icon: <FilmIcon className="size-4" />,
-    title: 'Insert Video',
-    tooltip: 'Video',
-  },
+const MEDIA_ICONS: Record<string, React.ReactNode> = {
+  [KEYS.audio]: <AudioLinesIcon className="size-4" />,
+  [KEYS.file]: <FileUpIcon className="size-4" />,
+  [KEYS.img]: <ImageIcon className="size-4" />,
+  [KEYS.video]: <FilmIcon className="size-4" />,
+};
+
+const MEDIA_ACCEPT: Record<string, string[]> = {
+  [KEYS.audio]: ['audio/*'],
+  [KEYS.file]: ['*'],
+  [KEYS.img]: ['image/*'],
+  [KEYS.video]: ['video/*'],
+};
+
+const MEDIA_TITLE_KEYS: Record<string, string> = {
+  [KEYS.audio]: 'toolbar.insertAudio',
+  [KEYS.file]: 'toolbar.insertFile',
+  [KEYS.img]: 'toolbar.insertImage',
+  [KEYS.video]: 'toolbar.insertVideo',
+};
+
+const MEDIA_TOOLTIP_KEYS: Record<string, string> = {
+  [KEYS.audio]: 'toolbar.audio',
+  [KEYS.file]: 'toolbar.file',
+  [KEYS.img]: 'toolbar.imageMedia',
+  [KEYS.video]: 'toolbar.video',
 };
 
 export function MediaToolbarButton({
   nodeType,
   ...props
 }: DropdownMenuProps & { nodeType: string }) {
-  const currentConfig = MEDIA_CONFIG[nodeType];
+  const { t, language } = useLanguage();
+
+  const currentIcon = MEDIA_ICONS[nodeType];
+  const currentAccept = MEDIA_ACCEPT[nodeType];
+  const currentTitle = React.useMemo(() => t(MEDIA_TITLE_KEYS[nodeType]), [t, language, nodeType]);
+  const currentTooltip = React.useMemo(() => t(MEDIA_TOOLTIP_KEYS[nodeType]), [t, language, nodeType]);
+  const uploadText = React.useMemo(() => t('toolbar.uploadFromComputer'), [t, language]);
+  const insertViaUrlText = React.useMemo(() => t('toolbar.insertViaUrl'), [t, language]);
 
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
   const { openFilePicker } = useFilePicker({
-    accept: currentConfig.accept,
+    accept: currentAccept,
     multiple: true,
     onFilesSelected: ({ plainFiles: updatedFiles }) => {
       editor.getTransforms(PlaceholderPlugin).insert.media(updatedFiles);
@@ -113,7 +114,7 @@ export function MediaToolbarButton({
             pressed={open}
           >
             <ToolbarSplitButtonPrimary>
-              {currentConfig.icon}
+              {currentIcon}
             </ToolbarSplitButtonPrimary>
 
             <DropdownMenu
@@ -133,19 +134,19 @@ export function MediaToolbarButton({
               >
                 <DropdownMenuGroup>
                   <DropdownMenuItem onSelect={() => openFilePicker()}>
-                    {currentConfig.icon}
-                    Upload from computer
+                    {currentIcon}
+                    {uploadText}
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
                     <LinkIcon />
-                    Insert via URL
+                    {insertViaUrlText}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </ToolbarSplitButton>
         </TooltipTrigger>
-        <TooltipContent>{currentConfig.tooltip}</TooltipContent>
+        <TooltipContent>{currentTooltip}</TooltipContent>
       </Tooltip>
 
       <AlertDialog
@@ -156,7 +157,7 @@ export function MediaToolbarButton({
       >
         <AlertDialogContent className="gap-6">
           <MediaUrlDialogContent
-            currentConfig={currentConfig}
+            title={currentTitle}
             nodeType={nodeType}
             setOpen={setDialogOpen}
           />
@@ -167,19 +168,24 @@ export function MediaToolbarButton({
 }
 
 function MediaUrlDialogContent({
-  currentConfig,
+  title,
   nodeType,
   setOpen,
 }: {
-  currentConfig: (typeof MEDIA_CONFIG)[string];
+  title: string;
   nodeType: string;
   setOpen: (value: boolean) => void;
 }) {
   const editor = useEditorRef();
+  const { t, language } = useLanguage();
   const [url, setUrl] = React.useState('');
 
+  const invalidUrlText = React.useMemo(() => t('toolbar.invalidUrl'), [t, language]);
+  const cancelText = React.useMemo(() => t('toolbar.dialogCancel'), [t, language]);
+  const acceptText = React.useMemo(() => t('toolbar.dialogAccept'), [t, language]);
+
   const embedMedia = React.useCallback(() => {
-    if (!isUrl(url)) return toast.error('Invalid URL');
+    if (!isUrl(url)) return toast.error(invalidUrlText);
 
     setOpen(false);
     editor.tf.insertNodes({
@@ -188,12 +194,12 @@ function MediaUrlDialogContent({
       type: nodeType,
       url,
     });
-  }, [url, editor, nodeType, setOpen]);
+  }, [url, editor, nodeType, setOpen, invalidUrlText]);
 
   return (
     <>
       <AlertDialogHeader>
-        <AlertDialogTitle>{currentConfig.title}</AlertDialogTitle>
+        <AlertDialogTitle>{title}</AlertDialogTitle>
       </AlertDialogHeader>
 
       <AlertDialogDescription className="group relative w-full">
@@ -218,14 +224,14 @@ function MediaUrlDialogContent({
       </AlertDialogDescription>
 
       <AlertDialogFooter>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogCancel>{cancelText}</AlertDialogCancel>
         <AlertDialogAction
           onClick={(e) => {
             e.preventDefault();
             embedMedia();
           }}
         >
-          Accept
+          {acceptText}
         </AlertDialogAction>
       </AlertDialogFooter>
     </>

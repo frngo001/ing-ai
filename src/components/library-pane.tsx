@@ -41,6 +41,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useCitationStore, type SavedCitation } from "@/lib/stores/citation-store"
 import * as React from "react"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 const fallbackCitations: SavedCitation[] = []
 
@@ -51,6 +52,7 @@ export function LibraryPane({
   className?: string
   onClose?: () => void
 }) {
+  const { t, language } = useLanguage()
   const openSearch = useCitationStore((state) => state.openSearch)
   const setPendingCitation = useCitationStore((state) => state.setPendingCitation)
   const addCitation = useCitationStore((state) => state.addCitation)
@@ -70,6 +72,39 @@ export function LibraryPane({
   const [searchQuery, setSearchQuery] = React.useState("")
   const [expandedAbstracts, setExpandedAbstracts] = React.useState<Record<string, boolean>>({})
   const [isSyncing, setIsSyncing] = React.useState(false)
+
+  // Memoized translations that update on language change
+  const translations = React.useMemo(() => ({
+    title: t('library.title'),
+    refreshLibraries: t('library.refreshLibraries'),
+    importBib: t('library.importBib'),
+    exportBib: t('library.exportBib'),
+    addCitations: t('library.addCitations'),
+    closePanel: t('library.closePanel'),
+    selectLibrary: t('library.selectLibrary'),
+    chooseLibrary: t('library.chooseLibrary'),
+    newLibrary: t('library.newLibrary'),
+    deleteLibrary: t('library.deleteSource'),
+    libraryName: t('library.libraryName'),
+    cancel: t('library.cancel'),
+    createLibrary: t('library.createLibrary'),
+    searchSources: t('library.searchSources'),
+    noResultsFor: t('library.noResultsFor'),
+    noSourcesYetSaved: t('library.noSourcesYetSaved'),
+    adjustSearch: t('library.adjustSearch'),
+    importOrAdd: t('library.importOrAdd'),
+    resetSearch: t('library.resetSearch'),
+    citeInText: t('library.citeInText'),
+    openSource: t('library.openSource'),
+    deleteSource: t('library.deleteSource'),
+    showMore: t('library.showMore'),
+    showLess: t('library.showLess'),
+    deleteSourceTitle: t('library.deleteSourceTitle'),
+    delete: t('library.delete'),
+    deleteLibraryTitle: t('library.deleteLibraryTitle'),
+    deleteLibraryDescription: t('library.deleteLibraryDescription'),
+    addedOn: t('library.addedOn'),
+  }), [t, language])
 
   // Synchronisiere Bibliotheken vom Backend beim Mount
   React.useEffect(() => {
@@ -145,7 +180,7 @@ export function LibraryPane({
       const authors = authorsRaw
         ? authorsRaw.split(/\s+and\s+/i).map((a) => a.trim()).filter(Boolean)
         : []
-      const nowText = `hinzugefügt am ${new Date().toLocaleDateString("de-DE", { dateStyle: "short" })}`
+      const nowText = `${translations.addedOn} ${new Date().toLocaleDateString(language, { dateStyle: "short" })}`
       parsed.push({
         id,
         title,
@@ -171,7 +206,7 @@ export function LibraryPane({
   const handleImportClick = () => fileInputRef.current?.click()
 
   const handleCreateLibrary = async () => {
-    const name = newLibraryName.trim() || "Neue Bibliothek"
+    const name = newLibraryName.trim() || translations.newLibrary
     const id = await addLibrary(name)
     setActiveLibrary(id)
     setNewLibraryName("")
@@ -200,7 +235,7 @@ export function LibraryPane({
       <div className="flex items-center justify-between gap-2 pb-2 mt-1.5">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5">
-            <h2 className="text-sm font-semibold">Bibliothek</h2>
+            <h2 className="text-sm font-semibold">{translations.title}</h2>
             <Library className="size-4" />
           </div>
         </div>
@@ -219,7 +254,7 @@ export function LibraryPane({
             }}
           />
           <Tooltip>
-            <TooltipContent>Bibliotheken aktualisieren</TooltipContent>
+            <TooltipContent>{translations.refreshLibraries}</TooltipContent>
             <TooltipTrigger asChild>
               <Button
                 size="icon"
@@ -251,12 +286,12 @@ export function LibraryPane({
             variant="ghost"
             className="h-7 w-7 bg-transparent"
             onClick={handleImportClick}
-            aria-label="Import .bib"
+            aria-label={translations.importBib}
           >
             <Upload className="size-4" />
           </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Import .bib</TooltipContent>
+            <TooltipContent side="bottom">{translations.importBib}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -265,12 +300,12 @@ export function LibraryPane({
             variant="ghost"
             className="h-7 w-7 bg-transparent"
             onClick={exportBib}
-            aria-label="Export .bib"
+            aria-label={translations.exportBib}
           >
             <Download className="size-4" />
           </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Export .bib</TooltipContent>
+            <TooltipContent side="bottom">{translations.exportBib}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -279,19 +314,19 @@ export function LibraryPane({
             variant="ghost"
             className="h-7 w-7 bg-transparent"
             onClick={openSearch}
-                aria-label="Quelle hinzufügen"
+                aria-label={translations.addCitations}
           >
             <Plus className="size-4" />
           </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Zitate hinzufügen</TooltipContent>
+            <TooltipContent side="bottom">{translations.addCitations}</TooltipContent>
           </Tooltip>
           <Button
             size="icon"
             variant="ghost"
             className="h-7 w-7 bg-transparent"
             onClick={onClose}
-            aria-label="Panel schließen"
+            aria-label={translations.closePanel}
           >
             <PanelLeftClose className="size-4" />
           </Button>
@@ -310,8 +345,8 @@ export function LibraryPane({
               setActiveLibrary(value)
             }}
           >
-            <SelectTrigger className="h-9 w-full text-sm" aria-label="Bibliothek auswählen">
-              <SelectValue placeholder="Bibliothek wählen" />
+            <SelectTrigger className="h-9 w-full text-sm" aria-label={translations.selectLibrary}>
+              <SelectValue placeholder={translations.chooseLibrary} />
             </SelectTrigger>
             <SelectContent>
               {libraries.map((lib) => (
@@ -336,23 +371,23 @@ export function LibraryPane({
                   </Button>
                 </TooltipTrigger>
               </PopoverTrigger>
-              <TooltipContent side="bottom">Neue Bibliothek erstellen</TooltipContent>
+              <TooltipContent side="bottom">{translations.newLibrary}</TooltipContent>
             </Tooltip>
             <PopoverContent align="start" className="w-[260px]">
               <div className="flex flex-col gap-3">
                 <Input
                   value={newLibraryName}
                   onChange={(e) => setNewLibraryName(e.target.value)}
-                  placeholder="Name der Bibliothek"
-                  aria-label="Name der Bibliothek"
+                  placeholder={translations.libraryName}
+                  aria-label={translations.libraryName}
                   className="focus-within:ring-0 focus-within:ring-offset-0 group rounded-md border px-2 py-2"
                 />
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" size="sm" onClick={() => setIsCreateLibraryOpen(false)}>
-                    Abbrechen
+                    {translations.cancel}
                   </Button>
                   <Button size="sm" onClick={handleCreateLibrary}>
-                    Anlegen
+                    {translations.createLibrary}
                   </Button>
                 </div>
               </div>
@@ -377,7 +412,7 @@ export function LibraryPane({
                   <Trash className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Bibliothek löschen</TooltipContent>
+              <TooltipContent side="bottom">{translations.deleteLibraryTitle}</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -390,9 +425,9 @@ export function LibraryPane({
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Quellen durchsuchen"
+            placeholder={translations.searchSources}
             className="h-9 pl-8 text-sm"
-            aria-label="Quellen durchsuchen"
+            aria-label={translations.searchSources}
           />
         </div>
       </div>
@@ -404,13 +439,13 @@ export function LibraryPane({
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Search className="size-4 text-muted-foreground" />
                   {searchQuery.trim()
-                    ? `Keine Treffer für „${searchQuery.trim()}“`
-                    : "Noch keine Quellen gespeichert"}
+                    ? `${translations.noResultsFor} „${searchQuery.trim()}"`
+                    : translations.noSourcesYetSaved}
                 </div>
                 <p className="text-muted-foreground text-xs">
                   {searchQuery.trim()
-                    ? "Passe deine Suche an oder setze sie zurück."
-                    : "Importiere Quellen oder füge neue Quellen hinzu."}
+                    ? translations.adjustSearch
+                    : translations.importOrAdd}
                 </p>
                 {searchQuery.trim() && (
                   <div className="flex gap-2">
@@ -420,7 +455,7 @@ export function LibraryPane({
                       className="h-8 px-3 text-xs"
                       onClick={() => setSearchQuery("")}
                     >
-                      Suche zurücksetzen
+                      {translations.resetSearch}
                     </Button>
                   </div>
                 )}
@@ -473,7 +508,7 @@ export function LibraryPane({
                             }))
                           }
                         >
-                          {expandedAbstracts[item.id] ? "Weniger anzeigen" : "Mehr anzeigen"}
+                          {expandedAbstracts[item.id] ? translations.showLess : translations.showMore}
                         </Button>
                       </div>
                     ) : null}
@@ -492,12 +527,12 @@ export function LibraryPane({
                             variant="ghost"
                             className="h-8 w-8 cursor-pointer"
                             onClick={() => setPendingCitation(item)}
-                            aria-label="Im Text zitieren"
+                            aria-label={translations.citeInText}
                           >
                             <Quote className="size-3" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom">Im Text zitieren</TooltipContent>
+                        <TooltipContent side="bottom">{translations.citeInText}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -505,7 +540,7 @@ export function LibraryPane({
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 cursor-pointer"
-                            aria-label="Quelle öffnen"
+                            aria-label={translations.openSource}
                             asChild
                           >
                             <a href={url} target="_blank" rel="noreferrer">
@@ -513,7 +548,7 @@ export function LibraryPane({
                             </a>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom">Quelle öffnen</TooltipContent>
+                        <TooltipContent side="bottom">{translations.openSource}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -521,13 +556,13 @@ export function LibraryPane({
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
-                            aria-label="Quelle löschen"
+                            aria-label={translations.deleteSource}
                             onClick={() => setConfirmDeleteId(item.id)}
                           >
                             <Trash2 className="size-3 text-destructive hover:text-destructive" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom">Quelle löschen</TooltipContent>
+                        <TooltipContent side="bottom">{translations.deleteSource}</TooltipContent>
                       </Tooltip>
                      
                     </div>
@@ -550,7 +585,7 @@ export function LibraryPane({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Willst du diese Quelle wirklich löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{translations.deleteSourceTitle}</AlertDialogTitle>
 
             {confirmCitation && (
               <div className="mt-3 rounded-md bg-muted/60 px-3 py-2 text-xs text-muted-foreground space-y-1">
@@ -570,7 +605,7 @@ export function LibraryPane({
             )}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmDeleteId(null)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setConfirmDeleteId(null)}>{translations.cancel}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
@@ -578,7 +613,7 @@ export function LibraryPane({
                 setConfirmDeleteId(null)
               }}
             >
-              Löschen
+              {translations.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -592,18 +627,18 @@ export function LibraryPane({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Bibliothek löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{translations.deleteLibraryTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              {`"${libraryToDelete?.name ?? "Diese Bibliothek"}"`} wird dauerhaft gelöscht. Alle zugehörigen Quellen werden ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.
+              {`"${libraryToDelete?.name ?? translations.title}"`} {translations.deleteLibraryDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setLibraryToDelete(null)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setLibraryToDelete(null)}>{translations.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDeleteLibrary}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Löschen
+              {translations.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

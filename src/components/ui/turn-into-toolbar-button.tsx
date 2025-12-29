@@ -38,96 +38,98 @@ import {
 } from '@/components/editor/transforms';
 
 import { ToolbarButton, ToolbarMenuGroup } from './toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
-export const turnIntoItems = [
+export function TurnIntoToolbarButton(props: DropdownMenuProps) {
+  const editor = useEditorRef();
+  const [open, setOpen] = React.useState(false);
+  const { t, language } = useLanguage();
+
+  const turnIntoItems = React.useMemo(() => [
   {
     icon: <PilcrowIcon />,
     keywords: ['paragraph'],
-    label: 'Text',
+      label: t('toolbar.text'),
     value: KEYS.p,
   },
   {
     icon: <Heading1Icon />,
     keywords: ['title', 'h1'],
-    label: 'Überschrift 1',
+      label: t('toolbar.heading1'),
     value: 'h1',
   },
   {
     icon: <Heading2Icon />,
     keywords: ['subtitle', 'h2'],
-    label: 'Überschrift 2',
+      label: t('toolbar.heading2'),
     value: 'h2',
   },
   {
     icon: <Heading3Icon />,
     keywords: ['subtitle', 'h3'],
-    label: 'Überschrift 3',
+      label: t('toolbar.heading3'),
     value: 'h3',
   },
   {
     icon: <Heading4Icon />,
     keywords: ['subtitle', 'h4'],
-    label: 'Überschrift 4',
+      label: t('toolbar.heading4'),
     value: 'h4',
   },
   {
     icon: <Heading5Icon />,
     keywords: ['subtitle', 'h5'],
-    label: 'Überschrift 5',
+      label: t('toolbar.heading5'),
     value: 'h5',
   },
   {
     icon: <Heading6Icon />,
     keywords: ['subtitle', 'h6'],
-    label: 'Überschrift 6',
+      label: t('toolbar.heading6'),
     value: 'h6',
   },
   {
     icon: <ListIcon />,
     keywords: ['unordered', 'ul', '-'],
-    label: 'Aufzählung',
+      label: t('toolbar.bulletListLabel'),
     value: KEYS.ul,
   },
   {
     icon: <ListOrderedIcon />,
     keywords: ['ordered', 'ol', '1'],
-    label: 'Nummerierte Liste',
+      label: t('toolbar.numberedListLabel'),
     value: KEYS.ol,
   },
   {
     icon: <SquareIcon />,
     keywords: ['checklist', 'task', 'checkbox', '[]'],
-    label: 'To-do-Liste',
+      label: t('toolbar.todoList'),
     value: KEYS.listTodo,
   },
   {
     icon: <ChevronRightIcon />,
     keywords: ['collapsible', 'expandable'],
-    label: 'Toggle-Liste',
+      label: t('toolbar.toggleList'),
     value: KEYS.toggle,
   },
   {
     icon: <FileCodeIcon />,
     keywords: ['```'],
-    label: 'Code',
+      label: t('toolbar.code'),
     value: KEYS.codeBlock,
   },
   {
     icon: <QuoteIcon />,
     keywords: ['citation', 'blockquote', '>'],
-    label: 'Zitat',
+      label: t('toolbar.quoteLabel'),
     value: KEYS.blockquote,
   },
   {
     icon: <Columns3Icon />,
-    label: '3 Spalten',
+      label: t('toolbar.threeColumns'),
     value: 'action_three_columns',
   },
-];
-
-export function TurnIntoToolbarButton(props: DropdownMenuProps) {
-  const editor = useEditorRef();
-  const [open, setOpen] = React.useState(false);
+  ], [t, language]);
 
   const value = useSelectionFragmentProp({
     defaultValue: KEYS.p,
@@ -137,8 +139,11 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
     () =>
       turnIntoItems.find((item) => item.value === (value ?? KEYS.p)) ??
       turnIntoItems[0],
-    [value]
+    [value, turnIntoItems]
   );
+
+  const tooltipText = React.useMemo(() => t('toolbar.changeTextFormat'), [t, language]);
+  const labelText = React.useMemo(() => t('toolbar.changeTextFormat'), [t, language]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
@@ -147,7 +152,7 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
           className="min-w-[100px]"
           pressed={open}
           isDropdown
-          tooltip="Textformat ändern"
+          tooltip={tooltipText}
         >
           {selectedItem.label}
         </ToolbarButton>
@@ -166,7 +171,7 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
           onValueChange={(type) => {
             setBlockType(editor, type);
           }}
-          label="Textformat ändern"
+          label={labelText}
         >
           {turnIntoItems.map(({ icon, label, value: itemValue }) => (
             <DropdownMenuRadioItem

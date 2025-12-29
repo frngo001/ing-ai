@@ -40,6 +40,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 export const ColumnElement = withHOC(
   ResizableProvider,
@@ -100,6 +101,10 @@ export const ColumnElement = withHOC(
 );
 
 const ColumnDragHandle = React.memo(function ColumnDragHandle() {
+  const { t, language } = useLanguage();
+
+  const dragColumnToMoveText = React.useMemo(() => t('toolbar.dragColumnToMove'), [t, language]);
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -115,7 +120,7 @@ const ColumnDragHandle = React.memo(function ColumnDragHandle() {
           </Button>
         </TooltipTrigger>
 
-        <TooltipContent>Spalte ziehen zum Verschieben</TooltipContent>
+        <TooltipContent>{dragColumnToMoveText}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

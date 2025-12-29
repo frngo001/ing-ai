@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { parseBibTex } from '@/lib/citations/bib-parser'
 import { toast } from 'sonner'
+import { useLanguage } from '@/lib/i18n/use-language'
 
 interface Source {
     id: string
@@ -47,12 +48,34 @@ type Library = {
 const STORAGE_KEY = 'library-panel.libraries'
 
 export function LibraryPanel({ onSourcesChange, onInsertCitation }: LibraryPanelProps) {
+    const { t, language } = useLanguage()
     const [libraries, setLibraries] = useState<Library[]>([])
     const [selectedLibraryId, setSelectedLibraryId] = useState<string | null>(null)
     const [isUploadOpen, setIsUploadOpen] = useState(false)
     const [isCreateLibraryOpen, setIsCreateLibraryOpen] = useState(false)
     const [newLibraryName, setNewLibraryName] = useState('')
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // Memoized translations that update on language change
+    const translations = useMemo(() => ({
+        title: t('library.title'),
+        manageSources: t('library.manageSources'),
+        selectLibrary: t('library.selectLibrary'),
+        chooseLibrary: t('library.chooseLibrary'),
+        newLibrary: t('library.newLibrary'),
+        addSource: t('library.addSource'),
+        uploadSource: t('library.uploadSource'),
+        orImportCitations: t('library.orImportCitations'),
+        importBibFile: t('library.importBibFile'),
+        noSourcesYet: t('library.noSourcesYet'),
+        defaultLibrary: t('library.defaultLibrary'),
+        enterLibraryName: t('library.enterLibraryName'),
+        libraryName: t('library.libraryName'),
+        createLibrary: t('library.createLibrary'),
+        insertCitation: t('library.insertCitation'),
+        removeSource: t('library.removeSource'),
+        cancel: t('documents.cancel'),
+    }), [t, language])
 
     const currentLibrary = useMemo(
         () => libraries.find(lib => lib.id === selectedLibraryId) ?? null,
@@ -83,10 +106,10 @@ export function LibraryPanel({ onSourcesChange, onInsertCitation }: LibraryPanel
             }
         }
 
-        const initial: Library = { id: 'default-library', name: 'Standardbibliothek', sources: [] }
+        const initial: Library = { id: 'default-library', name: t('library.defaultLibrary'), sources: [] }
         setLibraries([initial])
         setSelectedLibraryId(initial.id)
-    }, [])
+    }, [t])
 
     useEffect(() => {
         if (!libraries.length) return
@@ -149,9 +172,9 @@ URL: ${entry.url}
                 }))
 
                 updateCurrentLibrarySources(prev => [...prev, ...newSources])
-                toast.success(`Imported ${entries.length} citations`)
+                toast.success(t('library.importedCitations').replace('{count}', String(entries.length)))
             } catch (error) {
-                toast.error('Failed to parse BibTeX file')
+                toast.error(t('library.failedToParseBib'))
             }
         }
         reader.readAsText(file)
@@ -161,7 +184,7 @@ URL: ${entry.url}
     const handleCreateLibrary = () => {
         const name = newLibraryName.trim()
         if (!name) {
-            toast.error('Bitte einen Bibliotheksnamen eingeben')
+            toast.error(t('library.enterLibraryName'))
             return
         }
 
@@ -183,9 +206,9 @@ URL: ${entry.url}
         <Card className="flex flex-col h-full border-0 shadow-none">
             <div className="p-4 border-b border-border flex justify-between items-center">
                 <div>
-                    <h3 className="font-semibold text-lg">Library</h3>
+                    <h3 className="font-semibold text-lg">{translations.title}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Manage your sources
+                        {translations.manageSources}
                     </p>
                 </div>
 
@@ -200,8 +223,8 @@ URL: ${entry.url}
                             setSelectedLibraryId(value)
                         }}
                     >
-                        <SelectTrigger className="w-[190px]" aria-label="Bibliothek auswählen">
-                            <SelectValue placeholder="Bibliothek wählen" />
+                        <SelectTrigger className="w-[190px]" aria-label={translations.selectLibrary}>
+                            <SelectValue placeholder={translations.chooseLibrary} />
                         </SelectTrigger>
                         <SelectContent>
                             {libraries.map(lib => (
@@ -209,7 +232,7 @@ URL: ${entry.url}
                                     {lib.name}
                                 </SelectItem>
                             ))}
-                            <SelectItem value="__new__">+ Neue Bibliothek</SelectItem>
+                            <SelectItem value="__new__">+ {translations.newLibrary}</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -217,22 +240,22 @@ URL: ${entry.url}
                         variant="outline"
                         size="sm"
                         onClick={() => setIsCreateLibraryOpen(true)}
-                        aria-label="Neue Bibliothek anlegen"
+                        aria-label={translations.newLibrary}
                     >
                         <Plus className="h-4 w-4 mr-2" />
-                        Neue Bibliothek
+                        {translations.newLibrary}
                     </Button>
 
                 <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
                     <DialogTrigger asChild>
                         <Button size="sm">
                             <Plus className="h-4 w-4 mr-2" />
-                            Add Source
+                            {translations.addSource}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Upload Source</DialogTitle>
+                            <DialogTitle>{translations.uploadSource}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                             <PdfUpload onUploadComplete={handlePdfUpload} />
@@ -243,7 +266,7 @@ URL: ${entry.url}
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
                                     <span className="bg-background px-2 text-muted-foreground">
-                                        Or import citations
+                                        {translations.orImportCitations}
                                     </span>
                                 </div>
                             </div>
@@ -258,7 +281,7 @@ URL: ${entry.url}
                                 />
                                 <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
                                     <FileText className="mr-2 h-4 w-4" />
-                                    Import .bib File
+                                    {translations.importBibFile}
                                 </Button>
                             </div>
                         </div>
@@ -272,7 +295,7 @@ URL: ${entry.url}
                     {displayedSources.length === 0 && (
                         <div className="text-center text-muted-foreground py-8">
                             <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                            <p>No sources added yet</p>
+                            <p>{translations.noSourcesYet}</p>
                         </div>
                     )}
 
@@ -288,24 +311,24 @@ URL: ${entry.url}
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => onInsertCitation?.(`(${source.author || 'Unknown'}, ${source.year || 'n.d.'})`)}
-                                    title="Insert Citation"
-                                >
-                                    <Quote className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => removeSource(source.id)}
-                                    title="Remove Source"
-                                >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
+<Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => onInsertCitation?.(`(${source.author || 'Unknown'}, ${source.year || 'n.d.'})`)}
+                                                    title={translations.insertCitation}
+                                                >
+                                                    <Quote className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => removeSource(source.id)}
+                                                    title={translations.removeSource}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
                             </div>
                         </Card>
                     ))}
@@ -315,20 +338,20 @@ URL: ${entry.url}
             <Dialog open={isCreateLibraryOpen} onOpenChange={setIsCreateLibraryOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Neue Bibliothek</DialogTitle>
+                        <DialogTitle>{translations.newLibrary}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-3">
                         <Input
                             value={newLibraryName}
                             onChange={(e) => setNewLibraryName(e.target.value)}
-                            placeholder="Name der Bibliothek"
-                            aria-label="Bibliotheksname"
+                            placeholder={translations.libraryName}
+                            aria-label={translations.libraryName}
                         />
                         <div className="flex justify-end gap-2">
                             <Button variant="outline" onClick={() => setIsCreateLibraryOpen(false)}>
-                                Abbrechen
+                                {translations.cancel}
                             </Button>
-                            <Button onClick={handleCreateLibrary}>Anlegen</Button>
+                            <Button onClick={handleCreateLibrary}>{translations.createLibrary}</Button>
                         </div>
                     </div>
                 </DialogContent>

@@ -2,6 +2,7 @@
 import * as React from "react"
 import { useTheme } from "next-themes"
 import { BadgeCheck, Bell, CreditCard, Database, Paintbrush, Settings, ShieldCheck, User } from "lucide-react"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 import {
   Breadcrumb,
@@ -39,17 +40,15 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
-const data = {
-  nav: [
-    { name: "General", icon: Settings },
-    { name: "Benachrichtigungen", icon: Bell },
-    { name: "Personalisierung", icon: Paintbrush },
-    { name: "Datenkontrolle", icon: Database },
-    { name: "Abrechnung", icon: CreditCard },
-    { name: "Sicherheit", icon: ShieldCheck },
-    { name: "Konto", icon: User },
-  ],
-}
+const getNavItems = (t: (key: string) => string) => [
+  { name: t('settings.general'), key: 'general', icon: Settings },
+  { name: t('settings.notifications'), key: 'notifications', icon: Bell },
+  { name: t('settings.personalization'), key: 'personalization', icon: Paintbrush },
+  { name: t('settings.dataControl'), key: 'dataControl', icon: Database },
+  { name: t('settings.billing'), key: 'billing', icon: CreditCard },
+  { name: t('settings.security'), key: 'security', icon: ShieldCheck },
+  { name: t('settings.account'), key: 'account', icon: User },
+]
 
 type ThemeChoice = "light" | "dark" | "system"
 type DensityChoice = "komfort" | "ausgewogen" | "kompakt"
@@ -96,13 +95,15 @@ type SettingsDialogProps = {
 
 export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialogProps) {
   const { setTheme, resolvedTheme } = useTheme()
+  const { language, setLanguage, t } = useLanguage()
   const [isHydrated, setIsHydrated] = React.useState(false)
   const [settings, setSettings] = React.useState<DisplaySettings>(() => ({
     ...defaultDisplaySettings,
     theme: (resolvedTheme as ThemeChoice | undefined) ?? defaultDisplaySettings.theme,
   }))
+  const navItems = React.useMemo(() => getNavItems(t), [t, language])
   const [activeNav, setActiveNav] = React.useState<string>(
-    initialNav ?? data.nav[0]?.name ?? "General"
+    initialNav ?? navItems[0]?.key ?? "general"
   )
   const [generalSettings, setGeneralSettings] = React.useState({
     autoUpdates: true,
@@ -124,95 +125,95 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
     sessionAlerts: true,
   })
 
-  const generalToggles: ToggleRowConfig[] = [
+  const generalToggles: ToggleRowConfig[] = React.useMemo(() => [
     {
-      title: "Automatische Updates",
-      description: "Neue Versionen automatisch installieren, wenn verfügbar.",
+      title: t('settings.autoUpdates'),
+      description: t('settings.autoUpdatesDescription'),
       checked: generalSettings.autoUpdates,
       onChange: (checked) => setGeneralSettings((prev) => ({ ...prev, autoUpdates: checked })),
     },
     {
-      title: "Tastenkürzel",
-      description: "Aktiviert Tastenkürzel für häufige Aktionen.",
+      title: t('settings.keyboardShortcuts'),
+      description: t('settings.keyboardShortcutsDescription'),
       checked: generalSettings.keyboardShortcuts,
       onChange: (checked) =>
         setGeneralSettings((prev) => ({ ...prev, keyboardShortcuts: checked })),
     },
     {
-      title: "Kompakter Modus",
-      description: "Reduzierte Abstände für mehr Inhalte pro Seite.",
+      title: t('settings.compactMode'),
+      description: t('settings.compactModeDescription'),
       checked: generalSettings.compactMode,
       onChange: (checked) => setGeneralSettings((prev) => ({ ...prev, compactMode: checked })),
     },
-  ]
+  ], [t, language, generalSettings])
 
-  const notificationToggles: ToggleRowConfig[] = [
+  const notificationToggles: ToggleRowConfig[] = React.useMemo(() => [
     {
-      title: "E-Mail-Benachrichtigungen",
-      description: "Wichtige Updates und Zusammenfassungen per E-Mail.",
+      title: t('settings.emailNotifications'),
+      description: t('settings.emailNotificationsDescription'),
       checked: notificationSettings.email,
       onChange: (checked) => setNotificationSettings((prev) => ({ ...prev, email: checked })),
     },
     {
-      title: "Push-Benachrichtigungen",
-      description: "Push-Nachrichten auf unterstützten Geräten.",
+      title: t('settings.pushNotifications'),
+      description: t('settings.pushNotificationsDescription'),
       checked: notificationSettings.push,
       onChange: (checked) => setNotificationSettings((prev) => ({ ...prev, push: checked })),
     },
     {
-      title: "Desktop-Benachrichtigungen",
-      description: "Hinweise am Desktop anzeigen, wenn du angemeldet bist.",
+      title: t('settings.desktopNotifications'),
+      description: t('settings.desktopNotificationsDescription'),
       checked: notificationSettings.desktop,
       onChange: (checked) => setNotificationSettings((prev) => ({ ...prev, desktop: checked })),
     },
-  ]
+  ], [t, language, notificationSettings])
 
-  const dataControlToggles: ToggleRowConfig[] = [
+  const dataControlToggles: ToggleRowConfig[] = React.useMemo(() => [
     {
-      title: "Nutzungs-Telemetrie",
-      description: "Anonyme Nutzungsdaten zur Produktverbesserung teilen.",
+      title: t('settings.telemetry'),
+      description: t('settings.telemetryDescription'),
       checked: dataControlSettings.telemetry,
       onChange: (checked) => setDataControlSettings((prev) => ({ ...prev, telemetry: checked })),
     },
     {
-      title: "Personalisierte Vorschläge",
-      description: "Inhalte anhand deiner Nutzung personalisieren.",
+      title: t('settings.personalizedSuggestions'),
+      description: t('settings.personalizedSuggestionsDescription'),
       checked: dataControlSettings.personalization,
       onChange: (checked) =>
         setDataControlSettings((prev) => ({ ...prev, personalization: checked })),
     },
-  ]
+  ], [t, language, dataControlSettings])
 
-  const securityToggles: ToggleRowConfig[] = [
+  const securityToggles: ToggleRowConfig[] = React.useMemo(() => [
     {
-      title: "Zwei-Faktor-Authentifizierung",
-      description: "Zusätzliche Sicherheit beim Login aktivieren.",
+      title: t('settings.twoFactorAuth'),
+      description: t('settings.twoFactorAuthDescription'),
       checked: securitySettings.twoFactor,
       onChange: (checked) => setSecuritySettings((prev) => ({ ...prev, twoFactor: checked })),
     },
     {
-      title: "Login-Benachrichtigungen",
-      description: "E-Mail-Benachrichtigungen bei neuen Geräten.",
+      title: t('settings.loginNotifications'),
+      description: t('settings.loginNotificationsDescription'),
       checked: securitySettings.sessionAlerts,
       onChange: (checked) =>
         setSecuritySettings((prev) => ({ ...prev, sessionAlerts: checked })),
     },
-  ]
+  ], [t, language, securitySettings])
 
-  const billingActions: ActionRowConfig[] = [
+  const billingActions: ActionRowConfig[] = React.useMemo(() => [
     {
-      title: "Plan & Abrechnung",
-      description: "Verwalte deinen aktuellen Tarif und Zahlungsdetails.",
-      cta: "Plan verwalten",
+      title: t('settings.planBilling'),
+      description: t('settings.planBillingDescription'),
+      cta: t('settings.managePlan'),
       onClick: () => console.log("Plan verwalten"),
     },
     {
-      title: "Rechnungs-E-Mails",
-      description: "Rechnungen an deine Hauptadresse senden.",
-      cta: "Adresse ändern",
+      title: t('settings.invoiceEmails'),
+      description: t('settings.invoiceEmailsDescription'),
+      cta: t('settings.changeAddress'),
       onClick: () => console.log("Abrechnungsadresse ändern"),
     },
-  ]
+  ], [t, language])
   const ActionRow = ({ title, description, cta, onClick }: ActionRowConfig) => (
     <div className="grid grid-cols-[1fr_auto] items-start gap-3 pr-3">
       <div className="space-y-1">
@@ -239,38 +240,38 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
     </div>
   )
 
-  const accountActions: ActionRowConfig[] = [
+  const accountActions: ActionRowConfig[] = React.useMemo(() => [
     {
-      title: "Profil",
-      description: "Name, Avatar und Kontaktinformationen verwalten.",
-      cta: "Bearbeiten",
+      title: t('settings.profileTitle'),
+      description: t('settings.profileDescription'),
+      cta: t('settings.edit'),
       onClick: () => console.log("Profil bearbeiten"),
     },
     {
-      title: "E-Mail",
-      description: "Deine primäre Kontaktadresse.",
-      cta: "E-Mail ändern",
+      title: t('settings.email'),
+      description: t('settings.emailDescription'),
+      cta: t('settings.changeEmail'),
       onClick: () => console.log("E-Mail ändern"),
     },
     {
-      title: "Avatar",
-      description: "Profilbild aktualisieren und für Team-Shares verwenden.",
-      cta: "Avatar ändern",
+      title: t('settings.avatar'),
+      description: t('settings.avatarDescription'),
+      cta: t('settings.changeAvatar'),
       onClick: () => console.log("Avatar aktualisieren"),
     },
     {
-      title: "Verknüpfte Konten",
-      description: "Meldeoptionen (z. B. Google) und Zugriffsrechte verwalten.",
-      cta: "Konten verwalten",
+      title: t('settings.linkedAccounts'),
+      description: t('settings.linkedAccountsDescription'),
+      cta: t('settings.manageAccounts'),
       onClick: () => console.log("Verknüpfte Konten öffnen"),
     },
     {
-      title: "Workspace & Rollen",
-      description: "Teamzugehörigkeit und Rollen in deinem Workspace anpassen.",
-      cta: "Rollen bearbeiten",
+      title: t('settings.workspaceRoles'),
+      description: t('settings.workspaceRolesDescription'),
+      cta: t('settings.editRoles'),
       onClick: () => console.log("Workspace verwalten"),
     },
-  ]
+  ], [t, language])
 
   const AccountRow = ({ title, description, cta, onClick }: ActionRowConfig) => (
     <div className="grid grid-cols-[1fr_auto] items-start gap-3 pr-3">
@@ -352,8 +353,10 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
     if (!open) return
     if (initialNav) {
       setActiveNav(initialNav)
+    } else {
+      setActiveNav(navItems[0]?.key ?? "general")
     }
-  }, [open, initialNav])
+  }, [open, initialNav, navItems])
 
   React.useEffect(() => {
     if (!isHydrated || typeof window === "undefined") return
@@ -364,9 +367,9 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="overflow-hidden p-0 md:max-h-[500px] md:max-w-[700px] lg:max-w-[800px]">
-        <DialogTitle className="sr-only">Einstellungen</DialogTitle>
+        <DialogTitle className="sr-only">{t('settings.title')}</DialogTitle>
         <DialogDescription className="sr-only">
-          Passe hier deine Einstellungen an.
+          {t('settings.description')}
         </DialogDescription>
         <SidebarProvider className="items-start">
           <Sidebar collapsible="none" className="hidden md:flex">
@@ -374,15 +377,15 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
               <SidebarGroup>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {data.nav.map((item) => (
-                      <SidebarMenuItem key={item.name}>
+                    {navItems.map((item) => (
+                      <SidebarMenuItem key={item.key}>
                         <SidebarMenuButton
                           asChild
-                          isActive={item.name === activeNav}
+                          isActive={item.key === activeNav}
                         >
                           <button
                             type="button"
-                            onClick={() => setActiveNav(item.name)}
+                            onClick={() => setActiveNav(item.key)}
                             className="flex items-center gap-2"
                           >
                             <item.icon />
@@ -402,11 +405,11 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">Einstellungen</BreadcrumbLink>
+                      <BreadcrumbLink href="#">{t('settings.title')}</BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator className="hidden md:block" />
                     <BreadcrumbItem>
-                      <BreadcrumbPage>{activeNav}</BreadcrumbPage>
+                      <BreadcrumbPage>{navItems.find(item => item.key === activeNav)?.name || activeNav}</BreadcrumbPage>
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>
@@ -414,15 +417,38 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
             </header>
             <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-0">
               <section className="max-w-3xl space-y-6">
-                {activeNav === "General" && (
+                {activeNav === "general" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{t('settings.language')}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('settings.languageDescription')}
+                        </p>
+                      </div>
+                      <Select
+                        value={language}
+                        onValueChange={(value) => setLanguage(value as "en" | "de" | "fr" | "es")}
+                      >
+                        <SelectTrigger className="min-w-[160px]">
+                          <SelectValue placeholder={t('settings.language')} />
+                        </SelectTrigger>
+                        <SelectContent align="end">
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="de">Deutsch</SelectItem>
+                          <SelectItem value="fr">Français</SelectItem>
+                          <SelectItem value="es">Español</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Separator />
                     {generalToggles.map((item) => (
                       <ToggleRow key={item.title} {...item} />
                     ))}
                   </div>
                 )}
 
-                {activeNav === "Benachrichtigungen" && (
+                {activeNav === "notifications" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
                     {notificationToggles.map((item) => (
                       <ToggleRow key={item.title} {...item} />
@@ -430,9 +456,9 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                     <Separator />
                     <div className="flex items-center justify-between gap-4">
                       <div className="space-y-1">
-                        <p className="text-sm font-medium">Zusammenfassung</p>
+                        <p className="text-sm font-medium">{t('settings.summary')}</p>
                         <p className="text-xs text-muted-foreground">
-                          Lege fest, wie oft Zusammenfassungen verschickt werden.
+                          {t('settings.summaryDescription')}
                         </p>
                       </div>
                       <Select
@@ -442,26 +468,26 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                         }
                       >
                         <SelectTrigger className="min-w-[160px]">
-                          <SelectValue placeholder="täglich" />
+                          <SelectValue placeholder={t('settings.daily')} />
                         </SelectTrigger>
                         <SelectContent align="end">
-                          <SelectItem value="realtime">Echtzeit</SelectItem>
-                          <SelectItem value="daily">Täglich</SelectItem>
-                          <SelectItem value="weekly">Wöchentlich</SelectItem>
+                          <SelectItem value="realtime">{t('settings.realtime')}</SelectItem>
+                          <SelectItem value="daily">{t('settings.daily')}</SelectItem>
+                          <SelectItem value="weekly">{t('settings.weekly')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                 )}
 
-                {activeNav === "Personalisierung" && (
+                {activeNav === "personalization" && (
                   <div className="space-y-5 rounded-lg pr-3 py-3">
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">Farbschema</p>
+                          <p className="text-sm font-medium">{t('settings.colorScheme')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Wähle zwischen hellem, dunklem oder systemweitem Modus.
+                            {t('settings.colorSchemeDescription')}
                           </p>
                         </div>
                         <Select
@@ -471,12 +497,12 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                           }
                         >
                           <SelectTrigger className="min-w-[160px]">
-                            <SelectValue placeholder="System" />
+                            <SelectValue placeholder={t('settings.system')} />
                           </SelectTrigger>
                           <SelectContent align="end">
-                            <SelectItem value="light">Hell</SelectItem>
-                            <SelectItem value="dark">Dunkel</SelectItem>
-                            <SelectItem value="system">System</SelectItem>
+                            <SelectItem value="light">{t('settings.light')}</SelectItem>
+                            <SelectItem value="dark">{t('settings.dark')}</SelectItem>
+                            <SelectItem value="system">{t('settings.system')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -487,9 +513,9 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">Schriftgröße</p>
+                          <p className="text-sm font-medium">{t('settings.fontSize')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Größere Schrift verbessert die Lesbarkeit.
+                            {t('settings.fontSizeDescription')}
                           </p>
                         </div>
                         <span className="text-sm font-medium tabular-nums">
@@ -507,16 +533,16 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                             fontSize: value?.[0] ?? prev.fontSize,
                           }))
                         }
-                        aria-label="Schriftgröße"
+                        aria-label={t('settings.fontSize')}
                       />
                     </div>
 
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">Zeilenhöhe</p>
+                          <p className="text-sm font-medium">{t('settings.lineHeight')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Lockerer Zeilenabstand erleichtert längere Texte.
+                            {t('settings.lineHeightDescription')}
                           </p>
                         </div>
                         <span className="text-sm font-medium tabular-nums">
@@ -534,7 +560,7 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                             lineHeight: value?.[0] ?? prev.lineHeight,
                           }))
                         }
-                        aria-label="Zeilenhöhe"
+                        aria-label={t('settings.lineHeight')}
                       />
                     </div>
 
@@ -543,9 +569,9 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">Layoutdichte</p>
+                          <p className="text-sm font-medium">{t('settings.layoutDensity')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Steuert Abstände und kompakte Darstellungen.
+                            {t('settings.layoutDensityDescription')}
                           </p>
                         </div>
                         <Select
@@ -555,21 +581,21 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                           }
                         >
                           <SelectTrigger className="min-w-[160px]">
-                            <SelectValue placeholder="Komfort" />
+                            <SelectValue placeholder={t('settings.comfort')} />
                           </SelectTrigger>
                           <SelectContent align="end">
-                            <SelectItem value="komfort">Komfort</SelectItem>
-                            <SelectItem value="ausgewogen">Ausgewogen</SelectItem>
-                            <SelectItem value="kompakt">Kompakt</SelectItem>
+                            <SelectItem value="komfort">{t('settings.comfort')}</SelectItem>
+                            <SelectItem value="ausgewogen">{t('settings.balanced')}</SelectItem>
+                            <SelectItem value="kompakt">{t('settings.compact')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="flex items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">Kontrast</p>
+                          <p className="text-sm font-medium">{t('settings.contrast')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Höherer Kontrast verbessert die Lesbarkeit.
+                            {t('settings.contrastDescription')}
                           </p>
                         </div>
                         <Select
@@ -579,11 +605,11 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                           }
                         >
                           <SelectTrigger className="min-w-[160px]">
-                            <SelectValue placeholder="Standard" />
+                            <SelectValue placeholder={t('settings.standard')} />
                           </SelectTrigger>
                           <SelectContent align="end">
-                            <SelectItem value="standard">Standard</SelectItem>
-                            <SelectItem value="hoch">Hoch</SelectItem>
+                            <SelectItem value="standard">{t('settings.standard')}</SelectItem>
+                            <SelectItem value="hoch">{t('settings.high')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -594,9 +620,9 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                     <div className="space-y-4">
                       <div className="flex items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">Ablenkungsfreier Modus</p>
+                          <p className="text-sm font-medium">{t('settings.focusMode')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Blendet sekundäre Elemente für fokussiertes Lesen aus.
+                            {t('settings.focusModeDescription')}
                           </p>
                         </div>
                         <Label className="flex items-center gap-3">
@@ -605,25 +631,25 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                             onCheckedChange={(checked: boolean) =>
                               setSettings((prev) => ({ ...prev, focusMode: checked }))
                             }
-                            aria-label="Ablenkungsfreier Modus"
+                            aria-label={t('settings.focusMode')}
                           />
-                          <span className="text-sm">Aktivieren</span>
+                          <span className="text-sm">{t('settings.enable')}</span>
                         </Label>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {activeNav === "Datenkontrolle" && (
+                {activeNav === "dataControl" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
                     {dataControlToggles.map((item) => (
                       <ToggleRow key={item.title} {...item} />
                     ))}
                     <Separator />
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Datenexport</p>
+                      <p className="text-sm font-medium">{t('settings.dataExport')}</p>
                       <p className="text-xs text-muted-foreground">
-                        Exportiere deine Daten als Archiv.
+                        {t('settings.dataExportDescription')}
                       </p>
                     </div>
                     <button
@@ -631,12 +657,12 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                       className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors hover:bg-muted"
                       onClick={() => console.log("Data export requested")}
                     >
-                      Export starten
+                      {t('settings.startExport')}
                     </button>
                   </div>
                 )}
 
-                {activeNav === "Abrechnung" && (
+                {activeNav === "billing" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
                     {billingActions.map((item) => (
                       <ActionRow key={item.title} {...item} />
@@ -644,16 +670,16 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                   </div>
                 )}
 
-                {activeNav === "Sicherheit" && (
+                {activeNav === "security" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
                     {securityToggles.map((item) => (
                       <ToggleRow key={item.title} {...item} />
                     ))}
                     <Separator />
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Passwort</p>
+                      <p className="text-sm font-medium">{t('settings.password')}</p>
                       <p className="text-xs text-muted-foreground">
-                        Ändere regelmäßig dein Passwort.
+                        {t('settings.passwordDescription')}
                       </p>
                     </div>
                     <button
@@ -661,12 +687,12 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                       className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors hover:bg-muted"
                       onClick={() => console.log("Passwort ändern")}
                     >
-                      Passwort ändern
+                      {t('settings.changePassword')}
                     </button>
                   </div>
                 )}
 
-                {activeNav === "Konto" && (
+                {activeNav === "account" && (
                   <div className="space-y-4 rounded-lg pr-3 py-3">
                     {accountActions.map((item) => (
                       <AccountRow key={item.title} {...item} />

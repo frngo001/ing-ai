@@ -19,12 +19,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { ToolbarButton } from './toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 type ImportType = 'html' | 'markdown';
 
 export function ImportToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.import'), [t, language]);
+  const importFromHtmlText = React.useMemo(() => t('toolbar.importFromHtml'), [t, language]);
+  const importFromMarkdownText = React.useMemo(() => t('toolbar.importFromMarkdown'), [t, language]);
 
   const getFileNodes = (text: string, type: ImportType) => {
     if (type === 'html') {
@@ -70,7 +76,7 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Importieren" isDropdown>
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
          <ArrowUpToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
@@ -82,7 +88,7 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
               openHtmlFilePicker();
             }}
           >
-            Aus HTML importieren
+            {importFromHtmlText}
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -90,7 +96,7 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
               openMdFilePicker();
             }}
           >
-            Aus Markdown importieren
+            {importFromMarkdownText}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

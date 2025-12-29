@@ -21,6 +21,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { ToolbarButton } from './toolbar';
 
@@ -45,6 +46,7 @@ const items = [
 
 export function AlignToolbarButton(props: DropdownMenuProps) {
   const { editor, tf } = useEditorPlugin(TextAlignPlugin);
+  const { t, language } = useLanguage();
   const value =
     useSelectionFragmentProp({
       defaultValue: 'start',
@@ -52,13 +54,16 @@ export function AlignToolbarButton(props: DropdownMenuProps) {
     }) ?? 'left';
 
   const [open, setOpen] = React.useState(false);
-  const IconValue =
-    items.find((item) => item.value === value)?.icon ?? AlignLeftIcon;
+  const IconValue = React.useMemo(
+    () => items.find((item) => item.value === value)?.icon ?? AlignLeftIcon,
+    [value, language]
+  );
+  const tooltipText = React.useMemo(() => t('toolbar.align'), [t, language]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Ausrichten" isDropdown>
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
           <IconValue />
         </ToolbarButton>
       </DropdownMenuTrigger>

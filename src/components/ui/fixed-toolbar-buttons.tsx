@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { KEYS } from 'platejs';
 import { useEditorReadOnly } from 'platejs/react';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { AIToolbarButton } from './ai-toolbar-button';
 import { AlignToolbarButton } from './align-toolbar-button';
@@ -55,6 +56,7 @@ import { ToolbarGroup } from './toolbar';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button';
 export function FixedToolbarButtons() {
   const readOnly = useEditorReadOnly();
+  const { t, language } = useLanguage();
 
   return (
     <div className="flex w-full">
@@ -66,7 +68,7 @@ export function FixedToolbarButtons() {
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <AIToolbarButton tooltip="KI Fragen">
+            <AIToolbarButton tooltip={t('toolbar.aiAsk')}>
               <WandSparklesIcon />
             </AIToolbarButton>
           </ToolbarGroup>
@@ -81,45 +83,44 @@ export function FixedToolbarButtons() {
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <MarkToolbarButton nodeType={KEYS.bold} tooltip="Fett (⌘+B)">
+            <MarkToolbarButton nodeType={KEYS.bold} tooltip={t('toolbar.bold')}>
               <BoldIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton nodeType={KEYS.italic} tooltip="Kursiv (⌘+I)">
+            <MarkToolbarButton nodeType={KEYS.italic} tooltip={t('toolbar.italic')}>
               <ItalicIcon />
             </MarkToolbarButton>
 
             <MarkToolbarButton
               nodeType={KEYS.underline}
-              tooltip="Unterstreichen (⌘+U)"
+              tooltip={t('toolbar.underline')}
             >
               <UnderlineIcon />
             </MarkToolbarButton>
-            <MarkToolbarButton  nodeType={KEYS.strikethrough} tooltip="Durchgestrichen (⌘+⇧+M)">
+            <MarkToolbarButton  nodeType={KEYS.strikethrough} tooltip={t('toolbar.strikethrough')}>
               <StrikethroughIcon />
             </MarkToolbarButton>
-            <FontColorToolbarButton nodeType={KEYS.color} tooltip="Textfarbe">
+            <FontColorToolbarButton nodeType={KEYS.color} tooltip={t('toolbar.textColor')}>
               <BaselineIcon />
             </FontColorToolbarButton>
             <FontColorToolbarButton
               nodeType={KEYS.backgroundColor}
-              tooltip="Hintergrundfarbe"
+              tooltip={t('toolbar.backgroundColor')}
             >
             <PaintBucketIcon />
             </FontColorToolbarButton>
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <MarkToolbarButton nodeType={KEYS.code} tooltip="Inline Code (⌘+E)">
+            <MarkToolbarButton nodeType={KEYS.code} tooltip={t('toolbar.inlineCode')}>
               <Code2Icon />
             </MarkToolbarButton>
-            <CodeBlockToolbarButton tooltip="Codeblock einfügen">
+            <CodeBlockToolbarButton tooltip={t('toolbar.codeBlock')}>
               <FileCode2Icon />
             </CodeBlockToolbarButton>
             <InlineEquationToolbarButton />
-            <BlockEquationToolbarButton tooltip="Formelblock einfügen" />
+            <BlockEquationToolbarButton tooltip={t('toolbar.blockEquation')} />
           </ToolbarGroup>
-
           <ToolbarGroup>
             <AlignToolbarButton />
             <NumberedListToolbarButton />
@@ -164,7 +165,7 @@ export function FixedToolbarButtons() {
       </ToolbarGroup>
 
       <ToolbarGroup>
-        <MarkToolbarButton nodeType={KEYS.highlight} tooltip="Hervorheben">
+        <MarkToolbarButton nodeType={KEYS.highlight} tooltip={t('toolbar.highlight')}>
           <HighlighterIcon />
         </MarkToolbarButton>
         <CommentToolbarButton />

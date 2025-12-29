@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/popover';
 import { MathLiveInput } from '@/components/ui/mathlive-input';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 export function EquationElement(props: PlateElementProps<TEquationElement>) {
   const editor = useEditorRef();
@@ -37,6 +38,9 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
   const katexRef = React.useRef<HTMLDivElement | null>(null);
   const hasContent = props.element.texExpression.length > 0;
   const isMountedRef = React.useRef(true);
+  const { t, language } = useLanguage();
+
+  const addBlockEquationText = React.useMemo(() => t('toolbar.equationAddBlock'), [t, language]);
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -133,7 +137,7 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
               ) : (
                 <div className="flex h-7 w-full items-center gap-2 whitespace-nowrap text-muted-foreground text-sm">
                   <RadicalIcon className="size-6 text-muted-foreground/80" />
-                  <div>Tex-Formel hinzufügen</div>
+                  <div>{addBlockEquationText}</div>
                 </div>
               )}
             </div>
@@ -170,6 +174,9 @@ export function InlineEquationElement(
   );
   const [open, setOpen] = React.useState(selected && isCollapsed);
   const isMountedRef = React.useRef(true);
+  const { t, language } = useLanguage();
+
+  const addInlineEquationText = React.useMemo(() => t('toolbar.equationAddInline'), [t, language]);
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -277,7 +284,7 @@ export function InlineEquationElement(
             {element.texExpression.length === 0 && (
               <span>
                 <RadicalIcon className="mr-1 inline-block h-[19px] w-4 py-[1.5px] align-text-bottom" />
-                Neue Formel hinzufügen
+                {addInlineEquationText}
               </span>
             )}
           </div>
@@ -317,6 +324,10 @@ const EquationPopoverContent = ({
   const element = useElement<TEquationElement>();
   const [useMathLive, setUseMathLive] = React.useState(true);
   const [latexValue, setLatexValue] = React.useState(element.texExpression);
+  const { t, language } = useLanguage();
+
+  const editEquationText = React.useMemo(() => t('toolbar.equationEdit'), [t, language]);
+  const doneText = React.useMemo(() => t('toolbar.equationDone'), [t, language]);
 
   // Entferne diesen useEffect, da er zu Problemen führen kann
   // Das Popover sollte nur durch den Parent-State gesteuert werden
@@ -394,7 +405,7 @@ const EquationPopoverContent = ({
       contentEditable={false}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium">Formel bearbeiten</span>
+        <span className="text-sm font-medium">{editEquationText}</span>
         <div className="flex items-center gap-2">
           <Button
             variant={useMathLive ? 'default' : 'ghost'}
@@ -435,7 +446,7 @@ const EquationPopoverContent = ({
 
       <div className="flex justify-end gap-2">
         <Button variant="secondary" className="px-3" onClick={onClose}>
-          Fertig <CornerDownLeftIcon className="size-3.5" />
+          {doneText} <CornerDownLeftIcon className="size-3.5" />
         </Button>
       </div>
     </PopoverContent>

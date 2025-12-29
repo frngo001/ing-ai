@@ -11,6 +11,7 @@ import { useEditorRef, useEditorSelector, usePluginOption } from 'platejs/react'
 import { cn } from '@/lib/utils';
 import { commentPlugin } from '@/components/editor/plugins/comment-kit';
 import { discussionPlugin } from '@/components/editor/plugins/discussion-kit';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 type CommentTocItem = {
   id: string;
@@ -35,6 +36,12 @@ export function CommentTocSidebar({
   const discussions = usePluginOption(discussionPlugin, 'discussions');
   const uniquePathMap = usePluginOption(commentPlugin, 'uniquePathMap');
   const activeId = usePluginOption(commentPlugin, 'activeId');
+  const { t, language } = useLanguage();
+
+  const openNoticeText = React.useMemo(() => t('toolbar.commentOpenNotice'), [t, language]);
+  const openStatusText = React.useMemo(() => t('toolbar.commentOpen'), [t, language]);
+  const resolvedStatusText = React.useMemo(() => t('toolbar.commentResolved'), [t, language]);
+  const placeholderText = React.useMemo(() => t('toolbar.commentPlaceholder'), [t, language]);
 
   const commentApi = React.useMemo(
     () => editor?.getApi(CommentPlugin).comment,
@@ -92,7 +99,7 @@ export function CommentTocSidebar({
 
     const textPreview = (discussionId: string) => {
       const discussion = discussions.find((d) => d.id === discussionId);
-      if (!discussion) return 'Kommentar';
+      if (!discussion) return placeholderText;
 
       const firstComment = discussion.comments.find((c) => c.contentRich?.length);
       const raw = firstComment
@@ -103,7 +110,7 @@ export function CommentTocSidebar({
         : '';
 
       const preview = (raw ?? '').toString().trim();
-      if (preview.length <= 80) return preview || 'Kommentar';
+      if (preview.length <= 80) return preview || placeholderText;
       return `${preview.slice(0, 77)}...`;
     };
 
@@ -187,7 +194,7 @@ export function CommentTocSidebar({
       )}
     >
       <div className="mb-2 text-sm font-semibold text-muted-foreground ml-2">
-        Du hast offene Kommentare. 
+        {openNoticeText}
       </div>
 
       <nav className="flex flex-col gap-2 text-sm max-h-[40vh] max-w-[15vw] overflow-auto pr-1">
@@ -215,7 +222,7 @@ export function CommentTocSidebar({
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200'
                   )}
                 >
-                  {item.status === 'resolved' ? 'Erledigt' : 'Offen'}
+                  {item.status === 'resolved' ? resolvedStatusText : openStatusText}
                 </span>
                 <span className="text-sm leading-snug line-clamp-2">{item.preview}</span>
               </div>

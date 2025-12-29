@@ -32,15 +32,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { ToolbarButton } from './toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 export function MoreToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.more'), [t, language]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Einfügen">
+        <ToolbarButton pressed={open} tooltip={tooltipText}>
           <MoreHorizontalIcon />
         </ToolbarButton>
       </DropdownMenuTrigger>
@@ -58,7 +62,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <HighlighterIcon />
-            Hervorheben
+            {t('toolbar.highlightText')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -68,7 +72,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <KeyboardIcon />
-            Tastatureingabe
+            {t('toolbar.keyboardInput')}
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -80,8 +84,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <SuperscriptIcon />
-            Hochgestellt
-            {/* (⌘+,) */}
+            {t('toolbar.superscript')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -92,8 +95,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <SubscriptIcon />
-            Tiefgestellt
-            {/* (⌘+.) */}
+            {t('toolbar.subscript')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -102,7 +104,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <ListIcon />
-            Aufzählungsliste
+            {t('toolbar.bulletList')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -111,7 +113,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <ListOrderedIcon />
-            Nummerierte Liste
+            {t('toolbar.numberedList')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -120,7 +122,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <QuoteIcon />
-            Zitat
+            {t('toolbar.quote')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -129,7 +131,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <PilcrowIcon />
-            Absatz
+            {t('toolbar.paragraph')}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

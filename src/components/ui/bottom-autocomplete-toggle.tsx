@@ -7,6 +7,7 @@ import { KEYS, NodeApi } from 'platejs';
 import { useEditorRef } from 'platejs/react';
 
 import { useEditorSettingsStore } from '@/lib/stores/editor-settings-store';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { Switch } from './switch';
 import { ToolbarGroup } from './toolbar';
@@ -14,6 +15,7 @@ import { ToolbarGroup } from './toolbar';
 export function BottomAutocompleteToggle() {
   const editor = useEditorRef();
   const { autocompleteEnabled, setAutocompleteEnabled } = useEditorSettingsStore();
+  const { t, language } = useLanguage();
 
   type CopilotTrigger = (options: { editor: any }) => boolean;
 
@@ -68,14 +70,17 @@ export function BottomAutocompleteToggle() {
     setAutocompleteEnabled(!autocompleteEnabled);
   }, [autocompleteEnabled, setAutocompleteEnabled]);
 
+  const autocompleteText = React.useMemo(() => t('toolbar.autocomplete'), [t, language]);
+  const ariaLabelText = React.useMemo(() => t('toolbar.toggleAutocomplete'), [t, language]);
+
   return (
     <ToolbarGroup className="flex">
       <div className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs text-muted-foreground">
-        <span>Autocomplete</span>
+        <span>{autocompleteText}</span>
         <Switch
           checked={autocompleteEnabled}
           onCheckedChange={handleToggle}
-          aria-label="KI-Autocomplete umschalten"
+          aria-label={ariaLabelText}
           className="data-[state=checked]:!bg-emerald-500 dark:data-[state=checked]:!bg-emerald-500"
         />
       </div>

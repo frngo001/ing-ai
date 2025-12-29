@@ -61,7 +61,9 @@ export class SourceFetcher {
         const startTime = Date.now()
         const selectedClients = this.selectClients(query)
 
-        console.log(`🔍 Searching ${selectedClients.length} APIs for: "${query.query}"`)
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`🔍 Searching ${selectedClients.length} APIs for: "${query.query}"`)
+        }
 
         // Execute searches in parallel with limit
         const results = await this.executeParallelSearches(selectedClients, query)
@@ -78,7 +80,9 @@ export class SourceFetcher {
 
         const searchTime = Date.now() - startTime
 
-        console.log(`✅ Found ${limited.length} unique sources in ${searchTime}ms`)
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`✅ Found ${limited.length} unique sources in ${searchTime}ms`)
+        }
 
         return {
             sources: limited,
@@ -211,7 +215,9 @@ export class SourceFetcher {
             }
 
             if (!response.success) {
-                console.log(`⚠️  ${client.config.name}: ${response.error}`)
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`⚠️  ${client.config.name}: ${response.error}`)
+                }
                 return null
             }
 
@@ -225,7 +231,9 @@ export class SourceFetcher {
                 data,
             }
         } catch (error) {
-            console.error(`❌ Error with ${client.config.name}:`, error)
+            if (process.env.NODE_ENV === 'development') {
+                console.error(`❌ Error with ${client.config.name}:`, error)
+            }
             return null
         }
     }
@@ -248,7 +256,9 @@ export class SourceFetcher {
                         normalized.push(normalizedSource)
                     }
                 } catch (error) {
-                    console.error(`Error normalizing source from ${result.apiName}:`, error)
+                    if (process.env.NODE_ENV === 'development') {
+                        console.error(`Error normalizing source from ${result.apiName}:`, error)
+                    }
                 }
             }
         }

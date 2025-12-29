@@ -24,6 +24,7 @@ import { BaseEditorKit } from '@/components/editor/editor-base-kit';
 
 import { EditorStatic } from './editor-static';
 import { ToolbarButton } from './toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 const siteUrl = 'https://platejs.org';
 
@@ -49,6 +50,15 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
   const [isExporting, setIsExporting] = React.useState(false);
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.export'), [t, language]);
+  const exportingText = React.useMemo(() => t('toolbar.exporting'), [t, language]);
+  const exportAsDocxText = React.useMemo(() => t('toolbar.exportAsDocx'), [t, language]);
+  const exportAsPdfText = React.useMemo(() => t('toolbar.exportAsPdf'), [t, language]);
+  const exportAsHtmlText = React.useMemo(() => t('toolbar.exportAsHtml'), [t, language]);
+  const exportAsMarkdownText = React.useMemo(() => t('toolbar.exportAsMarkdown'), [t, language]);
+  const exportAsImageText = React.useMemo(() => t('toolbar.exportAsImage'), [t, language]);
 
   // Extrahiere den Dokumentnamen aus dem Editor-Inhalt
   const getDocumentName = React.useCallback(() => {
@@ -399,7 +409,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Exportieren" isDropdown>
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
         <ArrowDownToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
@@ -407,19 +417,19 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
           <DropdownMenuItem onSelect={exportToDocx} disabled={isExporting}>
-            {isExporting ? 'Exportiere...' : 'Als DOCX exportieren'}
+            {isExporting ? exportingText : exportAsDocxText}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToPdf}>
-            Als PDF exportieren
+            {exportAsPdfText}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToHtml}>
-            Als HTML exportieren
+            {exportAsHtmlText}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToMarkdown}>
-            Als Markdown exportieren
+            {exportAsMarkdownText}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToImage}>
-            Als Bild exportieren
+            {exportAsImageText}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

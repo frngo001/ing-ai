@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 import {
   BadgeCheck,
@@ -48,6 +49,7 @@ export function NavUser({
 }) {
   const router = useRouter()
   const supabase = createClient()
+  const { t, language } = useLanguage()
   const { isMobile, setOpen, addInteractionLock, removeInteractionLock } =
     useSidebar()
   const [dropdownOpen, setDropdownOpen] = React.useState(false)
@@ -89,11 +91,11 @@ export function NavUser({
       router.refresh()
     } catch (error: any) {
       console.error("Logout error", error)
-      toast.error("Abmeldung fehlgeschlagen", {
-        description: error?.message ?? "Bitte erneut versuchen.",
+      toast.error(t('sidebar.logoutFailed'), {
+        description: error?.message ?? t('sidebar.pleaseTryAgain'),
       })
     }
-  }, [supabase, router])
+  }, [supabase, router, t])
 
   return (
     <SidebarMenu>
@@ -137,7 +139,7 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
-                Pro Abo holen
+                {t('sidebar.getProSubscription')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -145,35 +147,35 @@ export function NavUser({
               <DropdownMenuItem
                 onSelect={() => {
                   setDropdownOpen(false)
-                  onOpenSettings?.("Konto")
+                  onOpenSettings?.("account")
                 }}
               >
                 <BadgeCheck />
-                Konto
+                {t('sidebar.account')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
                   setDropdownOpen(false)
-                  onOpenSettings?.("Abrechnung")
+                  onOpenSettings?.("billing")
                 }}
               >
                 <CreditCard />
-                Abrechnung
+                {t('sidebar.billing')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
                   setDropdownOpen(false)
-                  onOpenSettings?.("Benachrichtigungen")
+                  onOpenSettings?.("notifications")
                 }}
               >
                 <Bell />
-                Benachrichtigungen
+                {t('sidebar.notifications')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout}>
               <LogOut />
-              Abmelden
+              {t('sidebar.logout')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

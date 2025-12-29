@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ToolbarButton } from '@/components/ui/toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 export function EmojiToolbarButton({
   options,
@@ -49,11 +50,37 @@ export function EmojiToolbarButton({
 } & React.ComponentPropsWithoutRef<typeof ToolbarButton>) {
   const { emojiPickerState, isOpen, setIsOpen } =
     useEmojiDropdownMenuState(options);
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.emoji'), [t, language]);
+
+  // Override i18n with our translations
+  const translatedI18n = React.useMemo(() => ({
+    ...emojiPickerState.i18n,
+    search: t('toolbar.emojiSearchPlaceholder'),
+    searchResult: t('toolbar.emojiSearchResult'),
+    searchNoResultsTitle: t('toolbar.emojiSearchNoResultsTitle'),
+    searchNoResultsSubtitle: t('toolbar.emojiSearchNoResultsSubtitle'),
+    pick: t('toolbar.emojiPick'),
+    clear: t('toolbar.emojiClear'),
+    categories: {
+      people: t('toolbar.emojiCategoriesPeople'),
+      nature: t('toolbar.emojiCategoriesNature'),
+      foods: t('toolbar.emojiCategoriesFoods'),
+      activity: t('toolbar.emojiCategoriesActivity'),
+      places: t('toolbar.emojiCategoriesPlaces'),
+      objects: t('toolbar.emojiCategoriesObjects'),
+      symbols: t('toolbar.emojiCategoriesSymbols'),
+      flags: t('toolbar.emojiCategoriesFlags'),
+      frequent: t('toolbar.emojiCategoriesFrequent'),
+      custom: t('toolbar.emojiCategoriesCustom'),
+    },
+  }), [emojiPickerState.i18n, t, language]);
 
   return (
     <EmojiPopover
       control={
-        <ToolbarButton pressed={isOpen} tooltip="Emoji" isDropdown {...props}>
+        <ToolbarButton pressed={isOpen} tooltip={tooltipText} isDropdown {...props}>
           <SmileIcon />
         </ToolbarButton>
       }
@@ -62,6 +89,7 @@ export function EmojiToolbarButton({
     >
       <EmojiPicker
         {...emojiPickerState}
+        i18n={translatedI18n}
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         settings={options?.settings}
@@ -366,6 +394,9 @@ function EmojiPickerSearchBar({
 }: {
   children: React.ReactNode;
 } & Pick<UseEmojiPickerType, 'i18n' | 'searchValue' | 'setSearch'>) {
+  const { t, language } = useLanguage();
+  const searchAriaLabel = React.useMemo(() => t('toolbar.emojiSearch'), [t, language]);
+
   return (
     <div className="flex items-center px-2">
       <div className="relative flex grow items-center">
@@ -374,7 +405,7 @@ function EmojiPickerSearchBar({
           value={searchValue}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={i18n.search}
-          aria-label="Search"
+          aria-label={searchAriaLabel}
           autoComplete="off"
           type="text"
           autoFocus
@@ -390,6 +421,9 @@ function EmojiPickerSearchAndClear({
   i18n,
   searchValue,
 }: Pick<UseEmojiPickerType, 'clearSearch' | 'i18n' | 'searchValue'>) {
+  const { t, language } = useLanguage();
+  const clearAriaLabel = React.useMemo(() => t('toolbar.emojiClear'), [t, language]);
+
   return (
     <div className="flex items-center text-foreground">
       <div
@@ -408,7 +442,7 @@ function EmojiPickerSearchAndClear({
           )}
           onClick={clearSearch}
           title={i18n.clear}
-          aria-label="Clear"
+          aria-label={clearAriaLabel}
           type="button"
         >
           {emojiSearchIcons.delete}

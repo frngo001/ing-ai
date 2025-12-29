@@ -11,6 +11,7 @@ import { ExportToolbarButton } from './export-toolbar-button';
 import { ArrowUpToLineIcon } from 'lucide-react';
 import { ModeToolbarButton } from './mode-toolbar-button';
 import { BottomCommentTocToggle, BottomSuggestionTocToggle, BottomTocToggle } from './bottom-toc-toggle';
+import { ToolbarGroup } from './toolbar';
 
 export function FixedBottomToolbarButtons() {
   const readOnly = useEditorReadOnly();
@@ -25,15 +26,21 @@ export function FixedBottomToolbarButtons() {
         <BottomSuggestionTocToggle />
         </div>
       <div className="flex items-center"> 
-      <ExportToolbarButton>
-        <ArrowUpToLineIcon />
+      <ToolbarGroup>
+        <ExportToolbarButton>
+          <ArrowUpToLineIcon />
         </ExportToolbarButton>
+      </ToolbarGroup>
+      <ToolbarGroup>
         {!readOnly && (
           <ImportToolbarButton>
             <ArrowUpToLineIcon />
           </ImportToolbarButton>
         )}
-      <ModeToolbarButton />
+      </ToolbarGroup>
+      <ToolbarGroup>  
+        <ModeToolbarButton />
+      </ToolbarGroup>
       </div>
     </div>
   );

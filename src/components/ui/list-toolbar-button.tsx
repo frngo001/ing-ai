@@ -25,10 +25,12 @@ import {
   ToolbarSplitButtonPrimary,
   ToolbarSplitButtonSecondary,
 } from './toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 export function BulletedListToolbarButton() {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
+  const { t, language } = useLanguage();
 
   const pressed = useEditorSelector(
     (editor) =>
@@ -39,6 +41,11 @@ export function BulletedListToolbarButton() {
       ]),
     []
   );
+
+  const tooltipText = React.useMemo(() => t('toolbar.bulletList'), [t, language]);
+  const listDefaultText = React.useMemo(() => t('toolbar.listDefault'), [t, language]);
+  const listCircleText = React.useMemo(() => t('toolbar.listCircle'), [t, language]);
+  const listSquareText = React.useMemo(() => t('toolbar.listSquare'), [t, language]);
 
   return (
     <Tooltip>
@@ -72,7 +79,7 @@ export function BulletedListToolbarButton() {
                 >
                   <div className="flex items-center gap-2">
                     <div className="size-2 rounded-full border border-current bg-current" />
-                    Default
+                    {listDefaultText}
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -84,7 +91,7 @@ export function BulletedListToolbarButton() {
                 >
                   <div className="flex items-center gap-2">
                     <div className="size-2 rounded-full border border-current" />
-                    Circle
+                    {listCircleText}
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -96,7 +103,7 @@ export function BulletedListToolbarButton() {
                 >
                   <div className="flex items-center gap-2">
                     <div className="size-2 border border-current bg-current" />
-                    Square
+                    {listSquareText}
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -104,7 +111,7 @@ export function BulletedListToolbarButton() {
           </DropdownMenu>
         </ToolbarSplitButton>
       </TooltipTrigger>
-      <TooltipContent>Aufzählung</TooltipContent>
+      <TooltipContent>{tooltipText}</TooltipContent>
     </Tooltip>
   );
 }
@@ -112,6 +119,7 @@ export function BulletedListToolbarButton() {
 export function NumberedListToolbarButton() {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
+  const { t, language } = useLanguage();
 
   const pressed = useEditorSelector(
     (editor) =>
@@ -124,6 +132,13 @@ export function NumberedListToolbarButton() {
       ]),
     []
   );
+
+  const tooltipText = React.useMemo(() => t('toolbar.numberedList'), [t, language]);
+  const listDecimalText = React.useMemo(() => t('toolbar.listDecimal'), [t, language]);
+  const listLowerAlphaText = React.useMemo(() => t('toolbar.listLowerAlpha'), [t, language]);
+  const listUpperAlphaText = React.useMemo(() => t('toolbar.listUpperAlpha'), [t, language]);
+  const listLowerRomanText = React.useMemo(() => t('toolbar.listLowerRoman'), [t, language]);
+  const listUpperRomanText = React.useMemo(() => t('toolbar.listUpperRoman'), [t, language]);
 
   return (
     <Tooltip>
@@ -155,7 +170,7 @@ export function NumberedListToolbarButton() {
                     })
                   }
                 >
-                  Decimal (1, 2, 3)
+                  {listDecimalText}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() =>
@@ -164,7 +179,7 @@ export function NumberedListToolbarButton() {
                     })
                   }
                 >
-                  Lower Alpha (a, b, c)
+                  {listLowerAlphaText}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() =>
@@ -173,7 +188,7 @@ export function NumberedListToolbarButton() {
                     })
                   }
                 >
-                  Upper Alpha (A, B, C)
+                  {listUpperAlphaText}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() =>
@@ -182,7 +197,7 @@ export function NumberedListToolbarButton() {
                     })
                   }
                 >
-                  Lower Roman (i, ii, iii)
+                  {listLowerRomanText}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() =>
@@ -191,14 +206,14 @@ export function NumberedListToolbarButton() {
                     })
                   }
                 >
-                  Upper Roman (I, II, III)
+                  {listUpperRomanText}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </ToolbarSplitButton>
       </TooltipTrigger>
-      <TooltipContent>Nummerierte Liste</TooltipContent>
+      <TooltipContent>{tooltipText}</TooltipContent>
     </Tooltip>
   );
 }
@@ -208,9 +223,12 @@ export function TodoListToolbarButton(
 ) {
   const state = useIndentTodoToolBarButtonState({ nodeType: 'todo' });
   const { props: buttonProps } = useIndentTodoToolBarButton(state);
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.todoList'), [t, language]);
 
   return (
-    <ToolbarButton {...props} {...buttonProps} tooltip="To-do">
+    <ToolbarButton {...props} {...buttonProps} tooltip={tooltipText}>
       <ListTodoIcon />
     </ToolbarButton>
   );

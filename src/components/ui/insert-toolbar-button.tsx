@@ -42,6 +42,7 @@ import {
 } from '@/components/editor/transforms';
 
 import { ToolbarButton, ToolbarMenuGroup } from './toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 type Group = {
   group: string;
@@ -56,48 +57,53 @@ type Item = {
   label?: string;
 };
 
-const groups: Group[] = [
+export function InsertToolbarButton(props: DropdownMenuProps) {
+  const editor = useEditorRef();
+  const [open, setOpen] = React.useState(false);
+  const { t, language } = useLanguage();
+
+  const groups: Group[] = React.useMemo(() => [
   {
-    group: 'Grundblöcke',
+      group: t('toolbar.basicBlocks'),
     items: [
       {
         icon: <PilcrowIcon />,
-        label: 'Absatz',
+          label: t('toolbar.paragraphLabel'),
         value: KEYS.p,
       },
       {
         icon: <Heading1Icon />,
-        label: 'Überschrift 1',
+          label: t('toolbar.heading1'),
         value: 'h1',
       },
       {
         icon: <Heading2Icon />,
-        label: 'Überschrift 2',
+          label: t('toolbar.heading2'),
         value: 'h2',
       },
       {
         icon: <Heading3Icon />,
-        label: 'Überschrift 3',
+          label: t('toolbar.heading3'),
         value: 'h3',
       },
       {
         icon: <TableIcon />,
-        label: 'Tabelle',
+          label: t('toolbar.table'),
         value: KEYS.table,
       },
       {
         icon: <FileCodeIcon />,
-        label: 'Code',
+          label: t('toolbar.code'),
         value: KEYS.codeBlock,
       },
       {
         icon: <QuoteIcon />,
-        label: 'Zitat',
+          label: t('toolbar.quoteLabel'),
         value: KEYS.blockquote,
       },
       {
         icon: <MinusIcon />,
-        label: 'Trenner',
+          label: t('toolbar.separator'),
         value: KEYS.hr,
       },
     ].map((item) => ({
@@ -108,26 +114,26 @@ const groups: Group[] = [
     })),
   },
   {
-    group: 'Listen',
+      group: t('toolbar.lists'),
     items: [
       {
         icon: <ListIcon />,
-        label: 'Aufzählung',
+          label: t('toolbar.bulletListLabel'),
         value: KEYS.ul,
       },
       {
         icon: <ListOrderedIcon />,
-        label: 'Nummerierte Liste',
+          label: t('toolbar.numberedListLabel'),
         value: KEYS.ol,
       },
       {
         icon: <SquareIcon />,
-        label: 'To-do-Liste',
+          label: t('toolbar.todoList'),
         value: KEYS.listTodo,
       },
       {
         icon: <ChevronRightIcon />,
-        label: 'Toggle-Liste',
+          label: t('toolbar.toggleList'),
         value: KEYS.toggle,
       },
     ].map((item) => ({
@@ -138,16 +144,16 @@ const groups: Group[] = [
     })),
   },
   {
-    group: 'Medien',
+      group: t('toolbar.media'),
     items: [
       {
         icon: <ImageIcon />,
-        label: 'Bild',
+          label: t('toolbar.image'),
         value: KEYS.img,
       },
       {
         icon: <FilmIcon />,
-        label: 'Einbetten',
+          label: t('toolbar.embed'),
         value: KEYS.mediaEmbed,
       },
     ].map((item) => ({
@@ -158,27 +164,27 @@ const groups: Group[] = [
     })),
   },
   {
-    group: 'Erweiterte Blöcke',
+      group: t('toolbar.advancedBlocks'),
     items: [
       {
         icon: <TableOfContentsIcon />,
-        label: 'Inhaltsverzeichnis',
+          label: t('toolbar.tableOfContents'),
         value: KEYS.toc,
       },
       {
         icon: <Columns3Icon />,
-        label: '3 Spalten',
+          label: t('toolbar.threeColumns'),
         value: 'action_three_columns',
       },
       {
         focusEditor: false,
         icon: <RadicalIcon />,
-        label: 'Formel',
+          label: t('toolbar.equation'),
         value: KEYS.equation,
       },
       {
         icon: <PenToolIcon />,
-        label: 'Excalidraw',
+          label: t('toolbar.excalidraw'),
         value: KEYS.excalidraw,
       },
     ].map((item) => ({
@@ -189,23 +195,23 @@ const groups: Group[] = [
     })),
   },
   {
-    group: 'Inline',
+      group: t('toolbar.inline'),
     items: [
       {
         icon: <Link2Icon />,
-        label: 'Link',
+          label: t('toolbar.link'),
         value: KEYS.link,
       },
       {
         focusEditor: true,
         icon: <CalendarIcon />,
-        label: 'Datum',
+          label: t('toolbar.date'),
         value: KEYS.date,
       },
       {
         focusEditor: false,
         icon: <RadicalIcon />,
-        label: 'Inline-Formel',
+          label: t('toolbar.inlineEquation'),
         value: KEYS.inlineEquation,
       },
     ].map((item) => ({
@@ -215,17 +221,16 @@ const groups: Group[] = [
       },
     })),
   },
-];
+  ], [t, language]);
 
-export function InsertToolbarButton(props: DropdownMenuProps) {
-  const editor = useEditorRef();
-  const [open, setOpen] = React.useState(false);
+  const tooltipText = React.useMemo(() => t('toolbar.insertElements'), [t, language]);
+  const newElementsText = React.useMemo(() => t('toolbar.newElements'), [t, language]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Elemente einfügen" isDropdown>
-          Neue Elemente <PlusIcon />
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
+          {newElementsText} <PlusIcon />
         </ToolbarButton>
       </DropdownMenuTrigger>
 

@@ -69,6 +69,7 @@ import { cn } from "@/lib/utils"
 import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as chatConversationsUtils from "@/lib/supabase/utils/chat-conversations"
 import * as chatMessagesUtils from "@/lib/supabase/utils/chat-messages"
+import { useLanguage } from "@/lib/i18n/use-language"
 import {
   type MessagePart,
   type ChatMessage,
@@ -109,6 +110,7 @@ export function AskAiPane({
   className?: string
   onClose?: () => void
 }) {
+  const { t, language } = useLanguage()
   const [conversationId, setConversationId] = useState(() => crypto.randomUUID())
   const [history, setHistory] = useState<StoredConversation[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
@@ -146,6 +148,55 @@ export function AskAiPane({
   persistConversationRef.current = persistConversation
   const setHistoryRef = useRef(setHistory)
   setHistoryRef.current = setHistory
+
+  // Memoized translations that update on language change
+  const translations = useMemo(() => ({
+    title: t('askAi.title'),
+    favorites: t('askAi.favorites'),
+    chatHistory: t('askAi.chatHistory'),
+    newChat: t('askAi.newChat'),
+    closePanel: t('askAi.closePanel'),
+    bachelorMasterAgent: t('askAi.bachelorMasterAgent'),
+    essayAgent: t('askAi.essayAgent'),
+    standardChat: t('askAi.standardChat'),
+    enableContext: t('askAi.enableContext'),
+    enableWebSearch: t('askAi.enableWebSearch'),
+    placeholder: t('askAi.placeholder'),
+    audioError: t('askAi.audioError'),
+    showReasoning: t('askAi.showReasoning'),
+    answer: t('askAi.answer'),
+    noAnswerAvailable: t('askAi.noAnswerAvailable'),
+    saveCommand: t('askAi.saveCommand'),
+    removeMention: t('askAi.removeMention'),
+    chatHistoryTitle: t('askAi.chatHistoryTitle'),
+    searchChats: t('askAi.searchChats'),
+    noMessages: t('askAi.noMessages'),
+    newChatTitle: t('askAi.newChatTitle'),
+    noResultsFor: t('askAi.noResultsFor'),
+    noChatHistory: t('askAi.noChatHistory'),
+    adjustSearch: t('askAi.adjustSearch'),
+    startNewChat: t('askAi.startNewChat'),
+    resetSearch: t('askAi.resetSearch'),
+    startNewChatButton: t('askAi.startNewChatButton'),
+    deleteChatTitle: t('askAi.deleteChatTitle'),
+    deleteChatDescription: t('askAi.deleteChatDescription'),
+    cancel: t('askAi.cancel'),
+    delete: t('askAi.delete'),
+    chatDeleted: t('askAi.chatDeleted'),
+    chatDeleteError: t('askAi.chatDeleteError'),
+    favoritesTitle: t('askAi.favoritesTitle'),
+    favoritesDescription: t('askAi.favoritesDescription'),
+    unknownChat: t('askAi.unknownChat'),
+    noFavorites: t('askAi.noFavorites'),
+    saveMessageHint: t('askAi.saveMessageHint'),
+    saveCommandTitle: t('askAi.saveCommandTitle'),
+    saveCommandDescription: t('askAi.saveCommandDescription'),
+    label: t('askAi.label'),
+    labelPlaceholder: t('askAi.labelPlaceholder'),
+    command: t('askAi.command'),
+    commandPlaceholder: t('askAi.commandPlaceholder'),
+    save: t('askAi.save'),
+  }), [t, language])
   
   const lastAssistantId = useMemo(
     () => [...messages].reverse().find((m) => m.role === "assistant")?.id ?? null,
@@ -420,12 +471,12 @@ export function AskAiPane({
         }, 100)
       }
 
-      toast.success("Chat gelöscht")
+      toast.success(translations.chatDeleted)
 
       setChatToDelete(null)
     } catch (error) {
       console.error('Fehler beim Löschen des Chats:', error)
-      toast.error("Der Chat konnte nicht gelöscht werden.")
+      toast.error(translations.chatDeleteError)
     }
   }
 
@@ -444,7 +495,6 @@ export function AskAiPane({
 
   const { renderAssistantActions, renderUserActions } = renderers
 
-  // Fokussiere Input-Feld nach dem Mount, wenn keine Nachrichten vorhanden sind
   useEffect(() => {
     if (isHydrated && messages.length === 0) {
     focusMessageInput()
@@ -461,7 +511,7 @@ export function AskAiPane({
       <div className="mt-1.5 flex items-center justify-between gap-1.5 sm:gap-2 pb-2 sm:pb-3">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold">
-            <span>AI chat</span>
+            <span>{translations.title}</span>
             <MessageSquareQuote className="size-4" />
               <Badge
                 variant="outline"
@@ -475,10 +525,10 @@ export function AskAiPane({
               )}
             >
               {context.agentMode === 'bachelor' 
-                ? "Bachelor/Master Agent" 
+                ? translations.bachelorMasterAgent
                 : context.agentMode === 'general'
-                ? "Hausarbeit / Essay Agent"
-                : "Standard Chat"}
+                ? translations.essayAgent
+                : translations.standardChat}
               </Badge>
           </div>
         </div>
@@ -487,48 +537,47 @@ export function AskAiPane({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center rounded-md border border-border/60 bg-background hover:bg-muted transition-colors"
-                aria-label="Favoriten"
+                className="h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center rounded-md border border-border/60 bg-background hover:bg-muted transition-colors text-foreground"
+                aria-label={translations.favorites}
                 onClick={() => setFavoritesDialogOpen(true)}
               >
                 <Bookmark className="size-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Favoriten</TooltipContent>
+            <TooltipContent side="bottom">{translations.favorites}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center rounded-md border border-border/60 bg-background hover:bg-muted transition-colors"
-                aria-label="Chatverlauf"
+                className="h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center rounded-md border border-border/60 bg-background hover:bg-muted transition-colors text-foreground"
+                aria-label={translations.chatHistory}
                 onClick={() => setHistoryOpen((v) => !v)}
               >
                 <History className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Chatverlauf</TooltipContent>
+            <TooltipContent side="bottom">{translations.chatHistory}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs text-foreground hover:text-foreground/80"
+              <button
+                type="button"
+                className="h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center rounded-md border border-border/60 bg-background hover:bg-muted transition-colors text-foreground"
                 onClick={resetChat}
-                aria-label="New chat"
+                aria-label={translations.newChat}
               >
-                <Plus className="size-3.5 sm:size-4" />
-              </Button>
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Neuer Chat</TooltipContent>
+            <TooltipContent side="bottom">{translations.newChat}</TooltipContent>
           </Tooltip>
           <Button
             size="icon"
             variant="ghost"
             className="h-6 w-6 sm:h-7 sm:w-7 bg-transparent"
             onClick={handleClose}
-            aria-label="Panel schließen"
+            aria-label={translations.closePanel}
           >
             <PanelLeftClose className="size-3.5 sm:size-4" />
           </Button>
@@ -568,7 +617,7 @@ export function AskAiPane({
                                       >
                                           <CollapsibleTrigger asChild>
                                           <Button variant="ghost" size="sm" className="h-auto py-2 text-xs text-muted-foreground hover:text-foreground w-full justify-start -ml-3 pl-3 [&[data-state=open]>svg]:rotate-180">
-                                              Reasoning anzeigen
+                                              {translations.showReasoning}
                                               <ChevronDown className="h-3 w-3 ml-1.5 transition-transform duration-200" />
                                             </Button>
                                           </CollapsibleTrigger>
@@ -584,7 +633,7 @@ export function AskAiPane({
 
                                     {textPart && (
                                       <div className="space-y-1">
-                                        <div className="text-[11px] font-semibold uppercase text-muted-foreground">Antwort</div>
+                                        <div className="text-[11px] font-semibold uppercase text-muted-foreground">{translations.answer}</div>
                                         <PlateMarkdown>
                                           {textPart.text}
                                         </PlateMarkdown>
@@ -601,7 +650,7 @@ export function AskAiPane({
                                     <CollapsibleTrigger asChild>
                                       <Button variant="ghost" size="sm" className="h-auto py-2 text-xs text-muted-foreground hover:text-foreground w-full justify-start -ml-3 pl-3">
                                         <Brain className="h-3 w-3 mr-1.5" />
-                                        Reasoning anzeigen
+                                        {translations.showReasoning}
                                         <ChevronDown className="h-3 w-3 ml-1.5" />
                                       </Button>
                                     </CollapsibleTrigger>
@@ -621,14 +670,14 @@ export function AskAiPane({
                                 ) : streamingId === message.id ? (
                                   <StreamingShimmer />
                                 ) : (
-                                  "Keine Antwort vorhanden."
+                                  translations.noAnswerAvailable
                                 )}
                               </>
                             )}
                           </>
                         ) : (
                           message.content ||
-                          (streamingId === message.id ? <StreamingShimmer /> : "Keine Antwort vorhanden.")
+                          (streamingId === message.id ? <StreamingShimmer /> : translations.noAnswerAvailable)
                         )}
                       </Response>
                       {message.role === "assistant"
@@ -658,7 +707,7 @@ export function AskAiPane({
                         type="button"
                         onClick={() => handleRemoveMention(mention.id)}
                         className="ml-0.5 hover:bg-muted-foreground/20 rounded-full p-0.5 transition-colors"
-                        aria-label={`${mention.label} entfernen`}
+                        aria-label={`${mention.label} ${translations.removeMention}`}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -716,7 +765,7 @@ export function AskAiPane({
                         className="w-full rounded-md border border-primary/50 bg-primary text-primary-foreground px-3 py-2 text-sm sm:text-sm font-medium hover:bg-primary/90 transition-colors"
                         onClick={handleSlashCreate}
                       >
-                        Neuen Command speichern
+                        {translations.saveCommand}
                       </button>
                     </div>
                   </div>
@@ -727,14 +776,13 @@ export function AskAiPane({
                   textAreaRef={messageInputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Wie kann ich dir helfen? Nutze @ für Mentions oder / für gespeicherte Prompts"
+                  placeholder={translations.placeholder}
                   isGenerating={isSending}
                   allowAttachments
                   files={files}
                   setFiles={setFiles}
                   onAudioError={(err) => {
-                    toast.error(
-                      "Bitte Mikrofon-Zugriff erlauben oder prüfe die Browser-Einstellungen.",)
+                    toast.error(translations.audioError)
                   }}
                   stop={handleStop}
                   contextActions={
@@ -749,11 +797,11 @@ export function AskAiPane({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent align="end">
-                          <SelectItem value="bachelor">Bachelor/Master Agent</SelectItem>
+                          <SelectItem value="bachelor">{translations.bachelorMasterAgent}</SelectItem>
                           <SelectItem value="general" className="text-xs">
-                            Hausarbeit / Essay Agent
+                            {translations.essayAgent}
                           </SelectItem>
-                          <SelectItem value="standard">Standard Chat</SelectItem>
+                          <SelectItem value="standard">{translations.standardChat}</SelectItem>
                         </SelectContent>
                       </Select>
                       <Tooltip>
@@ -764,12 +812,12 @@ export function AskAiPane({
                             variant={context.document ? "secondary" : "ghost"}
                             className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 flex items-center justify-center"
                             onClick={() => toggleContext("document")}
-                            aria-label="Kontext aktivieren"
+                            aria-label={translations.enableContext}
                           >
                             <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 m-auto" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom">Kontext aktivieren</TooltipContent>
+                        <TooltipContent side="bottom">{translations.enableContext}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -779,12 +827,12 @@ export function AskAiPane({
                             variant={context.web ? "secondary" : "ghost"}
                             className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 flex items-center justify-center"
                             onClick={() => toggleContext("web")}
-                            aria-label="Websuche aktivieren"
+                            aria-label={translations.enableWebSearch}
                           >
                             <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 m-auto" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom">Websuche aktivieren</TooltipContent>
+                        <TooltipContent side="bottom">{translations.enableWebSearch}</TooltipContent>
                       </Tooltip>
                     </>
                   }
@@ -805,7 +853,7 @@ export function AskAiPane({
         >
           <DialogContent className="max-w-sm sm:max-w-sm md:max-w-sm overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <DialogHeader>
-              <DialogTitle>Chatverlauf</DialogTitle>
+              <DialogTitle>{translations.chatHistoryTitle}</DialogTitle>
             </DialogHeader>
             <div className="mb-3">
               <div className="relative">
@@ -814,7 +862,7 @@ export function AskAiPane({
                 </span>
                 <input
                   className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm focus-visible:outline-none"
-                  placeholder="Chats durchsuchen..."
+                  placeholder={translations.searchChats}
                   value={historyQuery}
                   onChange={(e) => setHistoryQuery(e.target.value)}
                 />
@@ -827,7 +875,7 @@ export function AskAiPane({
                     [...item.messages]
                       .reverse()
                       .find((m) => m.role === "assistant" || m.role === "user")
-                      ?.content ?? "Keine Nachrichten vorhanden"
+                      ?.content ?? translations.noMessages
 
                   return (
                     <div
@@ -846,14 +894,14 @@ export function AskAiPane({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 space-y-1">
                           <div className="font-medium truncate">
-                            {item.title || "Neuer Chat"}
+                            {item.title || translations.newChatTitle}
                           </div>
                           <div className="text-xs text-muted-foreground line-clamp-2">
                             {lastRelevantMessage}
                           </div>
                         </div>
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                          {new Date(item.updatedAt).toLocaleString()}
+                          {new Date(item.updatedAt).toLocaleString(language)}
                         </span>
                       </div>
                       <Button
@@ -863,7 +911,7 @@ export function AskAiPane({
                         className="absolute bottom-2 right-2 h-6 w-6 text-muted-foreground hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setChatToDelete({ id: item.id, title: item.title || "Neuer Chat" })
+                          setChatToDelete({ id: item.id, title: item.title || translations.newChatTitle })
                         }}
                       >
                         <Trash2 className="size-3.5" />
@@ -876,13 +924,13 @@ export function AskAiPane({
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Search className="size-4 text-muted-foreground" />
                     {historyQuery.trim()
-                      ? `Keine Treffer für „${historyQuery.trim()}“`
-                      : "Kein Chatverlauf verfügbar"}
+                      ? `${translations.noResultsFor} „${historyQuery.trim()}“`
+                      : translations.noChatHistory}
                   </div>
                   <p className="text-muted-foreground text-xs">
                     {historyQuery.trim()
-                      ? "Passe deine Suche an oder setze sie zurück."
-                      : "Starte einen neuen Chat, um den Verlauf aufzubauen."}
+                      ? translations.adjustSearch
+                      : translations.startNewChat}
                   </p>
                 </div>
               )}
@@ -895,7 +943,7 @@ export function AskAiPane({
                   className="h-8 px-3 text-xs"
                   onClick={() => setHistoryQuery("")}
                 >
-                  Suche zurücksetzen
+                  {translations.resetSearch}
                 </Button>
               )}
               <Button
@@ -904,7 +952,7 @@ export function AskAiPane({
                 className="h-8 px-3 text-xs bg-muted-foreground/10 dark:bg-muted-foreground/10 text-foreground border-border hover:bg-muted-foreground/30 dark:hover:bg-muted-foreground/20"
                 onClick={handleStartNewChatFromHistory}
               >
-                Neuen Chat starten
+                {translations.startNewChatButton}
               </Button>
             </div>
           </DialogContent>
@@ -919,18 +967,18 @@ export function AskAiPane({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Chat löschen?</AlertDialogTitle>
+              <AlertDialogTitle>{translations.deleteChatTitle}</AlertDialogTitle>
               <AlertDialogDescription>
-                {`"${chatToDelete?.title ?? "Dieser Chat"}"`} wird dauerhaft gelöscht. Alle zugehörigen Nachrichten werden ebenfalls entfernt. Diese Aktion kann nicht rückgängig gemacht werden.
+                {`"${chatToDelete?.title ?? translations.newChatTitle}"`} {translations.deleteChatDescription}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setChatToDelete(null)}>Abbrechen</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setChatToDelete(null)}>{translations.cancel}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDeleteChat}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Löschen
+                {translations.delete}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -948,16 +996,16 @@ export function AskAiPane({
         >
           <DialogContent className="max-w-sm sm:max-w-sm md:max-w-sm overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <DialogHeader>
-              <DialogTitle>Favoriten</DialogTitle>
+              <DialogTitle>{translations.favoritesTitle}</DialogTitle>
               <DialogDescription>
-                Gespeicherte Nachrichten aus deinen Chats
+                {translations.favoritesDescription}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2 text-sm text-muted-foreground max-h-64 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {savedMessagesList.length > 0 ? (
                 savedMessagesList.map((saved) => {
                   const conversation = history.find(c => c.id === saved.conversationId)
-                  const conversationTitle = conversation?.title || "Unbekannter Chat"
+                  const conversationTitle = conversation?.title || translations.unknownChat
                   
                   return (
                     <button
@@ -976,7 +1024,7 @@ export function AskAiPane({
                           </div>
                         </div>
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                          {new Date(saved.timestamp).toLocaleDateString()}
+                          {new Date(saved.timestamp).toLocaleDateString(language)}
                         </span>
                       </div>
                     </button>
@@ -986,10 +1034,10 @@ export function AskAiPane({
                 <div className="rounded-md border border-dashed border-border/70 bg-muted/50 px-3 py-3 flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Bookmark className="size-4 text-muted-foreground" />
-                    Keine Favoriten vorhanden
+                    {translations.noFavorites}
                   </div>
                   <p className="text-muted-foreground text-xs">
-                    Speichere Nachrichten, um sie hier wiederzufinden.
+                    {translations.saveMessageHint}
                   </p>
                 </div>
               )}
@@ -1008,35 +1056,35 @@ export function AskAiPane({
         >
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Neuen Command speichern</DialogTitle>
+              <DialogTitle>{translations.saveCommandTitle}</DialogTitle>
               <DialogDescription>
-                Erstelle einen neuen Slash-Command für schnellen Zugriff
+                {translations.saveCommandDescription}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground">Titel</label>
+                <label className="text-sm font-medium text-foreground">{translations.label}</label>
                 <input
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none"
                   value={newSlashLabel}
                   onChange={(e) => setNewSlashLabel(e.target.value)}
-                  placeholder="z.B. Outline"
+                  placeholder={translations.labelPlaceholder}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground">Command</label>
+                <label className="text-sm font-medium text-foreground">{translations.command}</label>
                 <textarea
                   className="w-full rounded-md border border-input bg-background px-1 py-1 text-sm focus-visible:outline-none"
                   rows={4}
                   value={newSlashContent}
                   onChange={(e) => setNewSlashContent(e.target.value)}
-                  placeholder="/outline Gliedere den Text in Abschnitte."
+                  placeholder={translations.commandPlaceholder}
                 />
               </div>
             </div>
             <DialogFooter className="mt-2">
               <DialogClose asChild>
-                <Button variant="ghost">Abbrechen</Button>
+                <Button variant="ghost">{translations.cancel}</Button>
               </DialogClose>
               <Button
                 disabled={!newSlashLabel.trim() || !newSlashContent.trim()}
@@ -1059,7 +1107,7 @@ export function AskAiPane({
                   focusMessageInput()
                 }}
               >
-                Speichern
+                {translations.save}
               </Button>
             </DialogFooter>
           </DialogContent>

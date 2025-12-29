@@ -24,14 +24,9 @@ import {
   type CitationNoteVariant,
 } from '@/lib/stores/citation-store';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLanguage } from '@/lib/i18n/use-language';
 
-const FORMATS: { value: CitationFormat; label: string }[] = [
-  { value: 'author', label: 'Author' },
-  { value: 'author-date', label: 'Author-Date' },
-  { value: 'label', label: 'Label' },
-  { value: 'note', label: 'Note' },
-  { value: 'numeric', label: 'Numeric' },
-];
+// FORMATS is now defined inside the component to support translation
 
 const NUMERIC_VARIANTS: { value: CitationNumberFormat; label: string }[] = [
   { value: 'bracket', label: '[1]' },
@@ -57,11 +52,6 @@ const LABEL_VARIANTS = [
   { value: 'plain', label: 'Mue20' },
 ]
 
-const NOTE_VARIANTS = [
-  { value: 'superscript', label: '¹ Fußnote' },
-  { value: 'inline', label: '(Fußnote)' },
-]
-
 export function CitationFormatToolbarButton() {
   const {
     citationFormat,
@@ -73,6 +63,20 @@ export function CitationFormatToolbarButton() {
     setCitationLabelVariant,
     setCitationNoteVariant,
   } = useCitationStore();
+  const { t, language } = useLanguage();
+
+  const FORMATS = React.useMemo(() => [
+    { value: 'author' as CitationFormat, label: t('toolbar.citationFormatAuthor') },
+    { value: 'author-date' as CitationFormat, label: t('toolbar.citationFormatAuthorDate') },
+    { value: 'label' as CitationFormat, label: t('toolbar.citationFormatLabel') },
+    { value: 'note' as CitationFormat, label: t('toolbar.citationFormatNote') },
+    { value: 'numeric' as CitationFormat, label: t('toolbar.citationFormatNumeric') },
+  ], [t, language]);
+
+  const NOTE_VARIANTS = React.useMemo(() => [
+    { value: 'superscript', label: `¹ ${t('toolbar.footnote')}` },
+    { value: 'inline', label: t('toolbar.footnoteInline') },
+  ], [t, language]);
   
   const currentLabel = React.useMemo(() => {
     if (citationFormat === 'numeric') {
@@ -80,7 +84,9 @@ export function CitationFormatToolbarButton() {
       return variant?.label || '[1]';
     }
     return FORMATS.find((s) => s.value === citationFormat)?.label || citationFormat;
-  }, [citationFormat, citationNumberFormat]);
+  }, [citationFormat, citationNumberFormat, language]);
+
+  const tooltipText = React.useMemo(() => t('toolbar.citationFormat'), [t, language]);
 
   return (
     <DropdownMenu>
@@ -100,7 +106,7 @@ export function CitationFormatToolbarButton() {
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent>Zitierformat</TooltipContent>
+        <TooltipContent>{tooltipText}</TooltipContent>
       </Tooltip>
       <DropdownMenuContent className="w-48">
         <DropdownMenuRadioGroup

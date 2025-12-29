@@ -16,7 +16,8 @@ import type { TEquationElement } from '@platejs/utils';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
 import { Plate, type PlateEditor, usePlateEditor, usePluginOption, usePlateState } from 'platejs/react';
 
-import { EditorKit } from '@/components/editor/editor-kit';
+import { createEditorKit } from '@/components/editor/editor-kit';
+import { useLanguage } from '@/lib/i18n/use-language';
 import { SourceSearchDialog, type Source } from '@/components/citations/source-search-dialog';
 import { EditorBibliography } from '@/components/ui/editor-bibliography';
 import { CommentTocSidebar } from '@/components/ui/comment-toc';
@@ -49,6 +50,7 @@ export function PlateEditor({
   showSuggestionToc?: boolean;
   storageId?: string;
 }) {
+  const { t, language } = useLanguage();
   const hasHydrated = React.useRef(false);
   const discussionsApplied = React.useRef(false);
   const latestContentRef = React.useRef<Value>(DEFAULT_VALUE);
@@ -67,8 +69,14 @@ export function PlateEditor({
     }),
     [storageId]
   );
+  
+  const editorKit = React.useMemo(
+    () => createEditorKit(t('toolbar.placeholderWrite')),
+    [t, language]
+  );
+  
   const editor = usePlateEditor({
-    plugins: EditorKit,
+    plugins: editorKit,
     value: DEFAULT_VALUE,
   });
   const addCitation = useCitationStore((state) => state.addCitation);

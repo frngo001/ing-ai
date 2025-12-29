@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/lib/i18n/use-language"
 import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as documentsUtils from "@/lib/supabase/utils/documents"
 import { extractTextFromNode, extractTitleFromContent } from "@/lib/supabase/utils/document-title"
@@ -42,13 +43,13 @@ const hasContentText = (state: any): boolean => {
   return extractTextFromNode(content).trim().length > 0
 }
 
-const formatRelativeTime = (date: Date) => {
+const formatRelativeTime = (date: Date, locale: string = "de") => {
   const now = new Date()
   const diffMs = date.getTime() - now.getTime()
   const minutes = Math.round(diffMs / 60000)
   const absMinutes = Math.abs(minutes)
 
-  const rtf = new Intl.RelativeTimeFormat("de", { numeric: "auto" })
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" })
 
   if (absMinutes < 60) return rtf.format(minutes, "minute")
 
@@ -67,148 +68,20 @@ export function DocumentsPane({
   onClose?: () => void
 }) {
   const router = useRouter()
+  const { t, language } = useLanguage()
   const [documents, setDocuments] = React.useState<DocumentItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
   const [docToDelete, setDocToDelete] = React.useState<DocumentItem | null>(null)
-  const createNewDocument = React.useCallback(async () => {
-    const userId = await getCurrentUserId()
-    
-    if (!userId) {
-      // Fallback auf localStorage wenn kein User eingeloggt
-      if (typeof window === "undefined") return
 
-      const newId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `doc-${Date.now()}`
-
-      const payload = {
-        content: [{ type: "p", children: [{ text: "" }] }],
-        discussions: [],
-        updatedAt: new Date().toISOString(),
-      }
-
-      try {
-        window.localStorage.setItem(`${LOCAL_STATE_PREFIX}${newId}`, JSON.stringify(payload))
-        window.dispatchEvent(new Event("documents:reload"))
-      } catch {
-        // ignore
-      }
-
-      router.push(`/editor?doc=${encodeURIComponent(newId)}`)
-      return
-    }
-
-    try {
-      // Erstelle Dokument in Supabase
-      const newDoc = await documentsUtils.createDocument({
-        user_id: userId,
-        title: "Unbenanntes Dokument",
-        content: [{ type: "p", children: [{ text: "" }] }],
-        document_type: "essay",
-        word_count: 0,
-      })
-
-      router.push(`/editor?doc=${encodeURIComponent(newDoc.id)}`)
-      // Lade Dokumente neu
-      loadFromSupabase()
-    } catch (error) {
-      console.error("Fehler beim Erstellen des Dokuments:", error)
-      // Fallback auf localStorage
-      if (typeof window === "undefined") return
-
-      const newId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `doc-${Date.now()}`
-
-      const payload = {
-        content: [{ type: "p", children: [{ text: "" }] }],
-        discussions: [],
-        updatedAt: new Date().toISOString(),
-      }
-
-      try {
-        window.localStorage.setItem(`${LOCAL_STATE_PREFIX}${newId}`, JSON.stringify(payload))
-        window.dispatchEvent(new Event("documents:reload"))
-      } catch {
-        // ignore
-      }
-
-      router.push(`/editor?doc=${encodeURIComponent(newId)}`)
-    }
-  }, [router])
+  const untitledDocText = React.useMemo(() => t('documents.untitledDocument'), [t, language])
+  const savedText = React.useMemo(() => t('documents.saved'), [t, language])
+  const locallySavedText = React.useMemo(() => t('documents.locallySaved'), [t, language])
+  const meText = React.useMemo(() => t('documents.me'), [t, language])
+  const localText = React.useMemo(() => t('documents.local'), [t, language])
 
   const isLoadingRef = React.useRef(false)
   const reloadDebounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasInitialLoadRef = React.useRef(false)
-
-  const loadFromSupabase = React.useCallback(async (invalidateCache = false) => {
-    // Verhindere parallele Requests
-    if (isLoadingRef.current) {
-      return
-    }
-
-    const userId = await getCurrentUserId()
-    
-    if (!userId) {
-      // Fallback auf localStorage wenn kein User eingeloggt
-      loadFromLocalStorage()
-      return
-    }
-
-    // Cache nur invalidieren wenn explizit angefordert UND Daten nicht mehr gültig sind
-    if (invalidateCache) {
-      documentsUtils.invalidateDocumentsCache(userId)
-    }
-
-    isLoadingRef.current = true
-    try {
-      const docs = await documentsUtils.getDocuments(userId)
-      
-      const nextDocs: DocumentItem[] = await Promise.all(
-        docs.map(async (doc) => {
-          const content = doc.content as any
-          const extractedTitle = extractTitleFromContent(content)
-          const updatedAt = doc.updated_at ? new Date(doc.updated_at) : undefined
-
-          // Synchronisiere Titel: Wenn der gespeicherte Titel nicht mit dem aktuellen Content übereinstimmt,
-          // aktualisiere den Titel in der Datenbank
-          const currentTitle = doc.title || extractedTitle
-          if (extractedTitle !== "Unbenanntes Dokument" && currentTitle !== extractedTitle) {
-            try {
-              await documentsUtils.updateDocument(
-                doc.id,
-                { title: extractedTitle },
-                doc.user_id
-              )
-              // Cache wurde bereits in updateDocument invalidiert
-            } catch (error) {
-              console.error(`Fehler beim Aktualisieren des Titels für Dokument ${doc.id}:`, error)
-            }
-          }
-
-          return {
-            id: doc.id,
-            title: extractedTitle !== "Unbenanntes Dokument" ? extractedTitle : currentTitle,
-            lastEdited: updatedAt ? formatRelativeTime(updatedAt) : "Gespeichert",
-            author: "Ich",
-            href: `/editor?doc=${encodeURIComponent(doc.id)}`,
-          }
-        })
-      )
-
-      nextDocs.sort((a, b) => a.title.localeCompare(b.title, "de"))
-      setDocuments(nextDocs)
-      hasInitialLoadRef.current = true
-    } catch (error) {
-      console.error("Fehler beim Laden der Dokumente:", error)
-      // Fallback auf localStorage
-      loadFromLocalStorage()
-    } finally {
-      isLoadingRef.current = false
-    }
-  }, [])
 
   const loadFromLocalStorage = React.useCallback(() => {
     if (typeof window === "undefined") return
@@ -243,8 +116,8 @@ export function DocumentsPane({
         nextDocs.push({
           id,
           title,
-          lastEdited: updatedAt ? formatRelativeTime(updatedAt) : "Lokal gespeichert",
-          author: "Lokal",
+          lastEdited: updatedAt ? formatRelativeTime(updatedAt, language) : locallySavedText,
+          author: localText,
           href: `/editor?doc=${encodeURIComponent(id)}`,
         })
         seen.add(id)
@@ -253,9 +126,145 @@ export function DocumentsPane({
       }
     }
 
-    nextDocs.sort((a, b) => a.title.localeCompare(b.title, "de"))
+    nextDocs.sort((a, b) => a.title.localeCompare(b.title, language))
     setDocuments(nextDocs)
-  }, [])
+  }, [language, locallySavedText, localText])
+
+  const loadFromSupabase = React.useCallback(async (invalidateCache = false) => {
+    // Verhindere parallele Requests
+    if (isLoadingRef.current) {
+      return
+    }
+
+    const userId = await getCurrentUserId()
+    
+    if (!userId) {
+      // Fallback auf localStorage wenn kein User eingeloggt
+      loadFromLocalStorage()
+      return
+    }
+
+    // Cache nur invalidieren wenn explizit angefordert UND Daten nicht mehr gültig sind
+    if (invalidateCache) {
+      documentsUtils.invalidateDocumentsCache(userId)
+    }
+
+    isLoadingRef.current = true
+    try {
+      const docs = await documentsUtils.getDocuments(userId)
+      
+      const nextDocs: DocumentItem[] = await Promise.all(
+        docs.map(async (doc) => {
+          const content = doc.content as any
+          const extractedTitle = extractTitleFromContent(content)
+          const updatedAt = doc.updated_at ? new Date(doc.updated_at) : undefined
+
+          // Synchronisiere Titel: Wenn der gespeicherte Titel nicht mit dem aktuellen Content übereinstimmt,
+          // aktualisiere den Titel in der Datenbank
+          const currentTitle = doc.title || extractedTitle
+          if (extractedTitle !== untitledDocText && currentTitle !== extractedTitle) {
+            try {
+              await documentsUtils.updateDocument(
+                doc.id,
+                { title: extractedTitle },
+                doc.user_id
+              )
+              // Cache wurde bereits in updateDocument invalidiert
+            } catch (error) {
+              console.error(`Fehler beim Aktualisieren des Titels für Dokument ${doc.id}:`, error)
+            }
+          }
+
+          return {
+            id: doc.id,
+            title: extractedTitle !== untitledDocText ? extractedTitle : currentTitle,
+            lastEdited: updatedAt ? formatRelativeTime(updatedAt, language) : savedText,
+            author: meText,
+            href: `/editor?doc=${encodeURIComponent(doc.id)}`,
+          }
+        })
+      )
+
+      nextDocs.sort((a, b) => a.title.localeCompare(b.title, language))
+      setDocuments(nextDocs)
+      hasInitialLoadRef.current = true
+    } catch (error) {
+      console.error("Fehler beim Laden der Dokumente:", error)
+      // Fallback auf localStorage
+      loadFromLocalStorage()
+    } finally {
+      isLoadingRef.current = false
+    }
+  }, [untitledDocText, savedText, meText, language, loadFromLocalStorage])
+
+  const createNewDocument = React.useCallback(async () => {
+    const userId = await getCurrentUserId()
+    
+    if (!userId) {
+      // Fallback auf localStorage wenn kein User eingeloggt
+      if (typeof window === "undefined") return
+
+      const newId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `doc-${Date.now()}`
+
+      const payload = {
+        content: [{ type: "p", children: [{ text: "" }] }],
+        discussions: [],
+        updatedAt: new Date().toISOString(),
+      }
+
+      try {
+        window.localStorage.setItem(`${LOCAL_STATE_PREFIX}${newId}`, JSON.stringify(payload))
+        window.dispatchEvent(new Event("documents:reload"))
+      } catch {
+        // ignore
+      }
+
+      router.push(`/editor?doc=${encodeURIComponent(newId)}`)
+      return
+    }
+
+    try {
+      // Erstelle Dokument in Supabase
+      const newDoc = await documentsUtils.createDocument({
+        user_id: userId,
+        title: untitledDocText,
+        content: [{ type: "p", children: [{ text: "" }] }],
+        document_type: "essay",
+        word_count: 0,
+      })
+
+      router.push(`/editor?doc=${encodeURIComponent(newDoc.id)}`)
+      // Lade Dokumente neu
+      loadFromSupabase()
+    } catch (error) {
+      console.error("Fehler beim Erstellen des Dokuments:", error)
+      // Fallback auf localStorage
+      if (typeof window === "undefined") return
+
+      const newId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `doc-${Date.now()}`
+
+      const payload = {
+        content: [{ type: "p", children: [{ text: "" }] }],
+        discussions: [],
+        updatedAt: new Date().toISOString(),
+      }
+
+      try {
+        window.localStorage.setItem(`${LOCAL_STATE_PREFIX}${newId}`, JSON.stringify(payload))
+        window.dispatchEvent(new Event("documents:reload"))
+      } catch {
+        // ignore
+      }
+
+      router.push(`/editor?doc=${encodeURIComponent(newId)}`)
+    }
+  }, [router, untitledDocText, loadFromSupabase])
 
   const handleConfirmDelete = React.useCallback(async () => {
     if (!docToDelete) return
@@ -366,7 +375,7 @@ export function DocumentsPane({
       <div className="flex items-center justify-between gap-2 pb-3 mt-1.5">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5">
-          <h2 className="text-sm font-semibold">Dokumente</h2>
+          <h2 className="text-sm font-semibold">{t('documents.title')}</h2>
             <FilePenLine className="size-4" />
           </div>
         </div>
@@ -377,13 +386,13 @@ export function DocumentsPane({
                 size="icon"
                 variant="ghost"
                 className="h-7 w-7 bg-transparent"
-                aria-label="Neues Dokument"
+                aria-label={t('documents.newDocument')}
                 onClick={createNewDocument}
               >
             <Plus className="size-4" />
           </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Neues Dokument</TooltipContent>
+            <TooltipContent side="bottom">{t('documents.newDocument')}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -392,12 +401,12 @@ export function DocumentsPane({
             variant="ghost"
             className="h-7 w-7 bg-transparent"
             onClick={onClose}
-            aria-label="Panel schließen"
+            aria-label={t('documents.closePanel')}
           >
           <PanelLeftClose className="size-4" />
           </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Panel schließen</TooltipContent>
+            <TooltipContent side="bottom">{t('documents.closePanel')}</TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -409,9 +418,9 @@ export function DocumentsPane({
         <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Dokumente durchsuchen"
+          placeholder={t('documents.searchDocuments')}
             className="h-9 pl-8 text-sm"
-          aria-label="Dokumente durchsuchen"
+          aria-label={t('documents.searchDocuments')}
         />
         </div>
       </div>
@@ -422,13 +431,13 @@ export function DocumentsPane({
               <div className="rounded-md border border-dashed border-border/70 bg-muted/30 px-4 py-4 flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   {searchQuery.trim()
-                    ? `Keine Treffer für „${searchQuery.trim()}“`
-                    : "Noch keine Dokumente gespeichert"}
+                    ? `${t('documents.noResults')} „${searchQuery.trim()}"`
+                    : t('documents.noDocumentsYet')}
                 </div>
                 <p className="text-muted-foreground text-xs">
                   {searchQuery.trim()
-                    ? "Passe deine Suche an oder setze sie zurück."
-                    : "Lege ein neues Dokument an oder importiere Dateien."}
+                    ? t('documents.adjustSearch')
+                    : t('documents.createOrImport')}
                 </p>
                 {searchQuery.trim() && (
                   <div className="flex gap-2">
@@ -438,7 +447,7 @@ export function DocumentsPane({
                       className="h-8 px-3 text-xs"
                       onClick={() => setSearchQuery("")}
                     >
-                      Suche zurücksetzen
+                      {t('documents.resetSearch')}
                     </Button>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -447,12 +456,12 @@ export function DocumentsPane({
                           variant="ghost"
                           className="size-8 p-0"
                           onClick={createNewDocument}
-                          aria-label="Neues Dokument"
+                          aria-label={t('documents.newDocument')}
                         >
                           <Plus className="size-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="top">Neues Dokument</TooltipContent>
+                      <TooltipContent side="top">{t('documents.newDocument')}</TooltipContent>
                     </Tooltip>
                   </div>
                 )}
@@ -479,7 +488,7 @@ export function DocumentsPane({
                       size="icon-sm"
                       variant="ghost"
                       className="size-4 p-0 opacity-70 hover:opacity-100 hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                      aria-label={`Dokument ${doc.title} löschen`}
+                      aria-label={`${t('documents.deleteDocument')} ${doc.title}`}
                       onClick={(event) => {
                         event.preventDefault()
                         event.stopPropagation()
@@ -489,7 +498,7 @@ export function DocumentsPane({
                       <Trash className="size-3" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">Löschen</TooltipContent>
+                  <TooltipContent side="bottom">{t('documents.delete')}</TooltipContent>
                 </Tooltip>
               </div>
             ))
@@ -505,15 +514,15 @@ export function DocumentsPane({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Dokument löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{t('documents.deleteDocumentTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {`"${docToDelete?.title ?? "Dieses Dokument"}"`} wird dauerhaft aus dem lokalen Speicher entfernt.
+              {`"${docToDelete?.title ?? untitledDocText}"`} {t('documents.deleteDocumentDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDocToDelete(null)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDocToDelete(null)}>{t('documents.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Löschen
+              {t('documents.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Input } from '@/components/ui/input';
 import * as React from 'react';
 import { searchCitationStyles, type BibifyStyle } from '@/lib/bibify';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 const CITATION_STYLES: { value: CitationStyle; label: string }[] = [
   { value: 'apa', label: 'APA' },
@@ -31,13 +32,21 @@ export function CitationStyleToolbarButton() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [remoteStyles, setRemoteStyles] = React.useState<BibifyStyle[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const { t, language } = useLanguage();
   const menuItemClass =
     'focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground';
 
-  const currentLabel =
+  const currentLabel = React.useMemo(() =>
     CITATION_STYLES.find((s) => s.value === citationStyle)?.label ||
     citationStyle?.replace('.csl', '') ||
-    citationStyle;
+    citationStyle,
+    [citationStyle, language]
+  );
+
+  const tooltipText = React.useMemo(() => t('toolbar.citationStyle'), [t, language]);
+  const searchPlaceholder = React.useMemo(() => t('toolbar.searchCitationStyle'), [t, language]);
+  const loadingText = React.useMemo(() => t('toolbar.loadingStyles'), [t, language]);
+  const foundStylesText = React.useMemo(() => t('toolbar.foundCitationStyles'), [t, language]);
 
   React.useEffect(() => {
     if (searchTerm.trim().length < 2) {
@@ -79,7 +88,7 @@ export function CitationStyleToolbarButton() {
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent>Zitierstil</TooltipContent>
+        <TooltipContent>{tooltipText}</TooltipContent>
       </Tooltip>
       <DropdownMenuContent className="w-64 p-0">
         <div className="sticky top-0 z-10 bg-popover/95 backdrop-blur border-b">
@@ -87,7 +96,7 @@ export function CitationStyleToolbarButton() {
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="CSL-Stil suchen (z. B. ieee, apa)"
+            placeholder={searchPlaceholder}
             className="h-8 text-xs"
           />
         </div>
@@ -110,14 +119,14 @@ export function CitationStyleToolbarButton() {
               <DropdownMenuRadioItem value="__loading" disabled className={menuItemClass}>
               <span className="inline-flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Lädt Stile...
+                {loadingText}
               </span>
             </DropdownMenuRadioItem>
           )}
           {!isLoading && remoteStyles.length > 0 && (
             <>
               <DropdownMenuRadioItem value="__separator" disabled>
-                <span className="text-xs text-muted-foreground">Gefundene Zitierstile</span>
+                <span className="text-xs text-muted-foreground">{foundStylesText}</span>
               </DropdownMenuRadioItem>
               {remoteStyles.map((style) => (
                 <DropdownMenuRadioItem

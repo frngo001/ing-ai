@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, useMemo } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X } from "lucide-react"
 import { omit } from "remeda"
@@ -14,6 +14,7 @@ import { FilePreview } from "@/components/ui/file-preview"
 import { InterruptPrompt } from "@/components/ui/interrupt-prompt"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 interface MessageInputBaseProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -58,9 +59,21 @@ export function MessageInput({
   contextActions,
   ...props
 }: MessageInputProps) {
+  const { t, language } = useLanguage()
   const [isDragging, setIsDragging] = useState(false)
   const [showInterruptPrompt, setShowInterruptPrompt] = useState(false)
   const [isClient, setIsClient] = useState(false)
+
+  // Memoized translations that update on language change
+  const translations = useMemo(() => ({
+    attachFile: t('askAi.attachFile'),
+    voiceInput: t('askAi.voiceInput'),
+    stopGenerating: t('askAi.stopGenerating'),
+    sendMessage: t('askAi.sendMessage'),
+    dropFilesHere: t('askAi.dropFilesHere'),
+    transcribingAudio: t('askAi.transcribingAudio'),
+    clickToStopRecording: t('askAi.clickToStopRecording'),
+  }), [t, language])
 
   const {
     isListening,
@@ -202,6 +215,7 @@ export function MessageInput({
       <RecordingPrompt
         isVisible={isRecording}
         onStopRecording={stopRecording}
+        clickToStopRecording={translations.clickToStopRecording}
       />
 
       <div className="relative w-full space-y-2">
@@ -253,7 +267,7 @@ export function MessageInput({
             : omit(props, ["allowAttachments"]))}
         />
 
-        {props.allowAttachments && <FileUploadOverlay isDragging={isDragging} />}
+        {props.allowAttachments && <FileUploadOverlay isDragging={isDragging} dropFilesHere={translations.dropFilesHere} />}
 
         <RecordingControls
           isRecording={isRecording}
@@ -261,6 +275,7 @@ export function MessageInput({
           audioStream={audioStream}
           textAreaHeight={textAreaHeight}
           onStopRecording={stopRecording}
+          transcribingAudio={translations.transcribingAudio}
         />
       </div>
 
@@ -275,7 +290,7 @@ export function MessageInput({
                   size="icon"
                   variant="ghost"
                   className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 flex items-center justify-center"
-                  aria-label="Datei anhängen"
+                  aria-label={translations.attachFile}
                   onClick={async () => {
                     const files = await showFileUploadDialog()
                     addFiles(files)
@@ -284,7 +299,7 @@ export function MessageInput({
                   <Paperclip className="h-3 w-3 sm:h-3.5 sm:w-3.5 m-auto" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Datei anhängen</TooltipContent>
+              <TooltipContent side="top">{translations.attachFile}</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -295,7 +310,7 @@ export function MessageInput({
               type="button"
               size="icon"
               className="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center"
-              aria-label="Stop generating"
+              aria-label={translations.stopGenerating}
               onClick={stop}
             >
               <Square className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-pulse m-auto" fill="currentColor" />
@@ -305,7 +320,7 @@ export function MessageInput({
               type="submit"
               size="icon"
               className="h-7 w-7 sm:h-8 sm:w-8 transition-opacity flex items-center justify-center break-words"
-              aria-label="Send message"
+              aria-label={translations.sendMessage}
               disabled={isGenerating}
             >
               <ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 m-auto" />
@@ -320,7 +335,7 @@ export function MessageInput({
                     "h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 flex items-center justify-center",
                     isListening && "text-primary bg-primary/15 hover:bg-primary/20"
                   )}
-                  aria-label="Spracheingabe"
+                  aria-label={translations.voiceInput}
                   size="icon"
                   onClick={() => {
                     onAudioStart?.()
@@ -330,14 +345,14 @@ export function MessageInput({
                   <Mic className="h-3 w-3 sm:h-3.5 sm:w-3.5 m-auto" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Spracheingabe</TooltipContent>
+              <TooltipContent side="top">{translations.voiceInput}</TooltipContent>
             </Tooltip>
           ) : (
             <Button
               type="submit"
               size="icon"
               className="h-7 w-7 sm:h-8 sm:w-8 transition-opacity flex items-center justify-center break-words"
-              aria-label="Send message"
+              aria-label={translations.sendMessage}
               disabled
             >
               <ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 m-auto" />
@@ -352,9 +367,10 @@ MessageInput.displayName = "MessageInput"
 
 interface FileUploadOverlayProps {
   isDragging: boolean
+  dropFilesHere: string
 }
 
-function FileUploadOverlay({ isDragging }: FileUploadOverlayProps) {
+function FileUploadOverlay({ isDragging, dropFilesHere }: FileUploadOverlayProps) {
   return (
     <AnimatePresence>
       {isDragging && (
@@ -367,7 +383,7 @@ function FileUploadOverlay({ isDragging }: FileUploadOverlayProps) {
           aria-hidden
         >
           <Paperclip className="h-4 w-4" />
-          <span>Drop your files here to attach them.</span>
+          <span>{dropFilesHere}</span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -396,7 +412,11 @@ function showFileUploadDialog() {
   })
 }
 
-function TranscribingOverlay() {
+interface TranscribingOverlayProps {
+  transcribingAudio: string
+}
+
+function TranscribingOverlay({ transcribingAudio }: TranscribingOverlayProps) {
   return (
     <motion.div
       className="flex h-full w-full flex-col items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm"
@@ -420,7 +440,7 @@ function TranscribingOverlay() {
         />
       </div>
       <p className="mt-4 text-sm font-medium text-muted-foreground">
-        Transcribing audio...
+        {transcribingAudio}
       </p>
     </motion.div>
   )
@@ -429,9 +449,10 @@ function TranscribingOverlay() {
 interface RecordingPromptProps {
   isVisible: boolean
   onStopRecording: () => void
+  clickToStopRecording: string
 }
 
-function RecordingPrompt({ isVisible, onStopRecording }: RecordingPromptProps) {
+function RecordingPrompt({ isVisible, onStopRecording, clickToStopRecording }: RecordingPromptProps) {
   return (
     <AnimatePresence>
       {isVisible && (
@@ -451,7 +472,7 @@ function RecordingPrompt({ isVisible, onStopRecording }: RecordingPromptProps) {
         >
           <span className="mx-2.5 flex items-center">
             <Info className="mr-2 h-3 w-3" />
-            Klicken Sie, um die Aufnahme zu beenden
+            {clickToStopRecording}
           </span>
         </motion.div>
       )}
@@ -465,6 +486,7 @@ interface RecordingControlsProps {
   audioStream: MediaStream | null
   textAreaHeight: number
   onStopRecording: () => void
+  transcribingAudio: string
 }
 
 function RecordingControls({
@@ -473,6 +495,7 @@ function RecordingControls({
   audioStream,
   textAreaHeight,
   onStopRecording,
+  transcribingAudio,
 }: RecordingControlsProps) {
   if (isRecording) {
     return (
@@ -495,7 +518,7 @@ function RecordingControls({
         className="absolute inset-[1px] z-50 overflow-hidden rounded-xl"
         style={{ height: textAreaHeight - 2 }}
       >
-        <TranscribingOverlay />
+        <TranscribingOverlay transcribingAudio={transcribingAudio} />
       </div>
     )
   }

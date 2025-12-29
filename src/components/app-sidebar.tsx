@@ -11,6 +11,7 @@ import {
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
+import { useLanguage } from "@/lib/i18n/use-language"
 import {
   Sidebar,
   SidebarContent,
@@ -37,39 +38,37 @@ const defaultUser = {
   avatar: "/logos/logosApp/ing_AI.png",
 }
 
-const data = {
-  navMain: [
-    {
-      title: "Workspace",
-      url: "/editor",
-      icon: LayoutDashboard,
-      isActive: true,
-      items: [
-        {
-          title: "Dokumente",
-          url: "/editor",
-          isDocuments: true,
-        },
-        {
-          title: "Bibliothek",
-          url: "/editor",
-          isLibrary: true,
-        },
-        {
-          title: "AI chat",
-          url: "/editor",
-          isAskAi: true,
-        },
-      ],
-    },
-    {
-      title: "Einstellungen",
-      url: "#",
-      icon: Settings2,
-      isSettings: true,
-    },
-  ],
-}
+const getNavMain = (t: (key: string) => string) => [
+  {
+    title: t('sidebar.workspace'),
+    url: "/editor",
+    icon: LayoutDashboard,
+    isActive: true,
+    items: [
+      {
+        title: t('sidebar.documents'),
+        url: "/editor",
+        isDocuments: true,
+      },
+      {
+        title: t('sidebar.library'),
+        url: "/editor",
+        isLibrary: true,
+      },
+      {
+        title: t('sidebar.aiChat'),
+        url: "/editor",
+        isAskAi: true,
+      },
+    ],
+  },
+  {
+    title: t('sidebar.account'),
+    url: "#",
+    icon: Settings2,
+    isSettings: true,
+  },
+]
 
 export function AppSidebar({
   documentsVisible = true,
@@ -93,21 +92,22 @@ export function AppSidebar({
   onOpenSettings?: (nav?: string) => void
   onCreateDocument?: () => void
 }) {
+  const { t, language } = useLanguage()
   const [user, setUser] = React.useState(defaultUser)
   const supabase = createClient()
   const { addInteractionLock, removeInteractionLock, state } = useSidebar()
   const [isPinned, setIsPinned] = React.useState(false)
+  const navMain = React.useMemo(() => getNavMain(t), [t, language])
 
   React.useEffect(() => {
     const fetchUser = async () => {
-      // Nutze getSession() statt getUser() - kein API-Call
       const {
         data: { session },
       } = await supabase.auth.getSession()
 
       if (session?.user) {
         setUser({
-          name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Benutzer",
+          name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || t('sidebar.user'),
           email: session.user.email || "",
           avatar: session.user.user_metadata?.avatar_url || defaultUser.avatar,
         })
@@ -116,7 +116,6 @@ export function AppSidebar({
 
     fetchUser()
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -125,7 +124,7 @@ export function AppSidebar({
           name:
             session.user.user_metadata?.full_name ||
             session.user.email?.split("@")[0] ||
-            "Benutzer",
+            t('sidebar.user'),
           email: session.user.email || "",
           avatar: session.user.user_metadata?.avatar_url || defaultUser.avatar,
         })
@@ -137,7 +136,7 @@ export function AppSidebar({
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [supabase, t])
 
   const handleCreateDocument = React.useCallback(() => {
     if (onCreateDocument) {
@@ -157,7 +156,6 @@ export function AppSidebar({
     }
   }, [isPinned, addInteractionLock, removeInteractionLock])
 
-  // Cleanup: Entferne Lock beim Unmount, falls gepinnt
   React.useEffect(() => {
     return () => {
       if (isPinned) {
@@ -186,8 +184,8 @@ export function AppSidebar({
                 variant="ghost"
                 className="h-8 w-8 shrink-0 -mt-5"
                 onClick={handleTogglePin}
-                aria-label={isPinned ? "Sidebar entpinnen" : "Sidebar pinnen"}
-                title={isPinned ? "Sidebar entpinnen" : "Sidebar pinnen"}
+                aria-label={isPinned ? t('sidebar.unpinSidebar') : t('sidebar.pinSidebar')}
+                title={isPinned ? t('sidebar.unpinSidebar') : t('sidebar.pinSidebar')}
               >
                 {isPinned ? (
                   <Pin className="h-4 w-4" />
@@ -201,15 +199,15 @@ export function AppSidebar({
             size="sm"
             className="w-full justify-center gap-2"
             onClick={handleCreateDocument}
-            aria-label="Neues Dokument erstellen"
+            aria-label={t('sidebar.newDocument')}
           >
             <Plus className="h-4 w-4" />
-            <span className="group-data-[collapsible=icon]:hidden">Neues Dokument</span>
+            <span className="group-data-[collapsible=icon]:hidden">{t('sidebar.newDocument')}</span>
           </Button>
         </SidebarHeader>
         <SidebarContent>
           <NavMain
-            items={data.navMain}
+            items={navMain}
             onSelectDocument={onToggleDocuments}
             onSelectLibrary={onToggleLibrary}
             onSelectAskAi={onToggleAskAi}
@@ -237,15 +235,15 @@ export function AppSidebar({
             />
             <CardContent className="relative z-20 space-y-3 px-4 pt-4">
               <CardTitle className="text-sm font-semibold leading-tight">
-                Upgrade auf Pro
+                {t('sidebar.upgradeToPro')}
               </CardTitle>
               <CardDescription className="text-xs leading-relaxed text-muted-foreground">
-                Schalte AI-Features und unbegrenzte Dokumente frei. Keine Limits, mehr Produktivität.
+                {t('sidebar.upgradeDescription')}
               </CardDescription>
             </CardContent>
             <CardFooter className="relative z-20 px-4 pb-4 pt-1">
               <Button className="w-full text-sm" variant="default">
-                Jetzt upgraden
+                {t('sidebar.upgradeNow')}
               </Button>
             </CardFooter>
           </Card>

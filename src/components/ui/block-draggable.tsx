@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 const UNDRAGGABLE_KEYS = [KEYS.column, KEYS.tr, KEYS.td];
 
@@ -252,6 +253,9 @@ const DragHandle = React.memo(function DragHandle({
 }) {
   const editor = useEditorRef();
   const element = useElement();
+  const { t, language } = useLanguage();
+
+  const dragToMoveText = React.useMemo(() => t('toolbar.dragToMove'), [t, language]);
 
   return (
     <Tooltip>
@@ -346,13 +350,16 @@ const DragHandle = React.memo(function DragHandle({
           <GripVertical className="text-muted-foreground" />
         </div>
       </TooltipTrigger>
-      <TooltipContent side="bottom">Ziehen zum Verschieben</TooltipContent>
+      <TooltipContent side="bottom">{dragToMoveText}</TooltipContent>
     </Tooltip>
   );
 });
 
 const AiAssistantButton = React.memo(function AiAssistantButton() {
   const editor = useEditorRef();
+  const { t, language } = useLanguage();
+
+  const openAIAssistantText = React.useMemo(() => t('toolbar.openAIAssistant'), [t, language]);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -370,12 +377,12 @@ const AiAssistantButton = React.memo(function AiAssistantButton() {
           className="h-6 w-6 p-0 cursor-pointer"
           onClick={handleClick}
           data-plate-prevent-deselect
-          aria-label="KI-Assistent öffnen"
+          aria-label={openAIAssistantText}
         >
           <Sparkles className="text-primary cursor-pointer" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom">KI-Assistent öffnen</TooltipContent>
+      <TooltipContent side="bottom">{openAIAssistantText}</TooltipContent>
     </Tooltip>
   );
 });
@@ -383,6 +390,9 @@ const AiAssistantButton = React.memo(function AiAssistantButton() {
 const AddBlockButton = React.memo(function AddBlockButton() {
   const editor = useEditorRef();
   const element = useElement();
+  const { t, language } = useLanguage();
+
+  const insertBlockBelowText = React.useMemo(() => t('toolbar.insertBlockBelow'), [t, language]);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -422,12 +432,12 @@ const AddBlockButton = React.memo(function AddBlockButton() {
             e.preventDefault();
           }}
           data-plate-prevent-deselect
-          aria-label="Block unterhalb einfügen"
+          aria-label={insertBlockBelowText}
         >
           <Plus className="text-muted-foreground" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom">Neuen Block unterhalb einfügen</TooltipContent>
+      <TooltipContent side="bottom">{insertBlockBelowText}</TooltipContent>
     </Tooltip>
   );
 });

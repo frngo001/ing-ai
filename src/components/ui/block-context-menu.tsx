@@ -29,6 +29,7 @@ import {
 
 import { useCitationStore } from '@/lib/stores/citation-store';
 import { prepareCitationInsertion } from '@/components/editor/utils/prepare-citation-insertion';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import {
   ContextMenu,
@@ -52,6 +53,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
   const openId = usePluginOption(BlockMenuPlugin, 'openId');
   const isOpen = openId === BLOCK_CONTEXT_MENU_ID;
   const { openSearch } = useCitationStore();
+  const { t, language } = useLanguage();
   const contentClass =
     'w-64 rounded-lg border border-gray-200 bg-white text-gray-900 shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50';
   const subContentClass =
@@ -357,14 +359,14 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               }}
             >
               <Wand2 className={iconClass} />
-              KI fragen
+              {t('toolbar.askAi')}
             </ContextMenuItem>
             <ContextMenuItem
               className={itemClass}
               onClick={handleInsertCitation}
             >
               <Quote className={iconClass} />
-              Zitat einfügen
+              {t('toolbar.insertCitation')}
             </ContextMenuItem>
             <ContextMenuItem
               className={itemClass}
@@ -376,7 +378,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               }}
             >
               <Trash2 className={iconClass} />
-              Löschen
+              {t('common.delete')}
             </ContextMenuItem>
             <ContextMenuItem
               className={itemClass}
@@ -387,13 +389,13 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               }}
             >
               <CopyPlus className={iconClass} />
-              Duplizieren
+              {t('toolbar.duplicate')}
               {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
             </ContextMenuItem>
             <ContextMenuSub>
               <ContextMenuSubTrigger className={itemClass}>
                 <ArrowRightLeft className={iconClass} />
-                Textformat ändern
+                {t('toolbar.changeTextFormat')}
               </ContextMenuSubTrigger>
               <ContextMenuSubContent className={subContentClass}>
                 <ContextMenuItem
@@ -401,7 +403,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                   onClick={() => handleTurnInto(KEYS.p)}
                 >
                   <Type className={iconClass} />
-                  Absatz
+                  {t('toolbar.paragraph')}
                 </ContextMenuItem>
 
                 <ContextMenuItem
@@ -409,41 +411,41 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                   onClick={() => handleTurnInto(KEYS.h1)}
                 >
                   <Heading1 className={iconClass} />
-                  Überschrift 1
+                  {t('toolbar.heading1')}
                 </ContextMenuItem>
                 <ContextMenuItem
                   className={itemClass}
                   onClick={() => handleTurnInto(KEYS.h2)}
                 >
                   <Heading2 className={iconClass} />
-                  Überschrift 2
+                  {t('toolbar.heading2')}
                 </ContextMenuItem>
                 <ContextMenuItem
                   className={itemClass}
                   onClick={() => handleTurnInto(KEYS.h3)}
                 >
                   <Heading3 className={iconClass} />
-                  Überschrift 3
+                  {t('toolbar.heading3')}
                 </ContextMenuItem>
                 <ContextMenuItem
                   className={itemClass}
                   onClick={() => handleTurnInto(KEYS.blockquote)}
                 >
                   <Quote className={iconClass} />
-                  Zitatblock
+                  {t('toolbar.blockquote')}
                 </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>
             {hasInlineEquation() && (
               <ContextMenuItem className={itemClass} onClick={handleInlineEquationToBlock}>
                 <ArrowRightLeft className={iconClass} />
-                Inline-Formel in Block umwandeln
+                {t('toolbar.convertInlineToBlock')}
               </ContextMenuItem>
             )}
             {hasBlockEquation() && (
               <ContextMenuItem className={itemClass} onClick={handleBlockEquationToInline}>
                 <ArrowRightLeft className={iconClass} />
-                Block-Formel in Inline umwandeln
+                {t('toolbar.convertBlockToInline')}
               </ContextMenuItem>
             )}
           </ContextMenuGroup>
@@ -458,7 +460,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               }
             >
               <CornerDownRight className={iconClass} />
-              Einzug vergrößern
+              {t('toolbar.increaseIndent')}
             </ContextMenuItem>
             <ContextMenuItem
               className={itemClass}
@@ -469,12 +471,12 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               }
             >
               <CornerDownLeft className={iconClass} />
-              Einzug verkleinern
+              {t('toolbar.decreaseIndent')}
             </ContextMenuItem>
             <ContextMenuSub>
               <ContextMenuSubTrigger className={itemClass}>
                 <AlignLeft className={iconClass} />
-                Ausrichten
+                {t('toolbar.align')}
               </ContextMenuSubTrigger>
               <ContextMenuSubContent className={subContentClass}>
                 <ContextMenuItem
@@ -482,21 +484,21 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                   onClick={() => handleAlign('left')}
                 >
                   <AlignLeft className={iconClass} />
-                  Links
+                  {t('toolbar.alignLeft')}
                 </ContextMenuItem>
                 <ContextMenuItem
                   className={itemClass}
                   onClick={() => handleAlign('center')}
                 >
                   <AlignCenter className={iconClass} />
-                  Zentriert
+                  {t('toolbar.alignCenter')}
                 </ContextMenuItem>
                 <ContextMenuItem
                   className={itemClass}
                   onClick={() => handleAlign('right')}
                 >
                   <AlignRight className={iconClass} />
-                  Rechts
+                  {t('toolbar.alignRight')}
                 </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>

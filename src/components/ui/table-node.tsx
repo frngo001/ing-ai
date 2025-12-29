@@ -72,6 +72,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { blockSelectionVariants } from './block-selection';
 import {
@@ -161,8 +162,21 @@ function TableFloatingToolbar({
     [selected]
   );
   const isFocusedLast = useFocusedLast();
+  const { t, language } = useLanguage();
 
   const { canMerge, canSplit } = useTableMergeState();
+
+  const backgroundColorText = React.useMemo(() => t('toolbar.backgroundColor'), [t, language]);
+  const mergeCellsText = React.useMemo(() => t('toolbar.mergeCells'), [t, language]);
+  const splitCellText = React.useMemo(() => t('toolbar.splitCell'), [t, language]);
+  const cellBordersText = React.useMemo(() => t('toolbar.cellBorders'), [t, language]);
+  const deleteTableText = React.useMemo(() => t('common.deleteTable'), [t, language]);
+  const insertRowAboveText = React.useMemo(() => t('toolbar.insertRowAbove'), [t, language]);
+  const insertRowBelowText = React.useMemo(() => t('toolbar.insertRowBelow'), [t, language]);
+  const deleteRowText = React.useMemo(() => t('common.deleteRow'), [t, language]);
+  const insertColumnLeftText = React.useMemo(() => t('toolbar.insertColumnLeft'), [t, language]);
+  const insertColumnRightText = React.useMemo(() => t('toolbar.insertColumnRight'), [t, language]);
+  const deleteColumnText = React.useMemo(() => t('common.deleteColumn'), [t, language]);
 
   return (
     <Popover
@@ -181,14 +195,14 @@ function TableFloatingToolbar({
           contentEditable={false}
         >
           <ToolbarGroup>
-          <ColorDropdownMenu tooltip="Hintergrundfarbe">
+          <ColorDropdownMenu tooltip={backgroundColorText}>
               <PaintBucketIcon />
             </ColorDropdownMenu>
             {canMerge && (
               <ToolbarButton
                 onClick={() => tf.table.merge()}
                 onMouseDown={(e) => e.preventDefault()}
-                tooltip="Zellen zusammenführen"
+                tooltip={mergeCellsText}
               >
                 <CombineIcon />
               </ToolbarButton>
@@ -197,7 +211,7 @@ function TableFloatingToolbar({
               <ToolbarButton
                 onClick={() => tf.table.split()}
                 onMouseDown={(e) => e.preventDefault()}
-                tooltip="Zelle teilen"
+                tooltip={splitCellText}
               >
                 <SquareSplitHorizontalIcon />
               </ToolbarButton>
@@ -205,7 +219,7 @@ function TableFloatingToolbar({
 
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <ToolbarButton tooltip="Zellenrahmen">
+                <ToolbarButton tooltip={cellBordersText}>
                   <Grid2X2Icon />
                 </ToolbarButton>
               </DropdownMenuTrigger>
@@ -217,7 +231,7 @@ function TableFloatingToolbar({
 
             {collapsedInside && (
               <ToolbarGroup>
-                <ToolbarButton tooltip="Tabelle löschen" {...buttonProps}>
+                <ToolbarButton tooltip={deleteTableText} {...buttonProps}>
                   <Trash2Icon />
                 </ToolbarButton>
               </ToolbarGroup>
@@ -231,7 +245,7 @@ function TableFloatingToolbar({
                   tf.insert.tableRow({ before: true });
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                tooltip="Zeile oberhalb einfügen"
+                tooltip={insertRowAboveText}
               >
                 <ArrowUp />
               </ToolbarButton>
@@ -240,7 +254,7 @@ function TableFloatingToolbar({
                   tf.insert.tableRow();
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                tooltip="Zeile unterhalb einfügen"
+                tooltip={insertRowBelowText}
               >
                 <ArrowDown />
               </ToolbarButton>
@@ -249,7 +263,7 @@ function TableFloatingToolbar({
                   tf.remove.tableRow();
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                tooltip="Zeile löschen"
+                tooltip={deleteRowText}
               >
                 <XIcon />
               </ToolbarButton>
@@ -263,7 +277,7 @@ function TableFloatingToolbar({
                   tf.insert.tableColumn({ before: true });
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                tooltip="Spalte links einfügen"
+                tooltip={insertColumnLeftText}
               >
                 <ArrowLeft />
               </ToolbarButton>
@@ -272,7 +286,7 @@ function TableFloatingToolbar({
                   tf.insert.tableColumn();
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                tooltip="Spalte rechts einfügen"
+                tooltip={insertColumnRightText}
               >
                 <ArrowRight />
               </ToolbarButton>
@@ -281,7 +295,7 @@ function TableFloatingToolbar({
                   tf.remove.tableColumn();
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                tooltip="Spalte löschen"
+                tooltip={deleteColumnText}
               >
                 <XIcon />
               </ToolbarButton>
@@ -297,6 +311,7 @@ function TableBordersDropdownMenuContent(
   props: React.ComponentProps<typeof DropdownMenuPrimitive.Content>
 ) {
   const editor = useEditorRef();
+  const { t, language } = useLanguage();
   const {
     getOnSelectTableBorder,
     hasBottomBorder,
@@ -306,6 +321,13 @@ function TableBordersDropdownMenuContent(
     hasRightBorder,
     hasTopBorder,
   } = useTableBordersDropdownMenuContentState();
+
+  const borderTopText = React.useMemo(() => t('toolbar.borderTop'), [t, language]);
+  const borderRightText = React.useMemo(() => t('toolbar.borderRight'), [t, language]);
+  const borderBottomText = React.useMemo(() => t('toolbar.borderBottom'), [t, language]);
+  const borderLeftText = React.useMemo(() => t('toolbar.borderLeft'), [t, language]);
+  const noBorderText = React.useMemo(() => t('toolbar.noBorder'), [t, language]);
+  const outerBordersText = React.useMemo(() => t('toolbar.outerBorders'), [t, language]);
 
   return (
     <DropdownMenuContent
@@ -325,28 +347,28 @@ function TableBordersDropdownMenuContent(
           onCheckedChange={getOnSelectTableBorder('top')}
         >
           <BorderTopIcon />
-          <div>Rand oben</div>
+          <div>{borderTopText}</div>
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={hasRightBorder}
           onCheckedChange={getOnSelectTableBorder('right')}
         >
           <BorderRightIcon />
-          <div>Rand rechts</div>
+          <div>{borderRightText}</div>
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={hasBottomBorder}
           onCheckedChange={getOnSelectTableBorder('bottom')}
         >
           <BorderBottomIcon />
-          <div>Rand unten</div>
+          <div>{borderBottomText}</div>
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={hasLeftBorder}
           onCheckedChange={getOnSelectTableBorder('left')}
         >
           <BorderLeftIcon />
-          <div>Rand links</div>
+          <div>{borderLeftText}</div>
         </DropdownMenuCheckboxItem>
       </DropdownMenuGroup>
 
@@ -356,14 +378,14 @@ function TableBordersDropdownMenuContent(
           onCheckedChange={getOnSelectTableBorder('none')}
         >
           <BorderNoneIcon />
-          <div>Kein Rand</div>
+          <div>{noBorderText}</div>
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={hasOuterBorders}
           onCheckedChange={getOnSelectTableBorder('outer')}
         >
           <BorderAllIcon />
-          <div>Außenränder</div>
+          <div>{outerBordersText}</div>
         </DropdownMenuCheckboxItem>
       </DropdownMenuGroup>
     </DropdownMenuContent>
@@ -378,9 +400,13 @@ function ColorDropdownMenu({
   tooltip: string;
 }) {
   const [open, setOpen] = React.useState(false);
+  const { t, language } = useLanguage();
 
   const editor = useEditorRef();
   const selectedCells = usePluginOption(TablePlugin, 'selectedCells');
+
+  const colorsText = React.useMemo(() => t('toolbar.colors'), [t, language]);
+  const resetText = React.useMemo(() => t('toolbar.reset'), [t, language]);
 
   const onUpdateColor = React.useCallback(
     (color: string) => {
@@ -405,7 +431,7 @@ function ColorDropdownMenu({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start">
-        <ToolbarMenuGroup label="Farben">
+        <ToolbarMenuGroup label={colorsText}>
           <ColorDropdownMenuItems
             className="px-2"
             colors={DEFAULT_COLORS}
@@ -415,7 +441,7 @@ function ColorDropdownMenu({
         <DropdownMenuGroup>
           <DropdownMenuItem className="p-2" onClick={onClearColor}>
             <EraserIcon />
-            <span>Zurücksetzen</span>
+            <span>{resetText}</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

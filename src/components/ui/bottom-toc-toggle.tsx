@@ -1,19 +1,25 @@
 'use client';
 
+import * as React from 'react';
 import { ListOrdered, MessageCircleWarning, BookOpenCheck } from 'lucide-react';
 
 import { useVisibilityStore } from '@/lib/stores/visibility-store';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { ToolbarButton, ToolbarGroup } from './toolbar';
 
 export function BottomTocToggle() {
   const { tocEnabled, toggleToc } = useVisibilityStore();
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.toc'), [t, language]);
+  const tableOfContentsText = React.useMemo(() => t('toolbar.tableOfContents'), [t, language]);
 
   return (
     <ToolbarGroup className="flex">
       <ToolbarButton
-        tooltip="Inhaltsverzeichnis ein/ausblenden"
+        tooltip={tooltipText}
         pressed={tocEnabled}
         className={cn(
           'text-xs bg-none text-muted-foreground hover:text-muted-foreground dark:bg-transparent dark:hover:text-foreground/50',
@@ -27,7 +33,7 @@ export function BottomTocToggle() {
           )}
           aria-hidden
         />
-        Inhaltsverzeichnis
+        {tableOfContentsText}
       </ToolbarButton>
     </ToolbarGroup>
   );
@@ -35,11 +41,15 @@ export function BottomTocToggle() {
 
 export function BottomCommentTocToggle() {
   const { commentTocEnabled, toggleCommentToc } = useVisibilityStore();
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.commentToc'), [t, language]);
+  const commentsText = React.useMemo(() => t('sidebar.comments'), [t, language]);
 
   return (
     <ToolbarGroup className="flex">
       <ToolbarButton
-        tooltip="Kommentarverzeichnis ein/ausblenden"
+        tooltip={tooltipText}
         pressed={commentTocEnabled}
         className={cn(
           'text-xs bg-none text-muted-foreground hover:text-muted-foreground dark:bg-transparent dark:hover:text-foreground/50',
@@ -55,7 +65,7 @@ export function BottomCommentTocToggle() {
           )}
           aria-hidden
         />
-        Kommentare
+        {commentsText}
       </ToolbarButton>
     </ToolbarGroup>
   );
@@ -63,11 +73,15 @@ export function BottomCommentTocToggle() {
 
 export function BottomSuggestionTocToggle() {
   const { suggestionTocEnabled, toggleSuggestionToc } = useVisibilityStore();
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.suggestionToc'), [t, language]);
+  const suggestionText = React.useMemo(() => t('toolbar.suggestion'), [t, language]);
 
   return (
     <ToolbarGroup className="flex">
       <ToolbarButton
-        tooltip="Vorschlagsverzeichnis ein/ausblenden"
+        tooltip={tooltipText}
         pressed={suggestionTocEnabled}
         className={cn(
           'text-xs bg-none text-muted-foreground hover:text-muted-foreground dark:bg-transparent dark:hover:text-foreground/50',
@@ -83,7 +97,7 @@ export function BottomSuggestionTocToggle() {
           )}
           aria-hidden
         />
-        Vorschläge
+        {suggestionText}
       </ToolbarButton>
     </ToolbarGroup>
   );
