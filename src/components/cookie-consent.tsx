@@ -6,6 +6,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { hasConsentRecord, saveConsent } from "@/lib/cookie-consent"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 /**
  * Cookie Consent Banner
@@ -14,6 +15,7 @@ import { hasConsentRecord, saveConsent } from "@/lib/cookie-consent"
  * Gemäß DSGVO muss der Banner auf allen Seiten sichtbar sein.
  */
 export function CookieConsent() {
+  const { t } = useLanguage()
   const [showBanner, setShowBanner] = useState(false)
   const [hasConsent, setHasConsent] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -120,21 +122,17 @@ export function CookieConsent() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-2">
                       <h3 className="text-base font-semibold leading-tight tracking-tight">
-                        Cookie-Einstellungen
+                        {t('cookieConsent.title')}
                       </h3>
                       <p className="text-muted-foreground text-sm leading-relaxed max-w-3xl">
-                        Wir verwenden Cookies, um dir die bestmögliche Erfahrung zu bieten. 
-                        Einige Cookies sind für den Betrieb der Website erforderlich, während 
-                        andere uns helfen, diese Website und die Nutzererfahrung zu verbessern. 
-                        Durch Klicken auf "Alle akzeptieren" stimmst du der Verwendung aller Cookies zu. 
-                        Du kannst deine Einstellungen jederzeit in der{" "}
+                        {t('cookieConsent.description')}{" "}
                         <Link
                           href="/privacy"
                           className="font-medium underline underline-offset-4 hover:text-foreground transition-colors"
                         >
-                          Datenschutzerklärung
+                          {t('cookieConsent.privacyPolicy')}
                         </Link>{" "}
-                        ändern.
+                        {t('cookieConsent.descriptionEnd')}
                       </p>
                     </div>
                     <Button
@@ -142,9 +140,9 @@ export function CookieConsent() {
                       size="sm"
                       className="h-8 px-3 shrink-0 text-muted-foreground hover:text-foreground"
                       onClick={handleClose}
-                      aria-label="Banner schließen"
+                      aria-label={t('cookieConsent.closeAriaLabel')}
                     >
-                      Schließen
+                      {t('cookieConsent.close')}
                     </Button>
                   </div>
                 </div>
@@ -155,14 +153,14 @@ export function CookieConsent() {
                     onClick={handleDecline}
                     className="whitespace-nowrap font-medium transition-all hover:bg-accent/50"
                   >
-                    Ablehnen
+                    {t('cookieConsent.decline')}
                   </Button>
                   <Button
                     size="default"
                     onClick={handleAccept}
                     className="whitespace-nowrap font-medium transition-all"
                   >
-                    Alle akzeptieren
+                    {t('cookieConsent.acceptAll')}
                   </Button>
                 </div>
               </div>
