@@ -5,7 +5,7 @@ export const CHAT_HISTORY_STORAGE_KEY = "ask-ai-chat-history"
 export const SAVED_MESSAGES_STORAGE_KEY = "ask-ai-saved-messages"
 
 export const defaultContext: ContextSelection = {
-  document: true,
+  document: false, // Deaktiviert für Standard-Chat
   web: true,
   agentMode: 'standard',
 }

@@ -94,7 +94,6 @@ ${fileSections.join('\n\n---\n\n')}`
       },
       toolChoice: 'auto',
       stopWhen: stepCountIs(5),
-      maxOutputTokens: 4096,
     })
 
     const agentStream = agent.stream({

@@ -1,8 +1,6 @@
 import { deepseek, DEEPSEEK_CHAT_MODEL } from '@/lib/ai/deepseek'
 import { GENERAL_CHAT_PROMPT } from '@/lib/ai/prompts'
 import { streamText, stepCountIs } from 'ai'
-import { tavilyCrawl, tavilyMap, tavilySearch } from '@tavily/ai-sdk'
-import { tavilyExtract } from '@tavily/ai-sdk'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -42,7 +40,6 @@ ${truncatedContent}
 \`\`\`
 
 Beziehe dich auf diesen Text, wenn der Nutzer danach fragt oder wenn es relevant ist.`
-            console.log('[ASK] Editor-Kontext aktiviert:', { wordCount, contentLength: editorContent.length })
         }
 
         // Baue Datei-Content-Sektion, wenn Dateien hochgeladen wurden
@@ -75,7 +72,6 @@ ${fileSections.join('\n\n---\n\n')}`
                 console.warn(`[ASK] Warnung: ${fileContents.length} Datei(en) erhalten, aber keine mit gültigem Inhalt`)
             }
         } else {
-            console.log('[ASK] Keine Datei-Contents erhalten')
         }
 
         const systemPrompt = [
@@ -87,16 +83,6 @@ ${fileSections.join('\n\n---\n\n')}`
         ]
             .filter(Boolean)
             .join("\n\n")
-        
-
-
-        const tools: any = {}
-        if (useWeb) {
-            tools.webSearch = tavilySearch()
-            tools.webCrawl = tavilyCrawl()
-            tools.webExtract = tavilyExtract()
-            tools.webMap = tavilyMap()
-        }
 
         const result = streamText({
             model: deepseek(DEEPSEEK_CHAT_MODEL),
@@ -105,10 +91,9 @@ ${fileSections.join('\n\n---\n\n')}`
                 role: m.role === "assistant" ? "assistant" : "user",
                 content: m.content,
             })),
-            tools: useWeb ? tools : undefined,
+            tools: undefined,
             toolChoice: 'auto',
             stopWhen: stepCountIs(10),
-                maxOutputTokens: 8192, 
             })
 
         return result.toUIMessageStreamResponse()

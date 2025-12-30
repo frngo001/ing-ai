@@ -824,7 +824,11 @@ export function AskAiPane({
                       <Select
                         value={context.agentMode}
                         onValueChange={(value: AgentMode) => {
-                          setContext((prev) => ({ ...prev, agentMode: value }))
+                          setContext((prev) => {
+                            // Deaktiviere Editor-Context automatisch beim Wechsel zu Standard-Chat
+                            const document = value === 'standard' ? false : prev.document
+                            return { ...prev, agentMode: value, document }
+                          })
                         }}
                       >
                         <SelectTrigger className="h-8 max-w-32 text-xs border-0 bg-transparent shadow-none focus:ring-0 focus:outline-none [&>span]:pr-0">
