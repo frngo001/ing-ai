@@ -1,11 +1,13 @@
 "use client"
 
 import { Check, Copy } from "lucide-react"
+import { useMemo } from "react"
 
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 type CopyButtonProps = {
   content: string
@@ -20,6 +22,14 @@ export function CopyButton({ content, copyMessage, className }: CopyButtonProps)
     withToast: false,
   })
 
+  const { t, language } = useLanguage()
+
+  // Memoized translations that update on language change
+  const translations = useMemo(() => ({
+    copy: t('common.copy'),
+    copied: t('common.copied'),
+  }), [t, language])
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -27,7 +37,7 @@ export function CopyButton({ content, copyMessage, className }: CopyButtonProps)
           variant="ghost"
           size="icon"
           className={cn("relative h-8 w-8", className)}
-          aria-label="Kopieren"
+          aria-label={translations.copy}
           onClick={handleCopy}
         >
           <div className="absolute inset-0 flex items-center justify-center">
@@ -46,7 +56,7 @@ export function CopyButton({ content, copyMessage, className }: CopyButtonProps)
           />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom">{isCopied ? "Kopiert" : "Kopieren"}</TooltipContent>
+      <TooltipContent side="bottom">{isCopied ? translations.copied : translations.copy}</TooltipContent>
     </Tooltip>
   )
 }

@@ -31,6 +31,7 @@ import { insertCitationWithMerge } from '@/components/editor/utils/insert-citati
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils';
 import { extractTitleFromContent, extractTextFromNode } from '@/lib/supabase/utils/document-title';
 import { getCurrentUserId } from '@/lib/supabase/utils/auth';
+import { createClient } from '@/lib/supabase/client';
 import * as documentsUtils from '@/lib/supabase/utils/documents';
 import {
   type TDiscussion,
@@ -82,6 +83,85 @@ export function PlateEditor({
   const addCitation = useCitationStore((state) => state.addCitation);
   const pendingCitation = useCitationStore((state) => state.pendingCitation);
   const setPendingCitation = useCitationStore((state) => state.setPendingCitation);
+  const supabase = createClient();
+
+  // Lade aktuellen User und aktualisiere Plugin-Optionen
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !editor) return;
+
+    const loadCurrentUser = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          const userId = session.user.id;
+          const userName =
+            session.user.user_metadata?.full_name ||
+            session.user.email?.split('@')[0] ||
+            'User';
+          const avatarUrl =
+            session.user.user_metadata?.avatar_url ||
+            `https://api.dicebear.com/9.x/glass/svg?seed=${userId}`;
+
+          // Hole aktuelle Users-Daten aus dem Plugin
+          const currentUsers = editor.getOption(discussionPlugin, 'users') || {};
+          
+          // Aktualisiere Users-Daten mit dem aktuellen User
+          const updatedUsers = {
+            ...currentUsers,
+            [userId]: {
+              id: userId,
+              avatarUrl: avatarUrl,
+              name: userName,
+            },
+          };
+
+          // Aktualisiere Plugin-Optionen
+          editor.setOption(discussionPlugin, 'currentUserId', userId);
+          editor.setOption(discussionPlugin, 'users', updatedUsers);
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden des aktuellen Users:', error);
+      }
+    };
+
+    loadCurrentUser();
+
+    // Höre auf Auth-Status-Änderungen
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const userId = session.user.id;
+        const userName =
+          session.user.user_metadata?.full_name ||
+          session.user.email?.split('@')[0] ||
+          'User';
+        const avatarUrl =
+          session.user.user_metadata?.avatar_url ||
+          `https://api.dicebear.com/9.x/glass/svg?seed=${userId}`;
+
+        const currentUsers = editor.getOption(discussionPlugin, 'users') || {};
+        const updatedUsers = {
+          ...currentUsers,
+          [userId]: {
+            id: userId,
+            avatarUrl: avatarUrl,
+            name: userName,
+          },
+        };
+
+        editor.setOption(discussionPlugin, 'currentUserId', userId);
+        editor.setOption(discussionPlugin, 'users', updatedUsers);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [editor, supabase]);
 
   // Editor-Instance für Text-Einfügung verfügbar machen
   React.useEffect(() => {

@@ -170,7 +170,7 @@ function TableFloatingToolbar({
   const mergeCellsText = React.useMemo(() => t('toolbar.mergeCells'), [t, language]);
   const splitCellText = React.useMemo(() => t('toolbar.splitCell'), [t, language]);
   const cellBordersText = React.useMemo(() => t('toolbar.cellBorders'), [t, language]);
-  const deleteTableText = React.useMemo(() => t('common.deleteTable'), [t, language]);
+  const deleteTableText = React.useMemo(() => t('toolbar.deleteTable'), [t, language]);
   const insertRowAboveText = React.useMemo(() => t('toolbar.insertRowAbove'), [t, language]);
   const insertRowBelowText = React.useMemo(() => t('toolbar.insertRowBelow'), [t, language]);
   const deleteRowText = React.useMemo(() => t('common.deleteRow'), [t, language]);

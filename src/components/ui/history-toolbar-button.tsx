@@ -6,6 +6,7 @@ import { Redo2Icon, Undo2Icon } from 'lucide-react';
 import { useEditorRef, useEditorSelector } from 'platejs/react';
 
 import { ToolbarButton } from './toolbar';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 export function RedoToolbarButton(
   props: React.ComponentProps<typeof ToolbarButton>
@@ -15,6 +16,10 @@ export function RedoToolbarButton(
     (editor) => editor.history.redos.length === 0,
     []
   );
+  const { t, language } = useLanguage();
+
+  // Memoized translations that update on language change
+  const tooltipText = React.useMemo(() => t('toolbar.redo'), [t, language]);
 
   return (
     <ToolbarButton
@@ -22,7 +27,7 @@ export function RedoToolbarButton(
       disabled={disabled}
       onClick={() => editor.redo()}
       onMouseDown={(e) => e.preventDefault()}
-      tooltip="Wiederholen"
+      tooltip={tooltipText}
     >
       <Redo2Icon />
     </ToolbarButton>
@@ -37,6 +42,10 @@ export function UndoToolbarButton(
     (editor) => editor.history.undos.length === 0,
     []
   );
+  const { t, language } = useLanguage();
+
+  // Memoized translations that update on language change
+  const tooltipText = React.useMemo(() => t('toolbar.undo'), [t, language]);
 
   return (
     <ToolbarButton
@@ -44,7 +53,7 @@ export function UndoToolbarButton(
       disabled={disabled}
       onClick={() => editor.undo()}
       onMouseDown={(e) => e.preventDefault()}
-      tooltip="Rückgängig"
+      tooltip={tooltipText}
     >
       <Undo2Icon />
     </ToolbarButton>

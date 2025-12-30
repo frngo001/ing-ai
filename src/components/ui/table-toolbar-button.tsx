@@ -59,7 +59,7 @@ export function TableToolbarButton(props: DropdownMenuProps) {
   const insertColumnLeftText = React.useMemo(() => t('toolbar.insertColumnLeft'), [t, language]);
   const insertColumnRightText = React.useMemo(() => t('toolbar.insertColumnRight'), [t, language]);
   const deleteColumnText = React.useMemo(() => t('common.deleteColumn'), [t, language]);
-  const deleteTableText = React.useMemo(() => t('common.deleteTable'), [t, language]);
+  const deleteTableText = React.useMemo(() => t('toolbar.deleteTable'), [t, language]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>

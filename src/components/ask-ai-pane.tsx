@@ -83,6 +83,7 @@ import {
   defaultContext,
   addSourcesToLibrary,
   saveSlashCommands,
+  saveSingleSlashCommand,
   loadSlashCommands,
   persistConversation,
   loadChatHistory,
@@ -795,7 +796,7 @@ export function AskAiPane({
                     <div className="border-t border-border/60 pt-2 px-3 sm:px-4 pb-1 sticky bottom-0 bg-popover">
                       <button
                         type="button"
-                        className="w-full rounded-md border border-primary/50 bg-primary text-primary-foreground px-3 py-2 text-sm sm:text-sm font-medium hover:bg-primary/90 transition-colors"
+                        className="w-full rounded-md border border-primary/50 bg-primary text-primary-foreground px-2.5 py-1.5 text-xs font-normal hover:bg-primary/90 transition-colors"
                         onClick={handleSlashCreate}
                       >
                         {translations.saveCommand}
@@ -1121,19 +1122,35 @@ export function AskAiPane({
               </DialogClose>
               <Button
                 disabled={!newSlashLabel.trim() || !newSlashContent.trim()}
-                onClick={() => {
+                onClick={async () => {
                   const content = newSlashContent.trim()
                   if (!content) return
                   const label = newSlashLabel.trim()
                   if (!label) return
+                  
                   const newCommand: SlashCommand = {
                     id: crypto.randomUUID(),
                     label,
                     content,
                   }
-                  const next = [...slashCommands, newCommand]
-                  setSlashCommands(next)
-                  saveSlashCommands(next)
+                  
+                  try {
+                    // Speichere den Command in der Datenbank
+                    const savedCommand = await saveSingleSlashCommand(newCommand)
+                    
+                    // Lade Commands neu aus der Datenbank
+                    const reloadedCommands = await loadSlashCommands()
+                    setSlashCommands(reloadedCommands)
+                    
+                    toast.success(t('askAi.commandSaved') || 'Command gespeichert')
+                  } catch (error) {
+                    console.error('Fehler beim Speichern des Commands:', error)
+                    toast.error(t('askAi.commandSaveError') || 'Fehler beim Speichern')
+                    // Fallback: Füge lokal hinzu
+                    const next = [...slashCommands, newCommand]
+                    setSlashCommands(next)
+                  }
+                  
                   setSlashDialogOpen(false)
                   setNewSlashContent("")
                   setNewSlashLabel("")

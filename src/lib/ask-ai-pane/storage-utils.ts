@@ -48,6 +48,46 @@ export const saveSlashCommands = async (commands: SlashCommand[]) => {
   }
 }
 
+export const saveSingleSlashCommand = async (command: SlashCommand): Promise<SlashCommand> => {
+  const userId = await getCurrentUserId()
+  
+  if (userId) {
+    try {
+      // Erstelle neuen Command in der Datenbank
+      const created = await slashCommandsUtils.createSlashCommand({
+        user_id: userId,
+        label: command.label,
+        content: command.content,
+      })
+      
+      return {
+        id: created.id,
+        label: created.label,
+        content: created.content,
+      }
+    } catch (error) {
+      console.error('❌ [STORAGE] Fehler beim Speichern des Slash Commands:', error)
+      // Fallback auf localStorage
+      if (isLocalStorageAvailable()) {
+        const stored = localStorage.getItem(SLASH_STORAGE_KEY)
+        const commands = stored ? JSON.parse(stored) as SlashCommand[] : []
+        const updated = [...commands, command]
+        localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(updated))
+      }
+      return command
+    }
+  } else {
+    // Fallback auf localStorage wenn kein User eingeloggt
+    if (isLocalStorageAvailable()) {
+      const stored = localStorage.getItem(SLASH_STORAGE_KEY)
+      const commands = stored ? JSON.parse(stored) as SlashCommand[] : []
+      const updated = [...commands, command]
+      localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(updated))
+    }
+    return command
+  }
+}
+
 export const loadSlashCommands = async (): Promise<SlashCommand[]> => {
   const userId = await getCurrentUserId()
   
