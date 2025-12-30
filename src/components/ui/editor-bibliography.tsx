@@ -9,6 +9,7 @@ import { useCitationStore } from '@/lib/stores/citation-store';
 import type { TCitationElement } from '@/components/editor/plugins/citation-kit';
 import { citeWithBibify } from '@/lib/bibify';
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 type BibliographyItem = {
   path: Path;
@@ -21,6 +22,31 @@ export function EditorBibliography({ className: _className }: { className?: stri
   const prevSignature = React.useRef<string | null>(null);
   const [externalEntries, setExternalEntries] = React.useState<string[] | null>(null);
   const isExternalStyle = React.useMemo(() => citationStyle?.includes('.csl'), [citationStyle]);
+  const { t, language } = useLanguage();
+
+  // Memoized translations that update on language change
+  const translations = React.useMemo(() => ({
+    noAuthor: t('bibliography.noAuthor'),
+    untitled: t('bibliography.untitled'),
+    noDate: t('bibliography.noDate'),
+    volume: t('bibliography.volume'),
+    issue: t('bibliography.issue'),
+    pages: t('bibliography.pages'),
+    accessedOn: t('bibliography.accessedOn'),
+    in: t('bibliography.in'),
+    bibliography: t('bibliography.bibliography'),
+  }), [t, language]);
+
+  // Get locale based on current language
+  const locale = React.useMemo(() => {
+    const localeMap: Record<string, string> = {
+      en: 'en-US',
+      es: 'es-ES',
+      fr: 'fr-FR',
+      de: 'de-DE',
+    };
+    return localeMap[language] || 'en-US';
+  }, [language]);
 
   const normalizeTitle = React.useCallback((title: TCitationElement['title']) => {
     if (typeof title === 'string') return title.trim();
@@ -34,7 +60,7 @@ export function EditorBibliography({ className: _className }: { className?: stri
   }, []);
 
   const formatAuthors = React.useCallback((authors: TCitationElement['authors']) => {
-    if (!Array.isArray(authors) || authors.length === 0) return 'O. A.';
+    if (!Array.isArray(authors) || authors.length === 0) return translations.noAuthor;
 
     const formatAuthor = (a: TCitationElement['authors'][number]) => {
       const lastRaw =
@@ -51,7 +77,7 @@ export function EditorBibliography({ className: _className }: { className?: stri
     };
 
     const names = authors.map(formatAuthor).filter(Boolean);
-    if (names.length === 0) return 'O. A.';
+    if (names.length === 0) return translations.noAuthor;
     if (names.length === 1) return names[0];
     if (names.length === 2) return `${names[0]} & ${names[1]}`;
     if (names.length <= 6) {
@@ -59,7 +85,7 @@ export function EditorBibliography({ className: _className }: { className?: stri
       return `${head} & ${names[names.length - 1]}`;
     }
     return `${names.slice(0, 6).join(', ')}, ET AL.`;
-  }, []);
+  }, [translations.noAuthor]);
 
   const formatAccessDate = React.useCallback(
     (accessedAt?: string, accessParts?: number[]) => {
@@ -77,20 +103,20 @@ export function EditorBibliography({ className: _className }: { className?: stri
 
       if (!date || Number.isNaN(date.getTime())) return undefined;
 
-      return new Intl.DateTimeFormat('de-DE', {
+      return new Intl.DateTimeFormat(locale, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
       }).format(date);
     },
-    []
+    [locale]
   );
 
   const formatReferenceEntry = React.useCallback(
     (item: TCitationElement): { authors: string; rest: string; link?: string } => {
-      const title = normalizeTitle(item.title) || 'Unbenannt';
+      const title = normalizeTitle(item.title) || translations.untitled;
       const authors = formatAuthors(item.authors || []);
-      const year = item.year ?? 'n.d.';
+      const year = item.year ?? translations.noDate;
 
       // Verwende die gemeinsame Utility-Funktion für Link-Generierung
       // Priorität: direkter URL-Link > DOI-Link
@@ -113,9 +139,9 @@ export function EditorBibliography({ className: _className }: { className?: stri
       const publisher = item.publisher || '';
       const volumeIssue = (() => {
         if (!item.volume && !item.issue) return '';
-        if (item.volume && item.issue) return `Vol. ${item.volume} (Nr. ${item.issue})`;
-        if (item.volume) return `Vol. ${item.volume}`;
-        return `Nr. ${item.issue}`;
+        if (item.volume && item.issue) return `${translations.volume} ${item.volume} (${translations.issue} ${item.issue})`;
+        if (item.volume) return `${translations.volume} ${item.volume}`;
+        return `${translations.issue} ${item.issue}`;
       })();
       const pages = item.pages || (item as any)?.page || '';
       const identifiers = [
@@ -132,13 +158,13 @@ export function EditorBibliography({ className: _className }: { className?: stri
           : '';
 
       const accessSegment =
-        url && accessDate ? `Zugriff am ${accessDate}` : '';
+        url && accessDate ? `${translations.accessedOn} ${accessDate}` : '';
 
       const detailSegments = [
-        venue ? (item.sourceType === 'conference' ? `In ${venue}` : venue) : '',
+        venue ? (item.sourceType === 'conference' ? `${translations.in} ${venue}` : venue) : '',
         publisher,
         volumeIssue,
-        pages ? `pages ${pages}` : '',
+        pages ? `${translations.pages} ${pages}` : '',
         identifiers,
       ]
         .filter(Boolean)
@@ -188,7 +214,7 @@ export function EditorBibliography({ className: _className }: { className?: stri
         : baseWithPeriod;
       return build(fullRest);
     },
-    [citationStyle, formatAuthors, formatAccessDate, normalizeTitle]
+    [citationStyle, formatAuthors, formatAccessDate, normalizeTitle, translations]
   );
 
   const sortKey = React.useCallback(
@@ -272,7 +298,7 @@ export function EditorBibliography({ className: _className }: { className?: stri
         );
         const baseRest = externalEntries[index] || '';
         const accessAddition =
-          url && accessDate ? `Zugriff am ${accessDate}.` : '';
+          url && accessDate ? `${translations.accessedOn} ${accessDate}.` : '';
         const rest = [baseRest, accessAddition]
           .map((part) => part?.trim())
           .filter(Boolean)
@@ -313,6 +339,7 @@ export function EditorBibliography({ className: _className }: { className?: stri
     isExternalStyle,
     items,
     sortKey,
+    translations,
   ]);
 
   const signature = React.useMemo(() => {
@@ -404,7 +431,7 @@ export function EditorBibliography({ className: _className }: { className?: stri
           type: headingType,
           bibliography: true,
           bibliographyHeading: true,
-          children: [{ text: 'Quellenverzeichnis' }],
+          children: [{ text: translations.bibliography }],
         },
         ...bibliographyEntries.map((item, index) => {
           const prefix = citationStyle === 'vancouver' ? `[${index + 1}] ` : '';
@@ -447,7 +474,7 @@ export function EditorBibliography({ className: _className }: { className?: stri
 
       // Cursor ans Dokumentende bewegen, falls wir am Ende waren
     });
-  }, [editor, bibliographyEntries, items, signature]);
+  }, [editor, bibliographyEntries, items, signature, translations]);
 
   // Die sichtbare Ausgabe bleibt leer; die Inhalte werden in den Editor eingefügt.
   return null;

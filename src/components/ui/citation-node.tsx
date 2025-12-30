@@ -22,6 +22,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { citeWithBibify } from '@/lib/bibify';
 import { ExternalLink, Trash2, Unlink } from 'lucide-react';
 import { getNormalizedDoi } from '@/lib/citations/link-utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 export function CitationElement(
   props: PlateElementProps<TCitationElement & Record<string, unknown>>
@@ -41,6 +42,29 @@ export function CitationElement(
   } = useCitationStore();
   const editor = useEditorRef();
   const [externalLabel, setExternalLabel] = React.useState<string | null>(null);
+  const { t, language } = useLanguage();
+
+  // Memoized translations that update on language change
+  const translations = React.useMemo(() => ({
+    mergedCitations: t('citationNode.mergedCitations'),
+    entries: t('citationNode.entries'),
+    noAuthor: t('citationNode.noAuthor'),
+    volume: t('citationNode.volume'),
+    issue: t('citationNode.issue'),
+    pages: t('citationNode.pages'),
+    authors: t('citationNode.authors'),
+    type: t('citationNode.type'),
+    journalPublisher: t('citationNode.journalPublisher'),
+    pagesLabel: t('citationNode.pagesLabel'),
+    volumeLabel: t('citationNode.volumeLabel'),
+    issueLabel: t('citationNode.issueLabel'),
+    languageLabel: t('citationNode.languageLabel'),
+    year: t('citationNode.year'),
+    sourceId: t('citationNode.sourceId'),
+    openLink: t('citationNode.openLink'),
+    openDoi: t('citationNode.openDoi'),
+    deleteCitation: t('citationNode.deleteCitation'),
+  }), [t, language]);
 
   // Ensure title is a string
   const title = typeof element.title === 'string' ? element.title : String(element.title || '');
@@ -266,7 +290,7 @@ export function CitationElement(
   };
 
   const formatAuthorOnly = () => {
-    const authorText = formatAuthorsShort() || 'ohne Autor';
+    const authorText = formatAuthorsShort() || translations.noAuthor;
     if (citationAuthorVariant === 'with-parens') return `(${authorText})`;
     return authorText;
   };
@@ -394,9 +418,9 @@ export function CitationElement(
             {(runInfo?.entries?.length ?? 0) > 1 ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="font-medium">Gemergte Zitate</span>
+                  <span className="font-medium">{translations.mergedCitations}</span>
                   <span className="text-[11px] rounded bg-muted px-2 py-0.5">
-                    {runInfo?.entries?.length ?? 0} Einträge
+                    {runInfo?.entries?.length ?? 0} {translations.entries}
                   </span>
                 </div>
                 {runInfo?.entries?.map((entry, idx) => {
@@ -450,9 +474,9 @@ export function CitationElement(
                       <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                         {[
                           authorsFull,
-                          entryVolume && `Vol. ${entryVolume}`,
-                          entryIssue && `Nr. ${entryIssue}`,
-                          entryPages && `S. ${entryPages}`,
+                          entryVolume && `${translations.volume} ${entryVolume}`,
+                          entryIssue && `${translations.issue} ${entryIssue}`,
+                          entryPages && `${translations.pages} ${entryPages}`,
                           entryLanguage,
                           entryIsbn && `ISBN ${entryIsbn}`,
                           entryIssn && `ISSN ${entryIssn}`,
@@ -482,12 +506,12 @@ export function CitationElement(
                                 variant="ghost"
                             className="h-8 w-8 cursor-pointer text-emerald-600"
                                 onClick={() => window.open(entryUrl ?? url, '_blank')}
-                                aria-label="Link öffnen"
+                                aria-label={translations.openLink}
                               >
                             <ExternalLink className="size-3" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent side="bottom">Link öffnen</TooltipContent>
+                            <TooltipContent side="bottom">{translations.openLink}</TooltipContent>
                           </Tooltip>
                           {entryDoi && (
                             <Tooltip>
@@ -497,12 +521,12 @@ export function CitationElement(
                                   variant="ghost"
                                   className="h-8 w-8 cursor-pointer"
                                   onClick={() => window.open(`https://doi.org/${entryDoi}`, '_blank')}
-                                  aria-label="DOI öffnen"
+                                  aria-label={translations.openDoi}
                                 >
                                   <Unlink className="size-3" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent side="bottom">DOI öffnen</TooltipContent>
+                              <TooltipContent side="bottom">{translations.openDoi}</TooltipContent>
                             </Tooltip>
                           )}
                           <Tooltip>
@@ -512,12 +536,12 @@ export function CitationElement(
                                 variant="ghost"
                                 className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
                               onClick={() => handleDeleteEntry(entry.node, entry.path)}
-                                aria-label="Zitat löschen"
+                                aria-label={translations.deleteCitation}
                               >
                                 <Trash2 className="size-3 text-destructive hover:text-destructive" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent side="bottom">Zitat löschen</TooltipContent>
+                            <TooltipContent side="bottom">{translations.deleteCitation}</TooltipContent>
                           </Tooltip>
                         </div>
                         <span className="text-[11px] text-muted-foreground whitespace-nowrap"></span>
@@ -533,7 +557,7 @@ export function CitationElement(
                 </h4>
                 {citationData.authors?.length ? (
                   <p className="text-xs text-muted-foreground">
-                    Autoren:{' '}
+                    {translations.authors}{' '}
                     {citationData.authors
                       .map((a) => a.fullName || `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim())
                       .filter(Boolean)
@@ -541,39 +565,39 @@ export function CitationElement(
                   </p>
                 ) : null}
                 {element.type && (
-                  <p className="text-[11px] text-muted-foreground">Typ: {String(element.type)}</p>
+                  <p className="text-[11px] text-muted-foreground">{translations.type} {String(element.type)}</p>
                 )}
                 {(element as any)?.journal && (
                   <p className="text-[11px] text-muted-foreground break-words">
-                    Journal/Verlag: {(element as any).journal as string}
+                    {translations.journalPublisher} {(element as any).journal as string}
                   </p>
                 )}
                 {(element as any)?.pages && (
                   <p className="text-[11px] text-muted-foreground">
-                    Seiten: {(element as any).pages as string}
+                    {translations.pagesLabel} {(element as any).pages as string}
                   </p>
                 )}
                 {(element as any)?.volume && (
                   <p className="text-[11px] text-muted-foreground">
-                    Vol.: {(element as any).volume as string}
+                    {translations.volumeLabel} {(element as any).volume as string}
                   </p>
                 )}
                 {(element as any)?.issue && (
                   <p className="text-[11px] text-muted-foreground">
-                    Nr.: {(element as any).issue as string}
+                    {translations.issueLabel} {(element as any).issue as string}
                   </p>
                 )}
                 {(element as any)?.language && (
                   <p className="text-[11px] text-muted-foreground">
-                    Sprache: {(element as any).language as string}
+                    {translations.languageLabel} {(element as any).language as string}
                   </p>
                 )}
                 {element.year && (
-                  <p className="text-xs text-muted-foreground">Jahr: {element.year}</p>
+                  <p className="text-xs text-muted-foreground">{translations.year} {element.year}</p>
                 )}
                 {element.sourceId && (
                   <p className="text-xs text-muted-foreground break-words">
-                    Quelle-ID: {element.sourceId}
+                    {translations.sourceId} {element.sourceId}
                   </p>
                 )}
                 {url && (
@@ -599,12 +623,12 @@ export function CitationElement(
                           variant="ghost"
                           className="h-8 w-8 cursor-pointer text-emerald-600"
                           onClick={() => url && window.open(url, '_blank')}
-                          aria-label="Link öffnen"
+                          aria-label={translations.openLink}
                         >
                           <ExternalLink className="size-3" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="bottom">Link öffnen</TooltipContent>
+                      <TooltipContent side="bottom">{translations.openLink}</TooltipContent>
                     </Tooltip>
                     {doi && (
                       <Tooltip>
@@ -614,12 +638,12 @@ export function CitationElement(
                             variant="ghost"
                             className="h-8 w-8 cursor-pointer"
                             onClick={() => window.open(`https://doi.org/${doi}`, '_blank')}
-                            aria-label="DOI öffnen"
+                            aria-label={translations.openDoi}
                           >
                             <Unlink className="size-3" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom">DOI öffnen</TooltipContent>
+                        <TooltipContent side="bottom">{translations.openDoi}</TooltipContent>
                       </Tooltip>
                     )}
                     <Tooltip>
@@ -629,12 +653,12 @@ export function CitationElement(
                           variant="ghost"
                           className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
                           onClick={handleDeleteCurrent}
-                          aria-label="Zitat löschen"
+                          aria-label={translations.deleteCitation}
                         >
                           <Trash2 className="size-3 text-destructive hover:text-destructive" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="bottom">Zitat löschen</TooltipContent>
+                      <TooltipContent side="bottom">{translations.deleteCitation}</TooltipContent>
                     </Tooltip>
                   </div>
                   <span className="text-[11px] text-muted-foreground whitespace-nowrap"></span>

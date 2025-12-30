@@ -60,6 +60,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { commentPlugin } from '@/components/editor/plugins/comment-kit';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { AIChatEditor } from './ai-chat-editor';
 
@@ -77,6 +78,16 @@ export function AIMenu() {
   const [input, setInput] = React.useState('');
 
   const chat = usePluginOption(AIChatPlugin, 'chat');
+  const { t, language } = useLanguage();
+
+  // Memoized translations that update on language change
+  const translations = React.useMemo(() => ({
+    editing: t('aiMenu.editing'),
+    thinking: t('aiMenu.thinking'),
+    writing: t('aiMenu.writing'),
+    pleaseEnterPrompt: t('aiMenu.pleaseEnterPrompt'),
+    askAi: t('aiMenu.askAi'),
+  }), [t, language]);
 
   const { messages, status } = chat;
   const [anchorElement, setAnchorElement] = React.useState<HTMLElement | null>(
@@ -202,7 +213,7 @@ export function AIMenu() {
           {isLoading ? (
             <div className="flex grow select-none items-center gap-2 p-2 text-muted-foreground text-sm">
               <Loader2Icon className="size-4 animate-spin" />
-              {messages.length > 1 ? 'Bearbeite...' : 'Denke...'}
+              {messages.length > 1 ? translations.editing : translations.thinking}
             </div>
           ) : (
             <CommandPrimitive.Input
@@ -220,7 +231,7 @@ export function AIMenu() {
                 if (isHotkey('enter')(e) && !e.shiftKey && !value) {
                   e.preventDefault();
                   if (!input.trim()) {
-                    toast.warning('Bitte gib einen Prompt ein.');
+                    toast.warning(translations.pleaseEnterPrompt);
                     return;
                   }
                   void api.aiChat.submit(input.trim());
@@ -228,7 +239,7 @@ export function AIMenu() {
                 }
               }}
               onValueChange={setInput}
-              placeholder="Frage die KI nach etwas …"
+              placeholder={translations.askAi}
               data-plate-focus
               autoFocus
             />
@@ -240,6 +251,7 @@ export function AIMenu() {
                 input={input}
                 setInput={setInput}
                 setValue={setValue}
+                translations={translations}
               />
             </CommandList>
           )}
@@ -275,12 +287,12 @@ const AICommentIcon = () => (
   </svg>
 );
 
-const aiChatItems = {
+const createAiChatItems = (t: (key: string) => string) => ({
   accept: {
     icon: <Check />,
-    label: 'Annehmen',
+    label: t('aiMenu.accept'),
     value: 'accept',
-    onSelect: ({ aiEditor, editor }) => {
+    onSelect: ({ aiEditor, editor }: { aiEditor: SlateEditor; editor: PlateEditor }) => {
       const { mode, toolName } = editor.getOptions(AIChatPlugin);
 
       if (mode === 'chat' && toolName === 'generate') {
@@ -295,30 +307,29 @@ const aiChatItems = {
   },
   comment: {
     icon: <AICommentIcon />,
-    label: 'Kurz kommentieren',
+    label: t('aiMenu.comment'),
     value: 'comment',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       if (!input.trim()) {
-        toast.warning('Bitte tippe einen Text ein, bevor du kommentierst.');
+        toast.warning(t('aiMenu.pleaseEnterTextBeforeCommenting'));
         return;
       }
       editor.getApi(AIChatPlugin).aiChat.submit(input, {
         mode: 'insert',
-        prompt:
-          'Bitte gib ein kurzes, konstruktives Feedback zu folgendem Text.',
+        prompt: t('aiMenu.pleaseGiveBriefFeedback'),
         toolName: 'comment',
       });
     },
   },
   continueWrite: {
     icon: <PenLine />,
-    label: 'Text fortsetzen',
+    label: t('aiMenu.continueText'),
     value: 'continueWrite',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       const ancestorNode = editor.api.block({ highest: true });
 
       if (!ancestorNode) {
-        toast.warning('Setze den Cursor in einen Block, bevor du fortsetzt.');
+        toast.warning(t('aiMenu.pleaseSetCursorInBlock'));
         return;
       }
 
@@ -330,29 +341,29 @@ const aiChatItems = {
           ? `<Document>
 {editor}
 </Document>
-Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
-          : 'Schreibe nach <Block> genau einen weiteren Satz, ohne Wiederholungen.',
+${t('aiMenu.startNewParagraph')}`
+          : t('aiMenu.writeAnotherSentence'),
         toolName: 'generate',
       });
     },
   },
   discard: {
     icon: <X />,
-    label: 'Verwerfen',
+    label: t('aiMenu.discard'),
     shortcut: 'Escape',
     value: 'discard',
-    onSelect: ({ editor }) => {
+    onSelect: ({ editor }: { editor: PlateEditor }) => {
       editor.getTransforms(AIPlugin).ai.undo();
       editor.getApi(AIChatPlugin).aiChat.hide();
     },
   },
   emojify: {
     icon: <SmileIcon />,
-    label: 'Mit Emojis anreichern',
+    label: t('aiMenu.addEmojis'),
     value: 'emojify',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       if (!input.trim()) {
-        toast.warning('Bitte gib einen Text ein, bevor du Emojis hinzufügst.');
+        toast.warning(t('aiMenu.pleaseEnterTextBeforeAddingEmojis'));
         return;
       }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -363,17 +374,17 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   },
   explain: {
     icon: <BadgeHelp />,
-    label: 'Kurz erklären',
+    label: t('aiMenu.explainBriefly'),
     value: 'explain',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       if (!input.trim()) {
-        toast.warning('Bitte gib einen Text ein, bevor du erklärst.');
+        toast.warning(t('aiMenu.pleaseEnterTextBeforeExplaining'));
         return;
       }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: {
-          default: 'Erkläre den folgenden Text knapp: {editor}',
-          selecting: 'Auswahl erklären',
+          default: t('aiMenu.explainTextBriefly'),
+          selecting: t('aiMenu.explainSelection'),
         },
         toolName: 'generate',
       });
@@ -381,11 +392,11 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   },
   fixSpelling: {
     icon: <Check />,
-    label: 'Rechtschreibung & Grammatik korrigieren',
+    label: t('aiMenu.fixSpellingGrammar'),
     value: 'fixSpelling',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       if (!input.trim()) {
-        toast.warning('Bitte gib einen Text ein, bevor du korrigierst.');
+        toast.warning(t('aiMenu.pleaseEnterTextBeforeFixing'));
         return;
       }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -397,9 +408,9 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   
   improveWriting: {
     icon: <Wand />,
-    label: 'Stil verfeinern',
+    label: t('aiMenu.refineStyle'),
     value: 'improveWriting',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: 'Improve the writing',
         toolName: 'edit',
@@ -408,9 +419,9 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   },
   insertBelow: {
     icon: <ListEnd />,
-    label: 'Darunter einfügen',
+    label: t('aiMenu.insertBelow'),
     value: 'insertBelow',
-    onSelect: ({ aiEditor, editor }) => {
+    onSelect: ({ aiEditor, editor }: { aiEditor: SlateEditor; editor: PlateEditor }) => {
       /** Format: 'none' Fix insert table */
       void editor
         .getTransforms(AIChatPlugin)
@@ -419,9 +430,9 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   },
   makeLonger: {
     icon: <ListPlus />,
-    label: 'Text ausführlicher machen',
+    label: t('aiMenu.makeTextLonger'),
     value: 'makeLonger',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: 'Make longer',
         toolName: 'edit',
@@ -430,9 +441,9 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   },
   makeShorter: {
     icon: <ListMinus />,
-    label: 'Text knackiger machen',
+    label: t('aiMenu.makeTextShorter'),
     value: 'makeShorter',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: 'Make shorter',
         toolName: 'edit',
@@ -441,17 +452,17 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   },
   replace: {
     icon: <Check />,
-    label: 'Auswahl ersetzen',
+    label: t('aiMenu.replaceSelection'),
     value: 'replace',
-    onSelect: ({ aiEditor, editor }) => {
+    onSelect: ({ aiEditor, editor }: { aiEditor: SlateEditor; editor: PlateEditor }) => {
       void editor.getTransforms(AIChatPlugin).aiChat.replaceSelection(aiEditor);
     },
   },
   simplifyLanguage: {
     icon: <FeatherIcon />,
-    label: 'Sprache vereinfachen',
+    label: t('aiMenu.simplifyLanguage'),
     value: 'simplifyLanguage',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: 'Simplify the language',
         toolName: 'edit',
@@ -460,14 +471,14 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   },
   summarize: {
     icon: <Album />,
-    label: 'Kurz zusammenfassen',
+    label: t('aiMenu.summarizeBriefly'),
     value: 'summarize',
-    onSelect: ({ editor, input }) => {
+    onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         mode: 'insert',
         prompt: {
-          default: 'Fasse den Text in wenigen Sätzen zusammen: {editor}',
-          selecting: 'Auswahl zusammenfassen',
+          default: t('aiMenu.summarizeText'),
+          selecting: t('aiMenu.summarizeSelection'),
         },
         toolName: 'generate',
       });
@@ -475,41 +486,21 @@ Beginne nach <Document> einen neuen Absatz – genau ein Satz.`
   },
   tryAgain: {
     icon: <CornerUpLeft />,
-    label: 'Erneut versuchen',
+    label: t('aiMenu.tryAgain'),
     value: 'tryAgain',
-    onSelect: ({ editor }) => {
+    onSelect: ({ editor }: { editor: PlateEditor }) => {
       void editor.getApi(AIChatPlugin).aiChat.reload();
     },
   },
-} satisfies Record<
-  string,
-  {
-    icon: React.ReactNode;
-    label: string;
-    value: string;
-    component?: React.ComponentType<{ menuState: EditorChatState }>;
-    filterItems?: boolean;
-    items?: { label: string; value: string }[];
-    shortcut?: string;
-    onSelect?: ({
-      aiEditor,
-      editor,
-      input,
-    }: {
-      aiEditor: SlateEditor;
-      editor: PlateEditor;
-      input: string;
-    }) => void;
-  }
->;
+});
 
-const menuStateItems: Record<
+const createMenuStateItems = (aiChatItems: ReturnType<typeof createAiChatItems>): Record<
   EditorChatState,
   {
     items: (typeof aiChatItems)[keyof typeof aiChatItems][];
     heading?: string;
   }[]
-> = {
+> => ({
   cursorCommand: [
     {
       items: [
@@ -548,21 +539,27 @@ const menuStateItems: Record<
       ],
     },
   ],
-};
+});
 
 export const AIMenuItems = ({
   input,
   setInput,
   setValue,
+  translations,
 }: {
   input: string;
   setInput: (value: string) => void;
   setValue: (value: string) => void;
+  translations: Record<string, string>;
 }) => {
   const editor = useEditorRef();
   const { messages } = usePluginOption(AIChatPlugin, 'chat');
   const aiEditor = usePluginOption(AIChatPlugin, 'aiEditor')!;
   const isSelecting = useIsSelecting();
+  const { t } = useLanguage();
+
+  const aiChatItems = React.useMemo(() => createAiChatItems(t), [t]);
+  const menuStateItems = React.useMemo(() => createMenuStateItems(aiChatItems), [aiChatItems]);
 
   const menuState = React.useMemo(() => {
     if (messages && messages.length > 0) {
@@ -576,7 +573,7 @@ export const AIMenuItems = ({
     const items = menuStateItems[menuState];
 
     return items;
-  }, [menuState]);
+  }, [menuState, menuStateItems]);
 
   React.useEffect(() => {
     if (menuGroups.length > 0 && menuGroups[0].items.length > 0) {
@@ -622,6 +619,16 @@ export function AILoadingBar() {
   const { status } = chat;
 
   const { api } = useEditorPlugin(AIChatPlugin);
+  const { t, language } = useLanguage();
+
+  // Memoized translations that update on language change
+  const translations = React.useMemo(() => ({
+    thinking: t('aiMenu.thinking'),
+    writing: t('aiMenu.writing'),
+    stop: t('aiMenu.stop'),
+    accept: t('aiMenu.accept'),
+    reject: t('aiMenu.reject'),
+  }), [t, language]);
 
   const isLoading = status === 'streaming' || status === 'submitted';
 
@@ -662,7 +669,7 @@ export function AILoadingBar() {
         )}
       >
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-        <span>{status === 'submitted' ? 'Denke...' : 'Schreibe...'}</span>
+        <span>{status === 'submitted' ? translations.thinking : translations.writing}</span>
         <Button
           size="sm"
           variant="ghost"
@@ -670,7 +677,7 @@ export function AILoadingBar() {
           onClick={() => api.aiChat.stop()}
         >
           <PauseIcon className="h-4 w-4" />
-          Stopp
+          {translations.stop}
           <kbd className="ml-1 rounded bg-border px-1 font-mono text-[10px] text-muted-foreground shadow-sm">
             Esc
           </kbd>
@@ -695,7 +702,7 @@ export function AILoadingBar() {
               disabled={isLoading}
               onClick={() => handleComments('accept')}
             >
-              Accept
+              {translations.accept}
             </Button>
 
             <Button
@@ -703,7 +710,7 @@ export function AILoadingBar() {
               disabled={isLoading}
               onClick={() => handleComments('reject')}
             >
-              Reject
+              {translations.reject}
             </Button>
           </div>
         </div>

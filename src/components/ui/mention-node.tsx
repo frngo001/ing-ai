@@ -98,9 +98,7 @@ export function MentionInputElement(
   }), [t, language]);
 
   const handleCiteSelect = React.useCallback(() => {
-    // Remove the @cite input from the editor
     editor.tf.delete({ unit: 'block' });
-    // Open the citation search dialog
     openSearch();
   }, [editor, openSearch]);
 
