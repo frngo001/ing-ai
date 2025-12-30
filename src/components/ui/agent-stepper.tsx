@@ -104,18 +104,18 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
     const Icon = config.icon
 
     return (
-      <div className={cn("my-2 w-full", className)}>
+      <div className={cn("my-2 w-full min-w-0", className)}>
         <div 
           className={cn(
-            "flex flex-col rounded-lg border border-border/50 dark:border-border/30 bg-muted/20 dark:bg-muted/10 transition-all duration-200",
+            "flex flex-col rounded-lg border border-border/50 dark:border-border/30 bg-muted/20 dark:bg-muted/10 transition-all duration-200 min-w-0 w-full",
             step.status === 'running' && "border-blue-500/40 dark:border-blue-500/30 bg-blue-500/10 dark:bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.05)]",
             (step.output || step.error) && "cursor-pointer hover:bg-muted/30 dark:hover:bg-muted/20"
           )}
           onClick={() => (step.output || step.error) && setExpandedStep(isExpanded ? null : step.id)}
         >
-          <div className="flex items-center gap-3 px-3 py-2">
+          <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2">
             <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
-              <div className="flex items-center gap-2 truncate">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                 <div className="relative flex items-center justify-center shrink-0">
                   <Icon className={cn("h-3 w-3", step.status === 'completed' ? "text-emerald-600 dark:text-emerald-500/70" : "text-muted-foreground/40")} />
                   {step.status === 'running' && (
@@ -127,7 +127,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                   )}
                 </div>
                 <span className={cn(
-                  "text-[11px] font-semibold tracking-tight",
+                  "text-[10px] sm:text-[11px] font-semibold tracking-tight truncate",
                   step.status === 'completed' && "text-foreground/90 dark:text-foreground/80",
                   step.status === 'running' && "text-blue-600 dark:text-blue-500"
                 )}>
@@ -135,20 +135,20 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 </span>
                 
                 {step.status === 'completed' && step.output?.message && !isExpanded && (
-                  <span className="text-[10px] text-muted-foreground/60 truncate font-normal border-l border-border/40 pl-2">
+                  <span className="hidden sm:inline text-[10px] text-muted-foreground/60 truncate font-normal border-l border-border/40 pl-2">
                     {step.output.message}
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {step.completedAt && (
-                  <span className="text-[9px] font-mono text-zinc-500 dark:text-zinc-400">
+                  <span className="text-[8px] sm:text-[9px] font-mono text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                     {formatDuration(step.startedAt, step.completedAt)}
                   </span>
                 )}
                 {(step.output || step.error) && (
-                  <ChevronRight className={cn("h-3 w-3 text-muted-foreground/30 transition-transform", isExpanded && "rotate-90")} />
+                  <ChevronRight className={cn("h-3 w-3 text-muted-foreground/30 transition-transform shrink-0", isExpanded && "rotate-90")} />
                 )}
               </div>
             </div>
@@ -162,41 +162,45 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="px-3 pb-3 pt-0">
-                  <div className="rounded-md bg-zinc-100/80 dark:bg-zinc-800/40 p-2.5 font-sans text-[11px] leading-relaxed border border-zinc-200 dark:border-zinc-700/40 shadow-sm">
+                <div className="px-2 sm:px-3 pb-2 sm:pb-3 pt-0 min-w-0">
+                  <div className="rounded-md bg-zinc-100/80 dark:bg-zinc-800/40 p-2.5 sm:p-3 font-sans text-[11px] sm:text-[12px] leading-relaxed border border-zinc-200 dark:border-zinc-700/40 shadow-sm min-w-0 w-full">
                     {step.error ? (
                       <div className="text-red-500 dark:text-red-400 flex items-start gap-1.5 font-medium">
-                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                        <span>{step.error}</span>
+                        <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                        <span className="break-words text-[11px] sm:text-[12px]">{step.error}</span>
                       </div>
                     ) : step.output && (
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2 sm:gap-2.5 min-w-0 w-full">
                         {/* Input Data Section */}
                         {step.input && Object.keys(step.input).length > 0 && (
-                          <div className="space-y-1 mb-2">
+                          <div className="space-y-1.5 mb-2.5">
                             {Object.entries(step.input)
                               .filter(([key]) => !key.startsWith('_'))
                               .map(([key, value]) => (
-                                <div key={`in-${key}`} className="flex justify-between gap-4">
-                                  <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{translateToolDetailKey(key, t)}</span>
-                                  <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate text-right">
-                                    {typeof value === 'object' ? 'JSON' : String(value)}
-                                  </span>
+                                <div key={`in-${key}`} className="flex flex-col gap-1.5 min-w-0 w-full">
+                                  <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] sm:text-[10px] font-bold tracking-wider shrink-0 leading-tight">{translateToolDetailKey(key, t)}</span>
+                                  <div className="min-w-0 w-full overflow-x-auto">
+                                    <span className="text-zinc-700 dark:text-zinc-300 font-medium text-[11px] sm:text-[12px] break-words whitespace-pre-wrap">
+                                      {typeof value === 'object' ? 'JSON' : String(value)}
+                                    </span>
+                                  </div>
                                 </div>
                               ))}
                           </div>
                         )}
 
                         {/* Output Data Section */}
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           {Object.entries(step.output)
                             .filter(([key]) => !key.startsWith('_') && key !== 'success' && key !== 'message')
                             .map(([key, value]) => (
-                              <div key={`out-${key}`} className="flex justify-between gap-4 pb-0.5">
-                                <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{translateToolDetailKey(key, t)}</span>
-                                <span className="text-zinc-900 dark:text-zinc-100 font-semibold truncate text-right">
-                                  {Array.isArray(value) ? `${value.length} ${t('askAi.toolDetailItems')}` : typeof value === 'object' ? 'JSON' : String(value)}
-                                </span>
+                              <div key={`out-${key}`} className="flex flex-col gap-1.5 min-w-0 w-full pb-0.5">
+                                <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] sm:text-[10px] font-bold tracking-wider shrink-0 leading-tight">{translateToolDetailKey(key, t)}</span>
+                                <div className="min-w-0 w-full overflow-x-auto">
+                                  <span className="text-zinc-900 dark:text-zinc-100 font-semibold text-[11px] sm:text-[12px] break-words whitespace-pre-wrap">
+                                    {Array.isArray(value) ? `${value.length} ${t('askAi.toolDetailItems')}` : typeof value === 'object' ? 'JSON' : String(value)}
+                                  </span>
+                                </div>
                               </div>
                             ))}
                         </div>
@@ -217,16 +221,16 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
   const currentStep = steps.find(s => s.status === 'running') || steps[steps.length - 1]
 
   return (
-    <div className={cn('mb-4 w-full select-none', className)}>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="overflow-hidden rounded-xl border border-border/50 bg-background/60 backdrop-blur-md shadow-sm">
+    <div className={cn('mb-4 w-full min-w-0 select-none', className)}>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="overflow-hidden rounded-xl border border-border/50 bg-background/60 backdrop-blur-md shadow-sm min-w-0 w-full">
         {/* Minimalist Header */}
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/30">
-            <div className="flex items-center gap-3">
-              <div className="relative flex h-6 w-6 items-center justify-center">
+          <div className="flex items-center justify-between px-2 sm:px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/30">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <div className="relative flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center shrink-0">
                 {hasRunning ? (
                   <>
-                    <Activity className="h-3.5 w-3.5 text-blue-500 animate-pulse" />
+                    <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-500 animate-pulse" />
                     <motion.div 
                       className="absolute inset-0 rounded-full border-2 border-primary/20" 
                       style={{ borderTopColor: 'currentColor', borderRightColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: 'transparent' }}
@@ -235,23 +239,23 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                     />
                   </>
                 ) : hasError ? (
-                  <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                  <AlertCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-red-500" />
                 ) : (
-                  <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-500" />
                 )}
               </div>
               
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 truncate">
                   {t('askAi.agentActivity')}
                 </span>
-                <span className="text-xs font-semibold text-foreground/90">
+                <span className="text-[10px] sm:text-xs font-semibold text-foreground/90 truncate">
                   {currentStep ? getToolConfig(currentStep.toolName, t).label : '...'}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <div className="flex -space-x-1.5 overflow-hidden">
                 {steps.slice(-3).map((s, i) => (
                   <div key={s.id} className={cn(
@@ -260,13 +264,13 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                   )} />
                 ))}
               </div>
-              <ChevronRight className={cn("h-3 w-3 text-muted-foreground/60 transition-transform duration-300", isOpen && "rotate-90")} />
+              <ChevronRight className={cn("h-3 w-3 text-muted-foreground/60 transition-transform duration-300 shrink-0", isOpen && "rotate-90")} />
             </div>
           </div>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar bg-muted/10">
+          <div className="p-1 sm:p-1.5 max-h-[300px] overflow-y-auto custom-scrollbar bg-muted/10">
             {steps.map((step, index) => {
               const config = getToolConfig(step.toolName, t)
               const isExpanded = expandedStep === step.id
@@ -276,18 +280,18 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 <div key={step.id} className="relative group">
                   <div 
                     className={cn(
-                      "flex items-start gap-3 px-3 py-1.5 rounded-lg transition-all duration-200",
+                      "flex items-start gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 rounded-lg transition-all duration-200 min-w-0 w-full",
                       step.status === 'running' ? "bg-blue-500/10 dark:bg-blue-500/5 shadow-[inset_0_0_20px_rgba(59,130,246,0.05)]" : "hover:bg-muted/40",
                       (step.output || step.error) && "cursor-pointer"
                     )}
                     onClick={() => (step.output || step.error) && setExpandedStep(isExpanded ? null : step.id)}
                   >
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 w-full">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Icon className={cn("h-3 w-3", step.status === 'completed' ? "text-emerald-500/60 dark:text-muted-foreground/80" : "text-muted-foreground/40")} />
+                        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                          <Icon className={cn("h-3 w-3 shrink-0", step.status === 'completed' ? "text-emerald-500/60 dark:text-muted-foreground/80" : "text-muted-foreground/40")} />
                           <span className={cn(
-                            "text-xs font-medium tracking-tight",
+                            "text-[10px] sm:text-xs font-medium tracking-tight truncate",
                             step.status === 'completed' ? "text-foreground/90 dark:text-foreground/80" : "text-muted-foreground/60",
                             step.status === 'running' && "text-blue-600 dark:text-blue-500 font-bold"
                           )}>
@@ -296,7 +300,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                         </div>
                         
                         {step.completedAt && (
-                          <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+                          <span className="text-[9px] sm:text-[10px] font-mono text-zinc-500 dark:text-zinc-400 whitespace-nowrap shrink-0">
                             {formatDuration(step.startedAt, step.completedAt)}
                           </span>
                         )}
@@ -308,7 +312,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                           <motion.p 
                             initial={{ opacity: 0, y: -2 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-[10px] text-muted-foreground/60 mt-0.5 truncate leading-tight"
+                            className="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-0.5 truncate leading-tight"
                           >
                             {step.output.message}
                           </motion.p>
@@ -324,40 +328,44 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                           >
-                            <div className="mt-2 rounded-md bg-zinc-100/80 dark:bg-zinc-800/40 p-2.5 font-sans text-[11px] leading-relaxed border border-zinc-200 dark:border-zinc-700/40 shadow-sm">
+                            <div className="mt-2 rounded-md bg-zinc-100/80 dark:bg-zinc-800/40 p-2.5 sm:p-3 font-sans text-[11px] sm:text-[12px] leading-relaxed border border-zinc-200 dark:border-zinc-700/40 shadow-sm min-w-0 w-full">
                               {step.error ? (
                                 <div className="text-red-500 dark:text-red-400 flex items-start gap-1.5 font-medium">
-                                  <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                                  <span>{step.error}</span>
+                                  <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                  <span className="break-words text-[11px] sm:text-[12px]">{step.error}</span>
                                 </div>
                               ) : step.output && (
-                                <div className="grid gap-1.5">
+                                <div className="grid gap-2 sm:gap-2.5 min-w-0 w-full">
                                   {/* Input Data Section */}
                                   {step.input && Object.keys(step.input).length > 0 && (
-                                    <div className="space-y-1 mb-2">
+                                    <div className="space-y-1.5 mb-2.5">
                                       {Object.entries(step.input)
                                         .filter(([key]) => !key.startsWith('_'))
                                         .map(([key, value]) => (
-                                          <div key={`in-${key}`} className="flex justify-between gap-4">
-                                            <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{translateToolDetailKey(key, t)}</span>
-                                            <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate text-right">
-                                              {typeof value === 'object' ? 'JSON' : String(value)}
-                                            </span>
+                                          <div key={`in-${key}`} className="flex flex-col gap-1.5 min-w-0 w-full">
+                                            <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] sm:text-[10px] font-bold tracking-wider shrink-0 leading-tight">{translateToolDetailKey(key, t)}</span>
+                                            <div className="min-w-0 w-full overflow-x-auto">
+                                              <span className="text-zinc-700 dark:text-zinc-300 font-medium text-[11px] sm:text-[12px] break-words whitespace-pre-wrap">
+                                                {typeof value === 'object' ? 'JSON' : String(value)}
+                                              </span>
+                                            </div>
                                           </div>
                                         ))}
                                     </div>
                                   )}
 
                                   {/* Output Data Section */}
-                                  <div className="space-y-1">
+                                  <div className="space-y-1.5">
                                     {Object.entries(step.output)
                                       .filter(([key]) => !key.startsWith('_') && key !== 'success' && key !== 'message')
                                       .map(([key, value]) => (
-                                        <div key={`out-${key}`} className="flex justify-between gap-4 pb-0.5">
-                                          <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{translateToolDetailKey(key, t)}</span>
-                                          <span className="text-zinc-900 dark:text-zinc-100 font-semibold truncate text-right">
-                                            {Array.isArray(value) ? `${value.length} ${t('askAi.toolDetailItems')}` : typeof value === 'object' ? 'JSON' : String(value)}
-                                          </span>
+                                        <div key={`out-${key}`} className="flex flex-col gap-1.5 min-w-0 w-full pb-0.5">
+                                          <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] sm:text-[10px] font-bold tracking-wider shrink-0 leading-tight">{translateToolDetailKey(key, t)}</span>
+                                          <div className="min-w-0 w-full overflow-x-auto">
+                                            <span className="text-zinc-900 dark:text-zinc-100 font-semibold text-[11px] sm:text-[12px] break-words whitespace-pre-wrap">
+                                              {Array.isArray(value) ? `${value.length} ${t('askAi.toolDetailItems')}` : typeof value === 'object' ? 'JSON' : String(value)}
+                                            </span>
+                                          </div>
                                         </div>
                                       ))}
                                   </div>
