@@ -13,26 +13,66 @@ import {
 const supportedLanguages = Object.keys(translations) as Language[]
 
 /**
- * Ermittelt die bevorzugte Sprache des Browsers und prüft,
- * ob diese in den unterstützten Sprachen vorhanden ist.
- * Fallback auf 'en' wenn keine Übereinstimmung gefunden wird.
+ * Standard-Fallback-Sprache, wenn Geolocation fehlschlägt.
+ */
+const DEFAULT_FALLBACK_LANGUAGE: Language = 'en'
+
+/**
+ * Cache für die geolocation-basierte Sprache, um mehrfache API-Calls zu vermeiden.
+ */
+let cachedGeolocationLanguage: Language | null = null
+let geolocationCacheTimestamp: number = 0
+const GEOLOCATION_CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 Stunden
+
+/**
+ * Ermittelt die Standardsprache basierend auf der geografischen Position des Benutzers.
+ * Ruft die Geolocation-API auf, um das Land zu ermitteln und mappt es zur entsprechenden Sprache.
+ * Verwendet einen Cache, um mehrfache API-Calls zu vermeiden.
+ * 
+ * @returns Promise mit der ermittelten Sprache oder Fallback-Sprache
+ */
+async function getLanguageFromGeolocation(): Promise<Language> {
+    // Prüfe Cache zuerst
+    const now = Date.now()
+    if (cachedGeolocationLanguage && (now - geolocationCacheTimestamp) < GEOLOCATION_CACHE_DURATION) {
+        return cachedGeolocationLanguage
+    }
+
+    try {
+        const response = await fetch('/api/geolocation', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            console.warn('[LANGUAGE] Fehler beim Abrufen der Geolocation:', response.status)
+            return DEFAULT_FALLBACK_LANGUAGE
+        }
+
+        const data = await response.json()
+        
+        if (data.language && supportedLanguages.includes(data.language as Language)) {
+            // Cache aktualisieren
+            cachedGeolocationLanguage = data.language as Language
+            geolocationCacheTimestamp = now
+            return data.language as Language
+        }
+
+        return DEFAULT_FALLBACK_LANGUAGE
+    } catch (error) {
+        console.warn('[LANGUAGE] Fehler bei der Geolocation-API:', error)
+        return DEFAULT_FALLBACK_LANGUAGE
+    }
+}
+
+/**
+ * Synchroner Fallback für die Standardsprache.
+ * Wird verwendet, wenn asynchrone Geolocation noch nicht verfügbar ist.
  */
 function getDefaultLanguage(): Language {
-    if (typeof window === 'undefined') {
-        return 'en'
-    }
-
-    const browserLanguages = navigator.languages || [navigator.language]
-
-    for (const browserLang of browserLanguages) {
-        const langCode = browserLang.split('-')[0].toLowerCase()
-
-        if (supportedLanguages.includes(langCode as Language)) {
-            return langCode as Language
-        }
-    }
-
-    return 'en'
+    return DEFAULT_FALLBACK_LANGUAGE
 }
 
 /**
@@ -75,7 +115,9 @@ export const useLanguage = create<LanguageState>()(
                 try {
                     const userId = await getCurrentUserId()
                     if (!userId) {
-                        set({ isInitialized: true })
+                        // Kein User: Verwende Geolocation-basierte Sprache
+                        const geoLang = await getLanguageFromGeolocation()
+                        set({ language: geoLang, isInitialized: true })
                         return
                     }
 
@@ -84,14 +126,16 @@ export const useLanguage = create<LanguageState>()(
                     if (prefs?.language && isValidLanguage(prefs.language)) {
                         set({ language: prefs.language, isInitialized: true })
                     } else {
-                        // Erstelle User-Präferenzen mit Browser-Sprache
-                        const browserLang = getDefaultLanguage()
-                        await ensureUserPreferencesExist(userId, browserLang)
-                        set({ language: browserLang, isInitialized: true })
+                        // Keine Präferenzen: Ermittle Sprache basierend auf Geolocation
+                        const geoLang = await getLanguageFromGeolocation()
+                        await ensureUserPreferencesExist(userId, geoLang)
+                        set({ language: geoLang, isInitialized: true })
                     }
                 } catch (error) {
                     console.warn('Fehler beim Laden der Sprache aus Supabase:', error)
-                    set({ isInitialized: true })
+                    // Fallback auf Geolocation-basierte Sprache
+                    const geoLang = await getLanguageFromGeolocation()
+                    set({ language: geoLang, isInitialized: true })
                 }
             },
 

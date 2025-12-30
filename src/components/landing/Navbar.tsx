@@ -8,6 +8,7 @@ import { CircleCheckIcon, Menu, X } from "lucide-react"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { useCTAHref } from "@/hooks/use-auth"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,52 +21,6 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import { Shine } from "@/components/animate-ui/primitives/effects/shine"
-
-// =============================================================================
-// NAVIGATION DATA
-// =============================================================================
-
-const NAV_ITEMS = {
-  produkt: {
-    label: "Produkt",
-    featured: {
-      title: siteConfig.name,
-      description: "KI-gestütztes Schreiben, Recherchieren und Veröffentlichen in einem Editor.",
-      href: "/",
-    },
-    links: [
-      { title: "Funktionen", href: "/#bento-features", description: "KI-Autocomplete, Zitationen und mehr." },
-      { title: "Anwendungsfälle", href: "/#use-cases", description: "Für Studierende, Forscher und Professionals." },
-      { title: "Workflow", href: "/#how-it-works", description: "Von der leeren Seite zur fertigen Arbeit." },
-      { title: "Vorteile", href: "/#why-ing", description: "Warum Ing AI die beste Wahl ist." },
-    ],
-  },
-  features: {
-    label: "Features",
-    links: [
-      { title: "KI-Autocomplete", href: "/#bento-features", description: "Intelligente Satzvervollständigung mit Kontext." },
-      { title: "Sofortige Zitationen", href: "/#bento-features", description: "APA, MLA, Chicago und 20+ weitere Stile." },
-      { title: "Chat mit PDFs", href: "/#bento-features", description: "Fragen an deine Forschungsarbeiten stellen." },
-      { title: "Forschungsbibliothek", href: "/#bento-features", description: "PDFs, Notizen und Quellen organisieren." },
-      { title: "Mehrsprachig", href: "/#bento-features", description: "Schreiben in 20+ Sprachen." },
-      { title: "Plagiatsprüfung", href: "/#why-ing", description: "Sicherheit beim Veröffentlichen." },
-    ],
-  },
-  ressourcen: {
-    label: "Ressourcen",
-    links: [
-      { title: "Blog", href: "/blog", description: "Tipps und Guides für akademisches Schreiben." },
-      { title: "Tutorials", href: "/#tutorials", description: "Video-Anleitungen für alle Features." },
-      { title: "Changelog", href: "/changelog", description: "Neue Updates und Verbesserungen." },
-      { title: "Testimonials", href: "/#testimonials", description: "Erfahrungen von 5M+ Forschern." },
-      { title: "FAQ", href: "/#faq", description: "Antworten auf häufige Fragen." },
-    ],
-  },
-  directLinks: [
-    { label: "Preise", href: "/#pricing" },
-    { label: "Über uns", href: "/about" },
-  ],
-} as const
 
 // =============================================================================
 // MAIN NAVBAR COMPONENT
@@ -125,6 +80,49 @@ function Logo() {
 
 function DesktopNav() {
   const [mounted, setMounted] = React.useState(false)
+  const { t, language } = useLanguage()
+
+  const navItems = React.useMemo(() => ({
+    produkt: {
+      label: t('landing.navbar.product.label'),
+      featured: {
+        title: siteConfig.name,
+        description: t('landing.navbar.product.featured.description'),
+        href: "/",
+      },
+      links: [
+        { title: t('landing.navbar.product.links.functions.title'), href: "/#bento-features", description: t('landing.navbar.product.links.functions.description') },
+        { title: t('landing.navbar.product.links.useCases.title'), href: "/#use-cases", description: t('landing.navbar.product.links.useCases.description') },
+        { title: t('landing.navbar.product.links.workflow.title'), href: "/#how-it-works", description: t('landing.navbar.product.links.workflow.description') },
+        { title: t('landing.navbar.product.links.advantages.title'), href: "/#why-ing", description: t('landing.navbar.product.links.advantages.description') },
+      ],
+    },
+    features: {
+      label: t('landing.navbar.features.label'),
+      links: [
+        { title: t('landing.navbar.features.links.autocomplete.title'), href: "/#bento-features", description: t('landing.navbar.features.links.autocomplete.description') },
+        { title: t('landing.navbar.features.links.citations.title'), href: "/#bento-features", description: t('landing.navbar.features.links.citations.description') },
+        { title: t('landing.navbar.features.links.pdfChat.title'), href: "/#bento-features", description: t('landing.navbar.features.links.pdfChat.description') },
+        { title: t('landing.navbar.features.links.library.title'), href: "/#bento-features", description: t('landing.navbar.features.links.library.description') },
+        { title: t('landing.navbar.features.links.multilingual.title'), href: "/#bento-features", description: t('landing.navbar.features.links.multilingual.description') },
+        { title: t('landing.navbar.features.links.plagiarism.title'), href: "/#why-ing", description: t('landing.navbar.features.links.plagiarism.description') },
+      ],
+    },
+    ressourcen: {
+      label: t('landing.navbar.resources.label'),
+      links: [
+        { title: t('landing.navbar.resources.links.blog.title'), href: "/blog", description: t('landing.navbar.resources.links.blog.description') },
+        { title: t('landing.navbar.resources.links.tutorials.title'), href: "/#tutorials", description: t('landing.navbar.resources.links.tutorials.description') },
+        { title: t('landing.navbar.resources.links.changelog.title'), href: "/changelog", description: t('landing.navbar.resources.links.changelog.description') },
+        { title: t('landing.navbar.resources.links.testimonials.title'), href: "/#testimonials", description: t('landing.navbar.resources.links.testimonials.description') },
+        { title: t('landing.navbar.resources.links.faq.title'), href: "/#faq", description: t('landing.navbar.resources.links.faq.description') },
+      ],
+    },
+    directLinks: [
+      { label: t('landing.navbar.directLinks.pricing'), href: "/#pricing" },
+      { label: t('landing.navbar.directLinks.about'), href: "/about" },
+    ],
+  }), [t, language])
 
   React.useEffect(() => {
     setMounted(true)
@@ -143,26 +141,26 @@ function DesktopNav() {
       <NavigationMenuList className="flex items-center justify-center gap-1">
         {/* Produkt Dropdown */}
         <NavigationMenuItem>
-          <NavigationMenuTrigger>{NAV_ITEMS.produkt.label}</NavigationMenuTrigger>
+          <NavigationMenuTrigger>{navItems.produkt.label}</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
               <li className="row-span-4">
                 <NavigationMenuLink asChild>
                   <Link
                     className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none transition-colors hover:bg-muted focus:shadow-md"
-                    href={NAV_ITEMS.produkt.featured.href}
+                    href={navItems.produkt.featured.href}
                   >
                     <CircleCheckIcon className="h-6 w-6 text-primary" />
                     <div className="mb-2 mt-4 text-lg font-medium">
-                      {NAV_ITEMS.produkt.featured.title}
+                      {navItems.produkt.featured.title}
                     </div>
                     <p className="text-sm leading-tight text-muted-foreground">
-                      {NAV_ITEMS.produkt.featured.description}
+                      {navItems.produkt.featured.description}
                     </p>
                   </Link>
                 </NavigationMenuLink>
               </li>
-              {NAV_ITEMS.produkt.links.map((item) => (
+              {navItems.produkt.links.map((item) => (
                 <NavListItem key={item.title} href={item.href} title={item.title}>
                   {item.description}
                 </NavListItem>
@@ -173,10 +171,10 @@ function DesktopNav() {
 
         {/* Features Dropdown */}
         <NavigationMenuItem>
-          <NavigationMenuTrigger>{NAV_ITEMS.features.label}</NavigationMenuTrigger>
+          <NavigationMenuTrigger>{navItems.features.label}</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-              {NAV_ITEMS.features.links.map((item) => (
+              {navItems.features.links.map((item) => (
                 <NavListItem key={item.title} href={item.href} title={item.title}>
                   {item.description}
                 </NavListItem>
@@ -187,10 +185,10 @@ function DesktopNav() {
 
         {/* Ressourcen Dropdown */}
         <NavigationMenuItem>
-          <NavigationMenuTrigger>{NAV_ITEMS.ressourcen.label}</NavigationMenuTrigger>
+          <NavigationMenuTrigger>{navItems.ressourcen.label}</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid gap-3 p-4 md:w-[400px]">
-              {NAV_ITEMS.ressourcen.links.map((item) => (
+              {navItems.ressourcen.links.map((item) => (
                 <NavListItem key={item.title} href={item.href} title={item.title}>
                   {item.description}
                 </NavListItem>
@@ -200,7 +198,7 @@ function DesktopNav() {
         </NavigationMenuItem>
 
         {/* Direct Links */}
-        {NAV_ITEMS.directLinks.map((link) => (
+        {navItems.directLinks.map((link) => (
           <NavigationMenuItem key={link.href}>
             <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
               <Link href={link.href}>{link.label}</Link>
@@ -214,6 +212,7 @@ function DesktopNav() {
 
 function AuthButtons() {
   const ctaHref = useCTAHref()
+  const { t, language } = useLanguage()
 
   return (
     <div className="hidden items-center gap-3 md:flex">
@@ -221,11 +220,11 @@ function AuthButtons() {
         href="/auth/login"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
-        Login
+        {t('landing.navbar.login')}
       </Link>
       <Button asChild size="sm" className="rounded-full px-4">
         <Shine asChild duration={1500} loop delay={2000} color="rgba(255, 255, 255, 0.4)">
-          <Link href={ctaHref}>Kostenlos starten</Link>
+          <Link href={ctaHref}>{t('landing.navbar.startFree')}</Link>
         </Shine>
       </Button>
     </div>
@@ -233,13 +232,15 @@ function AuthButtons() {
 }
 
 function MobileMenuToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
+  const { t, language } = useLanguage()
+
   return (
     <Button
       variant="ghost"
       size="icon"
       className="md:hidden"
       onClick={onToggle}
-      aria-label={isOpen ? "Menü schließen" : "Menü öffnen"}
+      aria-label={isOpen ? t('landing.navbar.menuClose') : t('landing.navbar.menuOpen')}
     >
       {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
     </Button>
@@ -248,6 +249,44 @@ function MobileMenuToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
 
 function MobileMenu({ onClose }: { onClose: () => void }) {
   const ctaHref = useCTAHref()
+  const { t, language } = useLanguage()
+
+  const navItems = React.useMemo(() => ({
+    produkt: {
+      label: t('landing.navbar.product.label'),
+      links: [
+        { title: t('landing.navbar.product.links.functions.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.product.links.useCases.title'), href: "/#use-cases" },
+        { title: t('landing.navbar.product.links.workflow.title'), href: "/#how-it-works" },
+        { title: t('landing.navbar.product.links.advantages.title'), href: "/#why-ing" },
+      ],
+    },
+    features: {
+      label: t('landing.navbar.features.label'),
+      links: [
+        { title: t('landing.navbar.features.links.autocomplete.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.citations.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.pdfChat.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.library.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.multilingual.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.plagiarism.title'), href: "/#why-ing" },
+      ],
+    },
+    ressourcen: {
+      label: t('landing.navbar.resources.label'),
+      links: [
+        { title: t('landing.navbar.resources.links.blog.title'), href: "/blog" },
+        { title: t('landing.navbar.resources.links.tutorials.title'), href: "/#tutorials" },
+        { title: t('landing.navbar.resources.links.changelog.title'), href: "/changelog" },
+        { title: t('landing.navbar.resources.links.testimonials.title'), href: "/#testimonials" },
+        { title: t('landing.navbar.resources.links.faq.title'), href: "/#faq" },
+      ],
+    },
+    directLinks: [
+      { label: t('landing.navbar.directLinks.pricing'), href: "/#pricing" },
+      { label: t('landing.navbar.directLinks.about'), href: "/about" },
+    ],
+  }), [t, language])
 
   return (
     <div className="border-t bg-background px-4 py-4 md:hidden">
@@ -255,10 +294,10 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         {/* Produkt Section */}
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {NAV_ITEMS.produkt.label}
+            {navItems.produkt.label}
           </p>
           <div className="flex flex-col gap-2">
-            {NAV_ITEMS.produkt.links.map((link) => (
+            {navItems.produkt.links.map((link) => (
               <Link
                 key={link.title}
                 href={link.href}
@@ -274,10 +313,10 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         {/* Features Section */}
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {NAV_ITEMS.features.label}
+            {navItems.features.label}
           </p>
           <div className="flex flex-col gap-2">
-            {NAV_ITEMS.features.links.map((link) => (
+            {navItems.features.links.map((link) => (
               <Link
                 key={link.title}
                 href={link.href}
@@ -293,10 +332,10 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         {/* Ressourcen Section */}
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {NAV_ITEMS.ressourcen.label}
+            {navItems.ressourcen.label}
           </p>
           <div className="flex flex-col gap-2">
-            {NAV_ITEMS.ressourcen.links.map((link) => (
+            {navItems.ressourcen.links.map((link) => (
               <Link
                 key={link.title}
                 href={link.href}
@@ -311,7 +350,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 
         {/* Direct Links */}
         <div className="flex flex-col gap-2">
-          {NAV_ITEMS.directLinks.map((link) => (
+          {navItems.directLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -330,11 +369,11 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Login
+            {t('landing.navbar.login')}
           </Link>
           <Button asChild size="sm" className="rounded-full">
             <Link href={ctaHref} onClick={onClose}>
-              Kostenlos starten
+              {t('landing.navbar.startFree')}
             </Link>
           </Button>
         </div>

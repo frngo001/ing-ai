@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react"
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/use-language";
 
 type SignupFormProps = React.ComponentProps<"div"> & {
   nextPath?: string;
@@ -29,6 +31,7 @@ type SignupFormProps = React.ComponentProps<"div"> & {
 export function SignupForm({ className, nextPath = "/dashboard", ...props }: SignupFormProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,10 +52,10 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
       });
       if (error) throw error;
 
-      toast.success("Konto erstellt", {
+      toast.success(t('auth.signup.accountCreated'), {
         description: data.session
-          ? "Du bist angemeldet."
-          : "Bitte bestätige deine E-Mail.",
+          ? t('auth.signup.signedIn')
+          : t('auth.signup.confirmEmail'),
       });
 
       if (data.session) {
@@ -62,8 +65,8 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
         router.push("/auth/login");
       }
     } catch (error: any) {
-      toast.error("Registrierung fehlgeschlagen", {
-        description: error?.message ?? "Bitte Eingaben prüfen.",
+      toast.error(t('auth.signup.signupFailed'), {
+        description: error?.message ?? t('auth.signup.checkInputs'),
       });
     } finally {
       setIsLoading(false);
@@ -88,8 +91,8 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
       });
       if (error) throw error;
     } catch (error: any) {
-      toast.error("Social Signup fehlgeschlagen", {
-        description: error?.message ?? "Bitte erneut versuchen.",
+      toast.error(t('auth.signup.socialSignupFailed'), {
+        description: error?.message ?? t('auth.signup.tryAgain'),
       });
       setSocialLoading(null);
     }
@@ -113,28 +116,28 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
                   />
                 </Link>
                 <div className="space-y-1">
-                  <h1 className="text-2xl font-bold">Konto bei Ing AI erstellen</h1>
+                  <h1 className="text-2xl font-bold">{t('auth.signup.title')}</h1>
                   <p className="text-muted-foreground text-sm text-balance">
-                    Aktiviere KI-Autocomplete, PDF-Chat und sofortige Zitationen.
+                    {t('auth.signup.description')}
                   </p>
                 </div>
               </div>
               <Field>
-                <FieldLabel htmlFor="fullName">Vollständiger Name</FieldLabel>
+                <FieldLabel htmlFor="fullName">{t('auth.signup.fullName')}</FieldLabel>
                 <Input
                   id="fullName"
-                  placeholder="Alex Muster"
+                  placeholder={t('auth.signup.fullNamePlaceholder')}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="email">E-Mail</FieldLabel>
+                <FieldLabel htmlFor="email">{t('auth.signup.email')}</FieldLabel>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder={t('auth.signup.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -143,7 +146,7 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
               <Field>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <FieldLabel htmlFor="password">Passwort</FieldLabel>
+                    <FieldLabel htmlFor="password">{t('auth.signup.password')}</FieldLabel>
                     <div className="relative">
                       <Input
                         id="password"
@@ -156,7 +159,7 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
                       />
                       <button
                         type="button"
-                        aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                        aria-label={showPassword ? t('auth.signup.hidePassword') : t('auth.signup.showPassword')}
                         onClick={() => setShowPassword((prev) => !prev)}
                         className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-2 flex items-center"
                       >
@@ -165,7 +168,7 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <FieldLabel htmlFor="confirm-password">Passwort bestätigen</FieldLabel>
+                    <FieldLabel htmlFor="confirm-password">{t('auth.signup.confirmPassword')}</FieldLabel>
                     <div className="relative">
                       <Input
                         id="confirm-password"
@@ -177,7 +180,7 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
                       />
                       <button
                         type="button"
-                        aria-label={showConfirm ? "Passwort verbergen" : "Passwort anzeigen"}
+                        aria-label={showConfirm ? t('auth.signup.hidePassword') : t('auth.signup.showPassword')}
                         onClick={() => setShowConfirm((prev) => !prev)}
                         className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-2 flex items-center"
                       >
@@ -186,16 +189,16 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
                     </div>
                   </div>
                 </div>
-                <FieldDescription>Mindestens 6 Zeichen, verwende Groß-/Kleinschreibung.</FieldDescription>
+                <FieldDescription>{t('auth.signup.passwordHint')}</FieldDescription>
               </Field>
               <Field>
                 <Button type="submit" disabled={isLoading || Boolean(socialLoading)} className="w-full">
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Konto anlegen
+                  {t('auth.signup.submit')}
                 </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Oder weiter mit
+                {t('auth.signup.orContinueWith')}
               </FieldSeparator>
               <Field className="grid grid-cols-2 gap-4">
                 <Button
@@ -228,9 +231,9 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                Bereits registriert?{" "}
+                {t('auth.signup.alreadyRegistered')}{" "}
                 <Link href="/auth/login" className="underline underline-offset-4">
-                  Zum Login
+                  {t('auth.signup.goToLogin')}
                 </Link>
               </FieldDescription>
             </FieldGroup>
@@ -245,13 +248,13 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        Durch Registrierung stimmst du unseren{" "}
+        {t('auth.signup.termsAgreement')}{" "}
         <Link href="/terms" className="underline underline-offset-4">
-          Nutzungsbedingungen
+          {t('auth.signup.terms')}
         </Link>{" "}
-        und{" "}
+        {t('auth.signup.and')}{" "}
         <Link href="/privacy" className="underline underline-offset-4">
-          Datenschutz
+          {t('auth.signup.privacy')}
         </Link>{" "}
         zu.
       </FieldDescription>

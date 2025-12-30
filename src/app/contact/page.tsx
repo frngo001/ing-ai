@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,27 +27,33 @@ import {
   CardContent,
 } from '@/components/ui/card-hover'
 import { Send, CheckCircle2 } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n/use-language'
 
-const contactFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name muss mindestens 2 Zeichen lang sein.",
-  }),
-  email: z.string().email({
-    message: "Bitte gib eine gültige E-Mail-Adresse ein.",
-  }),
-  subject: z.string().min(3, {
-    message: "Betreff muss mindestens 3 Zeichen lang sein.",
-  }),
-  message: z.string().min(10, {
-    message: "Nachricht muss mindestens 10 Zeichen lang sein.",
-  }),
-})
+type ContactFormValues = z.infer<ReturnType<typeof getContactFormSchema>>
 
-type ContactFormValues = z.infer<typeof contactFormSchema>
+function getContactFormSchema(t: (key: string) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      message: t('pages.contact.validation.nameMin'),
+    }),
+    email: z.string().email({
+      message: t('pages.contact.validation.emailInvalid'),
+    }),
+    subject: z.string().min(3, {
+      message: t('pages.contact.validation.subjectMin'),
+    }),
+    message: z.string().min(10, {
+      message: t('pages.contact.validation.messageMin'),
+    }),
+  })
+}
 
 export default function ContactPage() {
+  const { t, language } = useLanguage()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const contactFormSchema = React.useMemo(() => getContactFormSchema(t), [t, language])
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -88,14 +95,13 @@ export default function ContactPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="max-w-3xl mx-auto text-center">
               <Badge variant="outline" className="mb-6 text-[10px] uppercase tracking-wider">
-                Kontakt
+                {t('pages.contact.badge')}
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-foreground">
-                Lass uns zusammenarbeiten
+                {t('pages.contact.title')}
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
-                Hast du Fragen, Feedback oder eine Idee? Wir freuen uns darauf, von dir zu hören.
-                Unser Team antwortet normalerweise innerhalb von 24 Stunden.
+                {t('pages.contact.description')}
               </p>
             </ScrollReveal>
           </div>
@@ -113,14 +119,14 @@ export default function ContactPage() {
               <ScrollReveal>
                 <Card className="border-0 bg-gradient-to-br from-muted/50 to-muted/20">
                   <CardContent className="pt-6">
-                    <h2 className="text-2xl font-bold mb-6">Nachricht senden</h2>
+                    <h2 className="text-2xl font-bold mb-6">{t('pages.contact.form.title')}</h2>
                     
                     {isSubmitted ? (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
                         <CheckCircle2 className="h-16 w-16 text-primary mb-4" />
-                        <h3 className="text-xl font-semibold mb-2">Nachricht gesendet!</h3>
+                        <h3 className="text-xl font-semibold mb-2">{t('pages.contact.form.success.title')}</h3>
                         <p className="text-muted-foreground">
-                          Wir haben deine Nachricht erhalten und werden uns so schnell wie möglich bei dir melden.
+                          {t('pages.contact.form.success.description')}
                         </p>
                       </div>
                     ) : (
@@ -131,9 +137,9 @@ export default function ContactPage() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Name</FormLabel>
+                                <FormLabel>{t('pages.contact.form.name')}</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Dein Name" {...field} />
+                                  <Input placeholder={t('pages.contact.form.namePlaceholder')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -145,9 +151,9 @@ export default function ContactPage() {
                             name="email"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>E-Mail</FormLabel>
+                                <FormLabel>{t('pages.contact.form.email')}</FormLabel>
                                 <FormControl>
-                                  <Input type="email" placeholder="deine@email.de" {...field} />
+                                  <Input type="email" placeholder={t('pages.contact.form.emailPlaceholder')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -159,9 +165,9 @@ export default function ContactPage() {
                             name="subject"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Betreff</FormLabel>
+                                <FormLabel>{t('pages.contact.form.subject')}</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Worum geht es?" {...field} />
+                                  <Input placeholder={t('pages.contact.form.subjectPlaceholder')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -173,10 +179,10 @@ export default function ContactPage() {
                             name="message"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Nachricht</FormLabel>
+                                <FormLabel>{t('pages.contact.form.message')}</FormLabel>
                                 <FormControl>
                                   <Textarea
-                                    placeholder="Deine Nachricht..."
+                                    placeholder={t('pages.contact.form.messagePlaceholder')}
                                     className="min-h-32"
                                     {...field}
                                   />
@@ -194,12 +200,12 @@ export default function ContactPage() {
                           >
                             {isSubmitting ? (
                               <>
-                                <span className="mr-2">Wird gesendet...</span>
+                                <span className="mr-2">{t('pages.contact.form.sending')}</span>
                               </>
                             ) : (
                               <>
                                 <Send className="mr-2 h-4 w-4" />
-                                Nachricht senden
+                                {t('pages.contact.form.submit')}
                               </>
                             )}
                           </Button>
@@ -218,17 +224,17 @@ export default function ContactPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="max-w-2xl mx-auto text-center">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Bereit, mit {siteConfig.name} zu starten?
+                {t('pages.contact.cta.title')}
               </h2>
               <p className="text-muted-foreground mb-8">
-                Schließe dich Millionen von Forschern an, die bereits mit {siteConfig.name} arbeiten.
+                {t('pages.contact.cta.description')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="rounded-full">
-                  <a href="/auth/signup">Kostenlos starten</a>
+                  <a href="/auth/signup">{t('pages.contact.cta.startFree')}</a>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="rounded-full">
-                  <a href="/about">Mehr erfahren</a>
+                  <a href="/about">{t('pages.contact.cta.learnMore')}</a>
                 </Button>
               </div>
             </ScrollReveal>

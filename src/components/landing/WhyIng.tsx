@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"
 import {
     BrainCircuitIcon,
     CheckCircleIcon,
@@ -16,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import Glow from "@/components/ui/glow";
 import { Item, ItemDescription, ItemIcon, ItemTitle } from "@/components/ui/item";
 import { Section } from "@/components/ui/section";
+import { useLanguage } from "@/lib/i18n/use-language";
 
 interface ItemProps {
     title: string;
@@ -30,55 +32,60 @@ interface WhyIngProps {
     className?: string;
 }
 
-const defaultItems: ItemProps[] = [
+export default function WhyIng({
+    title,
+    description,
+    items,
+    className,
+}: WhyIngProps) {
+    const { t, language } = useLanguage()
+
+    const defaultItems = React.useMemo<ItemProps[]>(() => [
     {
-        title: "KI-gestützte Vervollständigung",
-        description: "Intelligente Vorschläge, die deinen Kontext und Schreibstil verstehen.",
+            title: t('landing.whyIng.items.aiCompletion.title'),
+            description: t('landing.whyIng.items.aiCompletion.description'),
         icon: <BrainCircuitIcon className="size-5 stroke-1 text-primary" />,
     },
     {
-        title: "Blitzschnelle Performance",
-        description: "Sofortige Antworten und flüssiges Schreiben ohne Wartezeiten.",
+            title: t('landing.whyIng.items.fastPerformance.title'),
+            description: t('landing.whyIng.items.fastPerformance.description'),
         icon: <ZapIcon className="size-5 stroke-1 text-primary" />,
     },
     {
-        title: "Akademische Qualität",
-        description: "Zitationen, Plagiatsprüfung und Formatierung nach wissenschaftlichen Standards.",
+            title: t('landing.whyIng.items.academicQuality.title'),
+            description: t('landing.whyIng.items.academicQuality.description'),
         icon: <CheckCircleIcon className="size-5 stroke-1 text-primary" />,
     },
     {
-        title: "DSGVO-konform & sicher",
-        description: "Deine Daten bleiben verschlüsselt und werden nie für Modell-Training genutzt.",
+            title: t('landing.whyIng.items.gdprCompliant.title'),
+            description: t('landing.whyIng.items.gdprCompliant.description'),
         icon: <ShieldCheckIcon className="size-5 stroke-1 text-primary" />,
     },
     {
-        title: "Mehrsprachig",
-        description: "Schreibe und recherchiere in Deutsch, Englisch und 20+ weiteren Sprachen.",
+            title: t('landing.whyIng.items.multilingual.title'),
+            description: t('landing.whyIng.items.multilingual.description'),
         icon: <GlobeIcon className="size-5 stroke-1 text-primary" />,
     },
     {
-        title: "Voll anpassbar",
-        description: "Passe Schreibstil, Tonalität und Formatierung an deine Bedürfnisse an.",
+            title: t('landing.whyIng.items.fullyCustomizable.title'),
+            description: t('landing.whyIng.items.fullyCustomizable.description'),
         icon: <PaletteIcon className="size-5 stroke-1 text-primary" />,
     },
     {
-        title: "Produktionsbereit",
-        description: "Export in Word, PDF, LaTeX und HTML – ohne Nacharbeit.",
+            title: t('landing.whyIng.items.productionReady.title'),
+            description: t('landing.whyIng.items.productionReady.description'),
         icon: <RocketIcon className="size-5 stroke-1 text-primary" />,
     },
     {
-        title: "Ständige Verbesserung",
-        description: "Regelmäßige Updates mit neuen Features und verbesserten KI-Modellen.",
+            title: t('landing.whyIng.items.constantImprovement.title'),
+            description: t('landing.whyIng.items.constantImprovement.description'),
         icon: <SparklesIcon className="size-5 stroke-1 text-primary" />,
     },
-];
+    ], [t, language])
 
-export default function WhyIng({
-    title = "Warum Ing AI?",
-    description = "Die Werkzeuge, die du brauchst – ohne Ballast.",
-    items = defaultItems,
-    className,
-}: WhyIngProps) {
+    const finalTitle = title ?? t('landing.whyIng.title')
+    const finalDescription = description ?? t('landing.whyIng.description')
+    const finalItems = items ?? defaultItems
     return (
         <Section className={`py-12 md:py-16 relative overflow-hidden bg-background ${className || ''}`} id="why-ing">
             {/* Background */}
@@ -92,20 +99,20 @@ export default function WhyIng({
                 {/* Header */}
                 <div className="text-center space-y-4 mb-12">
                     <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                        Vorteile
+                        {t('landing.whyIng.badge')}
                     </Badge>
                     <h2 className="max-w-[560px] mx-auto text-center text-2xl leading-tight font-semibold sm:text-3xl sm:leading-tight">
-                        {title}
+                        {finalTitle}
                     </h2>
                     <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                        {description}
+                        {finalDescription}
                     </p>
                 </div>
 
                 {/* Items Grid */}
-                {items !== false && items.length > 0 && (
+                {finalItems !== false && finalItems.length > 0 && (
                     <div className="grid auto-rows-fr grid-cols-2 gap-0 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 max-w-6xl mx-auto">
-                        {items.map((item, index) => (
+                        {finalItems.map((item, index) => (
                             <Item
                                 key={index}
                                 className="group transition-all duration-300 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 dark:hover:border-primary/20 dark:hover:shadow-[0_0_20px_-12px_rgba(62,207,142,0.3)]"

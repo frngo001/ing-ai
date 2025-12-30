@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as React from "react";
 import Link from "next/link";
 import { Check, User, Users, Crown, ArrowRight, Gift } from "lucide-react";
 import { motion } from "framer-motion";
@@ -11,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useCTAHref } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/i18n/use-language";
+import { translations } from "@/lib/i18n/translations";
 
 // =============================================================================
 // TYPES
@@ -36,76 +39,6 @@ interface PricingPlan {
 // PRICING DATA
 // =============================================================================
 
-const pricingPlans: PricingPlan[] = [
-  {
-    id: "free",
-    name: "Kostenlos",
-    description: "Perfekt zum Ausprobieren und für gelegentliches Schreiben",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    icon: <Gift className="h-5 w-5" />,
-    cta: {
-      label: "Kostenlos starten",
-      href: siteConfig.pricing.free,
-    },
-    features: [
-      "200 Wörter KI-Generierung / Tag",
-      "Unbegrenzte Dokumente",
-      "Grundlegende Zitationssuche",
-      "1 aktives Projekt",
-      "Plagiatsprüfung (begrenzt)",
-      "Export als PDF & DOCX",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    description: "Für Studierende und Forscher mit regelmäßigem Schreibbedarf",
-    monthlyPrice: 20,
-    yearlyPrice: 13,
-    icon: <User className="h-5 w-5" />,
-    popular: true,
-    highlight: true,
-    cta: {
-      label: "Pro wählen",
-      href: siteConfig.pricing.pro,
-    },
-    features: [
-      "Unbegrenzte KI-Generierung",
-      "Unbegrenzte Dokumente & Projekte",
-      "Erweiterte Zitationssuche (20+ Quellen)",
-      "Vollständige Plagiatsprüfung",
-      "Akademischer Stil-Assistent",
-      "Mehrsprachige Unterstützung",
-      "Prioritäts-Support",
-      "Versionsverlauf (30 Tage)",
-    ],
-  },
-  {
-    id: "team",
-    name: "Team",
-    description: "Für Forschungsgruppen und akademische Institutionen",
-    monthlyPrice: 40,
-    yearlyPrice: 27,
-    icon: <Users className="h-5 w-5" />,
-    cta: {
-      label: "Team starten",
-      href: siteConfig.pricing.team,
-    },
-    features: [
-      "Alles aus Pro, plus:",
-      "Bis zu 10 Teammitglieder",
-      "Gemeinsame Projekt-Bibliothek",
-      "Team-Zitationsdatenbank",
-      "Kollaboratives Schreiben",
-      "Admin-Dashboard & Statistiken",
-      "SSO-Integration verfügbar",
-      "Dedizierter Konto Manager",
-      "Unbegrenzter Versionsverlauf",
-    ],
-  },
-];
-
 // =============================================================================
 // PRICING CARD COMPONENT
 // =============================================================================
@@ -114,10 +47,12 @@ function PricingCard({
   plan,
   isYearly,
   index,
+  t,
 }: {
   plan: PricingPlan;
   isYearly: boolean;
   index: number;
+  t: (key: string) => string;
 }) {
   const ctaHref = useCTAHref()
   const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
@@ -145,7 +80,7 @@ function PricingCard({
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <Badge className="bg-primary text-primary-foreground shadow-lg shadow-primary/25 px-4 py-1">
             <Crown className="mr-1 h-3 w-3" />
-            Am beliebtesten
+            {t('landing.pricing.plans.pro.popular')}
           </Badge>
         </div>
       )}
@@ -172,20 +107,20 @@ function PricingCard({
       <div className="mb-6">
         <div className="flex items-baseline gap-1">
           <span className="text-4xl font-bold">
-            {price === 0 ? "Kostenlos" : `€${price}`}
+            {price === 0 ? t('landing.pricing.free') : `€${price}`}
           </span>
           {price > 0 && (
-            <span className="text-muted-foreground">/Monat</span>
+            <span className="text-muted-foreground">{t('landing.pricing.perMonth')}</span>
           )}
         </div>
         {isYearly && savings > 0 && (
           <p className="mt-1 text-sm text-primary font-medium">
-            {savings}% gespart bei jährlicher Zahlung
+            {savings}% {t('landing.pricing.saved')}
           </p>
         )}
         {!isYearly && price > 0 && (
           <p className="mt-1 text-sm text-muted-foreground">
-            Bei monatlicher Abrechnung
+            {t('landing.pricing.monthlyBilling')}
           </p>
         )}
       </div>
@@ -231,6 +166,58 @@ function PricingCard({
 
 export default function Pricing() {
   const [isYearly, setIsYearly] = useState(true);
+  const { t, language } = useLanguage();
+
+  const pricingPlans = React.useMemo<PricingPlan[]>(() => {
+    const langTranslations = translations[language as keyof typeof translations] as any
+    const freeFeatures = langTranslations?.landing?.pricing?.plans?.free?.features || []
+    const proFeatures = langTranslations?.landing?.pricing?.plans?.pro?.features || []
+    const teamFeatures = langTranslations?.landing?.pricing?.plans?.team?.features || []
+    
+    return [
+      {
+        id: "free",
+        name: t('landing.pricing.plans.free.name'),
+        description: t('landing.pricing.plans.free.description'),
+        monthlyPrice: 0,
+        yearlyPrice: 0,
+        icon: <Gift className="h-5 w-5" />,
+        cta: {
+          label: t('landing.pricing.plans.free.cta'),
+          href: siteConfig.pricing.free,
+        },
+        features: Array.isArray(freeFeatures) ? freeFeatures : [],
+      },
+      {
+        id: "pro",
+        name: t('landing.pricing.plans.pro.name'),
+        description: t('landing.pricing.plans.pro.description'),
+        monthlyPrice: 20,
+        yearlyPrice: 13,
+        icon: <User className="h-5 w-5" />,
+        popular: true,
+        highlight: true,
+        cta: {
+          label: t('landing.pricing.plans.pro.cta'),
+          href: siteConfig.pricing.pro,
+        },
+        features: Array.isArray(proFeatures) ? proFeatures : [],
+      },
+      {
+        id: "team",
+        name: t('landing.pricing.plans.team.name'),
+        description: t('landing.pricing.plans.team.description'),
+        monthlyPrice: 40,
+        yearlyPrice: 27,
+        icon: <Users className="h-5 w-5" />,
+        cta: {
+          label: t('landing.pricing.plans.team.cta'),
+          href: siteConfig.pricing.team,
+        },
+        features: Array.isArray(teamFeatures) ? teamFeatures : [],
+      },
+    ]
+  }, [t, language]);
 
   return (
     <section id="pricing" className="relative py-10 md:py-12 overflow-hidden bg-muted dark:bg-neutral-900">
@@ -245,13 +232,13 @@ export default function Pricing() {
         {/* Header */}
         <div className="text-center mb-12 md:mb-16 space-y-4">
           <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-            Preise
+            {t('landing.pricing.badge')}
           </Badge>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-            Wähle deinen Plan
+            {t('landing.pricing.title')}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Starte kostenlos und upgrade jederzeit. Keine versteckten Kosten.
+            {t('landing.pricing.description')}
           </p>
 
           {/* Billing Toggle */}
@@ -260,7 +247,7 @@ export default function Pricing() {
               "text-sm font-medium transition-colors",
               !isYearly ? "text-foreground" : "text-muted-foreground"
             )}>
-              Monatlich
+              {t('landing.pricing.monthly')}
             </span>
             <Switch
               checked={isYearly}
@@ -271,11 +258,11 @@ export default function Pricing() {
               "text-sm font-medium transition-colors",
               isYearly ? "text-foreground" : "text-muted-foreground"
             )}>
-              Jährlich
+              {t('landing.pricing.yearly')}
             </span>
             {isYearly && (
               <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-primary/20">
-                Spare bis zu 33%
+                {t('landing.pricing.saveUpTo')}
               </Badge>
             )}
           </div>
@@ -289,6 +276,7 @@ export default function Pricing() {
               plan={plan}
               isYearly={isYearly}
               index={index}
+              t={t}
             />
           ))}
         </div>
@@ -296,15 +284,15 @@ export default function Pricing() {
         {/* Bottom Section */}
         <div className="mt-16 text-center">
           <p className="text-muted-foreground text-sm">
-            Alle Preise zzgl. MwSt. · Jederzeit kündbar · 14 Tage Geld-zurück-Garantie
+            {t('landing.pricing.footer')}
           </p>
           <p className="mt-4 text-sm">
-            <span className="text-muted-foreground">Brauchst du einen individuellen Plan? </span>
+            <span className="text-muted-foreground">{t('landing.pricing.needCustom')} </span>
             <Link
               href="/contact"
               className="text-primary font-medium hover:underline underline-offset-4"
             >
-              Kontaktiere uns
+              {t('landing.pricing.contactUs')}
             </Link>
           </p>
         </div>

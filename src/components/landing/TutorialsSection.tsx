@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"
 import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useCTAHref } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/i18n/use-language";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
 
@@ -50,6 +52,17 @@ function TutorialCard({
     tutorial: Tutorial;
     index: number;
 }) {
+    const { t, language } = useLanguage()
+    
+    const authorPrefix = React.useMemo(() => t('landing.tutorials.author'), [t, language])
+    const displayDescription = React.useMemo(() => {
+        // Wenn die Beschreibung nur ein Autor-Name ist (kein "Von" Präfix), füge das übersetzte Präfix hinzu
+        if (tutorial.description && tutorial.description !== 'YouTube Video' && !tutorial.description.startsWith('Von ') && !tutorial.description.startsWith('By ') && !tutorial.description.startsWith('Por ') && !tutorial.description.startsWith('Par ')) {
+            return `${authorPrefix} ${tutorial.description}`
+        }
+        return tutorial.description
+    }, [tutorial.description, authorPrefix, language])
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -89,7 +102,7 @@ function TutorialCard({
                     {tutorial.title}
                 </h3>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                    {tutorial.description}
+                    {displayDescription}
                 </p>
             </div>
         </motion.div>
@@ -103,6 +116,7 @@ export function TutorialsSection() {
     const [tutorials, setTutorials] = useState<Tutorial[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const ctaHref = useCTAHref();
+    const { t, language } = useLanguage();
 
     // Lade YouTube-Metadaten beim Mount
     useEffect(() => {
@@ -182,13 +196,13 @@ export function TutorialsSection() {
                         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                             <div className="max-w-2xl">
                                 <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                                    Tutorials
+                                    {t('landing.tutorials.badge')}
                                 </Badge>
                                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-neutral-900 dark:text-neutral-100 mb-4">
-                                    Lerne Ing AI in Minuten
+                                    {t('landing.tutorials.title')}
                                 </h2>
                                 <p className="text-neutral-500 dark:text-neutral-400 text-lg">
-                                    Schau dir unsere Video-Tutorials an und werde zum Profi.
+                                    {t('landing.tutorials.description')}
                                 </p>
                             </div>
 
@@ -250,7 +264,7 @@ export function TutorialsSection() {
                         {/* Empty State */}
                         {!isLoading && tutorials.length === 0 && (
                             <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
-                                Keine Tutorials verfügbar.
+                                {t('landing.tutorials.noTutorials')}
                             </div>
                         )}
                     </div>
@@ -265,7 +279,7 @@ export function TutorialsSection() {
                     >
                         <Link href={ctaHref}>
                             <MorphyButton size="lg">
-                                Jetzt kostenlos ausprobieren
+                                {t('landing.tutorials.tryNow')}
                             </MorphyButton>
                         </Link>
                         <a
@@ -274,7 +288,7 @@ export function TutorialsSection() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
                         >
-                            Alle Tutorials auf YouTube ansehen
+                            {t('landing.tutorials.watchAll')}
                             <ChevronRight className="ml-1 h-4 w-4" />
                         </a>
                     </motion.div>

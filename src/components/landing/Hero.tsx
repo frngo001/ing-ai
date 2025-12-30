@@ -1,9 +1,11 @@
 "use client"
 
+import * as React from "react"
 import { ArrowRight, Sparkles, Zap, FileText, Quote } from "lucide-react"
 import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 import Glow, { Spotlight } from "@/components/ui/glow"
 import { Mockup, MockupFrame, FloatingCard, PerspectiveWrapper } from "@/components/ui/mockup"
@@ -22,6 +24,20 @@ import {
 // =============================================================================
 
 export default function Hero() {
+  const { t, language } = useLanguage()
+
+  const heroContent = React.useMemo(() => ({
+    badge: t('landing.hero.badge'),
+    title: t('landing.hero.title'),
+    titleHighlight: t('landing.hero.titleHighlight'),
+    subtitle: t('landing.hero.subtitle'),
+    socialProof: {
+      users: t('landing.hero.socialProof.users'),
+      label: t('landing.hero.socialProof.label'),
+      trust: t('landing.hero.socialProof.trust'),
+    },
+  }), [t, language])
+
   return (
     <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0 sm:py-0 md:py-0">
       <div className="max-w-7xl line-y line-dashed relative mx-auto flex flex-col gap-0 pt-12 sm:pt-32 md:pt-10">
@@ -32,7 +48,7 @@ export default function Hero() {
             <Link href="/auth/login">
               <Announcement movingBorder className="px-2.5 py-0 h-6">
                 <AnnouncementTitle className="gap-1 text-[11px] font-medium">
-                  <span className="text-muted-foreground">Ing AI v1.0 - Jetzt verfügbar</span>
+                  <span className="text-muted-foreground">{heroContent.badge}</span>
                   <ArrowRight className="size-2.5 text-muted-foreground" />
                 </AnnouncementTitle>
               </Announcement>
@@ -41,15 +57,14 @@ export default function Hero() {
 
           {/* H1 */}
           <h1 className="animate-appear inline-block max-w-[840px] text-4xl leading-tight font-semibold text-balance drop-shadow-2xl sm:text-5xl sm:leading-tight lg:text-6xl lg:leading-tight text-foreground dark:text-white">
-            Akademisches Schreiben, <br />
+            {heroContent.title} <br />
             <span className="text-foreground dark:text-white">
-              revolutioniert
+              {heroContent.titleHighlight}
             </span>
           </h1>
           {/* Subtext */}
           <p className="text-md animate-appear text-muted-foreground max-w-[840px] font-medium text-balance opacity-0 delay-100 lg:text-xl">
-            Der intelligenteste KI-Schreibassistent für akademische Arbeiten.
-            Schreibe schneller, zitiere sofort und überwinde jede Schreibblockade.
+            {heroContent.subtitle}
           </p>
 
           {/* Social Proof */}
@@ -71,10 +86,10 @@ export default function Hero() {
               </div>
               <div className="flex flex-col">
                 <p className="text-xs font-semibold text-foreground leading-tight">
-                  <span className="text-primary font-bold">100+</span> Studenten und Forscher
+                  <span className="text-primary font-bold">{heroContent.socialProof.users}</span> {heroContent.socialProof.label}
                 </p>
                 <p className="text-[10px] text-muted-foreground leading-tight">
-                  vertrauen auf Ing AI
+                  {heroContent.socialProof.trust}
                 </p>
               </div>
             </div>

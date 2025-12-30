@@ -15,6 +15,7 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 type OTPFormProps = Omit<React.ComponentProps<"div">, "onChange"> & {
   code: string
@@ -33,6 +34,8 @@ export function OTPForm({
   isLoading,
   ...props
 }: OTPFormProps) {
+  const { t } = useLanguage()
+
   return (
     <div className={cn("flex flex-col gap-6 md:min-h-[450px]", className)} {...props}>
       <Card className="flex-1 overflow-hidden p-0">
@@ -46,14 +49,14 @@ export function OTPForm({
           >
             <FieldGroup>
               <Field className="items-center text-center">
-                <h1 className="text-2xl font-bold">Verifizierungscode eingeben</h1>
+                <h1 className="text-2xl font-bold">{t('auth.otp.title')}</h1>
                 <p className="text-muted-foreground text-sm text-balance">
-                  Wir haben einen 6-stelligen Code an deine E-Mail gesendet.
+                  {t('auth.otp.description')}
                 </p>
               </Field>
               <Field>
                 <FieldLabel htmlFor="otp" className="sr-only">
-                  Verifizierungscode
+                  {t('auth.otp.codeLabel')}
                 </FieldLabel>
                 <InputOTP
                   maxLength={6}
@@ -76,7 +79,7 @@ export function OTPForm({
                   </InputOTPGroup>
                 </InputOTP>
                 <FieldDescription className="text-center">
-                  Gib den 6-stelligen Code ein, um fortzufahren.
+                  {t('auth.otp.codeHint')}
                 </FieldDescription>
               </Field>
               <Field className="grid gap-2">
@@ -84,16 +87,16 @@ export function OTPForm({
                   {isLoading && (
                     <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-b-transparent align-[-0.2em]" />
                   )}
-                  Code bestätigen
+                  {t('auth.otp.submit')}
                 </Button>
                 {onResend && (
                   <Button type="button" variant="outline" onClick={onResend} disabled={isLoading}>
-                    Code erneut senden
+                    {t('auth.otp.resend')}
                   </Button>
                 )}
               </Field>
               <FieldDescription className="text-center text-xs text-muted-foreground">
-                Durch Fortfahren stimmst du unseren Nutzungsbedingungen und der Datenschutzrichtlinie zu.
+                {t('auth.otp.agreement')}
               </FieldDescription>
             </FieldGroup>
           </form>

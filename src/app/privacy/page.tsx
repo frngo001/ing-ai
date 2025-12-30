@@ -1,13 +1,28 @@
 "use client"
 
+import * as React from "react"
 import Navbar from '@/components/landing/Navbar'
 import { Footer } from '@/components/landing/Footer'
 import { siteConfig } from '@/config/site'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import Glow from '@/components/ui/glow'
 import { Badge } from '@/components/ui/badge'
+import { useLanguage } from '@/lib/i18n/use-language'
+import { translations } from '@/lib/i18n/translations'
 
 export default function PrivacyPage() {
+  const { t, language } = useLanguage()
+
+  const langTranslations = React.useMemo(() => {
+    return translations[language as keyof typeof translations] as any
+  }, [language])
+
+  const visitItems = langTranslations?.pages?.privacy?.sections?.dataCollection?.visit?.items || []
+  const registrationItems = langTranslations?.pages?.privacy?.sections?.dataCollection?.registration?.items || []
+  const dataUsageItems = langTranslations?.pages?.privacy?.sections?.dataUsage?.items || []
+  const dataSharingItems = langTranslations?.pages?.privacy?.sections?.dataSharing?.items || []
+  const rightsItems = langTranslations?.pages?.privacy?.sections?.rights?.items || []
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
@@ -20,13 +35,13 @@ export default function PrivacyPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="max-w-3xl mx-auto text-center">
               <Badge variant="outline" className="mb-6 text-[10px] uppercase tracking-wider">
-                Rechtliches
+                {t('pages.privacy.badge')}
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-                Datenschutzerklärung
+                {t('pages.privacy.title')}
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
-                Stand: {new Date().toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {t('pages.privacy.lastUpdated')} {new Date().toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </ScrollReveal>
           </div>
@@ -38,9 +53,9 @@ export default function PrivacyPage() {
             <ScrollReveal className="prose prose-lg dark:prose-invert max-w-none">
               <div className="space-y-8 text-muted-foreground">
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Verantwortlicher</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.responsible.title')}</h2>
                   <p>
-                    Verantwortlich für die Datenverarbeitung auf dieser Website ist:
+                    {t('pages.privacy.sections.responsible.description')}
                   </p>
                   <p className="mt-2">
                     <strong>{siteConfig.name}</strong><br />
@@ -49,123 +64,99 @@ export default function PrivacyPage() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Erhebung und Speicherung personenbezogener Daten</h2>
-                  <h3 className="text-xl font-semibold mb-3 text-foreground">2.1 Beim Besuch der Website</h3>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.dataCollection.title')}</h2>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">{t('pages.privacy.sections.dataCollection.visit.title')}</h3>
                   <p>
-                    Beim Aufruf unserer Website werden durch den auf Ihrem Endgerät zum Einsatz kommenden Browser 
-                    automatisch Informationen an den Server unserer Website gesendet. Diese Informationen werden 
-                    temporär in einem sogenannten Logfile gespeichert. Folgende Informationen werden dabei ohne 
-                    Ihr Zutun erfasst und bis zur automatisierten Löschung gespeichert:
+                    {t('pages.privacy.sections.dataCollection.visit.description')}
                   </p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li>IP-Adresse des anfragenden Rechners</li>
-                    <li>Datum und Uhrzeit des Zugriffs</li>
-                    <li>Name und URL der abgerufenen Datei</li>
-                    <li>Website, von der aus der Zugriff erfolgt (Referrer-URL)</li>
-                    <li>verwendeter Browser und ggf. das Betriebssystem Ihres Rechners sowie der Name Ihres Access-Providers</li>
+                    {Array.isArray(visitItems) && visitItems.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
                   </ul>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-semibold mb-3 text-foreground">2.2 Bei Registrierung</h3>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">{t('pages.privacy.sections.dataCollection.registration.title')}</h3>
                   <p>
-                    Wenn Sie sich für ein Konto registrieren, erheben wir folgende Daten:
+                    {t('pages.privacy.sections.dataCollection.registration.description')}
                   </p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li>E-Mail-Adresse</li>
-                    <li>Passwort (verschlüsselt gespeichert)</li>
-                    <li>Name (optional)</li>
-                    <li>Registrierungsdatum</li>
+                    {Array.isArray(registrationItems) && registrationItems.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
                   </ul>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">3. Nutzung Ihrer Daten</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.dataUsage.title')}</h2>
                   <p>
-                    Wir verwenden die von Ihnen zur Verfügung gestellten personenbezogenen Daten für folgende Zwecke:
+                    {t('pages.privacy.sections.dataUsage.description')}
                   </p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li>Bereitstellung und Verbesserung unserer Dienste</li>
-                    <li>Kommunikation mit Ihnen bezüglich unserer Dienste</li>
-                    <li>Erfüllung unserer vertraglichen Verpflichtungen</li>
-                    <li>Erfüllung gesetzlicher Aufbewahrungspflichten</li>
-                    <li>Gewährleistung der Sicherheit und Stabilität unserer Systeme</li>
+                    {Array.isArray(dataUsageItems) && dataUsageItems.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
                   </ul>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Weitergabe von Daten</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.dataSharing.title')}</h2>
                   <p>
-                    Eine Übermittlung Ihrer persönlichen Daten an Dritte erfolgt grundsätzlich nicht, außer:
+                    {t('pages.privacy.sections.dataSharing.description')}
                   </p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li>Sie haben ausdrücklich eingewilligt</li>
-                    <li>die Weitergabe zur Erfüllung vertraglicher Verpflichtungen erforderlich ist</li>
-                    <li>die Weitergabe zur Erfüllung einer rechtlichen Verpflichtung erforderlich ist</li>
-                    <li>die Weitergabe zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen erforderlich ist</li>
+                    {Array.isArray(dataSharingItems) && dataSharingItems.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
                   </ul>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Cookies</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.cookies.title')}</h2>
                   <p>
-                    Wir setzen auf unserer Seite Cookies ein. Hierbei handelt es sich um kleine Dateien, die Ihr 
-                    Browser automatisch erstellt und die auf Ihrem Endgerät (Laptop, Tablet, Smartphone o.ä.) 
-                    gespeichert werden, wenn Sie unsere Seite besuchen. Cookies richten auf Ihrem Endgerät keinen 
-                    Schaden an, enthalten keine Viren, Trojaner oder sonstige Schadsoftware.
+                    {t('pages.privacy.sections.cookies.description1')}
                   </p>
                   <p className="mt-2">
-                    Wir setzen Cookies ein, um unsere Website nutzerfreundlicher zu gestalten. Einige Funktionen 
-                    unserer Internetseite können ohne den Einsatz von Cookies nicht angeboten werden.
+                    {t('pages.privacy.sections.cookies.description2')}
                   </p>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Ihre Rechte</h2>
-                  <p>Sie haben das Recht:</p>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.rights.title')}</h2>
+                  <p>{t('pages.privacy.sections.rights.description')}</p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li>Auskunft über Ihre bei uns gespeicherten personenbezogenen Daten zu erhalten</li>
-                    <li>Berichtigung unrichtiger Daten zu verlangen</li>
-                    <li>Löschung Ihrer bei uns gespeicherten Daten zu verlangen</li>
-                    <li>Einschränkung der Datenverarbeitung zu verlangen</li>
-                    <li>Widerspruch gegen die Verarbeitung Ihrer personenbezogenen Daten einzulegen</li>
-                    <li>Datenübertragbarkeit zu verlangen</li>
-                    <li>Beschwerde bei einer Aufsichtsbehörde einzulegen</li>
+                    {Array.isArray(rightsItems) && rightsItems.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
                   </ul>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Datensicherheit</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.dataSecurity.title')}</h2>
                   <p>
-                    Wir verwenden moderne Sicherheitstechnologien, um Ihre Daten zu schützen. Die Übertragung 
-                    von Daten erfolgt verschlüsselt über SSL/TLS. Ihre Passwörter werden mit modernen 
-                    Verschlüsselungsverfahren gespeichert.
+                    {t('pages.privacy.sections.dataSecurity.description')}
                   </p>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">8. Speicherdauer</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.storageDuration.title')}</h2>
                   <p>
-                    Personenbezogene Daten werden gelöscht, sobald der Zweck der Speicherung entfällt oder Sie 
-                    die Löschung verlangen, es sei denn, gesetzliche Aufbewahrungspflichten stehen einer Löschung 
-                    entgegen.
+                    {t('pages.privacy.sections.storageDuration.description')}
                   </p>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">9. Änderungen dieser Datenschutzerklärung</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.changes.title')}</h2>
                   <p>
-                    Wir behalten uns vor, diese Datenschutzerklärung anzupassen, damit sie stets den aktuellen 
-                    rechtlichen Anforderungen entspricht oder um Änderungen unserer Leistungen in der 
-                    Datenschutzerklärung umzusetzen. Für Ihren erneuten Besuch gilt dann die neue 
-                    Datenschutzerklärung.
+                    {t('pages.privacy.sections.changes.description')}
                   </p>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">10. Kontakt</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.privacy.sections.contact.title')}</h2>
                   <p>
-                    Bei Fragen zum Datenschutz können Sie sich jederzeit an uns wenden:
+                    {t('pages.privacy.sections.contact.description')}
                   </p>
                   <p className="mt-2">
                     <strong>{siteConfig.name}</strong><br />

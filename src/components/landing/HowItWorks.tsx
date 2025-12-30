@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"
 import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
@@ -9,33 +10,8 @@ import Link from "next/link";
 import { MorphyButton } from "@/components/ui/morphy-button";
 import StatsCount from "@/components/ui/statscount";
 import { useCTAHref } from "@/hooks/use-auth";
-
-const steps = [
-    {
-        number: "01",
-        title: "Quellen hochladen",
-        description: "Lade deine PDFs hoch oder importiere Referenzen direkt aus Google Scholar, PubMed oder Zotero.",
-        visual: "upload",
-    },
-    {
-        number: "02",
-        title: "Gliederung erstellen",
-        description: "Lass die KI eine strukturierte Gliederung basierend auf deinem Thema und deinen Quellen erstellen.",
-        visual: "outline",
-    },
-    {
-        number: "03",
-        title: "Mit KI schreiben",
-        description: "Nutze Autocomplete und automatische Zitationen, um deinen Text Abschnitt für Abschnitt zu verfassen.",
-        visual: "write",
-    },
-    {
-        number: "04",
-        title: "Exportieren",
-        description: "Exportiere deine fertige Arbeit als Word, PDF, LaTeX oder HTML – perfekt formatiert.",
-        visual: "export",
-    },
-];
+import { useLanguage } from "@/lib/i18n/use-language";
+import { translations } from "@/lib/i18n/translations";
 
 // Typing animation hook
 function useTypingEffect(text: string, isInView: boolean, delay: number = 0) {
@@ -71,11 +47,12 @@ function useTypingEffect(text: string, isInView: boolean, delay: number = 0) {
 
 // Upload Visual with drag animation
 function UploadVisual({ isInView }: { isInView: boolean }) {
-    const files = [
-        { name: "forschungsarbeit.pdf", size: "2.4 MB" },
-        { name: "methodik.pdf", size: "1.8 MB" },
-        { name: "literaturübersicht.pdf", size: "3.1 MB" },
-    ];
+    const { language } = useLanguage()
+    
+    const visuals = React.useMemo(() => {
+        const lang = language as keyof typeof translations;
+        return translations[lang].landing.howItWorks.visuals.upload as unknown as { dragFiles: string; files: { name: string; size: string }[] };
+    }, [language])
 
     return (
         <div className="space-y-2 relative">
@@ -90,11 +67,11 @@ function UploadVisual({ isInView }: { isInView: boolean }) {
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     className="text-xs text-neutral-400"
                 >
-                    Dateien hierher ziehen
+                    {visuals.dragFiles}
                 </motion.div>
             </motion.div>
 
-            {files.map((file, i) => (
+            {visuals.files.map((file, i) => (
                 <motion.div
                     key={file.name}
                     initial={{ opacity: 0, x: -30, scale: 0.9 }}
@@ -132,12 +109,12 @@ function UploadVisual({ isInView }: { isInView: boolean }) {
 
 // Outline Visual with expanding animation
 function OutlineVisual({ isInView }: { isInView: boolean }) {
-    const sections = [
-        { title: "1. Einleitung", subsections: ["1.1 Hintergrund", "1.2 Forschungsfrage"] },
-        { title: "2. Methodik", subsections: ["2.1 Datenerhebung", "2.2 Analyse"] },
-        { title: "3. Ergebnisse", subsections: [] },
-        { title: "4. Diskussion", subsections: [] },
-    ];
+    const { language } = useLanguage()
+    
+    const sections = React.useMemo(() => {
+        const lang = language as keyof typeof translations;
+        return translations[lang].landing.howItWorks.visuals.outline.sections as unknown as { title: string; subsections: string[] }[];
+    }, [language])
 
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
@@ -200,16 +177,23 @@ function OutlineVisual({ isInView }: { isInView: boolean }) {
 
 // Writing Visual with typing effect
 function WriteVisual({ isInView }: { isInView: boolean }) {
-    const baseText = "Die Studie zeigt signifikante Ergebnisse in ";
-    const aiSuggestion = "der Analyse der Primärdaten, wobei 78% der Teilnehmer eine deutliche Verbesserung zeigten (Miller et al., 2024).";
+    const { t, language } = useLanguage()
+    
+    const visuals = React.useMemo(() => ({
+        baseText: t('landing.howItWorks.visuals.write.baseText'),
+        aiSuggestion: t('landing.howItWorks.visuals.write.aiSuggestion'),
+        accept: t('landing.howItWorks.visuals.write.accept'),
+        reject: t('landing.howItWorks.visuals.write.reject'),
+        citationAdded: t('landing.howItWorks.visuals.write.citationAdded'),
+    }), [t, language])
 
-    const { displayText: typedSuggestion, isComplete } = useTypingEffect(aiSuggestion, isInView, 500);
+    const { displayText: typedSuggestion, isComplete } = useTypingEffect(visuals.aiSuggestion, isInView, 500);
 
     return (
         <div className="space-y-3">
             <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg p-3 border border-neutral-200 dark:border-neutral-700">
                 <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    {baseText}
+                    {visuals.baseText}
                     <span className="text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-0.5 rounded">
                         {typedSuggestion}
                         {!isComplete && (
@@ -237,13 +221,13 @@ function WriteVisual({ isInView }: { isInView: boolean }) {
                     >
                         Tab
                     </motion.kbd>
-                    <span className="text-xs text-neutral-400">akzeptieren</span>
+                    <span className="text-xs text-neutral-400">{visuals.accept}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <kbd className="px-2 py-1 bg-neutral-200 dark:bg-neutral-800 rounded text-[10px] font-mono text-neutral-500 border border-neutral-300 dark:border-neutral-700">
                         Esc
                     </kbd>
-                    <span className="text-xs text-neutral-400">ablehnen</span>
+                    <span className="text-xs text-neutral-400">{visuals.reject}</span>
                 </div>
             </motion.div>
 
@@ -255,7 +239,7 @@ function WriteVisual({ isInView }: { isInView: boolean }) {
                 className="flex items-center gap-2 p-2 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
             >
                 <div className="w-2 h-2 rounded-full bg-neutral-900 dark:bg-neutral-100" />
-                <span className="text-[10px] text-neutral-500">Zitation automatisch hinzugefügt</span>
+                <span className="text-[10px] text-neutral-500">{visuals.citationAdded}</span>
             </motion.div>
         </div>
     );
@@ -263,13 +247,16 @@ function WriteVisual({ isInView }: { isInView: boolean }) {
 
 // Export Visual with format selection
 function ExportVisual({ isInView }: { isInView: boolean }) {
+    const { t, language } = useLanguage()
     const [selected, setSelected] = useState<string | null>(null);
-    const formats = [
-        { name: "DOCX", desc: "Word-Dokument" },
-        { name: "PDF", desc: "PDF-Dokument" },
-        { name: "LaTeX", desc: "TeX-Format" },
-        { name: "HTML", desc: "Web-Format" },
-    ];
+    
+    const visuals = React.useMemo(() => {
+        const lang = language as keyof typeof translations;
+        return {
+            formats: translations[lang].landing.howItWorks.visuals.export.formats as unknown as { name: string; desc: string }[],
+            exporting: t('landing.howItWorks.visuals.export.exporting'),
+        };
+    }, [t, language])
 
     useEffect(() => {
         if (isInView) {
@@ -281,7 +268,7 @@ function ExportVisual({ isInView }: { isInView: boolean }) {
     return (
         <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-                {formats.map((format, i) => (
+                {visuals.formats.map((format, i) => (
                     <motion.div
                         key={format.name}
                         initial={{ opacity: 0, y: 20 }}
@@ -324,7 +311,7 @@ function ExportVisual({ isInView }: { isInView: boolean }) {
                 className="space-y-2"
             >
                 <div className="flex items-center justify-between text-xs">
-                    <span className="text-neutral-500">Exportiere als {selected}...</span>
+                    <span className="text-neutral-500">{visuals.exporting} {selected}...</span>
                     <motion.span
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -362,7 +349,14 @@ function StepVisual({ type, isInView }: { type: string; isInView: boolean }) {
 }
 
 // Step Card Component
-function StepCard({ step, index }: { step: typeof steps[0]; index: number }) {
+type Step = {
+    number: string;
+    title: string;
+    description: string;
+    visual: string;
+};
+
+function StepCard({ step, index }: { step: Step; index: number }) {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -451,6 +445,34 @@ function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: strin
 
 export function HowItWorks() {
     const ctaHref = useCTAHref()
+    const { t, language } = useLanguage()
+
+    const steps = React.useMemo(() => [
+        {
+            number: t('landing.howItWorks.steps.upload.number'),
+            title: t('landing.howItWorks.steps.upload.title'),
+            description: t('landing.howItWorks.steps.upload.description'),
+            visual: "upload",
+        },
+        {
+            number: t('landing.howItWorks.steps.outline.number'),
+            title: t('landing.howItWorks.steps.outline.title'),
+            description: t('landing.howItWorks.steps.outline.description'),
+            visual: "outline",
+        },
+        {
+            number: t('landing.howItWorks.steps.write.number'),
+            title: t('landing.howItWorks.steps.write.title'),
+            description: t('landing.howItWorks.steps.write.description'),
+            visual: "write",
+        },
+        {
+            number: t('landing.howItWorks.steps.export.number'),
+            title: t('landing.howItWorks.steps.export.title'),
+            description: t('landing.howItWorks.steps.export.description'),
+            visual: "export",
+        },
+    ], [t, language])
 
     return (
         <section id="how-it-works" className="py-24 bg-white dark:bg-neutral-950 relative overflow-hidden">
@@ -460,13 +482,13 @@ export function HowItWorks() {
             <div className="container px-4 mx-auto">
                 <ScrollReveal className="text-center max-w-2xl mx-auto mb-20 space-y-4">
                     <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                        Workflow
+                        {t('landing.howItWorks.badge')}
                     </Badge>
                     <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-                        Von der leeren Seite zur fertigen Arbeit
+                        {t('landing.howItWorks.title')}
                     </h2>
                     <p className="text-neutral-500 dark:text-neutral-400">
-                        Ein einfacher, strukturierter Prozess für dein akademisches Schreiben.
+                        {t('landing.howItWorks.description')}
                     </p>
                 </ScrollReveal>
 
@@ -500,11 +522,11 @@ export function HowItWorks() {
                     <div className="mt-16">
                         <StatsCount
                             stats={[
-                                { value: 3, suffix: "x", label: "schneller schreiben" },
-                                { value: 85, suffix: "%", label: "Zeitersparnis" },
-                                { value: 50, suffix: "+", label: "Zitierstile" }
+                                { value: 3, suffix: "x", label: t('landing.howItWorks.stats.faster.label') },
+                                { value: 85, suffix: "%", label: t('landing.howItWorks.stats.timeSaved.label') },
+                                { value: 50, suffix: "+", label: t('landing.howItWorks.stats.citationStyles.label') }
                             ]}
-                            title="LEISTUNGSSTARKE ERGEBNISSE"
+                            title={t('landing.howItWorks.stats.title')}
                             showDividers={true}
                             className="bg-card text-card-foreground backdrop-blur-xl rounded-2xl border border-border/50 shadow-sm"
                         />
@@ -513,7 +535,7 @@ export function HowItWorks() {
                     <div className="flex justify-center mt-12">
                         <Link href={ctaHref}>
                             <MorphyButton size="lg">
-                                Jetzt Workflow starten
+                                {t('landing.howItWorks.cta')}
                             </MorphyButton>
                         </Link>
                     </div>

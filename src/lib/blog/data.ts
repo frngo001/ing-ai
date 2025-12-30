@@ -9,17 +9,40 @@ export interface BlogAuthor {
 export interface BlogPost {
   id: string
   title: string
-  date: string
+  date: string // ISO date string (YYYY-MM-DD) or Date object
   author: BlogAuthor
   excerpt: string
   content: string
+}
+
+/**
+ * Formatiert ein Datum basierend auf der angegebenen Sprache
+ */
+export function formatBlogDate(date: string | Date, locale: string = 'de'): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  
+  // Sprach-Mapping für Intl.DateTimeFormat
+  const localeMap: Record<string, string> = {
+    'en': 'en-US',
+    'es': 'es-ES',
+    'fr': 'fr-FR',
+    'de': 'de-DE',
+  }
+  
+  const intlLocale = localeMap[locale] || localeMap['de']
+  
+  return new Intl.DateTimeFormat(intlLocale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(dateObj)
 }
 
 export const blogPosts: BlogPost[] = [
   {
     id: "ki-gestuetztes-wissenschaftliches-schreiben",
     title: "KI-gestütztes wissenschaftliches Schreiben: Eine umfassende Anleitung",
-    date: "15. Dezember 2024",
+    date: "2024-12-15",
     author: {
       name: "Dr. Sarah Müller",
       title: "Senior Research Scientist",
@@ -101,7 +124,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "zitationsstile-verstehen",
     title: "Zitationsstile verstehen: Ein Leitfaden für wissenschaftliches Schreiben",
-    date: "10. Dezember 2024",
+    date: "2024-12-10",
     author: {
       name: "Prof. Dr. Michael Weber",
       title: "Professor für Wissenschaftskommunikation",
@@ -139,7 +162,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "ultimativer-guide-bachelorarbeit",
     title: "Der ultimative Guide für die Bachelorarbeit",
-    date: "8. Dezember 2024",
+    date: "2024-12-08",
     author: {
       name: "Dr. Anna Schmidt",
       title: "Akademische Beraterin",
@@ -183,7 +206,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "ki-im-studium",
     title: "KI im Studium",
-    date: "5. Dezember 2024",
+    date: "2024-12-05",
     author: {
       name: "Dr. Thomas Klein",
       title: "Bildungstechnologe",
@@ -224,7 +247,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "zitieren-leicht-gemacht",
     title: "Zitieren leicht gemacht",
-    date: "3. Dezember 2024",
+    date: "2024-12-03",
     author: {
       name: "Prof. Dr. Michael Weber",
       title: "Professor für Wissenschaftskommunikation",
@@ -265,7 +288,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "schreibblockaden-ueberwinden",
     title: "Schreibblockaden überwinden",
-    date: "1. Dezember 2024",
+    date: "2024-12-01",
     author: {
       name: "Dr. Lisa Wagner",
       title: "Schreibcoach und Psychologin",
@@ -310,7 +333,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "plagiatspruefung",
     title: "Plagiatsprüfung",
-    date: "28. November 2024",
+    date: "2024-11-28",
     author: {
       name: "Dr. Julia Becker",
       title: "Akademische Integritätsbeauftragte",
@@ -357,7 +380,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "forschungsmethoden",
     title: "Forschungsmethoden",
-    date: "25. November 2024",
+    date: "2024-11-25",
     author: {
       name: "Prof. Dr. Robert Fischer",
       title: "Professor für Methodologie",
@@ -408,7 +431,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "literaturverwaltung",
     title: "Literaturverwaltung",
-    date: "22. November 2024",
+    date: "2024-11-22",
     author: {
       name: "Dr. Markus Hoffmann",
       title: "Bibliothekswissenschaftler",
@@ -458,7 +481,7 @@ export const blogPosts: BlogPost[] = [
   {
     id: "community-stories",
     title: "Community Stories",
-    date: "20. November 2024",
+    date: "2024-11-20",
     author: {
       name: "Jenni AI Team",
       title: "Community Manager",

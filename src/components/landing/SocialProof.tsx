@@ -1,7 +1,9 @@
 "use client";
 
+import * as React from "react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import Image from "next/image";
+import { useLanguage } from "@/lib/i18n/use-language";
 
 const germanUniversities = [
     { name: "LMU München", logo: "/logos/lmu-muenchen.svg" },
@@ -27,12 +29,14 @@ const germanUniversities = [
 ];
 
 export default function SocialProof() {
+    const { t, language } = useLanguage()
+
     return (
         <section className="py-16 border-y border-neutral-100 dark:border-neutral-900/50 bg-gradient-to-b from-neutral-50/50 to-transparent dark:from-neutral-950/50 overflow-hidden">
             <div className="container mx-auto px-4">
                 <ScrollReveal>
                     <p className="text-sm font-medium text-muted-foreground mb-10 uppercase tracking-widest text-center">
-                        Vertraut von Forschern an weltweit führenden Universitäten
+                        {t('landing.socialProof.title')}
                     </p>
                 </ScrollReveal>
 

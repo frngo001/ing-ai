@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MorphyButton } from "@/components/ui/morphy-button";
@@ -9,92 +10,22 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useCTAHref } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/i18n/use-language";
+import { translations } from "@/lib/i18n/translations";
 
-const testimonials = [
-    {
-        name: "Sarah Chen",
-        handle: "@sarahchen_phd",
-        content:
-            "Jenni hat meinen Schreibprozess komplett verändert. Die KI-Vorschläge sind unglaublich präzise und der Zitationsmanager ist ein Lebensretter.",
-        avatar: "SC",
-        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "Dr. James Wilson",
-        handle: "@jwilson_prof",
-        content:
-            "Ich empfehle Jenni allen meinen Studierenden. Es hilft ihnen, ihre Argumente besser zu strukturieren und kein Zitat zu vergessen.",
-        avatar: "JW",
-        image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "Emily Rodriguez",
-        handle: "@emilyrod_med",
-        content:
-            "Die Möglichkeit, mit meinen PDFs zu chatten und wichtige Erkenntnisse zu extrahieren, hat mir Hunderte Stunden Lesezeit erspart.",
-        avatar: "ER",
-        image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "Michael Park",
-        handle: "@mpark_mit",
-        content:
-            "Das beste Schreibwerkzeug, das ich je benutzt habe. Die Autovervollständigung fühlt sich an wie ein Co-Autor, der meine Forschung wirklich versteht.",
-        avatar: "MP",
-        image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "Dr. Lisa Thompson",
-        handle: "@lisathompson_ox",
-        content:
-            "Allein Jennis Zitierungsfunktionen sind das Abonnement wert. Es integriert sich nahtlos in meinen Workflow.",
-        avatar: "LT",
-        image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "Alex Kim",
-        handle: "@alexkim_writes",
-        content:
-            "Nicht nur für Akademiker! Ich nutze Jenni für alle meine längeren Texte. Es ist wie ein professioneller Lektor auf Abruf.",
-        avatar: "AK",
-        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "Dr. Maria Santos",
-        handle: "@msantos_research",
-        content:
-            "Der Plagiatsprüfer gibt mir Sicherheit. Ich kann meine Arbeit einreichen und weiß, dass sie original und korrekt zitiert ist.",
-        avatar: "MS",
-        image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "David Chen",
-        handle: "@dchen_dev",
-        content:
-            "Als technischer Redakteur hilft mir Jenni, komplexe Konzepte klar zu erklären. Die KI versteht den Kontext perfekt.",
-        avatar: "DC",
-        image: "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "Prof. Anna Müller",
-        handle: "@amuller_berlin",
-        content:
-            "Jenni hat das Schreiben meiner Forschungsarbeiten um das 3-fache beschleunigt. Ein unverzichtbares Tool für jeden ernsthaften Akademiker.",
-        avatar: "AM",
-        image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
-    },
-    {
-        name: "Rachel Green",
-        handle: "@rachelg_law",
-        content:
-            "Juristische Recherche ist jetzt einfacher. Jenni hilft mir, Fallzitate zu organisieren und stärkere Argumente aufzubauen.",
-        avatar: "RG",
-        image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150",
-    },
+// Static images for testimonials
+const testimonialImages = [
+    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150",
 ];
-
-const firstRow = testimonials.slice(0, Math.ceil(testimonials.length / 2));
-const secondRow = testimonials.slice(Math.ceil(testimonials.length / 2));
 
 function TestimonialCard({
     name,
@@ -147,6 +78,20 @@ function TestimonialCard({
 
 export function Testimonials() {
     const ctaHref = useCTAHref()
+    const { t, language } = useLanguage()
+
+    const testimonials = React.useMemo(() => {
+        const lang = language as keyof typeof translations;
+        const items = translations[lang].landing.testimonials.items as unknown as { name: string; handle: string; content: string }[];
+        return items.map((item, index) => ({
+            ...item,
+            avatar: item.name.split(' ').map(n => n[0]).join(''),
+            image: testimonialImages[index] || null,
+        }));
+    }, [language]);
+
+    const firstRow = React.useMemo(() => testimonials.slice(0, Math.ceil(testimonials.length / 2)), [testimonials]);
+    const secondRow = React.useMemo(() => testimonials.slice(Math.ceil(testimonials.length / 2)), [testimonials]);
 
     return (
         <section
@@ -165,13 +110,13 @@ export function Testimonials() {
                     {/* Header */}
                     <ScrollReveal className="text-center mb-12 md:mb-16 space-y-4">
                         <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                            Testimonials
+                            {t('landing.testimonials.badge')}
                         </Badge>
                         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-                            Geliebt von 5M+ Forschern
+                            {t('landing.testimonials.title')}
                         </h2>
                         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                            Werde Teil der Community von Akademikern, die besser, schneller und mit mehr Vertrauen schreiben.
+                            {t('landing.testimonials.description')}
                         </p>
                     </ScrollReveal>
 
@@ -199,7 +144,7 @@ export function Testimonials() {
                     <div className="flex justify-center mt-12 relative z-20">
                         <Link href={ctaHref}>
                             <MorphyButton size="lg">
-                                Werde Teil der Community
+                                {t('landing.testimonials.cta')}
                             </MorphyButton>
                         </Link>
                     </div>

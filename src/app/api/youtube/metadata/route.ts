@@ -84,9 +84,8 @@ async function fetchYouTubeMetadata(urlOrId: string): Promise<YouTubeMetadata> {
     }
     
     // Extrahiere Beschreibung aus oEmbed oder nutze Author als Fallback
-    const description = oEmbedData.author_name 
-        ? `Von ${oEmbedData.author_name}` 
-        : 'YouTube Video';
+    // Wir geben nur den Autor-Namen zurück, die Übersetzung von "Von" erfolgt in der Komponente
+    const description = oEmbedData.author_name || 'YouTube Video';
     
     return {
         title: oEmbedData.title || 'Untitled',

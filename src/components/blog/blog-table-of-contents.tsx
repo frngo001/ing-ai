@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useEffect, useState } from "react"
+import { useLanguage } from '@/lib/i18n/use-language'
 
 interface BlogTableOfContentsProps {
   content: string
@@ -11,6 +12,11 @@ interface TocItem {
   id: string
   text: string
   level: number
+}
+
+interface TocGroup {
+  title: string
+  items: TocItem[]
 }
 
 /**
@@ -36,9 +42,73 @@ function extractHeadings(htmlContent: string): TocItem[] {
   return items
 }
 
+/**
+ * Gruppiert Überschriften nach h2-Elementen
+ * Wenn keine h2 vorhanden sind, werden alle Items als einzelne Gruppen behandelt
+ */
+function groupHeadings(items: TocItem[]): TocGroup[] {
+  const groups: TocGroup[] = []
+  let currentGroup: TocGroup | null = null
+
+  // Prüfe, ob es h2-Überschriften gibt
+  const hasH2 = items.some(item => item.level === 2)
+
+  if (!hasH2) {
+    // Wenn keine h2 vorhanden sind, erstelle für jedes Item eine eigene Gruppe
+    return items.map(item => ({
+      title: item.text,
+      items: [item],
+    }))
+  }
+
+  // Gruppiere nach h2-Elementen
+  items.forEach((item) => {
+    if (item.level === 2) {
+      // Neue Hauptgruppe (h2)
+      if (currentGroup) {
+        groups.push(currentGroup)
+      }
+      currentGroup = {
+        title: item.text,
+        items: [item],
+      }
+    } else if (currentGroup) {
+      // Unterüberschrift (h3, h4) zur aktuellen Gruppe hinzufügen
+      currentGroup.items.push(item)
+    }
+  })
+
+  if (currentGroup) {
+    groups.push(currentGroup)
+  }
+
+  return groups
+}
+
 export function BlogTableOfContents({ content }: BlogTableOfContentsProps) {
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [activeId, setActiveId] = useState<string>("")
+  const [navbarHeight, setNavbarHeight] = useState(112)
+  const { t, language } = useLanguage()
+
+  const tocTitle = React.useMemo(() => t('pages.blog.toc.title'), [t, language])
+
+  // Messen der tatsächlichen Navbar-Höhe
+  useEffect(() => {
+    const measureNavbar = () => {
+      const navbar = document.querySelector('header')
+      if (navbar) {
+        setNavbarHeight(navbar.offsetHeight)
+      }
+    }
+
+    measureNavbar()
+    window.addEventListener('resize', measureNavbar)
+    
+    return () => {
+      window.removeEventListener('resize', measureNavbar)
+    }
+  }, [])
 
   useEffect(() => {
     const items = extractHeadings(content)
@@ -91,10 +161,6 @@ export function BlogTableOfContents({ content }: BlogTableOfContentsProps) {
     }
   }, [tocItems])
 
-  if (tocItems.length === 0) {
-    return null
-  }
-
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault()
     const element = document.getElementById(id)
@@ -110,34 +176,68 @@ export function BlogTableOfContents({ content }: BlogTableOfContentsProps) {
     }
   }
 
+  if (tocItems.length === 0) {
+    return null
+  }
+
+  const groups = groupHeadings(tocItems)
+
   return (
-    <aside className="hidden xl:block fixed right-8 top-24 w-64 max-h-[calc(100vh-8rem)] overflow-y-auto">
-      <div className="sticky top-8">
-        <h2 className="text-sm font-semibold mb-4 text-foreground">Inhaltsverzeichnis</h2>
-        <nav className="space-y-1">
-          {tocItems.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              onClick={(e) => handleClick(e, item.id)}
-              className={`block text-sm py-1 transition-colors ${
-                item.level === 2
-                  ? "font-medium pl-0"
-                  : item.level === 3
-                  ? "pl-4 text-muted-foreground"
-                  : "pl-8 text-muted-foreground text-xs"
-              } ${
-                activeId === item.id
-                  ? "text-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {item.text}
-            </a>
-          ))}
-        </nav>
+    <aside 
+      className="hidden xl:flex w-[280px] flex-shrink-0 border-l bg-background"
+      style={{
+        height: `calc(100vh - ${navbarHeight}px)`,
+        position: 'sticky',
+        top: `${navbarHeight}px`,
+        alignSelf: 'flex-start',
+      }}
+    >
+      <div className="w-full h-full overflow-y-auto">
+        <div className="p-4">
+          <h2 className="text-sm font-semibold mb-4 sticky top-0 bg-background pb-2 border-b z-10">
+            {tocTitle}
+          </h2>
+          <nav className="space-y-1">
+            {groups.map((group, groupIndex) => (
+              <div key={`${group.title}-${groupIndex}`} className="mb-4">
+                <a
+                  href={`#${group.items[0]?.id || ''}`}
+                  onClick={(e) => {
+                    if (group.items[0]?.id) {
+                      handleClick(e, group.items[0].id)
+                    }
+                  }}
+                  className={`block text-sm font-medium py-1 transition-colors ${
+                    activeId === group.items[0]?.id
+                      ? "text-primary"
+                      : "text-foreground hover:text-primary"
+                  }`}
+                >
+                  {group.title}
+                </a>
+                {group.items.length > 1 && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {group.items.slice(1).map((item) => (
+                      <a
+                        key={item.id}
+                        href={`#${item.id}`}
+                        onClick={(e) => handleClick(e, item.id)}
+                        className={`block text-sm py-1 transition-colors ${
+                          activeId === item.id
+                            ? "text-primary font-medium"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {item.text}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        </div>
       </div>
     </aside>
   )
 }
-

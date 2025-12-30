@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -10,15 +11,17 @@ import { MorphyButton } from "@/components/ui/morphy-button";
 import StatsCount from "@/components/ui/statscount";
 import Glow from "@/components/ui/glow";
 import { useCTAHref } from "@/hooks/use-auth";
-
-const stats = [
-    { value: 2, suffix: "M+", label: "Aktive Nutzer" },
-    { value: 50, suffix: "M+", label: "Dokumente erstellt" },
-    { value: 4.9, suffix: "", label: "Bewertung" },
-];
+import { useLanguage } from "@/lib/i18n/use-language";
 
 export function CTASection() {
     const ctaHref = useCTAHref()
+    const { t, language } = useLanguage()
+
+    const stats = React.useMemo(() => [
+        { value: 2, suffix: "M+", label: t('landing.cta.statsTitle') },
+        { value: 50, suffix: "M+", label: t('landing.cta.statsTitle') },
+        { value: 4.9, suffix: "", label: t('landing.cta.statsTitle') },
+    ], [t, language])
 
     return (
         <Section className="py-24 md:py-32 bg-muted dark:bg-neutral-900 relative overflow-hidden">
@@ -41,7 +44,7 @@ export function CTASection() {
                                     transition={{ delay: 0.1 }}
                                 >
                                     <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                                        Starte noch heute
+                                        {t('landing.cta.badge')}
                                     </Badge>
                                 </motion.div>
 
@@ -53,9 +56,9 @@ export function CTASection() {
                                     transition={{ delay: 0.2 }}
                                     className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-neutral-900 dark:text-neutral-100"
                                 >
-                                    Bereit dein Schreiberlebnis
+                                    {t('landing.cta.title')}
                                     <br />
-                                    zu transformieren?
+                                    {t('landing.cta.titleLine2')}
                                 </motion.h2>
 
                                 {/* Description */}
@@ -66,8 +69,7 @@ export function CTASection() {
                                     transition={{ delay: 0.3 }}
                                     className="text-lg text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto"
                                 >
-                                    Schließe dich Millionen von Forschern, Studierenden und Professionals an,
-                                    die bereits besser und schneller mit Jenni AI schreiben.
+                                    {t('landing.cta.description')}
                                 </motion.p>
 
                                 {/* CTA Buttons */}
@@ -80,7 +82,7 @@ export function CTASection() {
                                 >
                                     <Link href={ctaHref}>
                                         <MorphyButton size="lg">
-                                            Kostenlos starten
+                                            {t('landing.cta.startFree')}
                                         </MorphyButton>
                                     </Link>
                                     <Link href="#pricing">
@@ -89,7 +91,7 @@ export function CTASection() {
                                             variant="outline"
                                             className="rounded-full"
                                         >
-                                            Preise ansehen
+                                            {t('landing.cta.viewPricing')}
                                         </Button>
                                     </Link>
                                 </motion.div>
@@ -103,7 +105,7 @@ export function CTASection() {
                                     className="pt-4"
                                 >
                                     <p className="text-sm text-neutral-400 dark:text-neutral-500">
-                                        Keine Kreditkarte nötig · Kostenloser Plan für immer · Jederzeit kündbar
+                                        {t('landing.cta.trustSignals')}
                                     </p>
                                 </motion.div>
                             </div>
@@ -113,7 +115,7 @@ export function CTASection() {
                         <div className="mt-12">
                             <StatsCount
                                 stats={stats}
-                                title="VERTRAUT VON MILLIONEN"
+                                title={t('landing.cta.statsTitle')}
                                 showDividers={true}
                             />
                         </div>
@@ -128,7 +130,7 @@ export function CTASection() {
                         >
                             <Link href={ctaHref}>
                                 <MorphyButton size="lg">
-                                    Jetzt kostenlos starten
+                                    {t('landing.cta.startNow')}
                                 </MorphyButton>
                             </Link>
                         </motion.div>

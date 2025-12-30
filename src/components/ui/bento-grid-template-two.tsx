@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n/use-language";
 import {
   CardCurtain,
   CardCurtainReveal,
@@ -96,6 +97,7 @@ export function BentoGridTemplateTwo({
 }
 
 function BentoGridItem({ item }: { item: BentoItem }) {
+  const { t } = useLanguage();
   const {
     title,
     description,
@@ -183,7 +185,7 @@ function BentoGridItem({ item }: { item: BentoItem }) {
         {link && (
           <Link href={link}>
             <LiftButton showArrow size="sm" variant="outline">
-              Mehr erfahren
+              {t('landing.blog.learnMore')}
             </LiftButton>
           </Link>
         )}

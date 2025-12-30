@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react"
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/use-language";
 
 type LoginFormProps = React.ComponentProps<"div"> & {
   nextPath?: string;
@@ -31,6 +33,7 @@ type LoginFormProps = React.ComponentProps<"div"> & {
 export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFormProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,8 +49,8 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
       if (error) throw error;
       setShowTransition(true);
     } catch (error: any) {
-      toast.error("Login fehlgeschlagen", {
-        description: error?.message ?? "Bitte Eingaben prüfen.",
+      toast.error(t('auth.login.failed'), {
+        description: error?.message ?? t('auth.login.checkInputs'),
       });
       setIsLoading(false);
     }
@@ -76,8 +79,8 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
       });
       if (error) throw error;
     } catch (error: any) {
-      toast.error("Social Login fehlgeschlagen", {
-        description: error?.message ?? "Bitte erneut versuchen.",
+      toast.error(t('auth.login.socialFailed'), {
+        description: error?.message ?? t('auth.login.tryAgain'),
       });
       setSocialLoading(null);
     }
@@ -114,18 +117,18 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
                   />
                 </Link>
                 <div className="space-y-1">
-                  <h1 className="text-2xl font-bold">Bei Ing AI anmelden</h1>
+                  <h1 className="text-2xl font-bold">{t('auth.login.title')}</h1>
                   <p className="text-muted-foreground text-balance text-sm">
-                    Nutze Editor, Projekte und Zitationen mit deinem Team.
+                    {t('auth.login.description')}
                   </p>
                 </div>
               </div>
               <Field>
-                <FieldLabel htmlFor="email">E-Mail</FieldLabel>
+                <FieldLabel htmlFor="email">{t('auth.login.email')}</FieldLabel>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder={t('auth.login.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -133,12 +136,12 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
               </Field>
               <Field>
                 <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Passwort</FieldLabel>
+                  <FieldLabel htmlFor="password">{t('auth.login.password')}</FieldLabel>
                   <Link
                     href="/auth/reset-password"
                     className="ml-auto text-sm underline-offset-2 hover:underline"
                   >
-                    Passwort vergessen?
+                    {t('auth.login.forgotPassword')}
                   </Link>
                 </div>
                 <div className="relative">
@@ -152,7 +155,7 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
                   />
                   <button
                     type="button"
-                    aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                    aria-label={showPassword ? t('auth.login.hidePassword') : t('auth.login.showPassword')}
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-2 flex items-center"
                   >
@@ -163,11 +166,11 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
               <Field>
                 <Button type="submit" disabled={isLoading || Boolean(socialLoading)} className="w-full">
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Einloggen
+                  {t('auth.login.submit')}
                 </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Oder weiter mit
+                {t('auth.login.orContinueWith')}
               </FieldSeparator>
               <Field className="grid grid-cols-2 gap-4">
                 <Button
@@ -200,9 +203,9 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                Noch kein Konto?{" "}
+                {t('auth.login.noAccount')}{" "}
                 <Link href="/auth/signup" className="underline underline-offset-4">
-                  Jetzt registrieren
+                  {t('auth.login.signUp')}
                 </Link>
               </FieldDescription>
             </FieldGroup>
@@ -217,13 +220,13 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        Durch Login stimmst du unseren{" "}
+        {t('auth.login.termsAgreement')}{" "}
         <Link href="/terms" className="underline underline-offset-4">
-          Nutzungsbedingungen
+          {t('auth.login.terms')}
         </Link>{" "}
-        und{" "}
+        {t('auth.login.and')}{" "}
         <Link href="/privacy" className="underline underline-offset-4">
-          Datenschutz
+          {t('auth.login.privacy')}
         </Link>{" "}
         zu.
       </FieldDescription>

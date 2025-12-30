@@ -1,50 +1,13 @@
 "use client"
 
+import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { FooterThemeToggle } from "@/components/footer-theme-toggle"
 import { Twitter, Github, Linkedin, Youtube } from "lucide-react"
 import { MovingLinesBackground } from "@/components/ui/movinglines-background"
 import { siteConfig } from "@/config/site"
-
-const footerLinks = {
-    produkt: {
-        title: "Produkt",
-        links: [
-            { label: "Funktionen", href: "#bento-features" },
-            { label: "Anwendungsfälle", href: "#use-cases" },
-            { label: "Workflow", href: "#how-it-works" },
-            { label: "Vorteile", href: "#why-ing" },
-            { label: "Preise", href: "#pricing" },
-        ],
-    },
-    ressourcen: {
-        title: "Ressourcen",
-        links: [
-            { label: "Blog", href: "#blog" },
-            { label: "Tutorials", href: "#tutorials" },
-            { label: "FAQ", href: "#faq" },
-            { label: "Testimonials", href: "#testimonials" },
-            { label: "Changelog", href: "/changelog" },
-        ],
-    },
-    unternehmen: {
-        title: "Unternehmen",
-        links: [
-            { label: "Über uns", href: "/about" },
-            { label: "Karriere", href: "/careers" },
-            { label: "Kontakt", href: "/contact" },
-        ],
-    },
-    rechtliches: {
-        title: "Rechtliches",
-        links: [
-            { label: "Datenschutz", href: "/privacy" },
-            { label: "AGB", href: "/terms" },
-            { label: "Impressum", href: "/imprint" },
-        ],
-    },
-}
+import { useLanguage } from "@/lib/i18n/use-language"
 
 const socialLinks = [
     { icon: Twitter, href: "https://twitter.com/ingai", label: "Twitter" },
@@ -54,6 +17,47 @@ const socialLinks = [
 ]
 
 export function Footer() {
+    const { t, language } = useLanguage()
+
+    const footerLinks = React.useMemo(() => ({
+        produkt: {
+            title: t('landing.footer.product.title'),
+            links: [
+                { label: t('landing.footer.product.links.features'), href: "#bento-features" },
+                { label: t('landing.footer.product.links.useCases'), href: "#use-cases" },
+                { label: t('landing.footer.product.links.workflow'), href: "#how-it-works" },
+                { label: t('landing.footer.product.links.advantages'), href: "#why-ing" },
+                { label: t('landing.footer.product.links.pricing'), href: "#pricing" },
+            ],
+        },
+        ressourcen: {
+            title: t('landing.footer.resources.title'),
+            links: [
+                { label: t('landing.footer.resources.links.blog'), href: "#blog" },
+                { label: t('landing.footer.resources.links.tutorials'), href: "#tutorials" },
+                { label: t('landing.footer.resources.links.faq'), href: "#faq" },
+                { label: t('landing.footer.resources.links.testimonials'), href: "#testimonials" },
+                { label: t('landing.footer.resources.links.changelog'), href: "/changelog" },
+            ],
+        },
+        unternehmen: {
+            title: t('landing.footer.company.title'),
+            links: [
+                { label: t('landing.footer.company.links.about'), href: "/about" },
+                { label: t('landing.footer.company.links.careers'), href: "/careers" },
+                { label: t('landing.footer.company.links.contact'), href: "/contact" },
+            ],
+        },
+        rechtliches: {
+            title: t('landing.footer.legal.title'),
+            links: [
+                { label: t('landing.footer.legal.links.privacy'), href: "/privacy" },
+                { label: t('landing.footer.legal.links.terms'), href: "/terms" },
+                { label: t('landing.footer.legal.links.imprint'), href: "/imprint" },
+            ],
+        },
+    }), [t, language])
+
     return (
         <footer className="border-t border-border bg-background/50 backdrop-blur-xl">
             <MovingLinesBackground className="pt-16 pb-8">
@@ -74,8 +78,7 @@ export function Footer() {
                                 </div>
                             </Link>
                             <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-                                Der KI-gestützte Schreibassistent für akademische Arbeiten.
-                                Schreibe schneller, zitiere korrekt und überwinde jede Schreibblockade.
+                                {t('landing.footer.description')}
                             </p>
                             <div className="flex space-x-4">
                                 {socialLinks.map((social) => (
@@ -150,13 +153,13 @@ export function Footer() {
 
                     {/* Bottom Bar */}
                     <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-                        <p>© {new Date().getFullYear()} {siteConfig.name}. Alle Rechte vorbehalten.</p>
+                        <p>© {new Date().getFullYear()} {siteConfig.name}. {t('landing.footer.copyright')}</p>
                         <div className="flex items-center gap-6 relative z-50">
                             <Link href="/privacy" className="hover:text-foreground transition-colors">
-                                Datenschutz
+                                {t('landing.footer.privacy')}
                             </Link>
                             <Link href="/terms" className="hover:text-foreground transition-colors">
-                                AGB
+                                {t('landing.footer.terms')}
                             </Link>
                             <FooterThemeToggle />
                         </div>

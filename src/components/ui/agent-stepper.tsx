@@ -17,7 +17,9 @@ import {
   Clock,
   AlertCircle,
   Terminal,
-  Activity
+  Activity,
+  Globe,
+  Download
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -45,6 +47,9 @@ function getToolConfig(toolName: string, t: (key: string) => string) {
     addThema: { label: t('askAi.toolAddThema'), icon: Settings },
     saveStepData: { label: t('askAi.toolSaveStepData'), icon: Check },
     getCurrentStep: { label: t('askAi.toolGetCurrentStep'), icon: Clock },
+    webSearch: { label: t('askAi.toolWebSearch'), icon: Search },
+    webExtract: { label: t('askAi.toolWebExtract'), icon: Download },
+    webCrawl: { label: t('askAi.toolWebCrawl'), icon: Globe },
   }
 
   return configs[toolName] || { label: toolName, icon: Terminal }
@@ -54,6 +59,34 @@ function formatDuration(startedAt: number, completedAt?: number): string {
   if (!completedAt) return ''
   const durationMs = completedAt - startedAt
   return durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`
+}
+
+function translateToolDetailKey(key: string, t: (key: string) => string): string {
+  const translations: Record<string, string> = {
+    query: t('askAi.toolDetailQuery'),
+    url: t('askAi.toolDetailUrl'),
+    results: t('askAi.toolDetailResults'),
+    totalresults: t('askAi.toolDetailTotalResults'),
+    title: t('askAi.toolDetailTitle'),
+    success: t('askAi.toolDetailSuccess'),
+    error: t('askAi.toolDetailError'),
+    message: t('askAi.toolDetailMessage'),
+    searchdepth: t('askAi.toolDetailSearchDepth'),
+    'search depth': t('askAi.toolDetailSearchDepth'),
+    timerange: t('askAi.toolDetailTimeRange'),
+    'time range': t('askAi.toolDetailTimeRange'),
+    extractdepth: t('askAi.toolDetailExtractDepth'),
+    'extract depth': t('askAi.toolDetailExtractDepth'),
+  }
+  
+  // Wenn direkte Übersetzung vorhanden, verwende sie (case-insensitive)
+  const lowerKey = key.toLowerCase()
+  if (translations[lowerKey]) {
+    return translations[lowerKey]
+  }
+  
+  // Ansonsten formatiere den Key (z.B. "totalResults" -> "Total Results")
+  return key.replace(/([A-Z])/g, ' $1').trim()
 }
 
 export function AgentStepperView({ steps, className, minimal = false }: AgentStepperViewProps) {
@@ -145,7 +178,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                               .filter(([key]) => !key.startsWith('_'))
                               .map(([key, value]) => (
                                 <div key={`in-${key}`} className="flex justify-between gap-4">
-                                  <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                  <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{translateToolDetailKey(key, t)}</span>
                                   <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate text-right">
                                     {typeof value === 'object' ? 'JSON' : String(value)}
                                   </span>
@@ -160,9 +193,9 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                             .filter(([key]) => !key.startsWith('_') && key !== 'success' && key !== 'message')
                             .map(([key, value]) => (
                               <div key={`out-${key}`} className="flex justify-between gap-4 pb-0.5">
-                                <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{translateToolDetailKey(key, t)}</span>
                                 <span className="text-zinc-900 dark:text-zinc-100 font-semibold truncate text-right">
-                                  {Array.isArray(value) ? `${value.length} items` : typeof value === 'object' ? 'JSON' : String(value)}
+                                  {Array.isArray(value) ? `${value.length} ${t('askAi.toolDetailItems')}` : typeof value === 'object' ? 'JSON' : String(value)}
                                 </span>
                               </div>
                             ))}
@@ -306,7 +339,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                                         .filter(([key]) => !key.startsWith('_'))
                                         .map(([key, value]) => (
                                           <div key={`in-${key}`} className="flex justify-between gap-4">
-                                            <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                            <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{translateToolDetailKey(key, t)}</span>
                                             <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate text-right">
                                               {typeof value === 'object' ? 'JSON' : String(value)}
                                             </span>
@@ -321,9 +354,9 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                                       .filter(([key]) => !key.startsWith('_') && key !== 'success' && key !== 'message')
                                       .map(([key, value]) => (
                                         <div key={`out-${key}`} className="flex justify-between gap-4 pb-0.5">
-                                          <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                          <span className="text-zinc-500 dark:text-zinc-500 uppercase text-[9px] font-bold tracking-wider">{translateToolDetailKey(key, t)}</span>
                                           <span className="text-zinc-900 dark:text-zinc-100 font-semibold truncate text-right">
-                                            {Array.isArray(value) ? `${value.length} items` : typeof value === 'object' ? 'JSON' : String(value)}
+                                            {Array.isArray(value) ? `${value.length} ${t('askAi.toolDetailItems')}` : typeof value === 'object' ? 'JSON' : String(value)}
                                           </span>
                                         </div>
                                       ))}

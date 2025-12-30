@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -12,6 +13,7 @@ import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scr
 import { Button } from "@/components/ui/button";
 import { Play, X, ShieldCheck, FileCheck, Database, FileText, Code, Code2, FileType, ArrowUpToLine, Download, Upload, FileCode } from "lucide-react";
 import { useCTAHref } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/i18n/use-language";
 
 interface FeatureVideo {
     youtubeId?: string;
@@ -100,6 +102,7 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
     const { theme, systemTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const ctaHref = useCTAHref();
+    const { t } = useLanguage();
 
     useEffect(() => {
         setMounted(true);
@@ -173,10 +176,10 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                                                     <div className="relative z-10 space-y-4">
                                                         <div className="space-y-1">
                                                             <h4 className="text-lg font-bold text-white dark:text-neutral-100 leading-tight">
-                                                                Über 9000 Zitierstile verfügbar
+                                                                {t('landing.bentoGrid.cta.title')}
                                                             </h4>
                                                             <p className="text-sm text-neutral-300 dark:text-neutral-400">
-                                                                Probiere es jetzt kostenlos aus
+                                                                {t('landing.bentoGrid.cta.description')}
                                                             </p>
                                                         </div>
                                                         <Link href={ctaHref} className="block">
@@ -184,7 +187,7 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                                                                 size="lg" 
                                                                 className="w-full bg-white text-neutral-900 hover:bg-neutral-100 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 font-semibold text-base py-6 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                                                             >
-                                                                Jetzt kostenlos starten
+                                                                {t('landing.bentoGrid.cta.button')}
                                                             </Button>
                                                         </Link>
                                                     </div>
@@ -255,34 +258,36 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
 }
 
 export default function BentoGrid() {
+    const { t, language } = useLanguage()
+
     return (
         <Section className="py-24 bg-muted dark:bg-neutral-900" id="bento-features">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <ScrollReveal className="mb-20 text-center max-w-2xl mx-auto">
                     <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                        Funktionen
+                        {t('landing.bentoGrid.badge')}
                     </Badge>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-neutral-900 dark:text-neutral-100 mb-4">
-                        Alles was du für bessere Forschung brauchst
+                        {t('landing.bentoGrid.title')}
                     </h2>
                     <p className="text-neutral-500 dark:text-neutral-400">
-                        Eine komplette Suite von KI-Tools für akademisches Schreiben und Forschung.
+                        {t('landing.bentoGrid.description')}
                     </p>
                 </ScrollReveal>
 
                 {/* Section 1: Core Writing Features */}
                 <div className="mb-16">
                     <ScrollReveal className="mb-8">
-                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Kernfunktionen</h3>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Intelligente Schreibhilfen für deine akademische Arbeit</p>
+                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">{t('landing.bentoGrid.coreFeatures.title')}</h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('landing.bentoGrid.coreFeatures.description')}</p>
                     </ScrollReveal>
                     <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* AI Autocomplete */}
                         <StaggerItem className="lg:col-span-2">
                         <FeatureCard
-                            title="KI-Autocomplete"
-                                description="Intelligente Satzvervollständigung, die deinen Kontext und Schreibstil versteht. Schlage einfach Tab, um Vorschläge zu akzeptieren."
-                            badge="Schreiben"
+                            title={t('landing.bentoGrid.features.aiAutocomplete.title')}
+                                description={t('landing.bentoGrid.features.aiAutocomplete.description')}
+                            badge={t('landing.bentoGrid.featureBadges.writing')}
                                 video={{
                                     gifSrc: "/autocomplete_dark.gif"
                                 }}
@@ -293,9 +298,9 @@ export default function BentoGrid() {
                     {/* Citations */}
                         <StaggerItem>
                         <FeatureCard
-                            title="Sofortige Zitationen"
-                                description="Generiere perfekt formatierte Zitate in über 9000 Zitierstilen – von APA, MLA, Chicago, Harvard bis hin zu spezifischen Journal-Formaten. Automatische Formatierung in Sekunden."
-                            badge="Forschung"
+                            title={t('landing.bentoGrid.features.instantCitations.title')}
+                                description={t('landing.bentoGrid.features.instantCitations.description')}
+                            badge={t('landing.bentoGrid.featureBadges.research')}
                                 showCTA={true}
                                 video={{
                                     gifSrcLight: "/zitate-white.gif",
@@ -310,16 +315,16 @@ export default function BentoGrid() {
                 {/* Section 2: Research & Organization */}
                 <div className="mb-16">
                     <ScrollReveal className="mb-8">
-                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Recherche & Organisation</h3>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Finde Quellen, organisiere deine Bibliothek und arbeite mit KI-Agenten</p>
+                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">{t('landing.bentoGrid.researchOrganization.title')}</h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('landing.bentoGrid.researchOrganization.description')}</p>
                     </ScrollReveal>
                     <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Chat with KI-Agenten */}
                         <StaggerItem className="lg:col-span-2">
                         <FeatureCard
-                                title="Chat mit KI-Agenten"
-                                description="Chatte mit spezialisierten KI-Agenten für deine Forschungsarbeiten. Der Bachelor/Master-Agent führt dich Schritt für Schritt durch Literaturrecherche, Methodik-Entwicklung und Schreibprozess."
-                            badge="KI-Assistent"
+                                title={t('landing.bentoGrid.features.chatWithAgent.title')}
+                                description={t('landing.bentoGrid.features.chatWithAgent.description')}
+                            badge={t('landing.bentoGrid.featureBadges.aiAssistant')}
                                 video={{
                                     gifSrc: "/chat_dark-2.gif"
                                 }}
@@ -330,9 +335,9 @@ export default function BentoGrid() {
                     {/* Research Library */}
                         <StaggerItem>
                         <FeatureCard
-                            title="Forschungsbibliothek"
-                                description="Organisiere deine PDFs, Notizen und Quellen an einem Ort. Importiere .bib-Dateien und verwalte deine Referenzen effizient."
-                            badge="Organisation"
+                            title={t('landing.bentoGrid.features.researchLibrary.title')}
+                                description={t('landing.bentoGrid.features.researchLibrary.description')}
+                            badge={t('landing.bentoGrid.featureBadges.organization')}
                         >
                             <div className="grid grid-cols-2 gap-2">
                                 {[1, 2, 3, 4].map((i) => (
@@ -355,30 +360,30 @@ export default function BentoGrid() {
                 {/* Section 3: Quality & Analysis */}
                 <div className="mb-16">
                     <ScrollReveal className="mb-8">
-                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Qualität & Analyse</h3>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Prüfe deine Arbeit auf Plagiate, Grammatik und akademischen Stil</p>
+                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">{t('landing.bentoGrid.qualityAnalysis.title')}</h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('landing.bentoGrid.qualityAnalysis.description')}</p>
                     </ScrollReveal>
                     <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Plagiarism Check */}
                         <StaggerItem>
                             <FeatureCard
-                                title="Plagiatsprüfung"
-                                description="Prüfe deine Arbeit auf Plagiate bevor du sie einreichst. Automatische Erkennung von ähnlichen Texten, Quellenangaben und Originalitäts-Score."
-                                badge="Qualität"
+                                title={t('landing.bentoGrid.features.plagiarismCheck.title')}
+                                description={t('landing.bentoGrid.features.plagiarismCheck.description')}
+                                badge={t('landing.bentoGrid.featureBadges.quality')}
                             >
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3 px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
                                         <ShieldCheck className="w-5 h-5 text-neutral-900 dark:text-neutral-100" />
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Originalitäts-Score</p>
-                                            <p className="text-xs text-neutral-500 dark:text-neutral-400">95% Original</p>
+                                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t('landing.bentoGrid.features.plagiarismCheck.originalityScore')}</p>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400">95% {t('landing.bentoGrid.features.plagiarismCheck.original')}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
                                         <FileCheck className="w-5 h-5 text-neutral-900 dark:text-neutral-100" />
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Geprüfte Quellen</p>
-                                            <p className="text-xs text-neutral-500 dark:text-neutral-400">250M+ Dokumente</p>
+                                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t('landing.bentoGrid.features.plagiarismCheck.checkedSources')}</p>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400">250M+ {t('landing.bentoGrid.features.plagiarismCheck.documents')}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -388,16 +393,16 @@ export default function BentoGrid() {
                         {/* Grammar & Writing Analysis */}
                         <StaggerItem>
                             <FeatureCard
-                                title="Grammatik & Schreibanalyse"
-                                description="Automatische Grammatik- und Rechtschreibprüfung mit detaillierten Verbesserungsvorschlägen. Analysiere den akademischen Ton, Formulierungen und Stil."
-                                badge="Qualität"
+                                title={t('landing.bentoGrid.features.grammarAnalysis.title')}
+                                description={t('landing.bentoGrid.features.grammarAnalysis.description')}
+                                badge={t('landing.bentoGrid.featureBadges.quality')}
                             >
                                 <div className="space-y-2">
-                                    {[
-                                        { label: "Grammatik-Score", score: 98 },
-                                        { label: "Akademischer Ton", score: 92 },
-                                        { label: "Lesbarkeit", score: 95 },
-                                    ].map((item, i) => (
+                                    {React.useMemo(() => [
+                                        { label: t('landing.bentoGrid.features.grammarAnalysis.grammarScore'), score: 98 },
+                                        { label: t('landing.bentoGrid.features.grammarAnalysis.academicTone'), score: 92 },
+                                        { label: t('landing.bentoGrid.features.grammarAnalysis.readability'), score: 95 },
+                                    ], [t, language]).map((item, i) => (
                                         <motion.div
                                             key={item.label}
                                             initial={{ opacity: 0, x: -10 }}
@@ -426,9 +431,9 @@ export default function BentoGrid() {
                         {/* Scientific Databases */}
                         <StaggerItem>
                         <FeatureCard
-                                title="14+ Wissenschaftliche Datenbanken"
-                                description="Durchsuche über 250M+ wissenschaftliche Papers aus CrossRef, OpenAlex, Semantic Scholar, PubMed, arXiv, CORE, BASE und mehr."
-                                badge="Recherche"
+                                title={t('landing.bentoGrid.features.scientificDatabases.title')}
+                                description={t('landing.bentoGrid.features.scientificDatabases.description')}
+                                badge={t('landing.bentoGrid.featureBadges.search')}
                             >
                                 <div className="grid grid-cols-2 gap-2">
                                     {[
@@ -456,24 +461,24 @@ export default function BentoGrid() {
                 {/* Section 4: Import & Export */}
                 <div className="mb-16">
                     <ScrollReveal className="mb-8">
-                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Import & Export</h3>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Importiere bestehende Dokumente und exportiere in verschiedene Formate</p>
+                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">{t('landing.bentoGrid.importExport.title')}</h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('landing.bentoGrid.importExport.description')}</p>
                     </ScrollReveal>
                     <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Export Options */}
                         <StaggerItem className="lg:col-span-2">
                             <FeatureCard
-                                title="Export-Optionen"
-                                description="Exportiere deine Arbeit in verschiedene Formate: .docx für Word, LaTeX für wissenschaftliche Publikationen, HTML für Web und PDF."
-                                badge="Export"
+                                title={t('landing.bentoGrid.features.exportOptions.title')}
+                                description={t('landing.bentoGrid.features.exportOptions.description')}
+                                badge={t('landing.bentoGrid.featureBadges.export')}
                             >
                                 <div className="grid grid-cols-2 gap-3">
-                                    {[
-                                        { format: "DOCX", desc: "Microsoft Word", icon: FileType },
-                                        { format: "LaTeX", desc: "Wissenschaftlich", icon: Code },
-                                        { format: "HTML", desc: "Web-Format", icon: Code2 },
-                                        { format: "PDF", desc: "Druckfertig", icon: FileText },
-                                    ].map((item, i) => {
+                                    {React.useMemo(() => [
+                                        { format: "DOCX", desc: t('landing.bentoGrid.features.exportOptions.formats.docx'), icon: FileType },
+                                        { format: "LaTeX", desc: t('landing.bentoGrid.features.exportOptions.formats.latex'), icon: Code },
+                                        { format: "HTML", desc: t('landing.bentoGrid.features.exportOptions.formats.html'), icon: Code2 },
+                                        { format: "PDF", desc: t('landing.bentoGrid.features.exportOptions.formats.pdf'), icon: FileText },
+                                    ], [t, language]).map((item, i) => {
                                         const IconComponent = item.icon;
                                         return (
                                             <motion.button
@@ -520,15 +525,15 @@ export default function BentoGrid() {
                         {/* Editor Import */}
                         <StaggerItem>
                             <FeatureCard
-                                title="Editor Import"
-                                description="Importiere bestehende Dokumente direkt in den Editor. Unterstützt HTML und Markdown-Formate."
-                                badge="Import"
+                                title={t('landing.bentoGrid.features.editorImport.title')}
+                                description={t('landing.bentoGrid.features.editorImport.description')}
+                                badge={t('landing.bentoGrid.featureBadges.import')}
                             >
                                 <div className="space-y-3">
-                                    {[
-                                        { format: "HTML", desc: "Aus HTML importieren", icon: Code2 },
-                                        { format: "Markdown", desc: "Aus Markdown importieren", icon: FileText },
-                                    ].map((item, i) => {
+                                    {React.useMemo(() => [
+                                        { format: "HTML", desc: t('landing.bentoGrid.features.editorImport.formats.html'), icon: Code2 },
+                                        { format: "Markdown", desc: t('landing.bentoGrid.features.editorImport.formats.markdown'), icon: FileText },
+                                    ], [t, language]).map((item, i) => {
                                         const IconComponent = item.icon;
                                         return (
                                             <motion.div
@@ -559,16 +564,16 @@ export default function BentoGrid() {
                 {/* Section 5: Bibliography Management */}
                 <div>
                     <ScrollReveal className="mb-8">
-                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Bibliotheksverwaltung</h3>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Importiere und exportiere BibTeX-Dateien für Kompatibilität mit anderen Tools</p>
+                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">{t('landing.bentoGrid.bibliographyManagement.title')}</h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('landing.bentoGrid.bibliographyManagement.description')}</p>
                     </ScrollReveal>
                     <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Bib Import/Export */}
                         <StaggerItem className="lg:col-span-2">
                             <FeatureCard
-                                title="BibTeX Import & Export"
-                                description="Importiere bestehende .bib-Dateien in deine Bibliothek oder exportiere deine Quellen als BibTeX-Datei. Perfekt für die Kompatibilität mit LaTeX, Overleaf, Zotero, Mendeley und anderen Referenz-Management-Tools."
-                                badge="Bibliothek"
+                                title={t('landing.bentoGrid.features.bibtexImportExport.title')}
+                                description={t('landing.bentoGrid.features.bibtexImportExport.description')}
+                                badge={t('landing.bentoGrid.featureBadges.library')}
                             >
                                 <div className="grid grid-cols-2 gap-3">
                                     <motion.div
@@ -583,7 +588,7 @@ export default function BentoGrid() {
                                         </div>
                                         <div className="text-center">
                                             <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Import</p>
-                                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Importiere .bib-Dateien</p>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{t('landing.bentoGrid.features.bibtexImportExport.import')}</p>
                                         </div>
                                     </motion.div>
                                     <motion.div
@@ -598,7 +603,7 @@ export default function BentoGrid() {
                                         </div>
                                         <div className="text-center">
                                             <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Export</p>
-                                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Exportiere als .bib-Datei</p>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{t('landing.bentoGrid.features.bibtexImportExport.export')}</p>
                                         </div>
                                     </motion.div>
                                 </div>

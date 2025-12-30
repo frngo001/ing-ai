@@ -10,14 +10,41 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MorphyButton } from '@/components/ui/morphy-button'
 import { Badge } from '@/components/ui/badge'
-import { getBlogPost } from '@/lib/blog/data'
+import { getBlogPost, formatBlogDate } from '@/lib/blog/data'
 import { BlogTableOfContents } from '@/components/blog/blog-table-of-contents'
+import { useLanguage } from '@/lib/i18n/use-language'
 
 export default function BlogPostPage() {
   const params = useParams()
   const router = useRouter()
   const postId = params.id as string
   const blogContent = getBlogPost(postId)
+  const { t, language } = useLanguage()
+
+  const translations = React.useMemo(() => ({
+    by: t('pages.blog.post.by'),
+    linkedin: t('pages.blog.post.linkedin'),
+    cta: {
+      badge: t('pages.blog.post.cta.badge'),
+      title: t('pages.blog.post.cta.title'),
+      description: t('pages.blog.post.cta.description'),
+      startFree: t('pages.blog.post.cta.startFree'),
+      viewDemo: t('pages.blog.post.cta.viewDemo'),
+      trustSignals: t('pages.blog.post.cta.trustSignals'),
+    },
+    related: {
+      learnMore: {
+        title: t('pages.blog.post.related.learnMore.title'),
+        description: t('pages.blog.post.related.learnMore.description'),
+        link: t('pages.blog.post.related.learnMore.link'),
+      },
+      discoverFeatures: {
+        title: t('pages.blog.post.related.discoverFeatures.title'),
+        description: t('pages.blog.post.related.discoverFeatures.description'),
+        link: t('pages.blog.post.related.discoverFeatures.link'),
+      },
+    },
+  }), [t, language])
 
   useEffect(() => {
     if (!blogContent) {
@@ -63,15 +90,15 @@ export default function BlogPostPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
-      {/* Table of Contents - außerhalb des main Elements für fixierte Positionierung */}
-      <BlogTableOfContents content={blogContent.content} />
-      <main className="flex-1 relative">
-        <article className="container mx-auto px-4 py-8 md:py-12 max-w-3xl xl:mr-[280px]">
+      <div className="flex-1 flex relative" style={{ marginTop: 0 }}>
+        {/* Blog Content - Left Column */}
+        <main className="flex-1 overflow-y-auto">
+          <article className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
           {/* Blog Header */}
           <header className="mb-12">
             {/* Author and Date */}
             <div className="text-sm text-muted-foreground mb-6">
-              By {blogContent.author.name} - {blogContent.date}
+              {translations.by} {blogContent.author.name} - {formatBlogDate(blogContent.date, language)}
             </div>
             
             {/* Title */}
@@ -99,7 +126,7 @@ export default function BlogPostPage() {
                   rel="noopener noreferrer"
                   className="text-xs text-primary hover:underline font-medium"
                 >
-                  LinkedIn
+                  {translations.linkedin}
                 </Link>
               </div>
             </div>
@@ -110,13 +137,17 @@ export default function BlogPostPage() {
             className="blog-content max-w-none prose-lg"
             dangerouslySetInnerHTML={{ __html: blogContent.content }}
           />
-        </article>
-      </main>
+          </article>
+        </main>
+        
+        {/* TOC - Right Column (Fixed) */}
+        <BlogTableOfContents content={blogContent.content} />
+      </div>
       
       {/* Call to Action Section - Full Width */}
-      <section className="w-full mt-16 mb-12">
+      <section className="w-full mt-0 mb-12 bg-muted/30 dark:bg-muted/20">
         <div className="container mx-auto px-4">
-          <div className="relative rounded-2xl overflow-hidden p-8 md:p-12">
+          <div className="relative rounded-2xl overflow-hidden p-8 md:p-12 bg-background border border-border">
             {/* Dynamic Animated Background */}
             <div className="absolute inset-0 -z-10 overflow-hidden">
               {/* Primary animated blob */}
@@ -146,19 +177,18 @@ export default function BlogPostPage() {
             
             <div className="relative max-w-2xl mx-auto text-center space-y-6">
               <Badge variant="outline" className="text-xs uppercase tracking-wider font-medium">
-                Bereit zum Starten?
+                {translations.cta.badge}
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Starte noch heute mit Jenni AI
+                {translations.cta.title}
               </h2>
               <p className="text-lg text-muted-foreground">
-                Erlebe die Kraft von KI-gestütztem wissenschaftlichem Schreiben. 
-                Schließe dich Millionen von Nutzern an, die bereits schneller und besser schreiben.
+                {translations.cta.description}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
                 <Link href="/auth/signup">
                   <MorphyButton size="lg">
-                    Kostenlos starten
+                    {translations.cta.startFree}
                   </MorphyButton>
                 </Link>
                 <Link href="/dashboard">
@@ -167,12 +197,12 @@ export default function BlogPostPage() {
                     variant="outline"
                     className="rounded-full"
                   >
-                    Demo ansehen
+                    {translations.cta.viewDemo}
                   </Button>
                 </Link>
               </div>
               <p className="text-sm text-muted-foreground pt-2">
-                Keine Kreditkarte nötig · Kostenloser Plan verfügbar · Jederzeit kündbar
+                {translations.cta.trustSignals}
               </p>
             </div>
           </div>
@@ -184,21 +214,21 @@ export default function BlogPostPage() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <div className="p-6 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors">
-              <h3 className="font-semibold text-lg mb-2">Mehr erfahren</h3>
+              <h3 className="font-semibold text-lg mb-2">{translations.related.learnMore.title}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Entdecke weitere Artikel und Tipps zum wissenschaftlichen Schreiben.
+                {translations.related.learnMore.description}
               </p>
               <Link href="/blog" className="text-sm text-primary hover:underline font-medium">
-                Alle Artikel ansehen →
+                {translations.related.learnMore.link}
               </Link>
             </div>
             <div className="p-6 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors">
-              <h3 className="font-semibold text-lg mb-2">Features entdecken</h3>
+              <h3 className="font-semibold text-lg mb-2">{translations.related.discoverFeatures.title}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Lerne alle Funktionen von Jenni AI kennen und werde produktiver.
+                {translations.related.discoverFeatures.description}
               </p>
               <Link href="/#bento-features" className="text-sm text-primary hover:underline font-medium">
-                Features ansehen →
+                {translations.related.discoverFeatures.link}
               </Link>
             </div>
           </div>

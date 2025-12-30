@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"
 import { motion } from "framer-motion";
 import {
     GraduationCap,
@@ -24,55 +25,13 @@ import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scr
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/i18n/use-language";
 
 interface UseCase {
     title: string;
     description: string;
     icon: LucideIcon;
 }
-
-const useCases: UseCase[] = [
-    {
-        title: "Studierende",
-        description: "Bachelor-, Master- und Seminararbeiten schneller und besser schreiben.",
-        icon: GraduationCap,
-    },
-    {
-        title: "Doktoranden",
-        description: "Dissertationen strukturieren und mit korrekten Zitationen versehen.",
-        icon: BookOpen,
-    },
-    {
-        title: "Forscher",
-        description: "Wissenschaftliche Paper und Publikationen effizient verfassen.",
-        icon: FlaskConical,
-    },
-    {
-        title: "Juristen",
-        description: "Rechtsgutachten und juristische Texte präzise formulieren.",
-        icon: Scale,
-    },
-    {
-        title: "Mediziner",
-        description: "Medizinische Fachartikel und Studienberichte erstellen.",
-        icon: Stethoscope,
-    },
-    {
-        title: "Content Creator",
-        description: "Blogs, Reports und Whitepapers professionell verfassen.",
-        icon: FileText,
-    },
-    {
-        title: "Berater",
-        description: "Analysen, Berichte und Präsentationen strukturiert aufbauen.",
-        icon: Briefcase,
-    },
-    {
-        title: "Technischer Redakteur",
-        description: "Technische Dokumentationen klar und verständlich schreiben.",
-        icon: Code2,
-    },
-];
 
 function UseCaseCard({ useCase }: { useCase: UseCase }) {
     const Icon = useCase.icon;
@@ -108,19 +67,64 @@ function UseCaseCard({ useCase }: { useCase: UseCase }) {
 }
 
 export function UseCases() {
+    const { t, language } = useLanguage()
+
+    const useCases = React.useMemo<UseCase[]>(() => [
+        {
+            title: t('landing.useCases.cases.students.title'),
+            description: t('landing.useCases.cases.students.description'),
+            icon: GraduationCap,
+        },
+        {
+            title: t('landing.useCases.cases.phd.title'),
+            description: t('landing.useCases.cases.phd.description'),
+            icon: BookOpen,
+        },
+        {
+            title: t('landing.useCases.cases.researchers.title'),
+            description: t('landing.useCases.cases.researchers.description'),
+            icon: FlaskConical,
+        },
+        {
+            title: t('landing.useCases.cases.lawyers.title'),
+            description: t('landing.useCases.cases.lawyers.description'),
+            icon: Scale,
+        },
+        {
+            title: t('landing.useCases.cases.doctors.title'),
+            description: t('landing.useCases.cases.doctors.description'),
+            icon: Stethoscope,
+        },
+        {
+            title: t('landing.useCases.cases.contentCreators.title'),
+            description: t('landing.useCases.cases.contentCreators.description'),
+            icon: FileText,
+        },
+        {
+            title: t('landing.useCases.cases.consultants.title'),
+            description: t('landing.useCases.cases.consultants.description'),
+            icon: Briefcase,
+        },
+        {
+            title: t('landing.useCases.cases.technicalWriters.title'),
+            description: t('landing.useCases.cases.technicalWriters.description'),
+            icon: Code2,
+        },
+    ], [t, language])
+
     return (
         <Section id="use-cases" className="py-24 bg-background">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <ScrollReveal className="mb-16 text-center max-w-2xl mx-auto">
                     <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                        Anwendungsfälle
+                        {t('landing.useCases.badge')}
                     </Badge>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-neutral-900 dark:text-neutral-100 mb-4">
-                        Für jeden Schreibbedarf entwickelt
+                        {t('landing.useCases.title')}
                     </h2>
                     <p className="text-neutral-500 dark:text-neutral-400">
-                        Egal ob Thesis, Fachartikel oder Blog – Jenni AI passt sich deinem Workflow an.
+                        {t('landing.useCases.description')}
                     </p>
                 </ScrollReveal>
 

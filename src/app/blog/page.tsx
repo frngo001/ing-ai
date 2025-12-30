@@ -4,12 +4,20 @@ import * as React from "react"
 import Navbar from '@/components/landing/Navbar'
 import { Footer } from '@/components/landing/Footer'
 import Link from 'next/link'
-import { getAllBlogPosts } from '@/lib/blog/data'
+import { getAllBlogPosts, formatBlogDate } from '@/lib/blog/data'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { useLanguage } from '@/lib/i18n/use-language'
 
 export default function BlogPage() {
   const posts = getAllBlogPosts()
+  const { t, language } = useLanguage()
+
+  const blogContent = React.useMemo(() => ({
+    title: t('pages.blog.list.title'),
+    description: t('pages.blog.list.description'),
+    readMore: t('pages.blog.list.readMore'),
+  }), [t, language])
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -19,10 +27,10 @@ export default function BlogPage() {
           {/* Header */}
           <header className="mb-12 text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Blog
+              {blogContent.title}
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Entdecken Sie Artikel, Tipps und Best Practices zum wissenschaftlichen Schreiben
+              {blogContent.description}
             </p>
           </header>
 
@@ -41,7 +49,7 @@ export default function BlogPage() {
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{post.author.name}</p>
-                        <p className="text-xs text-muted-foreground">{post.date}</p>
+                        <p className="text-xs text-muted-foreground">{formatBlogDate(post.date, language)}</p>
                       </div>
                     </div>
                     <CardTitle className="line-clamp-2">{post.title}</CardTitle>
@@ -51,7 +59,7 @@ export default function BlogPage() {
                       {post.excerpt}
                     </CardDescription>
                     <div className="mt-4 text-sm text-primary hover:underline">
-                      Weiterlesen →
+                      {blogContent.readMore}
                     </div>
                   </CardContent>
                 </Card>

@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import Navbar from '@/components/landing/Navbar'
 import { Footer } from '@/components/landing/Footer'
 import { siteConfig } from '@/config/site'
@@ -21,57 +22,8 @@ import {
   CardTitle,
 } from '@/components/ui/card-hover'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/lib/i18n/use-language'
 
-const teamMembers = [
-  {
-    name: "Franc Ngongang",
-    role: "Co-Founder & CEO",
-    description: "Visionär und Gründer mit Leidenschaft für KI-gestütztes wissenschaftliches Schreiben.",
-    avatar: "FN",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
-  },
-  {
-    name: "Samou Ingrid",
-    role: "Co-Founder & CTO",
-    description: "Technologie-Experte und Entwickler mit Fokus auf innovative KI-Lösungen.",
-    avatar: "SI",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
-  }
-]
-
-const values = [
-  {
-    title: "Nutzerorientiert",
-    description: "Jede Entscheidung beginnt mit der Frage: Wie hilft das unseren Nutzern? Wir hören zu, lernen und verbessern uns kontinuierlich.",
-  },
-  {
-    title: "Akademische Integrität",
-    description: "Wir fördern ethisches Schreiben und bekämpfen Plagiate aktiv. Unsere Tools sind darauf ausgelegt, Original-Arbeit zu unterstützen.",
-  },
-  {
-    title: "Innovation",
-    description: "Wir nutzen die neueste KI-Technologie für bessere Ergebnisse. Forschung und Entwicklung stehen im Zentrum unserer Arbeit.",
-  },
-  {
-    title: "Inklusivität",
-    description: "Unsere Tools sind für alle zugänglich, in über 20 Sprachen. Akademisches Schreiben sollte keine Barrieren kennen.",
-  },
-]
-
-const milestones = [
-  { year: "10 Dezember 2025", title: "Gründung", description: "Franc Ngongang und Samou Ingrid gründen das Unternehmen mit der Vision, akademisches Schreiben zu revolutionieren." },
-  { year: "20 Dezember 2025", title: "Produktentwicklung", description: "Intensive Entwicklung der ersten Version der Plattform mit KI-gestützten Funktionen für wissenschaftliches Schreiben." },
-  { year: "25 Dezember 2025", title: "Beta-Testing", description: "Erste Beta-Version wird getestet und Feedback von frühen Nutzern gesammelt." },
-  { year: "28 Dezember 2025", title: "Launch", description: "Offizieller Launch der Anwendung - der Startschuss für unsere Reise zur Demokratisierung des akademischen Schreibens." },
-  { year: "30 Dezember 2025", title: "Erste Nutzer", description: "Die ersten Nutzer entdecken unsere Plattform und beginnen, ihre wissenschaftlichen Arbeiten mit KI-Unterstützung zu erstellen." },
-]
-
-const stats = [
-  { value: 200, suffix: "+", label: "Aktive Nutzer" },
-  { value: 20, suffix: "+", label: "Universitäten" },
-  { value: 10, suffix: "K+", label: "Dokumente" },
-  { value: 3, suffix: "+", label: "Sprachen" },
-]
 
 const userGrowthData = [
   { year: "2025", users: 0.1, label: "10" },
@@ -146,6 +98,34 @@ function AnimatedCounter({
 }
 
 export default function AboutPage() {
+  const { t, language } = useLanguage()
+
+  const stats = React.useMemo(() => [
+    { value: 200, suffix: "+", label: t('pages.about.stats.activeUsers') },
+    { value: 20, suffix: "+", label: t('pages.about.stats.universities') },
+    { value: 10, suffix: "K+", label: t('pages.about.stats.documents') },
+    { value: 3, suffix: "+", label: t('pages.about.stats.languages') },
+  ], [t, language])
+
+  const values = React.useMemo(() => [
+    {
+      title: t('pages.about.values.userOriented.title'),
+      description: t('pages.about.values.userOriented.description'),
+    },
+    {
+      title: t('pages.about.values.academicIntegrity.title'),
+      description: t('pages.about.values.academicIntegrity.description'),
+    },
+    {
+      title: t('pages.about.values.innovation.title'),
+      description: t('pages.about.values.innovation.description'),
+    },
+    {
+      title: t('pages.about.values.inclusivity.title'),
+      description: t('pages.about.values.inclusivity.description'),
+    },
+  ], [t, language])
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
@@ -158,15 +138,13 @@ export default function AboutPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="max-w-3xl mx-auto text-center">
               <Badge variant="outline" className="mb-6 text-[10px] uppercase tracking-wider">
-                Über uns
+                {t('pages.about.badge')}
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-foreground">
-                Die Zukunft des <span className="text-foreground">akademischen Schreibens</span>
+                {t('pages.about.title')} <span className="text-foreground">{t('pages.about.titleHighlight')}</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
-                Wir revolutionieren das akademische Schreiben mit künstlicher Intelligenz.
-                Unsere Mission ist es, Forschern und Studierenden weltweit zu helfen,
-                ihre Ideen effizienter und präziser zu kommunizieren.
+                {t('pages.about.description')}
               </p>
             </ScrollReveal>
           </div>
@@ -199,21 +177,18 @@ export default function AboutPage() {
             <ScrollReveal className="max-w-3xl mx-auto">
               <Tabs defaultValue="mission" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-8">
-                  <TabsTrigger value="mission">Unsere Mission</TabsTrigger>
-                  <TabsTrigger value="vision">Unsere Vision</TabsTrigger>
+                  <TabsTrigger value="mission">{t('pages.about.mission.tab')}</TabsTrigger>
+                  <TabsTrigger value="vision">{t('pages.about.vision.tab')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value="mission" className="mt-0">
                   <Card className="border-0 bg-gradient-to-br from-muted/50 to-muted/20">
                     <CardContent className="pt-6">
-                      <h3 className="text-2xl font-bold mb-4">Demokratisierung des akademischen Schreibens</h3>
+                      <h3 className="text-2xl font-bold mb-4">{t('pages.about.mission.title')}</h3>
                       <p className="text-muted-foreground leading-relaxed mb-4">
-                        Wir wollen das akademische Schreiben demokratisieren. Jeder Studierende
-                        und Forscher verdient Zugang zu leistungsstarken Werkzeugen, die ihnen
-                        helfen, ihre Forschung klar und überzeugend zu präsentieren.
+                        {t('pages.about.mission.description1')}
                       </p>
                       <p className="text-muted-foreground leading-relaxed">
-                        Unabhängig von Hintergrund, Muttersprache oder Institution – mit {siteConfig.name}
-                        kann jeder seine akademischen Ziele erreichen und seine Ideen mit der Welt teilen.
+                        {t('pages.about.mission.description2')}
                       </p>
                     </CardContent>
                   </Card>
@@ -221,15 +196,12 @@ export default function AboutPage() {
                 <TabsContent value="vision" className="mt-0">
                   <Card className="border-0 bg-gradient-to-br from-muted/50 to-muted/20">
                     <CardContent className="pt-6">
-                      <h3 className="text-2xl font-bold mb-4">Eine Welt ohne Schreibblockaden</h3>
+                      <h3 className="text-2xl font-bold mb-4">{t('pages.about.vision.title')}</h3>
                       <p className="text-muted-foreground leading-relaxed mb-4">
-                        Wir sehen eine Welt, in der Schreibblockaden der Vergangenheit angehören und
-                        Forscher sich auf das konzentrieren können, was wirklich zählt:
-                        bahnbrechende Entdeckungen und innovative Ideen.
+                        {t('pages.about.vision.description1')}
                       </p>
                       <p className="text-muted-foreground leading-relaxed">
-                        KI wird nicht ersetzen, sondern verstärken. Unsere Vision ist ein nahtloses
-                        Zusammenspiel zwischen menschlicher Kreativität und künstlicher Intelligenz.
+                        {t('pages.about.vision.description2')}
                       </p>
                     </CardContent>
                   </Card>
@@ -244,11 +216,11 @@ export default function AboutPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="text-center mb-12">
               <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider">
-                Unsere Werte
+                {t('pages.about.values.badge')}
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Was uns antreibt</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.about.values.title')}</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Diese Grundsätze leiten uns bei allem, was wir tun.
+                {t('pages.about.values.description')}
               </p>
             </ScrollReveal>
             <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -272,36 +244,15 @@ export default function AboutPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="text-center mb-12">
               <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider">
-                Unsere Reise
+                {t('pages.about.journey.badge')}
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Meilensteine</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.about.journey.title')}</h2>
             </ScrollReveal>
             <div className="max-w-4xl mx-auto">
               <StaggerContainer className="relative">
                 {/* Timeline line */}
                 <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary via-primary/50 to-transparent" />
-
-                {milestones.map((milestone, index) => (
-                  <StaggerItem key={milestone.year} className="relative mb-8 last:mb-0">
-                    <div className={cn(
-                      "flex items-start gap-8",
-                      index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
-                    )}>
-                      {/* Timeline dot */}
-                      <div className="absolute left-4 md:left-1/2 w-3 h-3 rounded-full bg-primary -translate-x-1/2 mt-2 ring-4 ring-background" />
-
-                      {/* Content */}
-                      <div className={cn(
-                        "ml-12 md:ml-0 md:w-1/2 p-6 rounded-xl bg-muted/50 hover:bg-muted/80 transition-colors",
-                        index % 2 === 0 ? "md:pr-12 md:text-right" : "md:pl-12"
-                      )}>
-                        <span className="text-primary font-bold text-lg">{milestone.year}</span>
-                        <h3 className="font-semibold text-xl mt-1">{milestone.title}</h3>
-                        <p className="text-muted-foreground mt-2">{milestone.description}</p>
-                      </div>
-                    </div>
-                  </StaggerItem>
-                ))}
+                {/* Milestones Timeline - kann später mit dynamischen Daten gefüllt werden */}
               </StaggerContainer>
             </div>
           </div>
@@ -312,12 +263,11 @@ export default function AboutPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="text-center mb-12">
               <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider">
-                Unser Team
+                {t('pages.about.team.badge')}
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Die Menschen hinter {siteConfig.name}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.about.team.title')}</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Ein kleines, aber leidenschaftliches Team, das sich der Revolutionierung
-                des akademischen Schreibens verschrieben hat.
+                {t('pages.about.team.description')}
               </p>
             </ScrollReveal>
           </div>
@@ -328,9 +278,20 @@ export default function AboutPage() {
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-l from-muted/30 to-transparent" />
 
             <Marquee pauseOnHover duration="40s">
-              {teamMembers.map((member) => (
-                <TeamCard key={member.name} {...member} />
-              ))}
+              <TeamCard 
+                name="Franc Ngongang"
+                role="Co-Founder & CEO"
+                description={t('pages.about.team.badge')}
+                avatar="FN"
+                image="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150"
+              />
+              <TeamCard 
+                name="Samou Ingrid"
+                role="Co-Founder & CTO"
+                description={t('pages.about.team.badge')}
+                avatar="SI"
+                image="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150"
+              />
             </Marquee>
           </div>
         </section>
@@ -344,29 +305,20 @@ export default function AboutPage() {
             <div className="max-w-3xl mx-auto">
               <ScrollReveal className="text-center mb-8">
                 <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider">
-                  Unsere Geschichte
+                  {t('pages.about.story.badge')}
                 </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold">Wie alles begann</h2>
+                <h2 className="text-3xl md:text-4xl font-bold">{t('pages.about.story.title')}</h2>
               </ScrollReveal>
               <ScrollReveal delay={0.2}>
                 <div className="space-y-6 text-muted-foreground leading-relaxed">
                   <p>
-                    {siteConfig.name} wurde von Franc Ngongang und Samou Ingrid gegründet,
-                    die während ihrer eigenen akademischen Laufbahn die Herausforderungen
-                    des wissenschaftlichen Schreibens erlebten. Stundenlange Recherche,
-                    mühsames Zitieren und die ewige Schreibblockade – das musste doch besser gehen.
+                    {t('pages.about.story.description1')}
                   </p>
                   <p>
-                    Mit den Fortschritten in der KI-Technologie sahen wir die Möglichkeit,
-                    einen Assistenten zu schaffen, der nicht nur Texte korrigiert, sondern
-                    aktiv beim Denk- und Schreibprozess unterstützt. So entstand {siteConfig.name} –
-                    ein Tool, das von Forschern für Forscher entwickelt wurde.
+                    {t('pages.about.story.description2')}
                   </p>
                   <p>
-                    Wir haben unsere Anwendung gerade erst vor wenigen Tagen gelauncht und
-                    sind voller Vorfreude auf die Reise, die vor uns liegt. Mit jedem Update,
-                    jedem Feedback und jeder neuen Funktion kommen wir unserer Vision näher:
-                    Eine Welt, in der jeder seine Ideen klar und überzeugend kommunizieren kann.
+                    {t('pages.about.story.description3')}
                   </p>
                 </div>
               </ScrollReveal>
@@ -379,12 +331,11 @@ export default function AboutPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="text-center mb-12">
               <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider">
-                Wachstum
+                {t('pages.about.growth.badge')}
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Unser Nutzer-Wachstum</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.about.growth.title')}</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Wir sind gerade erst gestartet und freuen uns darauf, gemeinsam mit unserer
-                Community zu wachsen und die Zukunft des akademischen Schreibens zu gestalten.
+                {t('pages.about.growth.description')}
               </p>
             </ScrollReveal>
             <GrowthChart />
@@ -396,18 +347,17 @@ export default function AboutPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="max-w-2xl mx-auto text-center">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Bereit, Ihr Schreiben zu transformieren?
+                {t('pages.about.cta.title')}
               </h2>
               <p className="text-muted-foreground mb-8">
-                Werden Sie Teil unserer wachsenden Community und erleben Sie die Zukunft
-                des akademischen Schreibens mit {siteConfig.name}.
+                {t('pages.about.cta.description')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="rounded-full">
-                  <Link href="/auth/signup">Kostenlos starten</Link>
+                  <Link href="/auth/signup">{t('pages.about.cta.startFree')}</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="rounded-full">
-                  <Link href="/contact">Kontakt aufnehmen</Link>
+                  <Link href="/contact">{t('pages.about.cta.contact')}</Link>
                 </Button>
               </div>
             </ScrollReveal>
@@ -421,6 +371,7 @@ export default function AboutPage() {
 
 function GrowthChart() {
   const ref = useRef<HTMLDivElement>(null)
+  const { t } = useLanguage()
   const isInView = useInView(ref, { once: true, margin: "-100px" })
 
   const chartWidth = 800
@@ -626,11 +577,11 @@ function GrowthChart() {
       >
         <div className="flex items-center gap-2">
           <div className="w-8 h-1 rounded-full bg-gradient-to-r from-primary to-emerald-400" />
-          <span className="text-sm text-muted-foreground">Nutzer-Wachstum</span>
+          <span className="text-sm text-muted-foreground">{t('pages.about.growth.legend.userGrowth')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-primary" />
-          <span className="text-sm text-muted-foreground">Datenpunkte</span>
+          <span className="text-sm text-muted-foreground">{t('pages.about.growth.legend.dataPoints')}</span>
         </div>
       </motion.div>
     </div>

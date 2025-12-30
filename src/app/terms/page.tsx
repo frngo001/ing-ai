@@ -6,8 +6,11 @@ import { siteConfig } from '@/config/site'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import Glow from '@/components/ui/glow'
 import { Badge } from '@/components/ui/badge'
+import { useLanguage } from '@/lib/i18n/use-language'
 
 export default function TermsPage() {
+  const { t } = useLanguage()
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
@@ -20,13 +23,13 @@ export default function TermsPage() {
           <div className="container px-4 mx-auto">
             <ScrollReveal className="max-w-3xl mx-auto text-center">
               <Badge variant="outline" className="mb-6 text-[10px] uppercase tracking-wider">
-                Rechtliches
+                {t('pages.terms.badge')}
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-                Allgemeine Geschäftsbedingungen
+                {t('pages.terms.title')}
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
-                Stand: {new Date().toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {t('pages.terms.lastUpdated')} {new Date().toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </ScrollReveal>
           </div>
@@ -38,12 +41,9 @@ export default function TermsPage() {
             <ScrollReveal className="prose prose-lg dark:prose-invert max-w-none">
               <div className="space-y-8 text-muted-foreground">
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Geltungsbereich</h2>
+                  <h2 className="text-2xl font-semibold mb-4 text-foreground">{t('pages.terms.sections.scope.title')}</h2>
                   <p>
-                    Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für die Nutzung der von {siteConfig.name} 
-                    angebotenen Dienste, insbesondere der KI-gestützten Schreibassistenz-Plattform. 
-                    Abweichende, entgegenstehende oder ergänzende AGB des Nutzers werden nicht Vertragsbestandteil, 
-                    es sei denn, ihrer Geltung wird ausdrücklich schriftlich zugestimmt.
+                    {t('pages.terms.sections.scope.description')}
                   </p>
                 </div>
 

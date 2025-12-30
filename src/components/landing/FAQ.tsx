@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react"
 import { motion } from "framer-motion";
 import {
     Accordion,
@@ -12,35 +13,38 @@ import Glow from "@/components/ui/glow";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scroll-reveal";
 import { MorphyButton } from "@/components/ui/morphy-button";
 import Link from "next/link";
-
-const faqs = [
-    {
-        question: "Wie funktioniert die KI-Zitiergenerierung?",
-        answer: "Unsere KI scannt deinen Text und schlägt passende Zitate aus unserer Datenbank mit Millionen von akademischen Arbeiten vor. Du kannst auch deine eigenen PDFs hochladen und die KI zieht Zitate direkt daraus. Wir unterstützen alle wichtigen Zitierstile wie APA, MLA, Chicago, Harvard und IEEE.",
-    },
-    {
-        question: "Ist der Inhalt plagiatfrei?",
-        answer: "Ja. Ing AI wurde entwickelt, um dir beim Schreiben origineller Inhalte zu helfen. Unsere KI-Vorschläge sind einzigartig und wir haben einen integrierten Plagiatsprüfer, um sicherzustellen, dass deine Arbeit zu 100% original ist.",
-    },
-    {
-        question: "Kann ich meine Arbeit nach Word oder LaTeX exportieren?",
-        answer: "Absolut. Du kannst dein gesamtes Dokument jederzeit im Microsoft Word (.docx), LaTeX (.tex) oder HTML-Format exportieren. Alle Formatierungen und Zitate bleiben erhalten.",
-    },
-    {
-        question: "Sind meine Daten sicher?",
-        answer: "Wir nehmen Datensicherheit sehr ernst. Alle deine Forschungen und Texte werden verschlüsselt und sicher gespeichert. Wir verwenden deine privaten Daten nicht, um unsere öffentlichen Modelle ohne deine ausdrückliche Erlaubnis zu trainieren.",
-    },
-    {
-        question: "Unterstützt es andere Sprachen als Deutsch?",
-        answer: "Ja! Ing AI unterstützt das Schreiben und Recherchieren in mehreren Sprachen, darunter Englisch, Spanisch, Französisch, Chinesisch, Japanisch und viele mehr.",
-    },
-    {
-        question: "Kann ich mein Abonnement jederzeit kündigen?",
-        answer: "Ja, du kannst dein Abonnement jederzeit kündigen. Dein Zugang bleibt bis zum Ende deines Abrechnungszeitraums bestehen, und dir wird nichts mehr berechnet.",
-    },
-];
+import { useLanguage } from "@/lib/i18n/use-language";
 
 export function FAQ() {
+    const { t, language } = useLanguage()
+
+    const faqs = React.useMemo(() => [
+    {
+            question: t('landing.faq.questions.citationGeneration.question'),
+            answer: t('landing.faq.questions.citationGeneration.answer'),
+    },
+    {
+            question: t('landing.faq.questions.plagiarismFree.question'),
+            answer: t('landing.faq.questions.plagiarismFree.answer'),
+    },
+    {
+            question: t('landing.faq.questions.exportFormats.question'),
+            answer: t('landing.faq.questions.exportFormats.answer'),
+    },
+    {
+            question: t('landing.faq.questions.dataSecurity.question'),
+            answer: t('landing.faq.questions.dataSecurity.answer'),
+    },
+    {
+            question: t('landing.faq.questions.otherLanguages.question'),
+            answer: t('landing.faq.questions.otherLanguages.answer'),
+    },
+    {
+            question: t('landing.faq.questions.cancelSubscription.question'),
+            answer: t('landing.faq.questions.cancelSubscription.answer'),
+    },
+    ], [t, language])
+
     return (
         <section id="faq" className="min-h-screen flex items-center justify-center px-6 py-12 bg-muted/40 relative overflow-hidden">
             {/* Background decoration */}
@@ -53,17 +57,17 @@ export function FAQ() {
             <div className="flex flex-col md:flex-row items-start gap-x-12 gap-y-6 container max-w-6xl mx-auto">
                 <div className="flex-1">
                     <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                        FAQ
+                        {t('landing.faq.badge')}
                     </Badge>
                     <h2 className="text-4xl lg:text-5xl leading-[1.15]! font-semibold tracking-[-0.035em] mb-4">
-                        Häufig gestellte <br /> Fragen
+                        {t('landing.faq.title')} <br /> {t('landing.faq.titleLine2')}
                     </h2>
                     <p className="text-lg text-muted-foreground mb-8">
-                        Alles was du über Ing AI wissen musst.
+                        {t('landing.faq.description')}
                     </p>
                     <Link href="mailto:support@ing-ai.com">
                         <MorphyButton>
-                            Support kontaktieren
+                            {t('landing.faq.contactSupport')}
                         </MorphyButton>
                     </Link>
                 </div>
