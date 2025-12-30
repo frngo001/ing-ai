@@ -134,6 +134,8 @@ export const persistConversation = async (msgs: ChatMessage[], id: string, setHi
             reasoning: msg.reasoning || null,
             parts: msg.parts || [],
             tool_invocations: msg.toolInvocations || [],
+            tool_steps: msg.toolSteps || [],
+            files: msg.files || [],
           }))
         )
       }
@@ -206,6 +208,8 @@ export const loadChatHistory = async (): Promise<StoredConversation[]> => {
               reasoning: msg.reasoning || undefined,
               parts: msg.parts as ChatMessage['parts'],
               toolInvocations: msg.tool_invocations as ChatMessage['toolInvocations'],
+              toolSteps: msg.tool_steps as ChatMessage['toolSteps'],
+              files: (msg.files as ChatMessage['files']) || undefined,
             })),
             updatedAt: new Date(conv.updated_at).getTime(),
           }

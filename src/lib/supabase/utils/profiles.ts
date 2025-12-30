@@ -1,19 +1,28 @@
+import { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '../client'
 import type { Database } from '../types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
+type SupabaseClientType = SupabaseClient<Database>
 
 /**
  * Stellt sicher, dass ein Profile für den gegebenen User existiert.
  * Erstellt es, falls es nicht existiert.
+ * 
+ * @param userId - Die User-ID
+ * @param supabaseClient - Optionaler Supabase-Client. Wenn nicht übergeben, wird der Browser-Client verwendet.
+ *                         In API-Routes sollte der Server-Client übergeben werden für korrekten Auth-Kontext.
  */
-export async function ensureProfileExists(userId: string): Promise<Profile> {
-  const supabase = createClient()
+export async function ensureProfileExists(
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<Profile> {
+  const supabase = supabaseClient || createClient()
   
   // Prüfe, ob Profile existiert
-  const { data: existingProfile, error: selectError } = await supabase
+  const { data: existingProfile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
@@ -23,18 +32,26 @@ export async function ensureProfileExists(userId: string): Promise<Profile> {
     return existingProfile
   }
 
-  // Wenn nicht existiert, hole User-Daten von auth.users
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  // Versuche User-Daten von auth.getUser() zu holen (funktioniert im Client-Kontext)
+  let email: string | null = null
+  let fullName: string | null = null
   
-  if (authError || !user || user.id !== userId) {
-    throw new Error(`User ${userId} nicht gefunden oder nicht authentifiziert`)
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user && user.id === userId) {
+      email = user.email || null
+      fullName = user.user_metadata?.full_name || user.email || null
+    }
+  } catch {
+    // Auth nicht verfügbar (z.B. in API-Route ohne Cookie-Kontext)
+    // Wir erstellen das Profile trotzdem mit minimalen Daten
   }
 
-  // Erstelle Profile
+  // Erstelle Profile mit verfügbaren Daten
   const newProfile: ProfileInsert = {
     id: userId,
-    email: user.email || null,
-    full_name: user.user_metadata?.full_name || user.email || null,
+    email,
+    full_name: fullName,
   }
 
   const { data: profile, error: insertError } = await supabase
@@ -66,8 +83,11 @@ export async function ensureProfileExists(userId: string): Promise<Profile> {
   return profile
 }
 
-export async function getProfile(userId: string): Promise<Profile | null> {
-  const supabase = createClient()
+export async function getProfile(
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<Profile | null> {
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -83,9 +103,10 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 
 export async function updateProfile(
   userId: string,
-  updates: ProfileUpdate
+  updates: ProfileUpdate,
+  supabaseClient?: SupabaseClientType
 ): Promise<Profile> {
-  const supabase = createClient()
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)

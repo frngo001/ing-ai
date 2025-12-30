@@ -3,6 +3,72 @@ import { detectArbeitType, extractThema } from './agent-utils'
 import { buildContextSummary } from './context-utils'
 import { parseAgentStream } from '@/lib/stream-parsers/agent-stream-parser'
 import { parseStandardStream } from '@/lib/stream-parsers/standard-stream-parser'
+import { extractFileContent, extractMultipleFilesContent, type FileContentResult } from '@/lib/file-extraction/extract-file-content'
+import { canExtractClientSide } from '@/lib/file-extraction/file-types'
+
+// Helper: Hole Editor-Inhalt als Markdown ueber Event-System
+function getEditorContentAsMarkdown(): Promise<string> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') {
+      resolve('')
+      return
+    }
+    
+    const editorEvent = new CustomEvent('get-editor-instance', {
+      detail: {
+        callback: (editor: any) => {
+          if (!editor) {
+            resolve('')
+            return
+          }
+          
+          try {
+            // Extrahiere Text aus allen Nodes
+            const extractText = (node: any): string => {
+              if (!node) return ''
+              if (typeof node.text === 'string') return node.text
+              if (Array.isArray(node.children)) {
+                return node.children.map(extractText).join(' ')
+              }
+              if (Array.isArray(node)) {
+                return node.map(extractText).join('\n\n')
+              }
+              return ''
+            }
+            
+            // Hole Editor-Inhalt
+            const content = editor.children || []
+            const text = extractText(content).trim()
+            
+            // Versuche Markdown-Serialisierung wenn verfuegbar
+            try {
+              const markdownApi = editor.getApi?.({ key: 'markdown' })
+              if (markdownApi?.markdown?.serialize) {
+                const markdown = markdownApi.markdown.serialize({ value: content })
+                if (markdown) {
+                  resolve(markdown)
+                  return
+                }
+              }
+            } catch {
+              // Fallback auf Plain Text
+            }
+            
+            resolve(text)
+          } catch (error) {
+            console.error('Fehler beim Extrahieren des Editor-Inhalts:', error)
+            resolve('')
+          }
+        }
+      }
+    })
+    
+    window.dispatchEvent(editorEvent)
+    
+    // Timeout falls kein Editor verfuegbar
+    setTimeout(() => resolve(''), 100)
+  })
+}
 
 export interface AgentStore {
   isActive: boolean
@@ -46,7 +112,7 @@ export interface HandlerDependencies {
   messageInputRef: React.RefObject<HTMLTextAreaElement | null>
   
   // Other
-  toast: { error: (message: string) => void }
+  toast: { error: (message: string) => void; success?: (message: string) => void }
   onClose?: () => void
   setContext: React.Dispatch<React.SetStateAction<ContextSelection>>
 }
@@ -129,13 +195,26 @@ export const createHandlers = (deps: HandlerDependencies) => {
       }
     }
 
-    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: trimmed }
+    // Erstelle User-Nachricht mit Dateien
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: trimmed,
+      files: files && files.length > 0
+        ? files.map((file) => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+          }))
+        : undefined,
+    }
     const assistantId = crypto.randomUUID()
     const contextSummary = buildContextSummary(trimmed, files, context, selectedMentions)
     const historyPayload = [...messages, userMsg].slice(-20)
 
     setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", content: "" }])
     setInput("")
+    setFiles(null) // Entferne Dateien aus dem Input-Feld nach dem Senden
     setSending(true)
     setStreamingId(assistantId)
 
@@ -145,12 +224,17 @@ export const createHandlers = (deps: HandlerDependencies) => {
     try {
       // Determine Endpoint based on Agent Mode
       // WICHTIG: Wenn Modus 'standard' ist, immer Ask-Endpoint verwenden, auch wenn Agent noch aktiv ist
+      // Wenn Websuche aktiviert ist, verwende WebSearch-Agent für schnellere und präzisere Antworten
       let apiEndpoint = "/api/ai/ask"
       const currentArbeitType = agentStore.arbeitType || (context.agentMode === 'general' ? 'general' : (context.agentMode === 'bachelor' ? 'bachelor' : null))
       
       if (context.agentMode === 'standard') {
-        // Standard Chat Modus - immer Ask-Endpoint verwenden
-        apiEndpoint = "/api/ai/ask"
+        // Standard Chat Modus - wenn Websuche aktiviert, verwende WebSearch-Agent
+        if (context.web) {
+          apiEndpoint = "/api/ai/agent/websearch"
+        } else {
+          apiEndpoint = "/api/ai/ask"
+        }
       } else if (agentStore.isActive && currentArbeitType) {
         // Use the mode stored in agentStore if active
         apiEndpoint = currentArbeitType === 'general' ? "/api/ai/agent/general" : "/api/ai/agent/bachelorarbeit"
@@ -172,14 +256,138 @@ export const createHandlers = (deps: HandlerDependencies) => {
       // Für general-Modus: Wenn kein Thema vorhanden ist, verwende die erste Nachricht oder einen Standard-Wert
       const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
 
-      const requestBody = context.agentMode !== 'standard'
+      // Hole aktuellen Editor-Inhalt wenn Kontext aktiviert ist (fuer alle Modi)
+      const editorContent = context.document ? await getEditorContentAsMarkdown() : ''
+
+      // Extrahiere Content aus hochgeladenen Dateien
+      let fileContents: Array<{ name: string; content: string; type: string }> = []
+      if (files && files.length > 0) {
+        try {
+          // Toast wird bei Fehlern angezeigt
+
+          // Trenne Dateien in clientseitig und serverseitig extrahierbare
+          const clientFiles: File[] = []
+          const serverFiles: File[] = []
+
+          files.forEach((file) => {
+            if (canExtractClientSide(file)) {
+              clientFiles.push(file)
+            } else {
+              serverFiles.push(file)
+            }
+          })
+
+          // Extrahiere clientseitig (TXT, MD)
+          if (clientFiles.length > 0) {
+            const clientResults = await extractMultipleFilesContent(clientFiles)
+            const successful = clientResults.filter((result) => result.content && !result.error)
+            const failed = clientResults.filter((result) => result.error)
+
+            if (failed.length > 0) {
+              toast.error(
+                `Fehler beim Extrahieren von ${failed.length} Datei(en): ${failed.map((f) => f.metadata?.fileName).join(', ')}`
+              )
+            }
+
+            fileContents.push(
+              ...successful.map((result) => ({
+                name: result.metadata?.fileName || 'unknown',
+                content: result.content,
+                type: result.metadata?.fileType || 'unknown',
+              }))
+            )
+          }
+
+          // Extrahiere serverseitig (PDF, DOCX, RTF)
+          if (serverFiles.length > 0) {
+            const serverResults = await Promise.all(
+              serverFiles.map(async (file) => {
+                try {
+                  const formData = new FormData()
+                  formData.append('file', file)
+
+                  const response = await fetch('/api/files/extract', {
+                    method: 'POST',
+                    body: formData,
+                  })
+
+                  if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}))
+                    throw new Error(
+                      errorData.error || `Fehler beim Extrahieren von ${file.name}`
+                    )
+                  }
+
+                  const data = await response.json()
+                  const extractedContent = data.content || ''
+                  console.log(`[HANDLER] Datei "${file.name}" extrahiert: ${extractedContent.length} Zeichen`)
+                  if (extractedContent.length > 0) {
+                    console.log(`[HANDLER] Datei "${file.name}" Text-Vorschau: ${extractedContent.substring(0, 200)}...`)
+                  } else {
+                    console.warn(`[HANDLER] Warnung: Datei "${file.name}" hat keinen extrahierten Inhalt`)
+                  }
+                  return {
+                    name: file.name,
+                    content: extractedContent,
+                    type: data.metadata?.fileType || file.type || 'unknown',
+                  }
+                } catch (error) {
+                  console.error(`Fehler beim Extrahieren von ${file.name}:`, error)
+                  toast.error(
+                    `Fehler beim Extrahieren von ${file.name}: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`
+                  )
+                  return null
+                }
+              })
+            )
+
+            const successful = serverResults.filter(
+              (result): result is { name: string; content: string; type: string } =>
+                result !== null && result.content.length > 0
+            )
+
+            fileContents.push(...successful)
+          }
+
+          // Zeige Erfolgsmeldung, wenn Dateien erfolgreich extrahiert wurden
+          if (fileContents.length > 0) {
+            console.log(`[HANDLER] ${fileContents.length} Datei(en) erfolgreich extrahiert`)
+            fileContents.forEach((file, index) => {
+              console.log(`[HANDLER] Datei ${index + 1}: "${file.name}" (${file.type}) - ${file.content.length} Zeichen`)
+            })
+            const totalChars = fileContents.reduce((sum, file) => sum + file.content.length, 0)
+            console.log(`[HANDLER] Gesamt extrahierter Text: ${totalChars} Zeichen`)
+          } else {
+            console.warn(`[HANDLER] Keine Dateien erfolgreich extrahiert`)
+          }
+        } catch (error) {
+          console.error('Fehler beim Extrahieren von Datei-Content:', error)
+          toast.error(
+            `Fehler beim Extrahieren von Dateien: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`
+          )
+          // Weiter mit leeren fileContents - Metadaten werden trotzdem gesendet
+        }
+      }
+
+      // Wenn WebSearch-Agent verwendet wird, verwende Agent-Format
+      const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
+      
+      const requestBody = (context.agentMode !== 'standard' || isWebSearchAgent)
         ? {
           messages: historyPayload.map((m) => ({
             role: m.role,
             content: m.content,
           })),
           useWeb: context.web,
-          agentState: {
+          editorContent, // Editor-Inhalt als Kontext (wenn aktiviert) und fuer getEditorContent Tool
+          documentContextEnabled: context.document, // Flag ob Kontext aktiviert ist
+          fileContents: fileContents.length > 0 ? fileContents : undefined, // Extrahierter Datei-Content
+          agentState: isWebSearchAgent ? {
+            isActive: false,
+            arbeitType: null,
+            thema: null,
+            currentStep: null,
+          } : {
             isActive: agentStore.isActive,
             arbeitType: currentArbeitType,
             thema: resolvedThema,
@@ -190,7 +398,9 @@ export const createHandlers = (deps: HandlerDependencies) => {
           question: trimmed,
           context: contextSummary,
           useWeb: context.web,
-          documentContent: context.document ? "Current document context aktiv" : undefined,
+          editorContent: context.document ? editorContent : undefined, // Editor-Inhalt fuer Standard-Modus
+          documentContextEnabled: context.document,
+          fileContents: fileContents.length > 0 ? fileContents : undefined, // Extrahierter Datei-Content
           messages: historyPayload,
           attachments:
             files?.map((file) => ({
@@ -241,7 +451,8 @@ export const createHandlers = (deps: HandlerDependencies) => {
       const reader = res.body.getReader()
       
       // TRENNUNG: Standard-Chat vs. Agenten - verwende separate Parser
-      const isAgentMode = context.agentMode !== 'standard'
+      // WebSearch-Agent verwendet auch Agent-Stream-Format
+      const isAgentMode = context.agentMode !== 'standard' || apiEndpoint === "/api/ai/agent/websearch"
       
       if (isAgentMode) {
         // Agent-Modi: Einfaches Text-Stream-Parsing

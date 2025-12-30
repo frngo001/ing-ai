@@ -69,6 +69,26 @@ export function setupEditorStreaming(): void {
         window.dispatchEvent(editorEvent)
     })
 
+    // Listener für Streaming-Ende
+    window.addEventListener('end-editor-stream', () => {
+        console.log('📝 [EDITOR STREAM] Streaming beendet')
+        // Optional: Hier könnte man z.B. den Cursor ans Ende setzen oder andere Finalisierungen durchführen
+        const editorEvent = new CustomEvent('get-editor-instance', {
+            detail: {
+                callback: (editor: PlateEditor) => {
+                    if (editor) {
+                        // Setze Cursor ans Ende des Dokuments
+                        const endPath = editor.api.end([])
+                        if (endPath) {
+                            editor.tf.select(endPath)
+                        }
+                    }
+                }
+            },
+        })
+        window.dispatchEvent(editorEvent)
+    })
+
     // Listener für Zitat-Einfügen (vom AI-Agent)
     window.addEventListener('insert-citation', (event: any) => {
         const citationData = event.detail

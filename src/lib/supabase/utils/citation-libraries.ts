@@ -1,3 +1,4 @@
+import { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '../client'
 import type { Database } from '../types'
 import { ensureProfileExists } from './profiles'
@@ -5,9 +6,13 @@ import { ensureProfileExists } from './profiles'
 type CitationLibrary = Database['public']['Tables']['citation_libraries']['Row']
 type CitationLibraryInsert = Database['public']['Tables']['citation_libraries']['Insert']
 type CitationLibraryUpdate = Database['public']['Tables']['citation_libraries']['Update']
+type SupabaseClientType = SupabaseClient<Database>
 
-export async function getCitationLibraries(userId: string): Promise<CitationLibrary[]> {
-  const supabase = createClient()
+export async function getCitationLibraries(
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<CitationLibrary[]> {
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('citation_libraries')
     .select('*')
@@ -18,8 +23,12 @@ export async function getCitationLibraries(userId: string): Promise<CitationLibr
   return data || []
 }
 
-export async function getCitationLibraryById(id: string, userId: string): Promise<CitationLibrary | null> {
-  const supabase = createClient()
+export async function getCitationLibraryById(
+  id: string,
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<CitationLibrary | null> {
+  const supabase = supabaseClient || createClient()
   
   try {
     const { data, error } = await supabase
@@ -55,7 +64,7 @@ export async function getCitationLibraryById(id: string, userId: string): Promis
     // Fallback: Lade alle Bibliotheken und filtere manuell
     if (error.message?.includes('406')) {
       console.warn('[CITATION_LIBRARIES] Fallback: Lade alle Bibliotheken und filtere manuell')
-      const allLibraries = await getCitationLibraries(userId)
+      const allLibraries = await getCitationLibraries(userId, supabase)
       return allLibraries.find((lib) => lib.id === id) || null
     }
     throw error
@@ -63,18 +72,14 @@ export async function getCitationLibraryById(id: string, userId: string): Promis
 }
 
 export async function createCitationLibrary(
-  library: CitationLibraryInsert
+  library: CitationLibraryInsert,
+  supabaseClient?: SupabaseClientType
 ): Promise<CitationLibrary> {
-  const supabase = createClient()
+  const supabase = supabaseClient || createClient()
   
-  if (library.user_id) {
-    try {
-      await ensureProfileExists(library.user_id)
-    } catch (error: any) {
-      console.error('[CITATION_LIBRARIES] Fehler beim Erstellen des Profiles:', error)
-      throw new Error(`Profile für User ${library.user_id} konnte nicht erstellt werden: ${error.message}`)
-    }
-  }
+  // Da das Profile durch den auth.users Trigger automatisch erstellt wird,
+  // müssen wir es hier nicht mehr manuell erstellen.
+  // Der Trigger `on_auth_user_created` in der DB kümmert sich darum.
   
   try {
     const { data, error } = await supabase
@@ -85,45 +90,26 @@ export async function createCitationLibrary(
 
     if (error) {
       if (error.code === '23503') {
-        if (library.user_id) {
-          await ensureProfileExists(library.user_id)
-          const { data: retryData, error: retryError } = await supabase
-            .from('citation_libraries')
-            .insert(library)
-            .select()
-            .limit(1)
-          
-          if (retryError) {
-            if (retryError.code === '23505') {
-              if (library.is_default && library.user_id) {
-                const defaultLib = await getDefaultCitationLibrary(library.user_id)
-                if (defaultLib) return defaultLib
-              }
-            }
-            throw retryError
-          }
-          
-          if (retryData && retryData.length > 0) {
-            return retryData[0]
-          }
-        }
-        throw new Error(`Foreign Key Constraint: Profile für User ${library.user_id} existiert nicht`)
+        // Foreign Key Constraint - Profile existiert nicht
+        // Das sollte nicht passieren, wenn der User authentifiziert ist
+        throw new Error(`Foreign Key Constraint: Profile für User ${library.user_id} existiert nicht. Bitte stelle sicher, dass der User authentifiziert ist.`)
       }
       
       if (error.code === '23505') {
+        // Unique Constraint - Bibliothek existiert bereits
         if (library.is_default && library.user_id) {
-          const defaultLib = await getDefaultCitationLibrary(library.user_id)
+          const defaultLib = await getDefaultCitationLibrary(library.user_id, supabase)
           if (defaultLib) return defaultLib
         }
         
         if (library.name && library.user_id) {
-          const existing = await getCitationLibraries(library.user_id)
+          const existing = await getCitationLibraries(library.user_id, supabase)
           const found = existing.find((lib) => lib.name === library.name)
           if (found) return found
         }
         
         if (library.user_id) {
-          const allLibs = await getCitationLibraries(library.user_id)
+          const allLibs = await getCitationLibraries(library.user_id, supabase)
           if (library.is_default) {
             const found = allLibs.find((lib) => lib.is_default === true)
             if (found) return found
@@ -143,10 +129,10 @@ export async function createCitationLibrary(
   } catch (error: any) {
     if (error.code === '23505') {
       if (library.is_default && library.user_id) {
-        const defaultLib = await getDefaultCitationLibrary(library.user_id)
+        const defaultLib = await getDefaultCitationLibrary(library.user_id, supabase)
         if (defaultLib) return defaultLib
         
-        const allLibs = await getCitationLibraries(library.user_id)
+        const allLibs = await getCitationLibraries(library.user_id, supabase)
         const found = allLibs.find((lib) => lib.is_default === true)
         if (found) return found
       }
@@ -158,9 +144,10 @@ export async function createCitationLibrary(
 export async function updateCitationLibrary(
   id: string,
   updates: CitationLibraryUpdate,
-  userId: string
+  userId: string,
+  supabaseClient?: SupabaseClientType
 ): Promise<CitationLibrary> {
-  const supabase = createClient()
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('citation_libraries')
     .update(updates)
@@ -173,8 +160,12 @@ export async function updateCitationLibrary(
   return data
 }
 
-export async function deleteCitationLibrary(id: string, userId: string): Promise<void> {
-  const supabase = createClient()
+export async function deleteCitationLibrary(
+  id: string,
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<void> {
+  const supabase = supabaseClient || createClient()
   const { error } = await supabase
     .from('citation_libraries')
     .delete()
@@ -184,8 +175,11 @@ export async function deleteCitationLibrary(id: string, userId: string): Promise
   if (error) throw error
 }
 
-export async function getDefaultCitationLibrary(userId: string): Promise<CitationLibrary | null> {
-  const supabase = createClient()
+export async function getDefaultCitationLibrary(
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<CitationLibrary | null> {
+  const supabase = supabaseClient || createClient()
   
   try {
     const { data, error } = await supabase
@@ -203,7 +197,7 @@ export async function getDefaultCitationLibrary(userId: string): Promise<Citatio
     return data?.[0] || null
   } catch (error: any) {
     if (error.message?.includes('406') || error.code === 'PGRST116') {
-      const allLibraries = await getCitationLibraries(userId)
+      const allLibraries = await getCitationLibraries(userId, supabase)
       return allLibraries.find((lib) => lib.is_default === true) || null
     }
     throw error

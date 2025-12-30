@@ -1,12 +1,18 @@
+import { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '../client'
 import type { Database } from '../types'
 
 type Citation = Database['public']['Tables']['citations']['Row']
 type CitationInsert = Database['public']['Tables']['citations']['Insert']
 type CitationUpdate = Database['public']['Tables']['citations']['Update']
+type SupabaseClientType = SupabaseClient<Database>
 
-export async function getCitationsByLibrary(libraryId: string, userId: string): Promise<Citation[]> {
-  const supabase = createClient()
+export async function getCitationsByLibrary(
+  libraryId: string,
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<Citation[]> {
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('citations')
     .select('*')
@@ -18,8 +24,11 @@ export async function getCitationsByLibrary(libraryId: string, userId: string): 
   return data || []
 }
 
-export async function getCitationsByDocument(documentId: string): Promise<Citation[]> {
-  const supabase = createClient()
+export async function getCitationsByDocument(
+  documentId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<Citation[]> {
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('citations')
     .select('*')
@@ -30,8 +39,12 @@ export async function getCitationsByDocument(documentId: string): Promise<Citati
   return data || []
 }
 
-export async function getCitationById(id: string, userId: string): Promise<Citation | null> {
-  const supabase = createClient()
+export async function getCitationById(
+  id: string,
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<Citation | null> {
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('citations')
     .select('*')
@@ -46,8 +59,11 @@ export async function getCitationById(id: string, userId: string): Promise<Citat
   return data
 }
 
-export async function createCitation(citation: CitationInsert): Promise<Citation> {
-  const supabase = createClient()
+export async function createCitation(
+  citation: CitationInsert,
+  supabaseClient?: SupabaseClientType
+): Promise<Citation> {
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('citations')
     .insert(citation)
@@ -61,9 +77,10 @@ export async function createCitation(citation: CitationInsert): Promise<Citation
 export async function updateCitation(
   id: string,
   updates: CitationUpdate,
-  userId: string
+  userId: string,
+  supabaseClient?: SupabaseClientType
 ): Promise<Citation> {
-  const supabase = createClient()
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('citations')
     .update(updates)
@@ -76,8 +93,12 @@ export async function updateCitation(
   return data
 }
 
-export async function deleteCitation(id: string, userId: string): Promise<void> {
-  const supabase = createClient()
+export async function deleteCitation(
+  id: string,
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<void> {
+  const supabase = supabaseClient || createClient()
   const { error } = await supabase
     .from('citations')
     .delete()
@@ -87,8 +108,11 @@ export async function deleteCitation(id: string, userId: string): Promise<void> 
   if (error) throw error
 }
 
-export async function getAllUserCitations(userId: string): Promise<Citation[]> {
-  const supabase = createClient()
+export async function getAllUserCitations(
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<Citation[]> {
+  const supabase = supabaseClient || createClient()
   const { data, error } = await supabase
     .from('citations')
     .select('*')

@@ -345,7 +345,7 @@ export function LibraryPane({
               setActiveLibrary(value)
             }}
           >
-            <SelectTrigger className="h-9 w-full text-sm" aria-label={translations.selectLibrary}>
+            <SelectTrigger className="h-9 flex-1 min-w-[120px] text-sm" aria-label={translations.selectLibrary}>
               <SelectValue placeholder={translations.chooseLibrary} />
             </SelectTrigger>
             <SelectContent>
@@ -364,7 +364,7 @@ export function LibraryPane({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-9 whitespace-nowrap"
+                    className="h-9 whitespace-nowrap shrink-0"
                     onClick={() => setIsCreateLibraryOpen((prev) => !prev)}
                   >
                     <CirclePlus className="h-4 w-4" />
@@ -401,7 +401,7 @@ export function LibraryPane({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 whitespace-nowrap"
+                  className="h-9 whitespace-nowrap shrink-0"
                   onClick={() => {
                     const library = libraries.find((lib) => lib.id === activeLibraryId)
                     if (library) {

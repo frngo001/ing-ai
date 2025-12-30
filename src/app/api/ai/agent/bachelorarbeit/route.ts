@@ -8,10 +8,36 @@ import { deepseek, DEEPSEEK_CHAT_MODEL } from '@/lib/ai/deepseek'
 import { SourceFetcher } from '@/lib/sources/source-fetcher'
 import type { NormalizedSource } from '@/lib/sources/types'
 import { BACHELORARBEIT_AGENT_PROMPT } from './prompts'
+import { createClient } from '@/lib/supabase/server'
+import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries'
+import * as citationsUtils from '@/lib/supabase/utils/citations'
+import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
 
-// Edge Runtime hat Probleme mit Tool-Ergebnis-Serialisierung
-// Wechsel zu Node.js Runtime für bessere Tool-Call-Verarbeitung
+
 export const runtime = 'nodejs'
+
+function createToolStepMarker(
+  type: 'start' | 'end',
+  data: {
+    id: string
+    toolName: string
+    input?: Record<string, any>
+    output?: Record<string, any>
+    status?: 'completed' | 'error'
+    error?: string
+  }
+): string {
+  const payload = JSON.stringify(data)
+  const base64 = Buffer.from(payload).toString('base64')
+  return type === 'start' 
+    ? `[TOOL_STEP_START:${base64}]`
+    : `[TOOL_STEP_END:${base64}]`
+}
+
+// Helper: Generiere eindeutige Tool-Step-ID
+function generateToolStepId(): string {
+  return `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+}
 
 // Helper: Quellen nach Relevanz, Impact-Faktor und Zitaten sortieren
 function analyzeAndRankSources(
@@ -27,13 +53,6 @@ function analyzeAndRankSources(
     .split(/\s+/)
     .filter((w) => w.length > 3) // Nur Wörter länger als 3 Zeichen
     .filter((w) => !['von', 'aus', 'der', 'die', 'das', 'und', 'oder'].includes(w))
-
-  console.log('🔍 [AGENT DEBUG] Relevanz-Analyse:', {
-    thema,
-    themaWords,
-    keywords,
-    sourcesCount: sources.length,
-  })
 
   return sources
     .map((source) => {
@@ -155,18 +174,8 @@ const searchSourcesTool = tool({
     preferHighImpact = true,
     preferHighCitations = true,
   }) => {
-    console.log('🔍 [AGENT DEBUG] searchSources Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Parameter:', {
-      query,
-      thema,
-      type,
-      limit,
-      keywords,
-      autoAnalyze,
-      maxResults,
-      preferHighImpact,
-      preferHighCitations,
-    })
+    const stepId = generateToolStepId()
+    const toolName = 'searchSources'
 
     try {
       const fetcher = new SourceFetcher({
@@ -178,17 +187,8 @@ const searchSourcesTool = tool({
           'arxiv', // XML-Parsing-Fehler
           'opencitations', // Nur DOI-basierte Suche
           'zenodo', // HTTP 400 Fehler
-          'pubmed', // XML-Parsing-Fehler (xmlText.match is not a function)
+          'pubmed', // XML-Parsing-Fehler (xmlText.match is not a function) TODO: Fix this
         ],
-      })
-
-      console.log('🔎 [AGENT DEBUG] Starte Quellensuche...')
-      console.log('🔍 [AGENT DEBUG] Suchparameter:', {
-        query,
-        type,
-        limit,
-        keywordsCount: keywords.length,
-        keywords: keywords.slice(0, 5), // Erste 5 Keywords
       })
       const startTime = Date.now()
 
@@ -199,37 +199,14 @@ const searchSourcesTool = tool({
       })
 
       const searchTime = Date.now() - startTime
-      console.log('✅ [AGENT DEBUG] Quellensuche abgeschlossen')
-      // Filter undefined APIs
       const validApis = results.apis?.filter((api): api is string => typeof api === 'string' && api.length > 0) || []
 
-      console.log('📊 [AGENT DEBUG] Suchergebnisse:', {
-        totalResults: results.totalResults,
-        sourcesFound: results.sources.length,
-        apis: validApis,
-        apisCount: validApis.length,
-        searchTime: `${searchTime}ms`,
-      })
-
-      // Automatische Analyse durchführen, wenn aktiviert
       if (autoAnalyze && thema) {
-        console.log('🔬 [AGENT DEBUG] Starte automatische Quellenanalyse...')
         const analysisStartTime = Date.now()
 
-        // Quellen analysieren und ranken
         const analyzed = analyzeAndRankSources(results.sources as NormalizedSource[], thema, keywords)
 
-        console.log('📈 [AGENT DEBUG] Analyse-Ergebnisse:', {
-          totalAnalyzed: analyzed.length,
-          topRelevanceScore: analyzed[0]?.relevanceScore || 0,
-          topRankingScore: analyzed[0]?.rankingScore || 0,
-        })
-
-        // Filter anwenden (minRelevanceScore: 20 statt 30 für mehr Ergebnisse)
         let filtered = analyzed.filter((s) => s.relevanceScore >= 20)
-        console.log(`🔍 [AGENT DEBUG] Nach Relevanz-Filter (>=20): ${filtered.length} Quellen`)
-
-        // Zusätzliche Filter basierend auf Präferenzen
         if (preferHighImpact) {
           filtered = filtered.sort((a, b) => {
             const impactA = a.impactFactor || 0
@@ -251,28 +228,20 @@ const searchSourcesTool = tool({
         // Top Ergebnisse auswählen - REDUZIERT auf 15 für bessere Serialisierung
         const maxSelected = Math.min(maxResults, 15)
         const selected = filtered.slice(0, maxSelected)
-        console.log(`🎯 [AGENT DEBUG] Top ${selected.length} Quellen ausgewählt (reduziert von ${filtered.length})`)
-
-        // Begründung für jede Quelle generieren
-        // WICHTIG: Vereinfache die Datenstruktur für bessere Serialisierung
         const selectedWithReason = selected.map((source) => {
-          // Vereinfache Autoren-Array zu String (max 200 Zeichen)
           const authorsString = source.authors
             ?.map((a) => a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim())
             .filter(Boolean)
             .join(', ') || 'Unbekannt'
 
-          // Kürze Autoren-String falls zu lang
           const authorsShort = authorsString.length > 200
             ? authorsString.substring(0, 197) + '...'
             : authorsString
 
-          // Kürze Titel falls zu lang
           const titleShort = (source.title || 'Ohne Titel').length > 200
             ? (source.title || 'Ohne Titel').substring(0, 197) + '...'
             : (source.title || 'Ohne Titel')
 
-          // Vereinfachte Begründung (max 150 Zeichen)
           const reasonShort = generateSourceReason(source, thema)
           const reason = reasonShort.length > 150
             ? reasonShort.substring(0, 147) + '...'
@@ -294,21 +263,7 @@ const searchSourcesTool = tool({
         })
 
         const analysisTime = Date.now() - analysisStartTime
-        console.log('✅ [AGENT DEBUG] Automatische Analyse abgeschlossen in', analysisTime + 'ms')
-        console.log('📊 [AGENT DEBUG] Analyse-Statistiken:', {
-          totalAnalyzed: analyzed.length,
-          totalSelected: selectedWithReason.length,
-          avgRelevanceScore: selected.reduce((sum, s) => sum + s.relevanceScore, 0) / selected.length,
-          top3Sources: selectedWithReason.slice(0, 3).map(s => ({
-            title: s.title?.substring(0, 60) + '...',
-            relevance: s.relevanceScore,
-            impact: s.impactFactor,
-            citations: s.citationCount,
-          })),
-        })
 
-        // WICHTIG: Vereinfache das Response-Objekt für bessere Serialisierung
-        // Entferne komplexe verschachtelte Objekte, die Probleme verursachen könnten
         const response = {
           success: true,
           totalResults: results.totalResults,
@@ -332,19 +287,7 @@ const searchSourcesTool = tool({
           },
         }
 
-        console.log('📤 [AGENT DEBUG] searchSources Response (mit Analyse):', {
-          success: response.success,
-          totalResults: response.totalResults,
-          sourcesFound: response.sourcesFound,
-          totalSelected: response.totalSelected,
-          topSourceTitle: response.selected[0]?.title?.substring(0, 60) + '...',
-          responseKeys: Object.keys(response),
-          selectedIsArray: Array.isArray(response.selected),
-        })
-
-        // KRITISCH: Prüfe ob das Response-Objekt korrekt ist BEVOR wir es zurückgeben
         try {
-          // Teste ob das Response-Objekt korrekt serialisiert werden kann
           const testReturn = JSON.parse(JSON.stringify(response))
 
           // Prüfe ob alle wichtigen Felder vorhanden sind
@@ -357,8 +300,15 @@ const searchSourcesTool = tool({
             console.warn('⚠️  [AGENT DEBUG] WARNUNG: selected Array ist leer!')
           }
 
-          console.log('✅ [AGENT DEBUG] Response-Objekt ist gültig und wird zurückgegeben')
-          return testReturn
+          return {
+            ...testReturn,
+            _toolStep: createToolStepMarker('end', {
+              id: stepId,
+              toolName,
+              status: 'completed',
+              output: { totalSelected: testReturn.totalSelected, message: testReturn.message },
+            }),
+          }
         } catch (returnError) {
           console.error('❌ [AGENT DEBUG] KRITISCHER FEHLER beim Return des Response-Objekts:', returnError)
           // Fallback: Gebe ein vereinfachtes Response-Objekt zurück
@@ -369,10 +319,13 @@ const searchSourcesTool = tool({
             selected: selectedWithReason.slice(0, 10), // Nur erste 10 Quellen als Fallback
             totalSelected: Math.min(selectedWithReason.length, 10),
             message: `Ich habe ${selectedWithReason.length} relevante Quellen gefunden. Bitte präsentiere diese Quellen.`,
+            _toolStep: createToolStepMarker('end', {
+              id: stepId,
+              toolName,
+              status: 'completed',
+              output: { totalSelected: Math.min(selectedWithReason.length, 10) },
+            }),
           }
-          console.log('🔄 [AGENT DEBUG] Verwende Fallback-Response:', {
-            selectedCount: fallbackResponse.selected.length,
-          })
           return fallbackResponse
         }
       }
@@ -384,18 +337,24 @@ const searchSourcesTool = tool({
         sources: results.sources.slice(0, limit),
         apis: validApis,
         searchTime: results.searchTime,
+        _toolStep: createToolStepMarker('end', {
+          id: stepId,
+          toolName,
+          status: 'completed',
+          output: { totalResults: results.totalResults, sourcesCount: results.sources.length },
+        }),
       }
-
-      console.log('📤 [AGENT DEBUG] searchSources Response (ohne Analyse):', {
-        success: response.success,
-        totalResults: response.totalResults,
-        sourcesCount: response.sources.length,
-      })
 
       return response
     } catch (error) {
       console.error('❌ [AGENT DEBUG] Source search error:', error)
       return {
+        _toolStep: createToolStepMarker('end', {
+          id: stepId,
+          toolName,
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       }
@@ -439,76 +398,23 @@ const analyzeSourcesTool = tool({
     preferHighCitations = true,
     maxResults = 30,
   }) => {
-    console.log('🔬 [AGENT DEBUG] analyzeSources Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Parameter:', {
-      sourcesCount: sources?.length || 0,
-      thema,
-      keywords,
-      minRelevanceScore,
-      preferHighImpact,
-      preferHighCitations,
-      maxResults,
-    })
+    const stepId = generateToolStepId()
+    const toolName = 'analyzeSources'
+
 
     try {
-      console.log('🧮 [AGENT DEBUG] Starte Quellenanalyse...')
       const startTime = Date.now()
 
       // Quellen analysieren und ranken
       const analyzed = analyzeAndRankSources(sources as unknown as NormalizedSource[], thema, keywords)
 
-      console.log('📈 [AGENT DEBUG] Analyse-Ergebnisse:', {
-        totalAnalyzed: analyzed.length,
-        topRelevanceScore: analyzed[0]?.relevanceScore || 0,
-        topRankingScore: analyzed[0]?.rankingScore || 0,
-        sourcesWithHighImpact: analyzed.filter((s) => (s.impactFactor || 0) > 5).length,
-        sourcesWithHighCitations: analyzed.filter((s) => (s.citationCount || 0) > 50).length,
-      })
-
       // Filter anwenden
       let filtered = analyzed.filter((s) => s.relevanceScore >= minRelevanceScore)
-      console.log(`🔍 [AGENT DEBUG] Nach Relevanz-Filter (>=${minRelevanceScore}): ${filtered.length} Quellen`)
+  
 
-      // Zusätzliche Filter basierend auf Präferenzen
-      if (preferHighImpact) {
-        console.log('⭐ [AGENT DEBUG] Sortiere nach Impact-Faktor...')
-        filtered = filtered.sort((a, b) => {
-          const impactA = a.impactFactor || 0
-          const impactB = b.impactFactor || 0
-          if (impactB !== impactA) return impactB - impactA
-          return b.rankingScore - a.rankingScore
-        })
-        console.log('⭐ [AGENT DEBUG] Impact-Sortierung:', {
-          topImpact: filtered[0]?.impactFactor || 0,
-          sourcesWithImpact: filtered.filter((s) => s.impactFactor).length,
-        })
-      }
-
-      if (preferHighCitations) {
-        console.log('📚 [AGENT DEBUG] Sortiere nach Zitationsanzahl...')
-        filtered = filtered.sort((a, b) => {
-          const citationsA = a.citationCount || 0
-          const citationsB = b.citationCount || 0
-          if (citationsB !== citationsA) return citationsB - citationsA
-          return b.rankingScore - a.rankingScore
-        })
-        console.log('📚 [AGENT DEBUG] Citation-Sortierung:', {
-          topCitations: filtered[0]?.citationCount || 0,
-          sourcesWithCitations: filtered.filter((s) => s.citationCount).length,
-        })
-      }
 
       // Top Ergebnisse auswählen
       const selected = filtered.slice(0, maxResults)
-      console.log(`🎯 [AGENT DEBUG] Top ${selected.length} Quellen ausgewählt`)
-      console.log('🎯 [AGENT DEBUG] Top 3 Quellen:', selected.slice(0, 3).map((s, idx) => ({
-        rank: idx + 1,
-        title: s.title?.substring(0, 60) + '...',
-        relevanceScore: s.relevanceScore,
-        rankingScore: s.rankingScore,
-        impactFactor: s.impactFactor,
-        citations: s.citationCount,
-      })))
 
       // Begründung für jede Quelle generieren
       const selectedWithReason = selected.map((source) => ({
@@ -536,32 +442,19 @@ const analyzeSourcesTool = tool({
         highCitationCount: selected.filter((s) => (s.citationCount || 0) > 50).length,
       }
 
-      console.log('✅ [AGENT DEBUG] Quellenanalyse abgeschlossen')
-      console.log('📊 [AGENT DEBUG] Finale Statistiken:', {
-        ...statistics,
-        analysisTime: `${analysisTime}ms`,
-        topSources: selectedWithReason.slice(0, 3).map((s) => ({
-          title: s.title?.substring(0, 50) + '...',
-          relevanceScore: s.relevanceScore,
-          impactFactor: s.impactFactor,
-          citations: s.citationCount,
-          reason: s.reason,
-        })),
-      })
-
       const response = {
         success: true,
         selected: selectedWithReason,
         totalAnalyzed: analyzed.length,
         totalSelected: selectedWithReason.length,
         statistics,
+        _toolStep: createToolStepMarker('end', {
+          id: stepId,
+          toolName,
+          status: 'completed',
+          output: { totalAnalyzed: analyzed.length, totalSelected: selectedWithReason.length },
+        }),
       }
-
-      console.log('📤 [AGENT DEBUG] analyzeSources Response:', {
-        success: response.success,
-        totalAnalyzed: response.totalAnalyzed,
-        totalSelected: response.totalSelected,
-      })
 
       return response
     } catch (error) {
@@ -569,6 +462,12 @@ const analyzeSourcesTool = tool({
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
+        _toolStep: createToolStepMarker('end', {
+          id: stepId,
+          toolName,
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
       }
     }
   },
@@ -612,10 +511,6 @@ const addThemaTool = tool({
     thema: z.string().describe('Das Thema der Bachelorarbeit oder Masterarbeit (z.B. "Künstliche Intelligenz in der Medizin")'),
   }),
   execute: async ({ thema }) => {
-    console.log('📝 [AGENT DEBUG] addThema Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Thema:', thema)
-    
-    // Erstelle Base64-kodiertes Tool-Result für Client-Verarbeitung
     const toolResult = {
       type: 'tool-result',
       toolName: 'addThema',
@@ -631,7 +526,6 @@ const addThemaTool = tool({
       // Base64-kodiertes Result für Client-Verarbeitung
       encodedResult: `[TOOL_RESULT_B64:${base64Payload}]`,
     }
-    console.log('📤 [AGENT DEBUG] addThema Response:', response)
     return response
   },
 })
@@ -643,171 +537,265 @@ const getCurrentStepTool = tool({
     _placeholder: z.string().optional().describe('Placeholder parameter'),
   }),
   execute: async () => {
-    console.log('📍 [AGENT DEBUG] getCurrentStep Tool aufgerufen')
-    // Wird vom Client-State verwaltet
     const response = {
       message: 'Verwende den Agent State Store um den aktuellen Schritt zu ermitteln',
     }
-    console.log('📤 [AGENT DEBUG] getCurrentStep Response:', response)
     return response
   },
 })
 
-// Tool: Bibliothek erstellen
-const createLibraryTool = tool({
-  description:
-    'Erstellt eine neue Bibliothek für die gespeicherten Quellen. Der Name sollte thematisch zur Arbeit passen (z.B. "[Thema]").',
-  inputSchema: z.object({
-    name: z.string().describe('Name der Bibliothek (z.B. "Künstlicher Intelligenz")'),
-  }),
-  execute: async ({ name }) => {
-    console.log('📚 [AGENT DEBUG] createLibrary Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Parameter:', { name })
+// Helper: Konvertiere Source zu Citation (für direkte DB-Operationen)
+function convertSourceToCitation(source: any) {
+  const authors = source.authors
+    ? (typeof source.authors === 'string' 
+        ? source.authors.split(',').map((a: string) => a.trim())
+        : Array.isArray(source.authors)
+        ? source.authors.map((a: any) => 
+            typeof a === 'string' ? a : a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim()
+          )
+        : [])
+    : []
 
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const response = await fetch(`${baseUrl}/api/library`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'createLibrary',
-          libraryName: name,
-        }),
-      })
+  const externalUrl = getCitationLink({
+    url: source.url,
+    doi: source.doi,
+    pdfUrl: source.pdfUrl,
+  });
+  const validDoi = getNormalizedDoi(source.doi);
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(error.error || `HTTP ${response.status}`)
+  return {
+    id: crypto.randomUUID(),
+    title: source.title || 'Ohne Titel',
+    source: source.journal || source.publisher || source.venue || 'Quelle',
+    year: source.publicationYear || source.year || undefined,
+    lastEdited: new Date().toLocaleDateString('de-DE', { dateStyle: 'short' }),
+    href: externalUrl || '/editor',
+    externalUrl,
+    doi: validDoi || undefined,
+    authors: authors.filter(Boolean),
+    abstract: source.abstract || undefined,
+  }
+}
+
+function createLibraryToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>) {
+  return tool({
+    description:
+      'Erstellt eine neue Bibliothek für die gespeicherten Quellen. Der Name sollte thematisch zur Arbeit passen (z.B. "[Thema]").',
+    inputSchema: z.object({
+      name: z.string().describe('Name der Bibliothek (z.B. "Künstlicher Intelligenz")'),
+    }),
+    execute: async ({ name }) => {
+      const stepId = generateToolStepId()
+      const toolName = 'createLibrary'
+      
+      try {
+        const newLibrary = await citationLibrariesUtils.createCitationLibrary({
+          user_id: userId,
+          name: name.trim(),
+          is_default: false,
+        }, supabaseClient)
+
+        return {
+          success: true,
+          libraryId: newLibrary.id,
+          libraryName: newLibrary.name,
+          message: `Bibliothek "${newLibrary.name}" erfolgreich erstellt`,
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'completed',
+            output: { libraryId: newLibrary.id, libraryName: newLibrary.name },
+          }),
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }),
+        }
+      }
+    },
+  })
+}
+
+function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>) {
+  return tool({
+    description:
+      'Fügt ausgewählte Quellen zu einer Bibliothek hinzu. Die Quellen werden im Frontend sichtbar und können vom Agent zum Zitieren verwendet werden.',
+    inputSchema: z.object({
+      libraryId: z.string().describe('ID der Bibliothek (von createLibrary)'),
+      sources: z
+        .array(z.object({}).passthrough())
+        .describe('Array von Quellen-Objekten (aus searchSources.selected)'),
+    }),
+    execute: async ({ libraryId, sources }) => {
+      const stepId = generateToolStepId()
+      const toolName = 'addSourcesToLibrary'
+      
+      if (!sources || !Array.isArray(sources) || sources.length === 0) {
+        return {
+          success: false,
+          error: 'Keine Quellen zum Hinzufügen',
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'error',
+            error: 'Keine Quellen zum Hinzufügen',
+          }),
+        }
       }
 
-      const result = await response.json()
-      console.log('✅ [AGENT DEBUG] Bibliothek erstellt:', result)
+      try {
+        const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId, supabaseClient)
+        if (!library) {
+          return {
+            success: false,
+            error: 'Bibliothek nicht gefunden',
+            _toolStep: createToolStepMarker('end', {
+              id: stepId,
+              toolName,
+              status: 'error',
+              error: 'Bibliothek nicht gefunden',
+            }),
+          }
+        }
 
-      return {
-        success: true,
-        libraryId: result.library.id,
-        libraryName: result.library.name,
-        message: result.message || `Bibliothek "${result.library.name}" erfolgreich erstellt`,
+        // Konvertiere Quellen zu Citations
+        const newCitations = sources.map(convertSourceToCitation)
+        
+        // Lade bestehende Citations
+        const existingCitations = await citationsUtils.getCitationsByLibrary(libraryId, userId, supabaseClient)
+        const existingIds = new Set(existingCitations.map((c) => c.id))
+        const uniqueCitations = newCitations.filter((c) => !existingIds.has(c.id))
+
+        // Erstelle neue Citations in Supabase
+        for (const citation of uniqueCitations) {
+          await citationsUtils.createCitation({
+            id: citation.id,
+            user_id: userId,
+            library_id: libraryId,
+            title: citation.title,
+            source: citation.source,
+            year: typeof citation.year === 'number' ? citation.year : citation.year ? parseInt(citation.year.toString()) : null,
+            last_edited: new Date().toISOString(),
+            href: citation.href,
+            external_url: citation.externalUrl || null,
+            authors: citation.authors || null,
+            abstract: citation.abstract || null,
+            doi: citation.doi || null,
+            citation_style: 'vancouver',
+            in_text_citation: citation.title,
+            full_citation: citation.title,
+            metadata: {},
+          }, supabaseClient)
+        }
+
+
+        return {
+          success: true,
+          libraryId: library.id,
+          libraryName: library.name,
+          added: uniqueCitations.length,
+          total: existingCitations.length + uniqueCitations.length,
+          message: `${uniqueCitations.length} Quelle(n) zur Bibliothek "${library.name}" hinzugefügt`,
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'completed',
+            output: { added: uniqueCitations.length, libraryName: library.name },
+          }),
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }),
+        }
       }
-    } catch (error) {
-      console.error('❌ [AGENT DEBUG] createLibrary error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+    },
+  })
+}
+
+// Factory-Funktion für getLibrarySourcesTool mit User-ID
+function getLibrarySourcesToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>) {
+  return tool({
+    description:
+      'Ruft alle Quellen aus einer Bibliothek ab. Kann verwendet werden, um bereits gespeicherte Quellen zu zitieren.',
+    inputSchema: z.object({
+      libraryId: z.string().describe('ID der Bibliothek'),
+    }),
+    execute: async ({ libraryId }) => {
+      const stepId = generateToolStepId()
+      const toolName = 'getLibrarySources'
+
+      try {
+        const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId, supabaseClient)
+        if (!library) {
+          return {
+            success: false,
+            error: 'Bibliothek nicht gefunden',
+            _toolStep: createToolStepMarker('end', {
+              id: stepId,
+              toolName,
+              status: 'error',
+              error: 'Bibliothek nicht gefunden',
+            }),
+          }
+        }
+
+        const citations = await citationsUtils.getCitationsByLibrary(libraryId, userId, supabaseClient)
+        const savedCitations = citations.map((c) => ({
+          id: c.id,
+          title: c.title || '',
+          source: c.source || '',
+          year: c.year || undefined,
+          lastEdited: c.last_edited ? new Date(c.last_edited).toLocaleDateString('de-DE', { dateStyle: 'short' }) : new Date().toLocaleDateString('de-DE', { dateStyle: 'short' }),
+          href: c.href || '/editor',
+          externalUrl: c.external_url || undefined,
+          doi: c.doi || undefined,
+          authors: c.authors || undefined,
+          abstract: c.abstract || undefined,
+        }))
+
+        return {
+          success: true,
+          libraryId: library.id,
+          libraryName: library.name,
+          sources: savedCitations,
+          count: savedCitations.length,
+          message: `Bibliothek "${library.name}" enthält ${savedCitations.length} Quelle(n)`,
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'completed',
+            output: { count: savedCitations.length, libraryName: library.name },
+          }),
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }),
+        }
       }
-    }
-  },
-})
-
-// Tool: Quellen zu Bibliothek hinzufügen
-const addSourcesToLibraryTool = tool({
-  description:
-    'Fügt ausgewählte Quellen zu einer Bibliothek hinzu. Die Quellen werden im Frontend sichtbar und können vom Agent zum Zitieren verwendet werden.',
-  inputSchema: z.object({
-    libraryId: z.string().describe('ID der Bibliothek (von createLibrary)'),
-    sources: z
-      .array(z.object({}).passthrough())
-      .describe('Array von Quellen-Objekten (aus searchSources.selected)'),
-  }),
-  execute: async ({ libraryId, sources }) => {
-    console.log('📚 [AGENT DEBUG] addSourcesToLibrary Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Parameter:', {
-      libraryId,
-      sourcesCount: sources?.length || 0,
-    })
-
-    if (!sources || !Array.isArray(sources) || sources.length === 0) {
-      return {
-        success: false,
-        error: 'Keine Quellen zum Hinzufügen',
-      }
-    }
-
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const response = await fetch(`${baseUrl}/api/library`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'addSources',
-          libraryId,
-          sources,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(error.error || `HTTP ${response.status}`)
-      }
-
-      const result = await response.json()
-      console.log('✅ [AGENT DEBUG] Quellen hinzugefügt:', result)
-
-      return {
-        success: true,
-        libraryId: result.library.id,
-        libraryName: result.library.name,
-        added: result.added,
-        total: result.total,
-        message: result.message || `${result.added} Quelle(n) hinzugefügt`,
-      }
-    } catch (error) {
-      console.error('❌ [AGENT DEBUG] addSourcesToLibrary error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }
-    }
-  },
-})
-
-// Tool: Quellen aus Bibliothek abrufen
-const getLibrarySourcesTool = tool({
-  description:
-    'Ruft alle Quellen aus einer Bibliothek ab. Kann verwendet werden, um bereits gespeicherte Quellen zu zitieren.',
-  inputSchema: z.object({
-    libraryId: z.string().describe('ID der Bibliothek'),
-  }),
-  execute: async ({ libraryId }) => {
-    console.log('📚 [AGENT DEBUG] getLibrarySources Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Parameter:', { libraryId })
-
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const response = await fetch(`${baseUrl}/api/library?id=${libraryId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      })
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(error.error || `HTTP ${response.status}`)
-      }
-
-      const result = await response.json()
-      console.log('✅ [AGENT DEBUG] Bibliothek abgerufen:', {
-        libraryId: result.library.id,
-        libraryName: result.library.name,
-        sourcesCount: result.library.citations.length,
-      })
-
-      return {
-        success: true,
-        libraryId: result.library.id,
-        libraryName: result.library.name,
-        sources: result.library.citations,
-        count: result.library.citations.length,
-        message: `Bibliothek "${result.library.name}" enthält ${result.library.citations.length} Quelle(n)`,
-      }
-    } catch (error) {
-      console.error('❌ [AGENT DEBUG] getLibrarySources error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }
-    }
-  },
-})
+    },
+  })
+}
 
 // Tool: Schritt-Daten speichern
 const saveStepDataTool = tool({
@@ -817,22 +805,84 @@ const saveStepDataTool = tool({
     data: z.object({}).passthrough().describe('Daten die gespeichert werden sollen (als Objekt)'),
   }),
   execute: async ({ step, data }) => {
-    console.log('💾 [AGENT DEBUG] saveStepData Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Parameter:', {
-      step,
-      dataKeys: Object.keys(data || {}),
-      dataSize: JSON.stringify(data || {}).length,
-    })
-    // Wird vom Client-State verwaltet
     const response = {
       success: true,
       message: 'Daten sollten im Client-State gespeichert werden',
       step,
     }
-    console.log('📤 [AGENT DEBUG] saveStepData Response:', response)
     return response
   },
 })
+
+// Tool: Editor-Inhalt abrufen (Factory-Funktion mit editorContent)
+function createGetEditorContentTool(editorContent: string) {
+  return tool({
+    description: 'Ruft den aktuellen Inhalt des Editors ab. Nutze dieses Tool, um zu sehen, was der Student bereits geschrieben hat oder um den aktuellen Stand der Arbeit zu analysieren.',
+    inputSchema: z.object({
+      includeFullText: z.boolean().optional().describe('Ob der vollständige Text zurückgegeben werden soll (Standard: true). Bei false wird nur eine Zusammenfassung zurückgegeben.'),
+      maxLength: z.number().optional().describe('Maximale Länge des zurückgegebenen Textes in Zeichen (Standard: unbegrenzt)'),
+    }),
+    execute: async ({ includeFullText = true, maxLength }) => {
+      const stepId = generateToolStepId()
+      const toolName = 'getEditorContent'
+      
+      if (!editorContent || editorContent.trim().length === 0) {
+        return {
+          success: true,
+          isEmpty: true,
+          content: '',
+          message: 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
+          characterCount: 0,
+          wordCount: 0,
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'completed',
+            output: { isEmpty: true, characterCount: 0, wordCount: 0 },
+          }),
+        }
+      }
+      
+      let content = editorContent.trim()
+      
+      if (maxLength && content.length > maxLength) {
+        content = content.substring(0, maxLength) + '...'
+      }
+      
+      const characterCount = editorContent.length
+      const wordCount = editorContent.split(/\s+/).filter(w => w.length > 0).length
+      const paragraphCount = editorContent.split(/\n\n+/).filter(p => p.trim().length > 0).length
+      
+      const headings = editorContent.match(/^#{1,6}\s.+$/gm) || []
+      
+      const response = {
+        success: true,
+        isEmpty: false,
+        content: includeFullText ? content : undefined,
+        summary: !includeFullText ? `${wordCount} Wörter, ${paragraphCount} Absätze, ${headings.length} Überschriften` : undefined,
+        message: `Editor-Inhalt abgerufen: ${wordCount} Wörter, ${characterCount} Zeichen.`,
+        characterCount,
+        wordCount,
+        paragraphCount,
+        headingCount: headings.length,
+        headings: headings.slice(0, 10),
+        _toolStep: createToolStepMarker('end', {
+          id: stepId,
+          toolName,
+          status: 'completed',
+          output: { 
+            wordCount, 
+            characterCount,
+            paragraphCount,
+            headingCount: headings.length,
+          },
+        }),
+      }
+      
+      return response
+    },
+  })
+}
 
 // Tool: Text im Editor hinzufügen
 const insertTextInEditorTool = tool({
@@ -857,14 +907,6 @@ const insertTextInEditorTool = tool({
       ),
   }),
   execute: async ({ markdown, position = 'end', focusOnHeadings = true }) => {
-    console.log('📝 [AGENT DEBUG] insertTextInEditor Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Parameter:', {
-      markdownLength: markdown.length,
-      position,
-      focusOnHeadings,
-      headingCount: (markdown.match(/^#+\s/gm) || []).length,
-    })
-
     const payload = JSON.stringify({
       type: 'tool-result',
       toolName: 'insertTextInEditor',
@@ -873,20 +915,16 @@ const insertTextInEditorTool = tool({
       focusOnHeadings,
     })
 
-    // Base64 Encoding für robustes Parsing im Frontend
     const base64Payload = Buffer.from(payload).toString('base64')
 
-    // WICHTIG: Sende Markdown-Daten direkt im Tool-Response zurück
-    // Das Frontend erkennt diese während des Streams und fügt sie ein
     return {
       success: true,
       markdownLength: markdown.length,
       headingCount: (markdown.match(/^#+\s/gm) || []).length,
       position,
-      markdown: markdown, // WICHTIG: Markdown im Response für Frontend
+      markdown: markdown,
       message: 'Text bereit für Einfügung im Editor',
       eventType: 'insert-text-in-editor',
-      // Spezielles Format für Frontend-Erkennung
       _streamMarker: `[TOOL_RESULT_B64:${base64Payload}]`,
     }
   },
@@ -901,9 +939,6 @@ const addCitationTool = tool({
     citationText: z.string().describe('Der Text des Zitats, z.B. "(Müller, 2023)" oder Fußnote'),
   }),
   execute: async ({ sourceId, citationText }) => {
-    console.log('📝 [AGENT DEBUG] addCitation Tool aufgerufen')
-    console.log('📥 [AGENT DEBUG] Parameter:', { sourceId, citationText })
-
     const payload = JSON.stringify({
       type: 'tool-result',
       toolName: 'addCitation',
@@ -924,24 +959,22 @@ const addCitationTool = tool({
 
 export async function POST(req: NextRequest) {
   const requestStartTime = Date.now()
-  console.log('🚀 [AGENT DEBUG] ========== Agent Request gestartet ==========')
-
   try {
-    const { messages, agentState } = await req.json()
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    console.log('📋 [AGENT DEBUG] Request-Daten:', {
-      messagesCount: messages?.length || 0,
-      agentState: {
-        isActive: agentState?.isActive,
-        arbeitType: agentState?.arbeitType,
-        thema: agentState?.thema,
-        currentStep: agentState?.currentStep,
-      },
-      lastMessage: messages?.[messages.length - 1]?.content?.substring(0, 100) + '...',
-    })
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Nicht authentifiziert' },
+        { status: 401 }
+      )
+    }
 
+    const { messages, agentState, editorContent, documentContextEnabled, fileContents } = await req.json()
+
+    
+    const currentEditorContent: string = editorContent || ''
     if (!agentState) {
-      console.error('❌ [AGENT DEBUG] Fehler: Agent State erforderlich')
       return NextResponse.json(
         { error: 'Agent State erforderlich' },
         { status: 400 }
@@ -982,25 +1015,67 @@ export async function POST(req: NextRequest) {
     systemPrompt = systemPrompt.replace(/{{ARBEIT_TYPE}}/g, arbeitTypeText)
     systemPrompt = systemPrompt.replace(/{{ARBEIT_TYPE_LOWER}}/g, arbeitTypeText.toLowerCase())
 
-    console.log('🤖 [AGENT DEBUG] Model:', DEEPSEEK_CHAT_MODEL)
-    console.log('📝 [AGENT DEBUG] System Prompt Länge:', systemPrompt.length)
-    console.log('📋 [AGENT DEBUG] Arbeitstyp:', arbeitTypeText)
-    console.log('📋 [AGENT DEBUG] Thema:', thema)
-    console.log('🔧 [AGENT DEBUG] Tools verfügbar:', Object.keys({
-      addThema: addThemaTool,
-      searchSources: searchSourcesTool,
-      analyzeSources: analyzeSourcesTool,
-      createLibrary: createLibraryTool,
-      addSourcesToLibrary: addSourcesToLibraryTool,
-      getLibrarySources: getLibrarySourcesTool,
-      insertTextInEditor: insertTextInEditorTool,
-      addCitation: addCitationTool,
-      getCurrentStep: getCurrentStepTool,
-      saveStepData: saveStepDataTool,
-    }))
+    if (documentContextEnabled && currentEditorContent.trim().length > 0) {
+      const wordCount = currentEditorContent.split(/\s+/).filter(w => w.length > 0).length
+      const headings = currentEditorContent.match(/^#{1,6}\s.+$/gm) || []
+      
+      const truncatedContent = currentEditorContent.length > 8000 
+        ? currentEditorContent.substring(0, 8000) + '\n\n[... Text gekürzt ...]'
+        : currentEditorContent
+      
+      const editorContextSection = `
+
+## Aktueller Editor-Inhalt (Kontext aktiviert)
+
+Der Student hat den Dokumentkontext aktiviert. Hier ist der aktuelle Inhalt des Editors:
+
+**Statistiken:** ${wordCount} Wörter, ${headings.length} Überschriften
+
+**Aktueller Text:**
+\`\`\`
+${truncatedContent}
+\`\`\`
+
+**WICHTIG**: Beziehe dich auf diesen vorhandenen Text, wenn der Student danach fragt oder wenn es relevant ist. Du kannst den Text analysieren, Verbesserungen vorschlagen oder darauf aufbauen.
+`
+      systemPrompt += editorContextSection
+    }
+
+    if (fileContents && Array.isArray(fileContents) && fileContents.length > 0) {
+      const fileSections = fileContents
+        .filter((file: any) => file.content && file.content.trim().length > 0)
+        .map((file: any) => {
+          const wordCount = file.content.split(/\s+/).filter((w: string) => w.length > 0).length
+          return `### Datei: ${file.name}
+
+Inhalt (${wordCount} Wörter):
+
+\`\`\`
+${file.content}
+\`\`\``
+        })
+      
+      if (fileSections.length > 0) {
+        const fileContentSection = `
+
+## Hochgeladene Dateien
+
+Der Student hat folgende Dateien hochgeladen. Beziehe dich auf deren Inhalt, wenn der Student danach fragt oder wenn es relevant ist:
+
+${fileSections.join('\n\n---\n\n')}
+
+**WICHTIG**: Analysiere den Inhalt der hochgeladenen Dateien und nutze sie als Kontext für die Arbeit. Du kannst auf den Inhalt verweisen, Zitate vorschlagen oder den Inhalt in die Arbeit integrieren.
+`
+        systemPrompt += fileContentSection
+      }
+    }
 
 
-    // Tool: Quellen mit LLM bewerten
+    const createLibraryTool = createLibraryToolWithUser(user.id, supabase)
+    const addSourcesToLibraryTool = addSourcesToLibraryToolWithUser(user.id, supabase)
+    const getLibrarySourcesTool = getLibrarySourcesToolWithUser(user.id, supabase)
+    const getEditorContentTool = createGetEditorContentTool(currentEditorContent)
+
     const evaluateSourcesTool = tool({
       description: 'Bewertet die Relevanz von Quellen basierend auf Titel und Abstract mithilfe eines LLMs. Nutze dies, um die Auswahl semantisch zu prüfen.',
       inputSchema: z.object({
@@ -1060,9 +1135,6 @@ export async function POST(req: NextRequest) {
             prompt,
           })
 
-          console.log('✅ [AGENT DEBUG] LLM Bewertung abgeschlossen', object.evaluations.length)
-
-          // Merge results with original sources
           const results = sources.map(source => {
             const evaluation = object.evaluations.find(e => e.id === source.id)
             return {
@@ -1073,7 +1145,6 @@ export async function POST(req: NextRequest) {
             }
           })
 
-          // Sortiere nach neuem Relevance Score
           return results.sort((a, b) => b.relevanceScore - a.relevanceScore)
 
         } catch (error) {
@@ -1083,7 +1154,6 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // Erstelle Agent mit Agent-Klasse
     const agent = new Agent({
       model,
       system: systemPrompt,
@@ -1095,6 +1165,7 @@ export async function POST(req: NextRequest) {
         createLibrary: createLibraryTool,
         addSourcesToLibrary: addSourcesToLibraryTool,
         getLibrarySources: getLibrarySourcesTool,
+        getEditorContent: getEditorContentTool,
         insertTextInEditor: insertTextInEditorTool,
         addCitation: addCitationTool,
         getCurrentStep: getCurrentStepTool,
@@ -1105,25 +1176,89 @@ export async function POST(req: NextRequest) {
       maxOutputTokens: 8192, 
     })
 
-    console.log('✅ [AGENT DEBUG] Agent erstellt mit stopWhen: stepCountIs(20)')
 
-    // Verwende agent.stream() für Streaming (laut AI SDK Dokumentation)
-    // agent.stream() gibt einen Stream zurück mit textStream Property
-    const stream = agent.stream({
+    const agentStream = agent.stream({
       messages: messages.map((msg: any) => ({
         role: msg.role,
         content: msg.content,
       })),
     })
 
-    const requestTime = Date.now() - requestStartTime
-    console.log(`⏱️  [AGENT DEBUG] Request-Verarbeitung: ${requestTime}ms`)
-    console.log('📤 [AGENT DEBUG] Sende Stream-Response...')
-    console.log('✅ [AGENT DEBUG] ========== Agent Request abgeschlossen ==========')
 
-    // Verwende den Standard-Stream
-    // Tool-Results werden im Tool-Response zurückgegeben und vom Frontend erkannt
-    return stream.toTextStreamResponse()
+    const encoder = new TextEncoder()
+    const toolStepTimestamps: Record<string, number> = {}
+    const toolStepIds: Record<string, string> = {}
+    
+    const customStream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of agentStream.fullStream) {
+            if (event.type === 'tool-call') {
+              // Tool wurde aufgerufen - sende START Marker
+              const stepId = `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+              toolStepTimestamps[event.toolCallId] = Date.now()
+              toolStepIds[event.toolCallId] = stepId
+              
+              // 'input' ist die korrekte Property fuer tool-call Events
+              const toolInput = 'input' in event ? (event.input as Record<string, any>) : {}
+              
+              const startMarker = createToolStepMarker('start', {
+                id: stepId,
+                toolName: event.toolName,
+                input: toolInput,
+              })
+              controller.enqueue(encoder.encode(startMarker))
+                    
+              await new Promise(resolve => setTimeout(resolve, 10))
+            } else if (event.type === 'tool-result') {
+              const stepId = toolStepIds[event.toolCallId] || `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+              const startTime = toolStepTimestamps[event.toolCallId] || Date.now()
+              
+              const toolOutput = 'output' in event ? event.output : null
+              
+              const output: Record<string, any> = {}
+              if (typeof toolOutput === 'object' && toolOutput !== null) {
+                const result = toolOutput as Record<string, any>
+                if (result.totalResults !== undefined) output.totalResults = result.totalResults
+                if (result.totalSelected !== undefined) output.totalSelected = result.totalSelected
+                if (result.sourcesFound !== undefined) output.sourcesFound = result.sourcesFound
+                if (result.added !== undefined) output.added = result.added
+                if (result.libraryId !== undefined) output.libraryId = result.libraryId
+                if (result.libraryName !== undefined) output.libraryName = result.libraryName
+                if (result.count !== undefined) output.count = result.count
+                if (result.success !== undefined) output.success = result.success
+                if (result.error !== undefined) output.error = result.error
+                if (result.message !== undefined) output.message = result.message
+              }
+              
+              const endMarker = createToolStepMarker('end', {
+                id: stepId,
+                toolName: event.toolName,
+                status: (toolOutput as any)?.success === false ? 'error' : 'completed',
+                output,
+                error: (toolOutput as any)?.error,
+              })
+              controller.enqueue(encoder.encode(endMarker))
+
+              await new Promise(resolve => setTimeout(resolve, 10))
+            } else if (event.type === 'text-delta') {
+              const textContent = 'text' in event ? event.text : ''
+              controller.enqueue(encoder.encode(textContent))
+            }
+          }
+          controller.close()
+        } catch (error) {
+          controller.error(error)
+        }
+      }
+    })
+
+    return new Response(customStream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
+    })
   } catch (error) {
     const requestTime = Date.now() - requestStartTime
     console.error('❌ [AGENT DEBUG] Agent error nach', requestTime + 'ms:', error)

@@ -15,6 +15,8 @@ import { InterruptPrompt } from "@/components/ui/interrupt-prompt"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { useLanguage } from "@/lib/i18n/use-language"
+import { useToast } from "@/hooks/use-toast"
+import { isSupportedFileType, getFileInputAccept, getSupportedExtensionsList } from "@/lib/file-extraction/file-types"
 
 interface MessageInputBaseProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -60,6 +62,7 @@ export function MessageInput({
   ...props
 }: MessageInputProps) {
   const { t, language } = useLanguage()
+  const { toast } = useToast()
   const [isDragging, setIsDragging] = useState(false)
   const [showInterruptPrompt, setShowInterruptPrompt] = useState(false)
   const [isClient, setIsClient] = useState(false)
@@ -105,18 +108,36 @@ export function MessageInput({
   }, [])
 
   const addFiles = (files: File[] | null) => {
-    if (props.allowAttachments) {
-      props.setFiles((currentFiles) => {
-        if (currentFiles === null) {
-          return files
-        }
+    if (props.allowAttachments && files) {
+      // Validiere Dateitypen
+      const supportedFiles: File[] = []
+      const unsupportedFiles: string[] = []
 
-        if (files === null) {
-          return currentFiles
+      files.forEach((file) => {
+        if (isSupportedFileType(file)) {
+          supportedFiles.push(file)
+        } else {
+          unsupportedFiles.push(file.name)
         }
-
-        return [...currentFiles, ...files]
       })
+
+      // Zeige Fehler für unsupported Dateien
+      if (unsupportedFiles.length > 0) {
+        const supportedList = getSupportedExtensionsList()
+        toast.error(
+          `Folgende Dateitypen werden nicht unterstützt: ${unsupportedFiles.join(', ')}. Unterstützte Formate: ${supportedList}`
+        )
+      }
+
+      // Füge nur unterstützte Dateien hinzu
+      if (supportedFiles.length > 0) {
+        props.setFiles((currentFiles) => {
+          if (currentFiles === null) {
+            return supportedFiles
+          }
+          return [...currentFiles, ...supportedFiles]
+        })
+      }
     }
   }
 
@@ -224,17 +245,10 @@ export function MessageInput({
             <div className="flex gap-2 sm:gap-3 px-1">
               <AnimatePresence mode="popLayout">
                 {props.files?.map((file) => {
-                  const truncatedName =
-                    file.name.length > 10 ? `${file.name.slice(0, 10)}…` : file.name
-                  const fileForPreview =
-                    file.type?.startsWith("image/")
-                      ? file
-                      : ({ ...file, name: truncatedName } as File)
-
                   return (
                     <FilePreview
                       key={file.name + String(file.lastModified)}
-                      file={fileForPreview}
+                      file={file}
                       onRemove={() => {
                         props.setFiles((files) => {
                           if (!files) return null
@@ -395,7 +409,7 @@ function showFileUploadDialog() {
 
   input.type = "file"
   input.multiple = true
-  input.accept = "*/*"
+  input.accept = getFileInputAccept()
   input.click()
 
   return new Promise<File[] | null>((resolve) => {

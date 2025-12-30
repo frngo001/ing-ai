@@ -381,6 +381,8 @@ export interface Database {
           reasoning: string | null
           parts: Json
           tool_invocations: Json
+          tool_steps: Json
+          files: Json
           created_at: string
         }
         Insert: {
@@ -391,6 +393,8 @@ export interface Database {
           reasoning?: string | null
           parts?: Json
           tool_invocations?: Json
+          tool_steps?: Json
+          files?: Json
           created_at?: string
         }
         Update: {
@@ -401,6 +405,8 @@ export interface Database {
           reasoning?: string | null
           parts?: Json
           tool_invocations?: Json
+          tool_steps?: Json
+          files?: Json
           created_at?: string
         }
       }

@@ -63,6 +63,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { AgentStepperView } from "@/components/ui/agent-stepper"
 import { useCitationStore } from "@/lib/stores/citation-store"
 import { useBachelorarbeitAgentStore, type SelectedSource } from "@/lib/stores/bachelorarbeit-agent-store"
 import { cn } from "@/lib/utils"
@@ -600,51 +601,61 @@ export function AskAiPane({
                         }
                       >
                         {message.role === "assistant" ? (
-                          <>
-                            {/* Render Parts nach Typ (wie im Beispiel) */}
+                          <div className="space-y-4">
+                            {/* Render Parts in Reihenfolge (fuer Cursor-Feeling) */}
                             {message.parts && message.parts.length > 0 ? (
-                              (() => {
-                                const reasoningPart = message.parts.find((p) => p.type === 'reasoning')
-                                const textPart = message.parts.find((p) => p.type === 'text')
-                                const sourceParts = message.parts.filter((p) => p.type === 'source')
+                              message.parts.map((part, idx) => {
+                                if (part.type === 'reasoning') {
+                                  return (
+                                    <Collapsible 
+                                      key={`reasoning-${idx}`}
+                                      open={reasoningOpen[message.id] ?? true}
+                                      onOpenChange={(open) => setReasoningOpen((prev) => ({ ...prev, [message.id]: open }))}
+                                    >
+                                      <CollapsibleTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-auto py-2 text-xs text-muted-foreground hover:text-foreground w-full justify-start -ml-3 pl-3 [&[data-state=open]>svg]:rotate-180">
+                                          {translations.showReasoning}
+                                          <ChevronDown className="h-3 w-3 ml-1.5 transition-transform duration-200" />
+                                        </Button>
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent className="max-h-[50vh] overflow-y-auto transition-all duration-200 ease-in-out [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                        <div className="text-xs mt-2 p-3 bg-none border-none max-w-none text-muted-foreground">
+                                          <PlateMarkdown id={`${message.id}-reasoning-${idx}`}>
+                                            {part.reasoning}
+                                          </PlateMarkdown>
+                                        </div>
+                                      </CollapsibleContent>
+                                    </Collapsible>
+                                  )
+                                }
+                                
+                                if (part.type === 'text') {
+                                  return part.text ? (
+                                    <PlateMarkdown key={`text-${idx}`} id={`${message.id}-text-${idx}`}>
+                                      {part.text}
+                                    </PlateMarkdown>
+                                  ) : null
+                                }
 
-                                      return (
-                                  <div className="space-y-4">
-                                    {reasoningPart && (
-                                      <Collapsible 
-                                        open={reasoningOpen[message.id] ?? true}
-                                        onOpenChange={(open) => setReasoningOpen((prev) => ({ ...prev, [message.id]: open }))}
-                                      >
-                                          <CollapsibleTrigger asChild>
-                                          <Button variant="ghost" size="sm" className="h-auto py-2 text-xs text-muted-foreground hover:text-foreground w-full justify-start -ml-3 pl-3 [&[data-state=open]>svg]:rotate-180">
-                                              {translations.showReasoning}
-                                              <ChevronDown className="h-3 w-3 ml-1.5 transition-transform duration-200" />
-                                            </Button>
-                                          </CollapsibleTrigger>
-                                          <CollapsibleContent className="max-h-[50vh] overflow-y-auto transition-all duration-200 ease-in-out [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                                          <div className="text-xs mt-2 p-3 bg-none border-none max-w-none text-muted-foreground">
-                                              <PlateMarkdown>
-                                                {reasoningPart.reasoning}
-                                              </PlateMarkdown>
-                                            </div>
-                                          </CollapsibleContent>
-                                        </Collapsible>
-                                    )}
+                                if (part.type === 'tool-step') {
+                                  return (
+                                    <AgentStepperView 
+                                      key={`step-${part.toolStep.id}`} 
+                                      steps={[part.toolStep]} 
+                                      minimal={true}
+                                    />
+                                  )
+                                }
 
-                                    {textPart && (
-                                      <div className="space-y-1">
-                                        <div className="text-[11px] font-semibold uppercase text-muted-foreground">{translations.answer}</div>
-                                        <PlateMarkdown>
-                                          {textPart.text}
-                                        </PlateMarkdown>
-                              </div>
-                                    )}
-                                  </div>
-                                )
-                              })()
+                                return null
+                              })
                             ) : (
                               <>
-                                {/* Fallback: Alte Logik wenn keine Parts vorhanden */}
+                                {/* Fallback fuer alte Nachrichten oder Nachrichten ohne Parts */}
+                                {message.toolSteps && message.toolSteps.length > 0 && (
+                                  <AgentStepperView steps={message.toolSteps} />
+                                )}
+                                
                                 {message.reasoning && (
                                   <Collapsible defaultOpen={false}>
                                     <CollapsibleTrigger asChild>
@@ -656,28 +667,50 @@ export function AskAiPane({
                                     </CollapsibleTrigger>
                                     <CollapsibleContent>
                                       <div className="px-3 bg-none border-none max-w-none text-muted-foreground">
-                                        <PlateMarkdown>
+                                        <PlateMarkdown id={`${message.id}-reasoning-fallback`}>
                                           {message.reasoning}
                                         </PlateMarkdown>
                                       </div>
                                     </CollapsibleContent>
                                   </Collapsible>
                                 )}
+                                
                                 {message.content ? (
-                                  <PlateMarkdown>
+                                  <PlateMarkdown id={`${message.id}-content-fallback`}>
                                     {message.content}
                                   </PlateMarkdown>
                                 ) : streamingId === message.id ? (
-                                  <StreamingShimmer />
+                                  message.toolSteps && message.toolSteps.length > 0 ? null : <StreamingShimmer />
                                 ) : (
                                   translations.noAnswerAvailable
                                 )}
                               </>
                             )}
-                          </>
+                          </div>
                         ) : (
-                          message.content ||
-                          (streamingId === message.id ? <StreamingShimmer /> : translations.noAnswerAvailable)
+                          <div className="space-y-2">
+                            {/* Zeige Dateien vor der Nachricht */}
+                            {message.files && message.files.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {message.files.map((file, idx) => (
+                                  <div
+                                    key={`${file.name}-${idx}`}
+                                    className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/40 px-2 py-1.5 text-xs"
+                                  >
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                    <span className="truncate max-w-[200px] text-muted-foreground">
+                                      {file.name}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground/70">
+                                      ({(file.size / 1024).toFixed(1)} KB)
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {message.content ||
+                              (streamingId === message.id ? <StreamingShimmer /> : translations.noAnswerAvailable)}
+                          </div>
                         )}
                       </Response>
                       {message.role === "assistant"

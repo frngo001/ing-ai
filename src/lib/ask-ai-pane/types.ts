@@ -3,6 +3,19 @@ export type MessagePart =
   | { type: 'reasoning'; reasoning: string }
   | { type: 'tool-invocation'; toolInvocation: { toolName: string; toolCallId: string } }
   | { type: 'source'; source: { url: string; title?: string; id?: string } }
+  | { type: 'tool-step'; toolStep: ToolStep }
+
+export type ToolStep = {
+  id: string
+  toolName: string
+  status: 'pending' | 'running' | 'completed' | 'error'
+  startedAt: number
+  completedAt?: number
+  input?: Record<string, any>
+  output?: Record<string, any>
+  reasoning?: string
+  error?: string
+}
 
 export type ChatMessage = {
   id: string
@@ -10,6 +23,7 @@ export type ChatMessage = {
   content: string
   reasoning?: string
   parts?: MessagePart[]
+  toolSteps?: ToolStep[]
   toolInvocations?: Array<{
     toolCallId?: string
     toolName?: string
@@ -20,6 +34,11 @@ export type ChatMessage = {
         title?: string
       }>
     }
+  }>
+  files?: Array<{
+    name: string
+    size: number
+    type: string
   }>
 }
 

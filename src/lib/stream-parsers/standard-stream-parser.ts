@@ -177,18 +177,12 @@ export async function parseStandardStream(
             case 'text-delta':
               if (event.delta) {
                 fullText += event.delta
-
-                // Wenn reasoning bereits vorhanden ist, ist alles weitere finale Antwort
-                // Ansonsten: Fallback-Logik für Reasoning-Tracking vor Tool-Calls
                 if (currentReasoning) {
-                  // reasoning wurde bereits gesetzt, alles weitere ist finale Antwort
                   currentText += event.delta
-                } else if (!hasSeenToolCall || !allToolResultsReceived) {
-                  // Fallback: Reasoning-Tracking vor Tool-Calls (für Modelle ohne reasoningText)
+                } else if (hasSeenToolCall && !allToolResultsReceived) {
                   currentReasoning += event.delta
                   reasoning = currentReasoning
                 } else {
-                  // Finale Antwort nach Tool-Calls
                   currentText += event.delta
                 }
 
