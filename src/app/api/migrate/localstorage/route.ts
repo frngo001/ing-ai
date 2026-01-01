@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { devError } from '@/lib/utils/logger'
 import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries'
 import * as citationsUtils from '@/lib/supabase/utils/citations'
 import * as chatConversationsUtils from '@/lib/supabase/utils/chat-conversations'
@@ -233,7 +234,7 @@ export async function POST(req: NextRequest) {
       message: 'Migration erfolgreich abgeschlossen',
     })
   } catch (error) {
-    console.error('❌ [MIGRATION API] Fehler:', error)
+    devError('❌ [MIGRATION API] Fehler:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

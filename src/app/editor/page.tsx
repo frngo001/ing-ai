@@ -20,10 +20,13 @@ import { setupEditorStreaming } from "@/lib/editor/stream-text"
 import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as documentsUtils from "@/lib/supabase/utils/documents"
 import { extractTextFromNode } from "@/lib/supabase/utils/document-title"
+import { useIsAuthenticated } from "@/hooks/use-auth"
 
 type Pane = "documents" | "library" | "askAi"
 
 export default function Page() {
+  const router = useRouter()
+  const isAuthenticated = useIsAuthenticated()
   const [panes, setPanes] = useState<Record<Pane, boolean>>({
     documents: false,
     library: false,
@@ -32,11 +35,24 @@ export default function Page() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsInitialNav, setSettingsInitialNav] = useState<string | undefined>(undefined)
 
+  // Authentifizierungsprüfung: Weiterleitung zur Login-Seite wenn nicht authentifiziert
+  useEffect(() => {
+    if (isAuthenticated === false && typeof window !== 'undefined') {
+      const currentPath = window.location.pathname + window.location.search
+      router.replace(`/auth/login?next=${encodeURIComponent(currentPath)}`)
+    }
+  }, [isAuthenticated, router])
+
   // Setup Editor-Text-Einfügung beim Mount
   useEffect(() => {
     setupEditorTextInsertion()
     setupEditorStreaming()
   }, [])
+
+  // Zeige Loading während Auth-Check oder wenn nicht authentifiziert
+  if (isAuthenticated === null || isAuthenticated === false) {
+    return <EditorLoading />
+  }
 
   const askAiPaneTransition =
     "absolute inset-0 overflow-hidden transition-all duration-300 ease-out data-[pane-state=open]:w-full data-[pane-state=closed]:w-0 data-[pane-state=closed]:min-w-0 data-[pane-state=open]:opacity-100 data-[pane-state=closed]:opacity-0 data-[pane-state=closed]:pointer-events-none data-[pane-state=open]:animate-in data-[pane-state=open]:fade-in data-[pane-state=open]:slide-in-from-left-52 data-[pane-state=open]:zoom-in-95 data-[pane-state=closed]:animate-out data-[pane-state=closed]:fade-out data-[pane-state=closed]:slide-out-to-left-52 data-[pane-state=closed]:zoom-out-95"

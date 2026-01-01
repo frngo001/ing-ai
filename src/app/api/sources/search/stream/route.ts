@@ -12,6 +12,7 @@ import { DoajClient } from '@/lib/sources/apis/doaj-client'
 import { BiorxivClient } from '@/lib/sources/apis/biorxiv-client'
 import { DataCiteClient } from '@/lib/sources/apis/datacite-client'
 import { SourceNormalizer } from '@/lib/sources/normalizer'
+import { devError } from '@/lib/utils/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -116,7 +117,7 @@ export async function GET(request: NextRequest) {
                         }
                     }
                 } catch (error) {
-                    console.error(`Error with ${name}:`, error)
+                    devError(`Error with ${name}:`, error)
                     // Continue with next API
                 }
             }

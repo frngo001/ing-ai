@@ -12,6 +12,7 @@ import {
   FileText,
   History,
   MessageSquareQuote,
+  MessageSquarePlus,
   PanelLeftClose,
   Plus,
   Globe,
@@ -22,6 +23,7 @@ import {
   Trash2,
 } from "lucide-react"
 import { PlateMarkdown } from "@/components/ui/plate-markdown"
+import { ChatSelectionToolbar } from "./ask-ai-pane/chat-selection-toolbar"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -80,6 +82,7 @@ import {
   type Mentionable,
   type SlashCommand,
   type SavedMessage,
+  type MessageContext,
   defaultContext,
   addSourcesToLibrary,
   saveSlashCommands,
@@ -142,6 +145,7 @@ export function AskAiPane({
   const [savedMessages, setSavedMessages] = useState<Set<string>>(new Set())
   const [savedMessagesList, setSavedMessagesList] = useState<SavedMessage[]>([])
   const [favoritesDialogOpen, setFavoritesDialogOpen] = useState(false)
+  const [pendingContext, setPendingContext] = useState<MessageContext[]>([])
   const autoClosedReasoning = useRef<Set<string>>(new Set())
   const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isPersistingRef = useRef(false)
@@ -198,6 +202,7 @@ export function AskAiPane({
     command: t('askAi.command'),
     commandPlaceholder: t('askAi.commandPlaceholder'),
     save: t('askAi.save'),
+    contextAdded: t('askAi.contextAdded'),
   }), [t, language])
   
   const lastAssistantId = useMemo(
@@ -334,6 +339,7 @@ export function AskAiPane({
     conversationId,
     slashQuery,
     agentStore,
+    pendingContext,
     setInput,
     setMessages,
     setSending: setIsSending,
@@ -347,6 +353,7 @@ export function AskAiPane({
     setNewSlashLabel,
     setNewSlashContent,
     setSlashDialogOpen,
+    setPendingContext,
     messageInputRef,
     toast,
     onClose,
@@ -587,7 +594,16 @@ export function AskAiPane({
       </div>
 
       <Card className="relative flex h-full min-h-0 flex-1 flex-col overflow-visible py-0 border-0 shadow-none bg-transparent">
-        <div className="flex-1 min-h-0 overflow-hidden pb-2 sm:pb-0">
+        <div className="flex-1 min-h-0 overflow-hidden pb-2 sm:pb-0 relative">
+          <ChatSelectionToolbar 
+            messages={messages}
+            setMessages={setMessages}
+            conversationId={conversationId}
+            input={input}
+            setInput={setInput}
+            pendingContext={pendingContext}
+            setPendingContext={setPendingContext}
+          />
           <Conversation className="h-full">
             <ConversationContent className="pb-4">
               {hasMessages &&
@@ -690,6 +706,29 @@ export function AskAiPane({
                           </div>
                         ) : (
                           <div className="space-y-2">
+                            {/* Kontext-Anzeige für User-Nachrichten */}
+                            {message.context && message.context.length > 0 && (
+                              <div className="mb-3 space-y-2">
+                                {message.context.map((ctx, ctxIdx) => (
+                                  <div
+                                    key={`context-${ctxIdx}`}
+                                    className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs"
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <MessageSquareQuote className="h-3.5 w-3.5 mt-0.5 text-primary/70 flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                      <div className="text-muted-foreground/80 mb-1">
+                                        {translations.contextAdded}
+                                      </div>
+                                        <div className="text-foreground/90 whitespace-pre-wrap break-words">
+                                          {ctx.text.length > 60 ? `${ctx.text.slice(0, 60)}...` : ctx.text}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                             {/* Zeige Dateien vor der Nachricht */}
                             {message.files && message.files.length > 0 && (
                               <div className="flex flex-wrap gap-2 mb-2">
@@ -819,6 +858,10 @@ export function AskAiPane({
                     toast.error(translations.audioError)
                   }}
                   stop={handleStop}
+                  pendingContext={pendingContext}
+                  onRemoveContext={(index) => {
+                    setPendingContext((prev) => prev.filter((_, i) => i !== index))
+                  }}
                   contextActions={
                     <>
                       <Select
@@ -1146,10 +1189,10 @@ export function AskAiPane({
                     const reloadedCommands = await loadSlashCommands()
                     setSlashCommands(reloadedCommands)
                     
-                    toast.success(t('askAi.commandSaved') || 'Command gespeichert')
+                    toast.success(t('askAi.commandSaved'))
                   } catch (error) {
                     console.error('Fehler beim Speichern des Commands:', error)
-                    toast.error(t('askAi.commandSaveError') || 'Fehler beim Speichern')
+                    toast.error(t('askAi.commandSaveError'))
                     // Fallback: Füge lokal hinzu
                     const next = [...slashCommands, newCommand]
                     setSlashCommands(next)

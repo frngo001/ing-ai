@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { devLog, devWarn, devError } from '@/lib/utils/logger'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -17,13 +18,13 @@ async function extractDOCXContent(file: File): Promise<string> {
     const buffer = Buffer.from(arrayBuffer)
     const result = await mammoth.default.extractRawText({ buffer })
     const text = result.value || ''
-    console.log(`[DOCX EXTRACT] Text extrahiert: ${text.length} Zeichen`)
+    devLog(`[DOCX EXTRACT] Text extrahiert: ${text.length} Zeichen`)
     if (text.length > 0) {
-      console.log(`[DOCX EXTRACT] Text-Vorschau: ${text.substring(0, 300)}...`)
+      devLog(`[DOCX EXTRACT] Text-Vorschau: ${text.substring(0, 300)}...`)
     }
     return text
   } catch (error) {
-    console.error(`[DOCX EXTRACT] Fehler:`, error)
+    devError(`[DOCX EXTRACT] Fehler:`, error)
     throw new Error(
       `Fehler beim Extrahieren von DOCX: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`
     )
@@ -50,13 +51,13 @@ async function extractXLSXContent(file: File): Promise<string> {
     })
     
     const text = textParts.join('\n\n---\n\n')
-    console.log(`[XLSX EXTRACT] Text extrahiert: ${text.length} Zeichen`)
+    devLog(`[XLSX EXTRACT] Text extrahiert: ${text.length} Zeichen`)
     if (text.length > 0) {
-      console.log(`[XLSX EXTRACT] Text-Vorschau: ${text.substring(0, 300)}...`)
+      devLog(`[XLSX EXTRACT] Text-Vorschau: ${text.substring(0, 300)}...`)
     }
     return text
   } catch (error) {
-    console.error(`[XLSX EXTRACT] Fehler:`, error)
+    devError(`[XLSX EXTRACT] Fehler:`, error)
     throw new Error(
       `Fehler beim Extrahieren von XLSX: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`
     )
@@ -76,13 +77,13 @@ async function extractRTFContent(file: File): Promise<string> {
       .replace(/\s+/g, ' ') // Normalisiere Whitespace
       .trim()
     
-    console.log(`[RTF EXTRACT] Text extrahiert: ${plainText.length} Zeichen`)
+    devLog(`[RTF EXTRACT] Text extrahiert: ${plainText.length} Zeichen`)
     if (plainText.length > 0) {
-      console.log(`[RTF EXTRACT] Text-Vorschau: ${plainText.substring(0, 300)}...`)
+      devLog(`[RTF EXTRACT] Text-Vorschau: ${plainText.substring(0, 300)}...`)
     }
     return plainText
   } catch (error) {
-    console.error(`[RTF EXTRACT] Fehler:`, error)
+    devError(`[RTF EXTRACT] Fehler:`, error)
     throw new Error(
       `Fehler beim Extrahieren von RTF: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`
     )
@@ -114,15 +115,15 @@ async function extractPDFContent(file: File): Promise<string> {
         try {
           // Extrahiere den Text aus dem geparsten PDF
           const text = pdfParser.getRawTextContent()
-          console.log(`[PDF EXTRACT] Text extrahiert: ${text?.length || 0} Zeichen`)
+          devLog(`[PDF EXTRACT] Text extrahiert: ${text?.length || 0} Zeichen`)
           if (text && text.length > 0) {
-            console.log(`[PDF EXTRACT] Text-Vorschau: ${text.substring(0, 300)}...`)
+            devLog(`[PDF EXTRACT] Text-Vorschau: ${text.substring(0, 300)}...`)
           } else {
-            console.warn(`[PDF EXTRACT] Warnung: Kein Text extrahiert aus PDF`)
+            devWarn(`[PDF EXTRACT] Warnung: Kein Text extrahiert aus PDF`)
           }
           resolve(text || '')
         } catch (error) {
-          console.error(`[PDF EXTRACT] Fehler beim Extrahieren:`, error)
+          devError(`[PDF EXTRACT] Fehler beim Extrahieren:`, error)
           reject(new Error(`Fehler beim Extrahieren des Textes: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`))
         }
       })
@@ -175,7 +176,7 @@ export async function POST(req: NextRequest) {
     let content = ''
 
     // Bestimme Dateityp und extrahiere Content
-    console.log(`[FILE EXTRACT] Starte Extraktion für: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
+    devLog(`[FILE EXTRACT] Starte Extraktion für: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
     
     if (fileName.endsWith('.pdf')) {
       content = await extractPDFContent(file)
@@ -189,9 +190,9 @@ export async function POST(req: NextRequest) {
       // Für andere Formate: Versuche als Text zu lesen (HTML, XML, CSV, etc.)
       try {
         content = await file.text()
-        console.log(`[FILE EXTRACT] Text direkt gelesen: ${content.length} Zeichen`)
+        devLog(`[FILE EXTRACT] Text direkt gelesen: ${content.length} Zeichen`)
       } catch (error) {
-        console.error(`[FILE EXTRACT] Fehler bei Extraktion von ${file.name}:`, error)
+        devError(`[FILE EXTRACT] Fehler bei Extraktion von ${file.name}:`, error)
         return NextResponse.json(
           {
             error: `Dateityp "${fileName.split('.').pop()?.toUpperCase()}" wird nicht unterstützt oder konnte nicht extrahiert werden.`,
@@ -201,14 +202,14 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    console.log(`[FILE EXTRACT] Extraktion erfolgreich: ${file.name}`)
-    console.log(`[FILE EXTRACT] Extrahierter Text-Länge: ${content.length} Zeichen`)
-    console.log(`[FILE EXTRACT] Text-Vorschau (erste 200 Zeichen): ${content.substring(0, 200)}...`)
+    devLog(`[FILE EXTRACT] Extraktion erfolgreich: ${file.name}`)
+    devLog(`[FILE EXTRACT] Extrahierter Text-Länge: ${content.length} Zeichen`)
+    devLog(`[FILE EXTRACT] Text-Vorschau (erste 200 Zeichen): ${content.substring(0, 200)}...`)
 
     // Truncatiere Content falls nötig
     const truncatedContent = truncateContent(content)
     if (content.length > MAX_CONTENT_LENGTH) {
-      console.log(`[FILE EXTRACT] Text wurde gekürzt von ${content.length} auf ${truncatedContent.length} Zeichen`)
+      devLog(`[FILE EXTRACT] Text wurde gekürzt von ${content.length} auf ${truncatedContent.length} Zeichen`)
     }
 
     return NextResponse.json({
@@ -222,7 +223,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('[FILE EXTRACT] Fehler:', error)
+    devError('[FILE EXTRACT] Fehler:', error)
     return NextResponse.json(
       {
         error:

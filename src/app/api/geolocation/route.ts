@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { devWarn, devError } from '@/lib/utils/logger'
 
 /**
  * Mapping von Ländercodes (ISO 3166-1 alpha-2) zu unterstützten Sprachen.
@@ -96,7 +97,7 @@ async function getCountryFromIP(ip: string): Promise<string | null> {
         })
 
         if (!response.ok) {
-            console.warn('[GEOLOCATION] Fehler beim Abrufen des Landes:', response.status)
+            devWarn('[GEOLOCATION] Fehler beim Abrufen des Landes:', response.status)
             return null
         }
 
@@ -109,7 +110,7 @@ async function getCountryFromIP(ip: string): Promise<string | null> {
 
         return null
     } catch (error) {
-        console.warn('[GEOLOCATION] Fehler bei IP-Geolocation:', error)
+        devWarn('[GEOLOCATION] Fehler bei IP-Geolocation:', error)
         return null
     }
 }
@@ -175,7 +176,7 @@ export async function GET(request: NextRequest) {
             source: 'geolocation'
         })
     } catch (error) {
-        console.error('[GEOLOCATION] Unerwarteter Fehler:', error)
+        devError('[GEOLOCATION] Unerwarteter Fehler:', error)
         return NextResponse.json(
             { 
                 country: null,

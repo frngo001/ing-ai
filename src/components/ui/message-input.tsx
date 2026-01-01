@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X } from "lucide-react"
+import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X, ChevronsDown } from "lucide-react"
 import { omit } from "remeda"
 
 import { cn } from "@/lib/utils"
@@ -17,6 +17,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { useLanguage } from "@/lib/i18n/use-language"
 import { useToast } from "@/hooks/use-toast"
 import { isSupportedFileType, getFileInputAccept, getSupportedExtensionsList } from "@/lib/file-extraction/file-types"
+import type { MessageContext } from "@/lib/ask-ai-pane/types"
 
 interface MessageInputBaseProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -31,6 +32,8 @@ interface MessageInputBaseProps
   onAudioError?: (error: Error) => void
   onAudioStart?: () => void
   contextActions?: React.ReactNode
+  pendingContext?: MessageContext[]
+  onRemoveContext?: (index: number) => void
 }
 
 interface MessageInputWithoutAttachmentProps extends MessageInputBaseProps {
@@ -59,6 +62,8 @@ export function MessageInput({
   onAudioError,
   onAudioStart,
   contextActions,
+  pendingContext,
+  onRemoveContext,
   ...props
 }: MessageInputProps) {
   const { t, language } = useLanguage()
@@ -76,6 +81,7 @@ export function MessageInput({
     dropFilesHere: t('askAi.dropFilesHere'),
     transcribingAudio: t('askAi.transcribingAudio'),
     clickToStopRecording: t('askAi.clickToStopRecording'),
+    contextAdded: t('askAi.contextAdded'),
   }), [t, language])
 
   const {
@@ -240,6 +246,37 @@ export function MessageInput({
       />
 
       <div className="relative w-full space-y-2">
+        {/* Zeige Kontext oben im Input-Feld */}
+        {pendingContext && pendingContext.length > 0 && (
+          <div className="px-1 pb-1 space-y-1.5">
+            {pendingContext.map((ctx, index) => (
+              <div
+                key={`context-${index}`}
+                className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 px-2 py-1.5 text-xs"
+              >
+                <ChevronsDown className="h-3.5 w-3.5 mt-0.5 text-primary/70 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-muted-foreground/80 mb-0.5 text-[10px]">
+                    {translations.contextAdded}
+                  </div>
+                  <div className="text-foreground/90 whitespace-pre-wrap break-words line-clamp-2">
+                    {ctx.text}
+                  </div>
+                </div>
+                {onRemoveContext && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveContext(index)}
+                    className="flex-shrink-0 h-5 w-5 rounded-sm hover:bg-muted flex items-center justify-center transition-colors"
+                    aria-label="Kontext entfernen"
+                  >
+                    <X className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         {props.allowAttachments && showFileList && (
           <ScrollArea className="pb-1">
             <div className="flex gap-2 sm:gap-3 px-1">

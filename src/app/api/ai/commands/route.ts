@@ -7,6 +7,7 @@ import {
     TONE_ADJUSTMENT_PROMPTS,
 } from '@/lib/ai/prompts'
 import { generateText } from 'ai'
+import { devError } from '@/lib/utils/logger'
 
 export const runtime = 'edge'
 
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
 
         return Response.json({ result })
     } catch (error) {
-        console.error('Command error:', error)
+        devError('Command error:', error)
         return new Response('Error processing command', { status: 500 })
     }
 }

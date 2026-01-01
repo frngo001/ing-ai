@@ -1,6 +1,7 @@
 import { deepseek, DEEPSEEK_CHAT_MODEL } from '@/lib/ai/deepseek'
 import { OUTLINE_GENERATOR_PROMPT } from '@/lib/ai/prompts'
 import { generateText } from 'ai'
+import { devError } from '@/lib/utils/logger'
 
 export const runtime = 'edge'
 
@@ -29,7 +30,7 @@ Generate clear, hierarchical section headings that provide a logical structure f
 
         return Response.json({ outline: text })
     } catch (error) {
-        console.error('Outline generation error:', error)
+        devError('Outline generation error:', error)
         return new Response('Error generating outline', { status: 500 })
     }
 }

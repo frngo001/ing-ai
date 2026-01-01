@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { pdfCache } from '@/lib/cache/pdf-cache'
+import { devError } from '@/lib/utils/logger'
 // import { createClient } from '@/lib/supabase/server' // Uncomment when ready to save to DB
 
 export const runtime = 'edge'
@@ -52,7 +53,7 @@ In production, use pdf-parse or similar library for actual text extraction.`
             text: mockText,
         })
     } catch (error) {
-        console.error('PDF upload error:', error)
+        devError('PDF upload error:', error)
         return NextResponse.json(
             { error: 'Failed to process PDF' },
             { status: 500 }

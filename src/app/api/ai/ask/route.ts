@@ -1,6 +1,7 @@
 import { deepseek, DEEPSEEK_CHAT_MODEL } from '@/lib/ai/deepseek'
 import { GENERAL_CHAT_PROMPT } from '@/lib/ai/prompts'
 import { streamText, stepCountIs } from 'ai'
+import { devWarn, devError } from '@/lib/utils/logger'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -69,14 +70,16 @@ Beziehe dich auf diesen Dokument-Text, wenn der Nutzer Fragen dazu stellt oder w
 ${fileSections.join('\n\n---\n\n')}`
               
             } else {
-                console.warn(`[ASK] Warnung: ${fileContents.length} Datei(en) erhalten, aber keine mit gültigem Inhalt`)
+                devWarn(`[ASK] Warnung: ${fileContents.length} Datei(en) erhalten, aber keine mit gültigem Inhalt`)
             }
         } else {
         }
 
         const systemPrompt = [
             GENERAL_CHAT_PROMPT,
-            useWeb ? "You have access to a web search tool. Use it when the user asks for current information or specific facts not in your knowledge base." : null,
+            useWeb 
+                ? "**WEBSUCHE AKTIVIERT:** Du hast Zugriff auf Websuche-Tools (webSearch, webExtract). Verwende sie für aktuelle Informationen, Fakten und real-time Daten, die nicht in deinem Wissensstand enthalten sind."
+                : "**WEBSUCHE DEAKTIVIERT:** Du hast KEINEN Zugriff auf Websuche-Tools. Antworte basierend auf deinem vorhandenen Wissen. Verwende KEINE Websuche-Tools und erwähne sie nicht.",
             context ? `Additional context: ${context}` : null,
             editorContextSection,
             fileContentSection,
@@ -99,7 +102,7 @@ ${fileSections.join('\n\n---\n\n')}`
         return result.toUIMessageStreamResponse()
 
     } catch (error) {
-        console.error('AskJenni error:', error)
+        devError('AskJenni error:', error)
         return new Response('Error processing question', { status: 500 })
     }
 }

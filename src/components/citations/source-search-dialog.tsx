@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Search, Loader2, BookOpen, ExternalLink, Bookmark, Quote } from 'lucide-react'
 import { useEditorRef } from 'platejs/react'
 import {
@@ -29,6 +29,7 @@ import { useCitationStore, type SavedCitation } from '@/lib/stores/citation-stor
 import { fetchWebsiteInfo, searchBooks } from '@/lib/bibify'
 import { insertCitationWithMerge } from '@/components/editor/utils/insert-citation-with-merge'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/lib/i18n/use-language'
 
 export interface Source {
     id: string
@@ -84,6 +85,48 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
     const [isLocalOpen, setIsLocalOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<'library' | 'search'>('library')
     const editor = useEditorRef()
+    const { t, language } = useLanguage()
+
+    // Memoized translations that update on language change
+    const translations = useMemo(() => ({
+        searchSourcesButton: t('library.searchSourcesButton'),
+        addSources: t('library.addSources'),
+        addSourcesDescription: t('library.addSourcesDescription'),
+        chooseLibrary: t('library.chooseLibrary'),
+        libraryTab: t('library.libraryTab'),
+        newSourcesTab: t('library.newSourcesTab'),
+        noLibraryCitations: t('library.noLibraryCitations'),
+        importBibOrSearch: t('library.importBibOrSearch'),
+        searchNewSources: t('library.searchNewSources'),
+        citeInText: t('library.citeInText'),
+        openSource: t('library.openSource'),
+        searchQuery: t('library.searchQuery'),
+        searchPlaceholder: t('library.searchPlaceholder'),
+        searchTypeKeyword: t('library.searchTypeKeyword'),
+        searchTypeTitle: t('library.searchTypeTitle'),
+        searchTypeAuthor: t('library.searchTypeAuthor'),
+        searchTypeBook: t('library.searchTypeBook'),
+        searching: t('library.searching'),
+        search: t('library.search'),
+        searchRunning: t('library.searchRunning'),
+        noResultsYet: t('library.noResultsYet'),
+        databases: t('library.databases'),
+        pages: t('library.pages'),
+        edition: t('library.edition'),
+        citations: t('library.citations'),
+        import: t('library.import'),
+        cite: t('library.cite'),
+        view: t('library.view'),
+        less: t('library.less'),
+        more: t('library.more'),
+        pleaseEnterSearchTerm: t('library.pleaseEnterSearchTerm'),
+        couldNotLoadWebsiteMetadata: t('library.couldNotLoadWebsiteMetadata'),
+        couldNotLoadBookInfo: t('library.couldNotLoadBookInfo'),
+        searchFailed: t('library.searchFailed'),
+        sourceAddedToCitationManager: t('library.sourceAddedToCitationManager'),
+        citationInsertedFromLibrary: t('library.citationInsertedFromLibrary'),
+        unnamedWebsite: t('library.unnamedWebsite'),
+    }), [t, language])
 
     // Sync with global store
     const isOpen = isSearchOpen || isLocalOpen
@@ -169,7 +212,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
 
         return {
             id: info.url || info.URL || crypto.randomUUID(),
-            title: info.title || info.URL || info.url || 'Unbenannte Webseite',
+            title: info.title || info.URL || info.url || translations.unnamedWebsite,
             authors,
             publicationYear: Number.isNaN(year) ? undefined : year,
             type: 'webpage',
@@ -266,7 +309,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
-            toast.error('Bitte gib einen Suchbegriff ein')
+            toast.error(translations.pleaseEnterSearchTerm)
             return
         }
 
@@ -283,7 +326,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                 setResults([source])
             } catch (error) {
                 console.error('Website lookup failed', error)
-                toast.error('Konnte Website-Metadaten nicht laden')
+                toast.error(translations.couldNotLoadWebsiteMetadata)
             } finally {
                 setIsSearching(false)
                 setCurrentApi('')
@@ -299,7 +342,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                 setResults(mapped)
             } catch (error) {
                 console.error('Book lookup failed', error)
-                toast.error('Konnte Buchinformationen nicht laden')
+                toast.error(translations.couldNotLoadBookInfo)
             } finally {
                 setIsSearching(false)
                 setCurrentApi('')
@@ -359,14 +402,14 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
         eventSource.onerror = () => {
             eventSource.close()
             setIsSearching(false)
-            toast.error('Suche fehlgeschlagen')
+            toast.error(translations.searchFailed)
         }
     }
 
     const handleImport = (source: Source) => {
         const safeSource = toSafeSource(source)
         onImport?.(safeSource)
-        toast.success('Quelle zum Zitat-Manager hinzugefügt')
+        toast.success(translations.sourceAddedToCitationManager)
     }
 
     const handleCite = (source: Source) => {
@@ -418,7 +461,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
 
     const handleUseSaved = (citation: SavedCitation) => {
         setPendingCitation(citation)
-        toast.success('Zitat aus Bibliothek eingefügt')
+        toast.success(translations.citationInsertedFromLibrary)
         setIsOpen(false)
     }
 
@@ -434,18 +477,15 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                 <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
                         <Search className="h-4 w-4 mr-2" />
-                        Quellen suchen
+                        {translations.searchSourcesButton}
                     </Button>
                 </DialogTrigger>
             )}
             <DialogContent className="max-w-4xl h-[80vh] overflow-hidden flex flex-col gap-4 border-0 shadow-none ring-0 outline-none focus-visible:outline-none">
                 <DialogHeader className="shrink-0 space-y-2 p-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                    <div className="space-y-1">
-                        <DialogTitle className="text-lg font-semibold">Quellen hinzufügen</DialogTitle>
-                        <DialogDescription className="text-sm">
-                                Wähle eine gespeicherte Quelle aus deiner Bibliothek oder starte eine neue Recherche.
-                        </DialogDescription>
+                        <div className="space-y-1 flex-1">
+                            <DialogTitle className="text-lg font-semibold">{translations.addSources}</DialogTitle>
                         </div>
                         <div className="sm:w-[260px] w-full">
                             <Select
@@ -453,7 +493,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                 onValueChange={(value) => setActiveLibrary(value)}
                             >
                                 <SelectTrigger id="library-select" className="h-9 w-full">
-                                    <SelectValue placeholder="Bibliothek wählen" />
+                                    <SelectValue placeholder={translations.chooseLibrary} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {libraries.map((lib) => (
@@ -465,12 +505,15 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                             </Select>
                         </div>
                     </div>
+                    <DialogDescription className="text-sm w-full">
+                        {translations.addSourcesDescription}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'library' | 'search')} className="flex-1 min-h-0 flex flex-col gap-4">
-                    <TabsList>
-                        <TabsTrigger value="library">Bibliothek</TabsTrigger>
-                        <TabsTrigger value="search">Neue Quellen</TabsTrigger>
+                    <TabsList className="w-full">
+                        <TabsTrigger value="library" className="flex-1">{translations.libraryTab}</TabsTrigger>
+                        <TabsTrigger value="search" className="flex-1">{translations.newSourcesTab}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="library" className="flex-1 min-h-0 flex flex-col gap-3">
@@ -480,13 +523,13 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                     <div className="flex flex-col items-center justify-center gap-3 py-10 text-center text-muted-foreground">
                                         <BookOpen className="h-8 w-8 opacity-60" />
                                         <div className="space-y-1">
-                                            <p className="text-sm font-medium text-foreground">Noch keine Bibliotheks-Zitate</p>
+                                            <p className="text-sm font-medium text-foreground">{translations.noLibraryCitations}</p>
                                             <p className="text-xs">
-                                                Importiere deine .bib-Datei oder suche neue Quellen im nächsten Tab.
+                                                {translations.importBibOrSearch}
                                             </p>
                                         </div>
                                         <Button variant="outline" size="sm" onClick={() => setActiveTab('search')}>
-                                            Neue Quellen suchen
+                                            {translations.searchNewSources}
                                         </Button>
                                     </div>
                                 ) : (
@@ -522,7 +565,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                         variant="ghost"
                                                         className="h-8 w-8"
                                                         onClick={() => handleUseSaved(citation)}
-                                                        title="Im Text zitieren"
+                                                        title={translations.citeInText}
                                                     >
                                                         <Quote className="h-4 w-4" />
                                                     </Button>
@@ -532,7 +575,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                             variant="ghost"
                                                             className="h-8 w-8"
                                                             onClick={() => window.open(url, '_blank')}
-                                                            title="Quelle öffnen"
+                                                            title={translations.openSource}
                                                         >
                                                             <ExternalLink className="h-4 w-4" />
                                                         </Button>
@@ -551,10 +594,10 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                         <div className="flex flex-col gap-3 p-3">
                             <div className="flex gap-2">
                                 <div className="flex-1">
-                                    <Label htmlFor="search-query" className="sr-only">Suchanfrage</Label>
+                                    <Label htmlFor="search-query" className="sr-only">{translations.searchQuery}</Label>
                                     <Input
                                         id="search-query"
-                                        placeholder="Titel, Autor, DOI oder Stichwort eingeben..."
+                                        placeholder={translations.searchPlaceholder}
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onKeyPress={handleKeyPress}
@@ -566,12 +609,12 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="keyword">Stichwort</SelectItem>
-                                        <SelectItem value="title">Titel</SelectItem>
-                                        <SelectItem value="author">Autor</SelectItem>
+                                        <SelectItem value="keyword">{translations.searchTypeKeyword}</SelectItem>
+                                        <SelectItem value="title">{translations.searchTypeTitle}</SelectItem>
+                                        <SelectItem value="author">{translations.searchTypeAuthor}</SelectItem>
                                         <SelectItem value="doi">DOI</SelectItem>
                                     <SelectItem value="url">URL</SelectItem>
-                                    <SelectItem value="book">Buch</SelectItem>
+                                    <SelectItem value="book">{translations.searchTypeBook}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Button
@@ -582,12 +625,12 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                     {isSearching ? (
                                         <>
                                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                            Suche läuft...
+                                            {translations.searching}
                                         </>
                                     ) : (
                                         <>
                                             <Search className="h-4 w-4 mr-2 text-primary-foreground" />
-                                            Suchen
+                                            {translations.search}
                                         </>
                                     )}
                                 </Button>
@@ -596,7 +639,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <Loader2 className="h-3 w-3 animate-spin" />
                                     <span>
-                                        {currentApi ? `${currentApi}` : 'Suche läuft'} ({progress.current}/{progress.total})
+                                        {currentApi ? `${currentApi}` : translations.searchRunning} ({progress.current}/{progress.total})
                                     </span>
                                 </div>
                             )}
@@ -607,7 +650,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                             {results.length === 0 && !isSearching && (
                                 <div className="text-center py-12 text-muted-foreground">
                                     <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                    <p>Noch keine Ergebnisse. Starte eine Suche, um wissenschaftliche Quellen zu finden.</p>
+                                    <p>{translations.noResultsYet}</p>
                                 </div>
                             )}
 
@@ -615,11 +658,11 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                 <div className="text-center py-12">
                                     <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
                                     <p className="text-sm text-muted-foreground">
-                                        {currentApi ? `Durchsuche ${currentApi}...` : 'Starte Suche...'}
+                                        {currentApi ? `${currentApi}...` : translations.searchRunning}
                                     </p>
                                     {progress.total > 0 && (
                                         <p className="text-xs text-muted-foreground mt-1">
-                                            {progress.current} / {progress.total} Datenbanken
+                                            {progress.current} / {progress.total} {translations.databases}
                                         </p>
                                     )}
                                 </div>
@@ -689,17 +732,17 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                         )}
                                                         {pages && (
                                                             <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                                                {pages} Seiten
+                                                                {pages} {translations.pages}
                                                             </Badge>
                                                         )}
                                                         {numberOfPages && !pages && (
                                                             <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                                                {numberOfPages} Seiten
+                                                                {numberOfPages} {translations.pages}
                                                             </Badge>
                                                         )}
                                                         {edition && (
                                                             <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                                                Auflage: {edition}
+                                                                {translations.edition}: {edition}
                                                             </Badge>
                                                         )}
                                                         {isbn && (
@@ -729,7 +772,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                         )}
                                                         {source.citationCount !== undefined && source.citationCount > 0 && (
                                                             <span className="text-[10px] text-muted-foreground">
-                                                                {source.citationCount} Zitate
+                                                                {source.citationCount} {translations.citations}
                                                             </span>
                                                         )}
                                                         {source.impactFactor !== undefined && source.impactFactor > 0 && (
@@ -771,7 +814,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                                     }))
                                                                 }
                                                             >
-                                                                {showFull ? "Weniger anzeigen" : "Mehr anzeigen"}
+                                                                {showFull ? translations.less : translations.more}
                                                             </Button>
                                                         </div>
                                                     )}
@@ -784,7 +827,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                         variant="ghost"
                                                         className="h-5 w-5"
                                                         onClick={() => handleImport(source)}
-                                                        title="Importieren"
+                                                        title={translations.import}
                                                     >
                                                         <Bookmark className="h-3 w-3" />
                                                     </Button>
@@ -793,7 +836,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                         variant="ghost"
                                                         className="h-5 w-5"
                                                         onClick={() => handleCite(source)}
-                                                        title="Zitieren"
+                                                        title={translations.cite}
                                                     >
                                                         <Quote className="h-3 w-3" />
                                                     </Button>
@@ -803,7 +846,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                             variant="ghost"
                                                             className="h-5 w-5"
                                                             onClick={() => window.open(source.url, '_blank')}
-                                                            title="Ansehen"
+                                                            title={translations.view}
                                                         >
                                                             <ExternalLink className="h-3 w-3" />
                                                         </Button>

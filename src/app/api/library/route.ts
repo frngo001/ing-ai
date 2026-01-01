@@ -5,6 +5,7 @@ import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
 import { createClient } from '@/lib/supabase/server'
 import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries'
 import * as citationsUtils from '@/lib/supabase/utils/citations'
+import { devLog, devError } from '@/lib/utils/logger'
 
 // Helper: Konvertiere NormalizedSource zu SavedCitation
 function convertSourceToCitation(source: any): SavedCitation {
@@ -114,7 +115,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ libraries: librariesWithCitations })
   } catch (error) {
-    console.error('❌ [LIBRARY API] GET error:', error)
+    devError('❌ [LIBRARY API] GET error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { action, libraryId, libraryName, sources } = body
 
-    console.log('📚 [LIBRARY API] POST request:', { action, libraryId, libraryName, sourcesCount: sources?.length })
+    devLog('📚 [LIBRARY API] POST request:', { action, libraryId, libraryName, sourcesCount: sources?.length })
 
     if (action === 'createLibrary') {
       // Neue Bibliothek erstellen
@@ -155,7 +156,7 @@ export async function POST(req: NextRequest) {
         citations: [],
       }
 
-      console.log('✅ [LIBRARY API] Bibliothek erstellt:', { id: newLibrary.id, name: newLibrary.name })
+      devLog('✅ [LIBRARY API] Bibliothek erstellt:', { id: newLibrary.id, name: newLibrary.name })
 
       return NextResponse.json({
         success: true,
@@ -229,7 +230,7 @@ export async function POST(req: NextRequest) {
         citations: savedCitations,
       }
 
-      console.log('✅ [LIBRARY API] Quellen hinzugefügt:', {
+      devLog('✅ [LIBRARY API] Quellen hinzugefügt:', {
         libraryId,
         libraryName: updatedLibrary.name,
         added: uniqueCitations.length,
@@ -247,7 +248,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'Ungültige Aktion' }, { status: 400 })
   } catch (error) {
-    console.error('❌ [LIBRARY API] POST error:', error)
+    devError('❌ [LIBRARY API] POST error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

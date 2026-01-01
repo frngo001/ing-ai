@@ -1,4 +1,4 @@
-import type { ChatMessage, Mentionable, SlashCommand, ContextSelection } from './types'
+import type { ChatMessage, Mentionable, SlashCommand, ContextSelection, MessageContext } from './types'
 import { detectArbeitType, extractThema } from './agent-utils'
 import { buildContextSummary } from './context-utils'
 import { parseAgentStream } from '@/lib/stream-parsers/agent-stream-parser'
@@ -92,6 +92,7 @@ export interface HandlerDependencies {
   conversationId: string
   slashQuery: string | null
   agentStore: AgentStore
+  pendingContext: MessageContext[]
   
   // Setters
   setInput: (value: string | ((prev: string) => string)) => void
@@ -107,6 +108,7 @@ export interface HandlerDependencies {
   setNewSlashLabel: (value: string) => void
   setNewSlashContent: (value: string) => void
   setSlashDialogOpen: (value: boolean) => void
+  setPendingContext: React.Dispatch<React.SetStateAction<MessageContext[]>>
   
   // Refs
   messageInputRef: React.RefObject<HTMLTextAreaElement | null>
@@ -130,6 +132,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
     conversationId,
     slashQuery,
     agentStore,
+    pendingContext,
     setInput,
     setMessages,
     setSending,
@@ -143,6 +146,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
     setNewSlashLabel,
     setNewSlashContent,
     setSlashDialogOpen,
+    setPendingContext,
     messageInputRef,
     toast,
     onClose,
@@ -160,6 +164,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
     setSelectedMentions([])
     setInput("")
     setFiles(null)
+    setPendingContext([])
     setAbortController(null)
   }
 
@@ -195,11 +200,17 @@ export const createHandlers = (deps: HandlerDependencies) => {
       }
     }
 
-    // Erstelle User-Nachricht mit Dateien
+    // Verwende pendingContext für die neue Nachricht
+    const contextToInclude = pendingContext.length > 0 ? [...pendingContext] : undefined;
+
+    // Leere pendingContext SOFORT, damit er aus dem Input-Feld verschwindet
+    setPendingContext([])
+
+    // Erstelle User-Nachricht mit Dateien und Kontext (Context nur im context-Feld, NICHT im content)
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
-      content: trimmed,
+      content: trimmed, // Nur der originale Text, ohne Context
       files: files && files.length > 0
         ? files.map((file) => ({
             name: file.name,
@@ -207,8 +218,10 @@ export const createHandlers = (deps: HandlerDependencies) => {
             type: file.type,
           }))
         : undefined,
+      context: contextToInclude, // Context nur für UI-Anzeige
     }
     const assistantId = crypto.randomUUID()
+
     const contextSummary = buildContextSummary(trimmed, files, context, selectedMentions)
     const historyPayload = [...messages, userMsg].slice(-20)
 
@@ -222,9 +235,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
     setAbortController(controller)
 
     try {
-      // Determine Endpoint based on Agent Mode
-      // WICHTIG: Wenn Modus 'standard' ist, immer Ask-Endpoint verwenden, auch wenn Agent noch aktiv ist
-      // Wenn Websuche aktiviert ist, verwende WebSearch-Agent für schnellere und präzisere Antworten
+      
       let apiEndpoint = "/api/ai/ask"
       const currentArbeitType = agentStore.arbeitType || (context.agentMode === 'general' ? 'general' : (context.agentMode === 'bachelor' ? 'bachelor' : null))
       
@@ -372,16 +383,32 @@ export const createHandlers = (deps: HandlerDependencies) => {
       // Wenn WebSearch-Agent verwendet wird, verwende Agent-Format
       const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
       
+      // Baue Context-Text aus MessageContext für den Prompt
+      let messageContextText = ''
+      if (contextToInclude && contextToInclude.length > 0) {
+        const contextTexts = contextToInclude.map((ctx) => ctx.text).join('\n\n')
+        messageContextText = `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
+      }
+      
       const requestBody = (context.agentMode !== 'standard' || isWebSearchAgent)
         ? {
-          messages: historyPayload.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          messages: historyPayload.map((m) => {
+ 
+            if (m.role === 'user' && m.id === userMsg.id && messageContextText) {
+              return {
+                role: m.role,
+                content: m.content + messageContextText, 
+              }
+            }
+            return {
+              role: m.role,
+              content: m.content,
+            }
+          }),
           useWeb: context.web,
-          editorContent, // Editor-Inhalt als Kontext (wenn aktiviert) und fuer getEditorContent Tool
-          documentContextEnabled: context.document, // Flag ob Kontext aktiviert ist
-          fileContents: fileContents.length > 0 ? fileContents : undefined, // Extrahierter Datei-Content
+          editorContent, 
+          documentContextEnabled: context.document, 
+          fileContents: fileContents.length > 0 ? fileContents : undefined,
           agentState: isWebSearchAgent ? {
             isActive: false,
             arbeitType: null,
@@ -396,7 +423,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
         }
         : {
           question: trimmed,
-          context: contextSummary,
+          context: contextSummary + (messageContextText ? messageContextText : ''), // Context im Hintergrund hinzufügen
           useWeb: context.web,
           editorContent: context.document ? editorContent : undefined, // Editor-Inhalt fuer Standard-Modus
           documentContextEnabled: context.document,
@@ -450,19 +477,15 @@ export const createHandlers = (deps: HandlerDependencies) => {
 
       const reader = res.body.getReader()
       
-      // TRENNUNG: Standard-Chat vs. Agenten - verwende separate Parser
-      // WebSearch-Agent verwendet auch Agent-Stream-Format
       const isAgentMode = context.agentMode !== 'standard' || apiEndpoint === "/api/ai/agent/websearch"
       
-      if (isAgentMode) {
-        // Agent-Modi: Einfaches Text-Stream-Parsing
+      if (isAgentMode) {  
         await parseAgentStream(reader, {
           assistantId,
           setMessages,
           agentStore,
         })
       } else {
-        // Standard-Chat: Komplexes Parsing mit Reasoning/Sources
         await parseStandardStream(reader, {
           assistantId,
           setMessages,
@@ -542,7 +565,6 @@ export const createHandlers = (deps: HandlerDependencies) => {
       })
 
       if (!res.ok) {
-        // Versuche, die Fehlermeldung aus der Response zu extrahieren
         let errorMessage = "Antwort fehlgeschlagen"
         try {
           const errorData = await res.json().catch(() => null)
@@ -554,7 +576,6 @@ export const createHandlers = (deps: HandlerDependencies) => {
             errorMessage = `Fehler ${res.status}: ${res.statusText}`
           }
         } catch {
-          // Falls JSON-Parsing fehlschlägt, verwende Status-Text
           errorMessage = `Fehler ${res.status}: ${res.statusText || "Unbekannter Fehler"}`
         }
         console.error("API-Fehler (/api/ai/ask):", {

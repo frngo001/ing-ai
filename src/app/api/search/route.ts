@@ -2,6 +2,7 @@ import { performWebSearch as search } from '@/lib/search/duckduckgo'
 import { CacheService } from '@/lib/cache/cache-service'
 import { NextResponse } from 'next/server'
 import { requestDeduplicator } from '@/lib/cache/request-deduplicator'
+import { devError } from '@/lib/utils/logger'
 
 export const runtime = 'edge'
 
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ results })
     } catch (error) {
-        console.error('Search API error:', error)
+        devError('Search API error:', error)
         return new Response('Error performing search', { status: 500 })
     }
 }

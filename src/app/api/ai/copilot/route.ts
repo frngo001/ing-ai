@@ -5,6 +5,7 @@ import { generateText } from 'ai';
 import { NextResponse } from 'next/server';
 
 import { DEEPSEEK_CHAT_MODEL } from '@/lib/ai/deepseek';
+import { devError } from '@/lib/utils/logger';
 
 export async function POST(req: NextRequest) {
   const {
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ text });
   } catch (error) {
-    console.error('Copilot error', {
+    devError('Copilot error', {
       error,
       hasSignal: !!req.signal,
       model,

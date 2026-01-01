@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { BaseEditorKit } from '@/components/editor/editor-base-kit';
 import { DEEPSEEK_CHAT_MODEL, deepseek } from '@/lib/ai/deepseek';
 import { markdownJoinerTransform } from '@/lib/markdown-joiner-transform';
+import { devInfo } from '@/lib/utils/logger';
 
 import {
   getChooseToolPrompt,
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
 
   const isSelecting = editor.api.isExpanded();
 
-  console.info('ai/command request', {
+  devInfo('ai/command request', {
     ip: requester,
     model: modelName,
     toolName: toolNameParam ?? 'auto',

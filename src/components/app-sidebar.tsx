@@ -32,11 +32,7 @@ import { Button } from "@/components/ui/button"
 import Particles from "@/components/Particles"
 import { createClient } from "@/lib/supabase/client"
 
-const defaultUser = {
-  name: "Ing AI",
-  email: "support@ing.ai",
-  avatar: "/logos/logosApp/ing_AI.png",
-}
+// Entfernt: defaultUser wird nicht mehr verwendet, da nur authentifizierte Benutzer die App nutzen können
 
 const getNavMain = (t: (key: string) => string) => [
   {
@@ -93,7 +89,11 @@ export function AppSidebar({
   onCreateDocument?: () => void
 }) {
   const { t, language } = useLanguage()
-  const [user, setUser] = React.useState(defaultUser)
+  const [user, setUser] = React.useState<{
+    name: string
+    email: string
+    avatar: string
+  } | null>(null)
   const supabase = createClient()
   const { addInteractionLock, removeInteractionLock, state } = useSidebar()
   const [isPinned, setIsPinned] = React.useState(false)
@@ -109,8 +109,10 @@ export function AppSidebar({
         setUser({
           name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || t('sidebar.user'),
           email: session.user.email || "",
-          avatar: session.user.user_metadata?.avatar_url || defaultUser.avatar,
+          avatar: session.user.user_metadata?.avatar_url || `/logos/logosApp/ing_AI.png`,
         })
+      } else {
+        setUser(null)
       }
     }
 
@@ -126,10 +128,10 @@ export function AppSidebar({
             session.user.email?.split("@")[0] ||
             t('sidebar.user'),
           email: session.user.email || "",
-          avatar: session.user.user_metadata?.avatar_url || defaultUser.avatar,
+          avatar: session.user.user_metadata?.avatar_url || `/logos/logosApp/ing_AI.png`,
         })
       } else {
-        setUser(defaultUser)
+        setUser(null)
       }
     })
 
@@ -186,6 +188,7 @@ export function AppSidebar({
                 onClick={handleTogglePin}
                 aria-label={isPinned ? t('sidebar.unpinSidebar') : t('sidebar.pinSidebar')}
                 title={isPinned ? t('sidebar.unpinSidebar') : t('sidebar.pinSidebar')}
+                suppressHydrationWarning
               >
                 {isPinned ? (
                   <Pin className="h-4 w-4" />
@@ -200,9 +203,10 @@ export function AppSidebar({
             className="w-full justify-center gap-2"
             onClick={handleCreateDocument}
             aria-label={t('sidebar.newDocument')}
+            suppressHydrationWarning
           >
             <Plus className="h-4 w-4" />
-            <span className="group-data-[collapsible=icon]:hidden">{t('sidebar.newDocument')}</span>
+            <span className="group-data-[collapsible=icon]:hidden" suppressHydrationWarning>{t('sidebar.newDocument')}</span>
           </Button>
         </SidebarHeader>
         <SidebarContent>
@@ -234,20 +238,20 @@ export function AppSidebar({
               overlay
             />
             <CardContent className="relative z-20 space-y-3 px-4 pt-4">
-              <CardTitle className="text-sm font-semibold leading-tight">
+              <CardTitle className="text-sm font-semibold leading-tight" suppressHydrationWarning>
                 {t('sidebar.upgradeToPro')}
               </CardTitle>
-              <CardDescription className="text-xs leading-relaxed text-muted-foreground">
+              <CardDescription className="text-xs leading-relaxed text-muted-foreground" suppressHydrationWarning>
                 {t('sidebar.upgradeDescription')}
               </CardDescription>
             </CardContent>
             <CardFooter className="relative z-20 px-4 pb-4 pt-1">
-              <Button className="w-full text-sm" variant="default">
+              <Button className="w-full text-sm" variant="default" suppressHydrationWarning>
                 {t('sidebar.upgradeNow')}
               </Button>
             </CardFooter>
           </Card>
-          <NavUser user={user} onOpenSettings={onOpenSettings} />
+          {user && <NavUser user={user} onOpenSettings={onOpenSettings} />}
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>

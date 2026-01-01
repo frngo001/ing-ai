@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { devLog, devError } from '@/lib/utils/logger'
 
 // API-Route zum Hinzufügen von Markdown-Text im Editor
 // Wird vom Agent-Tool aufgerufen, um Text direkt im Editor hinzuzufügen
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const headingCount = (markdown.match(/^#+\s/gm) || []).length
 
-    console.log('📝 [EDITOR API] Text einfügen:', {
+    devLog('📝 [EDITOR API] Text einfügen:', {
       markdownLength: markdown.length,
       position: position || 'end',
       focusOnHeadings: focusOnHeadings || false,
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
       eventType: 'insert-text-in-editor',
     })
   } catch (error) {
-    console.error('❌ [EDITOR API] Fehler:', error)
+    devError('❌ [EDITOR API] Fehler:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

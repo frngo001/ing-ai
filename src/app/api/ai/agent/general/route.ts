@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/server'
 import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries'
 import * as citationsUtils from '@/lib/supabase/utils/citations'
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
+import { devLog, devError } from '@/lib/utils/logger'
 
 // Edge Runtime hat Probleme mit Tool-Ergebnis-Serialisierung
 // Wechsel zu Node.js Runtime für bessere Tool-Call-Verarbeitung
@@ -628,8 +629,8 @@ function createGetEditorContentTool(editorContent: string) {
       const stepId = generateToolStepId()
       const toolName = 'getEditorContent'
       
-      console.log('📄 [GENERAL AGENT] getEditorContent Tool aufgerufen')
-      console.log('📥 [GENERAL AGENT] Parameter:', {
+      devLog('📄 [GENERAL AGENT] getEditorContent Tool aufgerufen')
+      devLog('📥 [GENERAL AGENT] Parameter:', {
         includeFullText,
         maxLength,
         editorContentLength: editorContent?.length || 0,
@@ -691,7 +692,7 @@ function createGetEditorContentTool(editorContent: string) {
         }),
       }
       
-      console.log('📤 [GENERAL AGENT] getEditorContent Response:', {
+      devLog('📤 [GENERAL AGENT] getEditorContent Response:', {
         wordCount,
         characterCount,
         paragraphCount,
@@ -709,7 +710,7 @@ export async function POST(req: NextRequest) {
         const { data: { user }, error: authError } = await supabase.auth.getUser()
 
         if (authError || !user) {
-            console.error('[GENERAL AGENT] Nicht authentifiziert:', authError?.message)
+            devError('[GENERAL AGENT] Nicht authentifiziert:', authError?.message)
             return NextResponse.json(
                 { error: 'Nicht authentifiziert' },
                 { status: 401 }
@@ -768,7 +769,7 @@ Der Nutzer hat folgende Dateien hochgeladen. Beziehe dich auf deren Inhalt, wenn
 
 ${fileSections.join('\n\n---\n\n')}`
                 systemPrompt += fileContentSection
-                console.log('[GENERAL AGENT] Datei-Content aktiviert:', { fileCount: fileContents.length })
+                devLog('[GENERAL AGENT] Datei-Content aktiviert:', { fileCount: fileContents.length })
             }
         }
 
@@ -796,7 +797,7 @@ ${truncatedContent}
 **WICHTIG**: Beziehe dich auf diesen vorhandenen Text, wenn der Nutzer danach fragt oder wenn es relevant ist. Du kannst den Text analysieren, Verbesserungen vorschlagen oder darauf aufbauen.
 `
           systemPrompt += editorContextSection
-          console.log('[GENERAL AGENT] Editor-Kontext hinzugefügt:', { wordCount, headingsCount: headings.length })
+          devLog('[GENERAL AGENT] Editor-Kontext hinzugefügt:', { wordCount, headingsCount: headings.length })
         }
 
         const agent = new Agent({
@@ -820,13 +821,13 @@ ${truncatedContent}
             maxOutputTokens: 16384,
             onStepFinish: (result) => {
                 if (result.text) {
-                    console.log(`   Text-Länge: ${result.text.length} Zeichen`)
+                    devLog(`   Text-Länge: ${result.text.length} Zeichen`)
                 }
                 if (result.toolCalls && result.toolCalls.length > 0) {
-                    console.log(`   Tool-Calls: ${result.toolCalls.map((tc: { toolName: string }) => tc.toolName).join(', ')}`)
+                    devLog(`   Tool-Calls: ${result.toolCalls.map((tc: { toolName: string }) => tc.toolName).join(', ')}`)
                 }
                 if (result.toolResults && result.toolResults.length > 0) {
-                    console.log(`   Tool-Results: ${result.toolResults.length}`)
+                    devLog(`   Tool-Results: ${result.toolResults.length}`)
                 }
             },
         })

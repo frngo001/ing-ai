@@ -383,6 +383,7 @@ export interface Database {
           tool_invocations: Json
           tool_steps: Json
           files: Json
+          context: Json
           created_at: string
         }
         Insert: {
@@ -395,6 +396,7 @@ export interface Database {
           tool_invocations?: Json
           tool_steps?: Json
           files?: Json
+          context?: Json
           created_at?: string
         }
         Update: {
@@ -407,6 +409,7 @@ export interface Database {
           tool_invocations?: Json
           tool_steps?: Json
           files?: Json
+          context?: Json
           created_at?: string
         }
       }

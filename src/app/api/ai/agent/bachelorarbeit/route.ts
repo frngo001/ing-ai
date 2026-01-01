@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/server'
 import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries'
 import * as citationsUtils from '@/lib/supabase/utils/citations'
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
+import { devWarn, devError } from '@/lib/utils/logger'
 
 
 export const runtime = 'nodejs'
@@ -292,12 +293,12 @@ const searchSourcesTool = tool({
 
           // Prüfe ob alle wichtigen Felder vorhanden sind
           if (!testReturn.selected || !Array.isArray(testReturn.selected)) {
-            console.error('❌ [AGENT DEBUG] FEHLER: selected ist kein Array!')
+            devError('❌ [AGENT DEBUG] FEHLER: selected ist kein Array!')
             throw new Error('selected muss ein Array sein')
           }
 
           if (testReturn.selected.length === 0) {
-            console.warn('⚠️  [AGENT DEBUG] WARNUNG: selected Array ist leer!')
+            devWarn('⚠️  [AGENT DEBUG] WARNUNG: selected Array ist leer!')
           }
 
           return {
@@ -310,7 +311,7 @@ const searchSourcesTool = tool({
             }),
           }
         } catch (returnError) {
-          console.error('❌ [AGENT DEBUG] KRITISCHER FEHLER beim Return des Response-Objekts:', returnError)
+          devError('❌ [AGENT DEBUG] KRITISCHER FEHLER beim Return des Response-Objekts:', returnError)
           // Fallback: Gebe ein vereinfachtes Response-Objekt zurück
           const fallbackResponse = {
             success: true,
@@ -347,7 +348,7 @@ const searchSourcesTool = tool({
 
       return response
     } catch (error) {
-      console.error('❌ [AGENT DEBUG] Source search error:', error)
+      devError('❌ [AGENT DEBUG] Source search error:', error)
       return {
         _toolStep: createToolStepMarker('end', {
           id: stepId,
@@ -458,7 +459,7 @@ const analyzeSourcesTool = tool({
 
       return response
     } catch (error) {
-      console.error('Source analysis error:', error)
+      devError('Source analysis error:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -1148,7 +1149,7 @@ ${fileSections.join('\n\n---\n\n')}
           return results.sort((a, b) => b.relevanceScore - a.relevanceScore)
 
         } catch (error) {
-          console.error('❌ [AGENT DEBUG] Fehler bei evaluateSources:', error)
+          devError('❌ [AGENT DEBUG] Fehler bei evaluateSources:', error)
           return sources.map(s => ({ ...s, evaluationError: true }))
         }
       }
@@ -1261,8 +1262,8 @@ ${fileSections.join('\n\n---\n\n')}
     })
   } catch (error) {
     const requestTime = Date.now() - requestStartTime
-    console.error('❌ [AGENT DEBUG] Agent error nach', requestTime + 'ms:', error)
-    console.error('❌ [AGENT DEBUG] Error Details:', {
+    devError('❌ [AGENT DEBUG] Agent error nach', requestTime + 'ms:', error)
+    devError('❌ [AGENT DEBUG] Error Details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     })

@@ -17,6 +17,12 @@ export type ToolStep = {
   error?: string
 }
 
+export type MessageContext = {
+  text: string
+  addedAt: number
+  sourceMessageId?: string
+}
+
 export type ChatMessage = {
   id: string
   role: "user" | "assistant"
@@ -40,6 +46,7 @@ export type ChatMessage = {
     size: number
     type: string
   }>
+  context?: MessageContext[]
 }
 
 export type StoredConversation = {

@@ -57,7 +57,7 @@ export function NavMain({
   return (
     <div suppressHydrationWarning>
       <SidebarGroup>
-        <SidebarGroupLabel>{t('sidebar.platform')}</SidebarGroupLabel>
+        <SidebarGroupLabel suppressHydrationWarning>{t('sidebar.platform')}</SidebarGroupLabel>
         <SidebarMenu>
           {items.map((item) => {
             const hasChildren = !!item.items?.length
@@ -101,7 +101,7 @@ export function NavMain({
                   <CollapsibleTrigger asChild>
                     <SidebarMenuAction className="data-[state=open]:rotate-90">
                       <ChevronRight />
-                      <span className="sr-only">{t('sidebar.toggle')}</span>
+                      <span className="sr-only" suppressHydrationWarning>{t('sidebar.toggle')}</span>
                     </SidebarMenuAction>
                   </CollapsibleTrigger>
 

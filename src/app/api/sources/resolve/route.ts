@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { SourceFetcher } from '@/lib/sources/source-fetcher'
+import { devError } from '@/lib/utils/logger'
 
 export async function POST(request: NextRequest) {
     try {
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(results.sources[0])
     } catch (error) {
-        console.error('Source resolution error:', error)
+        devError('Source resolution error:', error)
         return NextResponse.json(
             { error: 'Failed to resolve identifier' },
             { status: 500 }

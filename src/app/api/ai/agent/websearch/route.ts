@@ -8,6 +8,7 @@ import { deepseek, DEEPSEEK_CHAT_MODEL } from '@/lib/ai/deepseek'
 import { WEBSEARCH_AGENT_PROMPT } from './prompts'
 import { createClient } from '@/lib/supabase/server'
 import { tavilySearch, tavilyCrawl, tavilyExtract } from '@tavily/ai-sdk'
+import { devLog, devError } from '@/lib/utils/logger'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      console.error('[WEBSEARCH AGENT] Nicht authentifiziert:', authError?.message)
+      devError('[WEBSEARCH AGENT] Nicht authentifiziert:', authError?.message)
       return NextResponse.json(
         { error: 'Nicht authentifiziert' },
         { status: 401 }
@@ -80,7 +81,7 @@ Der Nutzer hat folgende Dateien hochgeladen. Beziehe dich auf deren Inhalt, wenn
 
 ${fileSections.join('\n\n---\n\n')}`
         systemPrompt += fileContentSection
-        console.log('[WEBSEARCH AGENT] Datei-Content aktiviert:', { fileCount: fileContents.length })
+        devLog('[WEBSEARCH AGENT] Datei-Content aktiviert:', { fileCount: fileContents.length })
       }
     }
 
@@ -188,7 +189,7 @@ ${fileSections.join('\n\n---\n\n')}`
             } else if (event.type === 'finish') {
             } else if (event.type === 'error') {
               const errorMessage = 'error' in event ? String(event.error) : 'Unbekannter Fehler'
-              console.error(`❌ [WEBSEARCH STREAM] Agent-Fehler: ${errorMessage}`)
+              devError(`❌ [WEBSEARCH STREAM] Agent-Fehler: ${errorMessage}`)
               
               const errorMarker = `\n\n**Fehler:** Es ist ein Problem aufgetreten. Bitte versuche es erneut.\n`
               controller.enqueue(encoder.encode(errorMarker))
@@ -197,7 +198,7 @@ ${fileSections.join('\n\n---\n\n')}`
           
           controller.close()
         } catch (error) {
-          console.error('❌ [WEBSEARCH STREAM] Stream error:', error)
+          devError('❌ [WEBSEARCH STREAM] Stream error:', error)
           
           try {
             const errorMarker = `\n\n**Fehler:** Die Verarbeitung wurde unterbrochen. Bitte versuche es erneut.\n`
@@ -217,7 +218,7 @@ ${fileSections.join('\n\n---\n\n')}`
       },
     })
   } catch (error) {
-    console.error('[WEBSEARCH AGENT] Error:', error)
+    devError('[WEBSEARCH AGENT] Error:', error)
     return NextResponse.json({ error: 'Failed to process agent request' }, { status: 500 })
   }
 }

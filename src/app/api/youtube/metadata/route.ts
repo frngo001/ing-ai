@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CacheService } from '@/lib/cache/cache-service';
 import { requestDeduplicator } from '@/lib/cache/request-deduplicator';
+import { devWarn, devError } from '@/lib/utils/logger';
 
 interface YouTubeMetadata {
     title: string;
@@ -78,7 +79,7 @@ async function fetchYouTubeMetadata(urlOrId: string): Promise<YouTubeMetadata> {
                 }
             }
         } catch (error) {
-            console.warn('YouTube Data API error:', error);
+            devWarn('YouTube Data API error:', error);
             // Fallback: Dauer bleibt "N/A"
         }
     }
@@ -151,14 +152,14 @@ export async function POST(req: NextRequest) {
                     results.push(metadata);
                 }
             } catch (error) {
-                console.error(`Error processing video URL/ID: ${urlOrId}`, error);
+                devError(`Error processing video URL/ID: ${urlOrId}`, error);
                 // Überspringe ungültige URLs/IDs und fahre mit den nächsten fort
             }
         }
         
         return NextResponse.json({ videos: results });
     } catch (error) {
-        console.error('YouTube metadata API error:', error);
+        devError('YouTube metadata API error:', error);
         return NextResponse.json(
             { error: 'Failed to fetch YouTube metadata' },
             { status: 500 }

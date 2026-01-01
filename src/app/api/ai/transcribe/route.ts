@@ -1,5 +1,7 @@
 export const runtime = "edge"
 
+import { devError } from '@/lib/utils/logger'
+
 const PROVIDER_BASE_URL = (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com/v1").replace(/\/$/, "")
 const TRANSCRIPTION_PATH = process.env.DEEPSEEK_TRANSCRIPTION_PATH || "/audio/transcriptions"
 const TRANSCRIPTION_ENABLED = process.env.DEEPSEEK_TRANSCRIPTION_ENABLED === "true"
@@ -40,7 +42,7 @@ export async function POST(req: Request) {
 
     if (!providerResponse.ok) {
       const message = await safeReadError(providerResponse)
-      console.error("Transcription provider error:", message)
+      devError("Transcription provider error:", message)
       return new Response("Transkription fehlgeschlagen", { status: 502 })
     }
 
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
 
     return Response.json({ text: result.text })
   } catch (error) {
-    console.error("Transcription error:", error)
+    devError("Transcription error:", error)
     return new Response("Error processing transcription", { status: 500 })
   }
 }
@@ -61,7 +63,7 @@ async function safeReadError(res: Response) {
     const text = await res.text()
     return text.slice(0, 500)
   } catch (error) {
-    console.error("Failed to read provider error", error)
+    devError("Failed to read provider error", error)
     return "unknown error"
   }
 }

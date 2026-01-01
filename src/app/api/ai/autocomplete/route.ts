@@ -1,6 +1,7 @@
 import { deepseek, DEEPSEEK_CHAT_MODEL, DEFAULT_TEMPERATURE } from '@/lib/ai/deepseek'
 import { AUTOCOMPLETE_SYSTEM_PROMPT } from '@/lib/ai/prompts'
 import { streamText } from 'ai'
+import { devError } from '@/lib/utils/logger'
 
 export const runtime = 'edge'
 
@@ -35,7 +36,7 @@ Output limit: up to 800 tokens`
         })
         return result.toTextStreamResponse()
     } catch (error) {
-        console.error('Autocomplete error:', error)
+        devError('Autocomplete error:', error)
         return new Response('Error generating autocomplete', { status: 500 })
     }
 }
