@@ -6,9 +6,8 @@ import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { CookieConsent } from '@/components/cookie-consent'
 import { AnalyticsProvider } from '@/components/analytics-provider'
-import { cookies, headers } from 'next/headers'
 import { translations, type Language } from '@/lib/i18n/translations'
-import { getLanguageFromGeolocation } from '@/lib/geolocation/language'
+import { getLanguageForServer } from '@/lib/i18n/server-language'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -21,70 +20,11 @@ const geistMono = Geist_Mono({
 })
 
 /**
- * Ermittelt die Sprache für Metadaten basierend auf:
- * 1. Cookies (wenn vorhanden - gespeicherte Präferenz)
- * 2. Geolocation (IP-basierte Lokalisierung)
- * 3. Accept-Language Header (Browser-Präferenz)
- * 4. Fallback: 'de' (Deutsch)
- * 
-*/
+ * Ermittelt die Sprache für Metadaten.
+ * Verwendet die exakt gleiche Logik wie die Client-seitige Initialisierung.
+ */
 async function getLanguageForMetadata(): Promise<Language> {
-  const supportedLanguages = Object.keys(translations) as Language[]
-  const defaultLanguage: Language = 'de'
-
-  try {
-    // 1. Versuche zuerst, die Sprache aus Cookies zu lesen (gespeicherte Präferenz)
-    const cookieStore = await cookies()
-    const languageCookie = cookieStore.get('language-storage')
-    
-    if (languageCookie?.value) {
-      try {
-        const parsed = JSON.parse(languageCookie.value)
-        const lang = parsed?.state?.language
-        if (lang && supportedLanguages.includes(lang as Language)) {
-          return lang as Language
-        }
-      } catch {
-        // Cookie konnte nicht geparst werden, weiter mit Geolocation
-      }
-    }
-
-    // 2. Verwende Geolocation (IP-basierte Lokalisierung)
-    // Dies entspricht der Logik der Client-seitigen Initialisierung
-    const headersList = await headers()
-    try {
-      const geoLang = await getLanguageFromGeolocation(headersList)
-      if (geoLang && supportedLanguages.includes(geoLang)) {
-        return geoLang
-      }
-    } catch {
-      // Fehler bei Geolocation, weiter mit Accept-Language Header
-    }
-
-    // 3. Fallback: Accept-Language Header (Browser-Präferenz)
-    const acceptLanguage = headersList.get('accept-language')
-    
-    if (acceptLanguage) {
-      // Parse Accept-Language Header (z.B. "de-DE,de;q=0.9,en;q=0.8")
-      const languages = acceptLanguage
-        .split(',')
-        .map(lang => {
-          const [code] = lang.trim().split(';')
-          return code.split('-')[0].toLowerCase()
-        })
-
-      for (const lang of languages) {
-        if (supportedLanguages.includes(lang as Language)) {
-          return lang as Language
-        }
-      }
-    }
-  } catch {
-    // Fehler beim Ermitteln der Sprache - verwende Fallback
-  }
-
-  // 4. Finaler Fallback
-  return defaultLanguage
+  return await getLanguageForServer()
 }
 
 /**
