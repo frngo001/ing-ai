@@ -5,8 +5,9 @@ import {
   ChevronsDown,
   FileEdit, 
   Copy,
-  WandSparkles,
+  Check,
 } from 'lucide-react';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { Toolbar, ToolbarGroup } from '@/components/ui/toolbar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -42,14 +43,18 @@ export function ChatSelectionToolbar({
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
   
+  const { isCopied, handleCopy } = useCopyToClipboard({
+    text: selectedText,
+    withToast: false,
+  });
+  
   // Memoized translations
   const translations = React.useMemo(() => ({
     askInChat: t('askAi.askInChat'),
     addToEditor: t('askAi.addToEditor'),
     inEditor: t('askAi.inEditor'),
     copy: t('common.copy'),
-    editWithAI: t('askAi.editWithAI'),
-    withAI: t('askAi.withAI'),
+    copied: t('common.copied'),
   }), [t, language]);
 
   React.useEffect(() => {
@@ -228,9 +233,25 @@ export function ChatSelectionToolbar({
               <button
                 type="button"
                 onClick={() => {
-                  // TODO: Im Editor hinzufügen
-                  console.log('Im Editor hinzufügen:', selectedText);
-                  setShowToolbar(false);
+                  if (!selectedText.trim()) {
+                    setShowToolbar(false);
+                    return;
+                  }
+
+                  try {
+                    // Füge Text als neuen Block vor dem Quellenverzeichnis hinzu
+                    const insertEvent = new CustomEvent('insert-text-in-editor', {
+                      detail: {
+                        markdown: selectedText.trim(),
+                        position: 'before-bibliography',
+                      },
+                    });
+                    window.dispatchEvent(insertEvent);
+                    setShowToolbar(false);
+                  } catch (error) {
+                    console.error('Fehler beim Hinzufügen zum Editor:', error);
+                    setShowToolbar(false);
+                  }
                 }}
                 onMouseDown={(e) => e.preventDefault()}
                 className="inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none transition-[color,box-shadow] hover:bg-muted hover:text-muted-foreground focus-visible:border-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 h-8 min-w-8 px-2 bg-transparent"
@@ -247,37 +268,32 @@ export function ChatSelectionToolbar({
               <button
                 type="button"
                 onClick={() => {
-                  // TODO: Kopieren
-                  navigator.clipboard.writeText(selectedText);
-                  setShowToolbar(false);
+                  if (!selectedText.trim()) {
+                    return;
+                  }
+                  handleCopy();
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                className="inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none transition-[color,box-shadow] hover:bg-muted hover:text-muted-foreground focus-visible:border-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 h-8 min-w-8 px-2 bg-transparent"
-                aria-label={translations.copy}
+                className="relative inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none transition-[color,box-shadow] hover:bg-muted hover:text-muted-foreground focus-visible:border-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 h-8 min-w-8 px-2 bg-transparent"
+                aria-label={isCopied ? translations.copied : translations.copy}
               >
-                <Copy className="size-4" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Check
+                    className={cn(
+                      "size-4 transition-transform ease-in-out",
+                      isCopied ? "scale-100" : "scale-0"
+                    )}
+                  />
+                </div>
+                <Copy
+                  className={cn(
+                    "size-4 transition-transform ease-in-out",
+                    isCopied ? "scale-0" : "scale-100"
+                  )}
+                />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{translations.copy}</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => {
-                  // TODO: Mit AI bearbeiten
-                  console.log('Mit AI bearbeiten:', selectedText);
-                  setShowToolbar(false);
-                }}
-                onMouseDown={(e) => e.preventDefault()}
-                className="inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none transition-[color,box-shadow] hover:bg-muted hover:text-muted-foreground focus-visible:border-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 h-8 min-w-8 px-2 bg-transparent"
-                aria-label={translations.editWithAI}
-              >
-                <WandSparkles className="size-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{translations.editWithAI}</TooltipContent>
+            <TooltipContent side="bottom">{isCopied ? translations.copied : translations.copy}</TooltipContent>
           </Tooltip>
         </ToolbarGroup>
       </Toolbar>

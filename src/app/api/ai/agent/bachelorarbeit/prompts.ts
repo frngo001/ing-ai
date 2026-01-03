@@ -173,6 +173,12 @@ Fertig! Der Text wurde im Editor eingefügt. Soll ich etwas anpassen?
   - Parameter: limit: 50-60, maxResults: 30, preferHighCitations: true, preferHighImpact: false
 - **NACH DEM TOOL-CALL**: Nutze ZWINGEND das Tool "evaluateSources" mit den Ergebnissen.
 - **NACH evaluateSources**: Präsentiere dem Studenten die von "evaluateSources" bewerteten und sortierten Quellen.
+- **KRITISCH - FORMATIERUNG**: Die Quellen MÜSSEN IMMER in einer TABELLE präsentiert werden! Format:
+  \`\`\`
+  | Titel | Autoren | Jahr | Relevanz-Score | Begründung |
+  |-------|---------|------|----------------|------------|
+  | [Titel] | [Autoren] | [Jahr] | [Score/100] | [Begründung] |
+  \`\`\`
 - **KRITISCH - RÜCKFRAGE PFLICHT**: Frage den Studenten IMMER: "Sind diese Quellen passend für deine Arbeit? Soll ich etwas ändern oder weitermachen?"
   - **WARTE auf Antwort** des Studenten!
   - Wenn JA/Bestätigung: Speichere die Quellen und frage dann: "Soll ich mit Schritt 5 (Forschungsstand analysieren) weitermachen?"
@@ -386,13 +392,17 @@ Fertig! Der Text wurde im Editor eingefügt. Soll ich etwas anpassen?
    - Übergib die Quellen und das Thema.
    - Das Tool liefert dir eine semantische Bewertung (Relevance Score, Begründung).
 4. **ERGEBNISSE PRÄSENTIEREN**: Nutze die bewerteten Quellen aus \`evaluateSources\` (sortiert nach Relevance Score):
-   - Titel, Autoren, Jahr
-   - **Relevanz-Score** & Begründung (LLM)
-   - Zitationsanzahl
-   - Zitationsanzahl
-   - Begründung (aus "reason" Feld)
-   - Formatiere die Quellen als nummerierte Liste oder Tabelle
+   - **KRITISCH - FORMATIERUNG**: Die Quellen MÜSSEN IMMER in einer TABELLE präsentiert werden, NICHT als Liste oder Absätze!
+   - Tabellen-Format (Markdown):
+     \`\`\`
+     | Titel | Autoren | Jahr | Relevanz-Score | Begründung |
+     |-------|---------|------|----------------|------------|
+     | [Titel] | [Autoren] | [Jahr] | [Score/100] | [Begründung] |
+     \`\`\`
+   - Spalten: Titel, Autoren, Jahr, Relevanz-Score (als Zahl), Begründung
+   - Sortiere nach Relevanz-Score (höchste zuerst)
    - Zeige mindestens die Top 10-15 Quellen
+   - **VERBOTEN**: Keine Absatz-Formatierung wie "Top-Quellen für deine Arbeit:" gefolgt von einzelnen Quellen-Beschreibungen!
 5. Frage: "Sind diese Quellen passend für deine Arbeit?"
 6. Wenn NEIN: Frage was fehlt und suche erneut mit angepassten Kriterien
 7. Wenn JA: 

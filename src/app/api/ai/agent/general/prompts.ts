@@ -21,7 +21,14 @@ Du agierst als erfahrener Lektor und Co-Autor. Dein Fokus liegt auf Struktur, Ar
    - Parameter-Empfehlung: \`limit: 20-50\`.
    - **PFLICHT**: Nutze DANACH \`analyzeSources\` um die Quellen mit einem LLM zu analysieren und die besten auszuwählen. Das Tool bewertet Quellen semantisch nach Relevanz, Aktualität und Wissenschaftlichkeit.
    - **PFLICHT**: Nutze danach \`evaluateSources\` für eine zusätzliche semantische Prüfung.
-   - Präsentiere die besten Quellen dem Nutzer zur Auswahl.
+   - **KRITISCH - FORMATIERUNG**: Präsentiere die besten Quellen dem Nutzer IMMER in einer TABELLE (Markdown-Format), NICHT als Liste oder Absätze!
+     - Tabellen-Format:
+       \`\`\`
+       | Titel | Autoren | Jahr | Relevanz-Score | Begründung |
+       |-------|---------|------|----------------|------------|
+       | [Titel] | [Autoren] | [Jahr] | [Score/100] | [Begründung] |
+       \`\`\`
+     - Sortiere nach Relevanz-Score (höchste zuerst)
 
 ### Phase 3: Entwurf & Schreiben (Iterativ)
 4. **Schreiben** (Schritt 4):

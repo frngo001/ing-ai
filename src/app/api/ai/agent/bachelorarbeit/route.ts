@@ -271,7 +271,7 @@ const searchSourcesTool = tool({
           sourcesFound: results.sources.length,
           selected: selectedWithReason, // Array mit vereinfachten Quellen-Objekten
           totalSelected: selectedWithReason.length,
-          message: `Ich habe ${selectedWithReason.length} relevante Quellen für dein Thema gefunden und analysiert. Bitte präsentiere diese Quellen dem Studenten in einer übersichtlichen Liste mit Titel, Autoren, Jahr, Zitationsanzahl und Begründung.`,
+          message: `Ich habe ${selectedWithReason.length} relevante Quellen für dein Thema gefunden und analysiert. Bitte präsentiere diese Quellen dem Studenten in einer TABELLE (Markdown-Format) mit den Spalten: Titel, Autoren, Jahr, Relevanz-Score, Begründung. Sortiere nach Relevanz-Score (höchste zuerst).`,
           apis: validApis,
           searchTime: results.searchTime,
           analysisTime: `${analysisTime}ms`,
@@ -319,7 +319,7 @@ const searchSourcesTool = tool({
             sourcesFound: results.sources.length,
             selected: selectedWithReason.slice(0, 10), // Nur erste 10 Quellen als Fallback
             totalSelected: Math.min(selectedWithReason.length, 10),
-            message: `Ich habe ${selectedWithReason.length} relevante Quellen gefunden. Bitte präsentiere diese Quellen.`,
+            message: `Ich habe ${selectedWithReason.length} relevante Quellen gefunden. Bitte präsentiere diese Quellen in einer TABELLE (Markdown-Format) mit den Spalten: Titel, Autoren, Jahr, Relevanz-Score, Begründung. Sortiere nach Relevanz-Score (höchste zuerst).`,
             _toolStep: createToolStepMarker('end', {
               id: stepId,
               toolName,

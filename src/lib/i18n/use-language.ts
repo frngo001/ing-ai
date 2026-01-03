@@ -99,6 +99,14 @@ export const useLanguage = create<LanguageState>()(
             setLanguage: (lang) => {
                 set({ language: lang })
 
+                // Speichere Sprache auch in Cookies für server-seitige Metadaten
+                try {
+                    const state = { state: { language: lang } }
+                    document.cookie = `language-storage=${JSON.stringify(state)}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`
+                } catch (error) {
+                    console.warn('Fehler beim Speichern der Sprache in Cookies:', error)
+                }
+
                 // Asynchron in Supabase speichern
                 getCurrentUserId().then((userId) => {
                     if (userId) {
@@ -118,24 +126,53 @@ export const useLanguage = create<LanguageState>()(
                         // Kein User: Verwende Geolocation-basierte Sprache
                         const geoLang = await getLanguageFromGeolocation()
                         set({ language: geoLang, isInitialized: true })
+                        // Speichere Sprache auch in Cookies
+                        try {
+                            const state = { state: { language: geoLang } }
+                            document.cookie = `language-storage=${JSON.stringify(state)}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`
+                        } catch (error) {
+                            console.warn('Fehler beim Speichern der Sprache in Cookies:', error)
+                        }
                         return
                     }
 
                     const prefs = await getUserPreferences(userId)
 
                     if (prefs?.language && isValidLanguage(prefs.language)) {
-                        set({ language: prefs.language, isInitialized: true })
+                        const lang = prefs.language
+                        set({ language: lang, isInitialized: true })
+                        // Speichere Sprache auch in Cookies
+                        try {
+                            const state = { state: { language: lang } }
+                            document.cookie = `language-storage=${JSON.stringify(state)}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`
+                        } catch (error) {
+                            console.warn('Fehler beim Speichern der Sprache in Cookies:', error)
+                        }
                     } else {
                         // Keine Präferenzen: Ermittle Sprache basierend auf Geolocation
                         const geoLang = await getLanguageFromGeolocation()
                         await ensureUserPreferencesExist(userId, geoLang)
                         set({ language: geoLang, isInitialized: true })
+                        // Speichere Sprache auch in Cookies
+                        try {
+                            const state = { state: { language: geoLang } }
+                            document.cookie = `language-storage=${JSON.stringify(state)}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`
+                        } catch (error) {
+                            console.warn('Fehler beim Speichern der Sprache in Cookies:', error)
+                        }
                     }
                 } catch (error) {
                     console.warn('Fehler beim Laden der Sprache aus Supabase:', error)
                     // Fallback auf Geolocation-basierte Sprache
                     const geoLang = await getLanguageFromGeolocation()
                     set({ language: geoLang, isInitialized: true })
+                    // Speichere Sprache auch in Cookies
+                    try {
+                        const state = { state: { language: geoLang } }
+                        document.cookie = `language-storage=${JSON.stringify(state)}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`
+                    } catch (error) {
+                        console.warn('Fehler beim Speichern der Sprache in Cookies:', error)
+                    }
                 }
             },
 

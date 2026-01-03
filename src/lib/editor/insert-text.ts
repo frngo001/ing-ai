@@ -4,6 +4,7 @@
 
 import type { PlateEditor } from 'platejs/react'
 import { MarkdownPlugin } from '@platejs/markdown'
+import { toast } from 'sonner'
 
 /**
  * Fügt Markdown-Text am Ende des Editors ein
@@ -12,7 +13,7 @@ import { MarkdownPlugin } from '@platejs/markdown'
 export function insertMarkdownText(
   editor: PlateEditor,
   markdown: string,
-  position: 'start' | 'end' | 'current' = 'end'
+  position: 'start' | 'end' | 'current' | 'before-bibliography' = 'end'
 ): void {
   if (!markdown || typeof markdown !== 'string') {
     console.warn('⚠️ [EDITOR] Kein Markdown-Text zum Einfügen')
@@ -28,34 +29,41 @@ export function insertMarkdownText(
       return
     }
 
-    console.log('📝 [EDITOR] Füge Text ein:', {
-      markdownLength: markdown.length,
-      nodesCount: nodes.length,
-      position,
-      headingCount: (markdown.match(/^#+\s/gm) || []).length,
-    })
-
-    // Füge Nodes basierend auf Position ein
     if (position === 'start') {
-      // Am Anfang einfügen
       editor.tf.insertNodes(nodes, { at: [0], select: false })
     } else if (position === 'current') {
-      // An aktueller Position einfügen
       const selection = editor.selection
       if (selection) {
         editor.tf.insertNodes(nodes, { at: selection.anchor.path, select: false })
       } else {
-        // Fallback: Am Ende einfügen
         const endPath = editor.api.end([])
         if (endPath) {
           editor.tf.insertNodes(nodes, { at: endPath.path, select: false })
         }
       }
+    } else if (position === 'before-bibliography') {
+      let bibliographyPath: number[] | null = null
+      for (let i = 0; i < editor.children.length; i++) {
+        const child = editor.children[i] as any
+        if (child && child.bibliography === true) {
+          bibliographyPath = [i]
+          break
+        }
+      }
+
+      if (bibliographyPath) {
+        editor.tf.insertNodes(nodes, { at: bibliographyPath, select: false })
+      } else {
+        const endPath = editor.api.end([])
+        if (endPath) {
+          editor.tf.insertNodes(nodes, { at: endPath.path, select: false })
+        } else {
+          editor.tf.insertNodes(nodes, { at: [0], select: false })
+        }
+      }
     } else {
-      // Am Ende einfügen (Standard)
       const endPath = editor.api.end([])
       if (endPath) {
-        // Füge einen leeren Paragraph vorher ein, wenn nötig
         const lastNodeEntry = editor.api.node(endPath.path)
         const lastNode = lastNodeEntry ? lastNodeEntry[0] : null
         if (lastNode && 'type' in lastNode && lastNode.type !== 'p') {
@@ -64,16 +72,13 @@ export function insertMarkdownText(
             { at: endPath.path, select: false }
           )
         }
-        // Füge die Nodes ein
         const insertPath = endPath.path
         editor.tf.insertNodes(nodes, { at: insertPath, select: false })
       } else {
-        // Fallback: Am Anfang einfügen
         editor.tf.insertNodes(nodes, { at: [0], select: false })
       }
     }
-
-    console.log('✅ [EDITOR] Text erfolgreich eingefügt')
+  toast.success('Text erfolgreich eingefügt')
   } catch (error) {
     console.error('❌ [EDITOR] Fehler beim Einfügen von Text:', error)
   }
@@ -86,18 +91,9 @@ export function insertMarkdownText(
 export function setupEditorTextInsertion(): void {
   if (typeof window === 'undefined') return
 
-  // Event-Listener für Editor-Text-Einfügung
   window.addEventListener('insert-text-in-editor', async (event: any) => {
-    const { markdown, position, focusOnHeadings } = event.detail
+    const { markdown, position } = event.detail
 
-    console.log('📝 [EDITOR] Event empfangen:', {
-      markdownLength: markdown?.length,
-      position,
-      focusOnHeadings,
-    })
-
-    // Warte auf Editor-Initialisierung
-    // Der Editor wird über ein Custom Event verfügbar gemacht
     const editorEvent = new CustomEvent('get-editor-instance', {
       detail: { callback: (editor: PlateEditor) => {
         if (editor) {

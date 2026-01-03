@@ -1,5 +1,9 @@
 export const translations = {
     en: {
+        metadata: {
+            title: 'Ing AI - AI-Powered Writing Assistant',
+            description: 'Ing AI is your AI co-pilot for academic writing and research. Get intelligent suggestions, manage citations, and write with confidence.',
+        },
         common: {
             save: 'Save',
             cancel: 'Cancel',
@@ -1519,6 +1523,10 @@ export const translations = {
         },
     },
     es: {
+        metadata: {
+            title: 'Ing AI - Asistente de Escritura con IA',
+            description: 'Ing AI es tu co-piloto de IA para la escritura académica y la investigación. Obtén sugerencias inteligentes, gestiona citas y escribe con confianza.',
+        },
         common: {
             save: 'Guardar',
             cancel: 'Cancelar',
@@ -3038,6 +3046,10 @@ export const translations = {
         },
     },
     fr: {
+        metadata: {
+            title: 'Ing AI - Assistant d\'écriture alimenté par l\'IA',
+            description: 'Ing AI est votre co-pilote IA pour l\'écriture académique et la recherche. Obtenez des suggestions intelligentes, gérez les citations et écrivez en toute confiance.',
+        },
         common: {
             save: 'Enregistrer',
             cancel: 'Annuler',
@@ -4557,6 +4569,10 @@ export const translations = {
         },
     },
     de: {
+        metadata: {
+            title: 'Ing AI - KI-gestützter Schreibassistent',
+            description: 'Ing AI ist dein KI-Co-Pilot für wissenschaftliches Schreiben und Forschung. Erhalte intelligente Vorschläge, verwalte Zitate und schreibe mit Selbstvertrauen.',
+        },
         common: {
             save: 'Speichern',
             cancel: 'Abbrechen',

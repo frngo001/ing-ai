@@ -6,6 +6,8 @@ import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { CookieConsent } from '@/components/cookie-consent'
 import { AnalyticsProvider } from '@/components/analytics-provider'
+import { cookies, headers } from 'next/headers'
+import { translations, type Language } from '@/lib/i18n/translations'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -17,23 +19,83 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-export const metadata: Metadata = {
-  title: 'Ing AI - KI-gestützter Schreibassistent',
-  description:
-    'Ing AI ist dein KI-Co-Pilot für wissenschaftliches Schreiben und Forschung. Erhalte intelligente Vorschläge, verwalte Zitate und schreibe mit Selbstvertrauen.',
-  icons: {
-    icon: '/logos/logosApp/ing_AI.png',
-    apple: '/logos/logosApp/ing_AI.png',
-  },
+/**
+ * Ermittelt die Sprache für Metadaten basierend auf Cookies oder Accept-Language Header.
+ * Falls keine Sprache gefunden wird, wird 'de' als Fallback verwendet.
+ */
+async function getLanguageForMetadata(): Promise<Language> {
+  const supportedLanguages = Object.keys(translations) as Language[]
+  const defaultLanguage: Language = 'de'
+
+  try {
+    // Versuche zuerst, die Sprache aus Cookies zu lesen
+    const cookieStore = await cookies()
+    const languageCookie = cookieStore.get('language-storage')
+    
+    if (languageCookie?.value) {
+      try {
+        const parsed = JSON.parse(languageCookie.value)
+        const lang = parsed?.state?.language
+        if (lang && supportedLanguages.includes(lang as Language)) {
+          return lang as Language
+        }
+      } catch {
+        // Cookie konnte nicht geparst werden, weiter mit Header
+      }
+    }
+
+    // Fallback: Accept-Language Header
+    const headersList = await headers()
+    const acceptLanguage = headersList.get('accept-language')
+    
+    if (acceptLanguage) {
+      // Parse Accept-Language Header (z.B. "de-DE,de;q=0.9,en;q=0.8")
+      const languages = acceptLanguage
+        .split(',')
+        .map(lang => {
+          const [code] = lang.trim().split(';')
+          return code.split('-')[0].toLowerCase()
+        })
+
+      for (const lang of languages) {
+        if (supportedLanguages.includes(lang as Language)) {
+          return lang as Language
+        }
+      }
+    }
+  } catch {
+    // Fehler beim Ermitteln der Sprache - verwende Fallback
+  }
+
+  return defaultLanguage
 }
 
-export default function RootLayout({
+/**
+ * Generiert Metadaten basierend auf der aktuellen Sprache.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const language = await getLanguageForMetadata()
+  const t = translations[language]?.metadata || translations.de.metadata
+
+  return {
+    title: t.title,
+    description: t.description,
+    icons: {
+      icon: '/logos/logosApp/ing_AI.png',
+      apple: '/logos/logosApp/ing_AI.png',
+    },
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const language = await getLanguageForMetadata()
+  
   return (
-    <html lang="de" suppressHydrationWarning>
+    <html lang={language} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
