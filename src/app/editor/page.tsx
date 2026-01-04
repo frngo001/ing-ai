@@ -49,13 +49,12 @@ export default function Page() {
     setupEditorStreaming()
   }, [])
 
-  // Zeige Loading während Auth-Check oder wenn nicht authentifiziert
   if (isAuthenticated === null || isAuthenticated === false) {
     return <EditorLoading />
   }
 
   const askAiPaneTransition =
-    "absolute inset-0 overflow-hidden transition-all duration-300 ease-out data-[pane-state=open]:w-full data-[pane-state=closed]:w-0 data-[pane-state=closed]:min-w-0 data-[pane-state=open]:opacity-100 data-[pane-state=closed]:opacity-0 data-[pane-state=closed]:pointer-events-none data-[pane-state=open]:animate-in data-[pane-state=open]:fade-in data-[pane-state=open]:slide-in-from-left-52 data-[pane-state=open]:zoom-in-95 data-[pane-state=closed]:animate-out data-[pane-state=closed]:fade-out data-[pane-state=closed]:slide-out-to-left-52 data-[pane-state=closed]:zoom-out-95"
+    "absolute inset-0 overflow-hidden data-[pane-state=open]:w-full data-[pane-state=closed]:w-0 data-[pane-state=closed]:min-w-0 data-[pane-state=closed]:pointer-events-none"
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -309,7 +308,7 @@ function PageContent({
         <div className="flex flex-1 overflow-hidden pt-0 pb-0">
           <div
             data-pane-state={showDocuments ? "open" : "closed"}
-            className="shrink-0 h-screen overflow-hidden transition-all duration-300 ease-out data-[pane-state=open]:w-[300px] data-[pane-state=closed]:w-0 data-[pane-state=open]:opacity-100 data-[pane-state=closed]:opacity-0 data-[pane-state=closed]:pointer-events-none data-[pane-state=open]:animate-in data-[pane-state=open]:fade-in data-[pane-state=open]:slide-in-from-left-52 data-[pane-state=open]:zoom-in-95 data-[pane-state=closed]:animate-out data-[pane-state=closed]:fade-out data-[pane-state=closed]:slide-out-to-left-52 data-[pane-state=closed]:zoom-out-95"
+            className="shrink-0 h-screen overflow-hidden data-[pane-state=open]:w-[300px] data-[pane-state=closed]:w-0 data-[pane-state=closed]:pointer-events-none"
           >
             <DocumentsPane
               className="h-full"
@@ -319,7 +318,7 @@ function PageContent({
 
           <div
             data-pane-state={showLibrary ? "open" : "closed"}
-            className="shrink-0 h-screen overflow-hidden transition-all duration-300 ease-out data-[pane-state=open]:w-[300px] data-[pane-state=closed]:w-0 data-[pane-state=open]:opacity-100 data-[pane-state=closed]:opacity-0 data-[pane-state=closed]:pointer-events-none data-[pane-state=open]:animate-in data-[pane-state=open]:fade-in data-[pane-state=open]:slide-in-from-left-52 data-[pane-state=open]:zoom-in-95 data-[pane-state=closed]:animate-out data-[pane-state=closed]:fade-out data-[pane-state=closed]:slide-out-to-left-52 data-[pane-state=closed]:zoom-out-95"
+            className="shrink-0 h-screen overflow-hidden data-[pane-state=open]:w-[300px] data-[pane-state=closed]:w-0 data-[pane-state=closed]:pointer-events-none"
           >
             <LibraryPane
               className="h-full"
