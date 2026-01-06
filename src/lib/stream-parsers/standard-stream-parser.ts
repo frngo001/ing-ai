@@ -62,9 +62,6 @@ export async function parseStandardStream(
   let fullText = ""
   let buffer = ""
   let toolResultProcessed = false
-  let isStreamingToEditor = false
-  let streamStartIndex = -1
-  let dispatchedStreamLength = 0
   let toolInvocations: any[] = []
   let reasoning: string | undefined = undefined
   let parts: MessagePart[] = []
@@ -302,44 +299,8 @@ export async function parseStandardStream(
     }
   }
 
-  // Editor-Stream Handling
-  if (!isStreamingToEditor) {
-    const startMarker = "[START_EDITOR_STREAM]"
-    const startIdx = fullText.lastIndexOf(startMarker)
-    if (startIdx !== -1 && startIdx >= streamStartIndex) {
-      isStreamingToEditor = true
-      streamStartIndex = startIdx + startMarker.length
-      dispatchedStreamLength = 0
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('init-editor-stream'))
-      }
-    }
-  }
-
-  if (isStreamingToEditor) {
-    const endMarker = "[END_EDITOR_STREAM]"
-    const endIdx = fullText.indexOf(endMarker, streamStartIndex)
-    const currentStreamContent = fullText.substring(streamStartIndex, endIdx !== -1 ? endIdx : fullText.length)
-
-    if (currentStreamContent.length > dispatchedStreamLength) {
-      const newContent = currentStreamContent.substring(dispatchedStreamLength)
-      if (typeof window !== 'undefined' && newContent.length > 0) {
-        window.dispatchEvent(
-          new CustomEvent('stream-editor-chunk', {
-            detail: { chunk: newContent },
-          })
-        )
-      }
-      dispatchedStreamLength = currentStreamContent.length
-    }
-
-    if (endIdx !== -1) {
-      isStreamingToEditor = false
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('end-editor-stream'))
-      }
-    }
-  }
+  // Editor-Streaming wurde entfernt - wird nicht mehr verwendet
+  // Der Agent verwendet jetzt nur noch das insertTextInEditor Tool
 
   // Parse REASONING Marker
   const reasoningMatch = buffer.match(/\[REASONING:([^\]]+)\]/)
@@ -411,7 +372,6 @@ export async function parseStandardStream(
     .replace(/\[REASONING:[^\]]+\]/g, '')
     .replace(/\[WEB_SEARCH_SOURCES:[^\]]+\]/g, '')
     .replace(/\[TOOL_INVOCATIONS:[^\]]+\]/g, '')
-    .replace(/\[START_EDITOR_STREAM\][\s\S]*?(\[END_EDITOR_STREAM\]|$)/g, '*(Schreibe in Editor...)*')
     .trim()
 
   // Update parts: füge text und reasoning hinzu
@@ -499,7 +459,6 @@ export async function parseStandardStream(
     .replace(/\[REASONING:[^\]]+\]/g, '')
     .replace(/\[WEB_SEARCH_SOURCES:[^\]]+\]/g, '')
     .replace(/\[TOOL_INVOCATIONS:[^\]]+\]/g, '')
-    .replace(/\[START_EDITOR_STREAM\][\s\S]*?(\[END_EDITOR_STREAM\]|$)/g, '*(Schreibe in Editor...)*')
     .trim()
 
   const finalUpdatedParts: MessagePart[] = []

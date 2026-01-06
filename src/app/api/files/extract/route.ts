@@ -12,11 +12,17 @@ const MAX_CONTENT_LENGTH = 50000 // 50.000 Zeichen
  */
 async function extractDOCXContent(file: File): Promise<string> {
   try {
-    const mammoth = await import('mammoth')
+    const mammothModule = await import('mammoth')
+    // mammoth kann als default export oder direkt exportiert sein
+    const mammoth = (mammothModule as any).default || mammothModule
+    if (!mammoth || typeof mammoth.extractRawText !== 'function') {
+      throw new Error('mammoth Modul konnte nicht korrekt geladen werden')
+    }
+    
     const arrayBuffer = await file.arrayBuffer()
     // mammoth erwartet 'buffer' nicht 'arrayBuffer'
     const buffer = Buffer.from(arrayBuffer)
-    const result = await mammoth.default.extractRawText({ buffer })
+    const result = await mammoth.extractRawText({ buffer })
     const text = result.value || ''
     devLog(`[DOCX EXTRACT] Text extrahiert: ${text.length} Zeichen`)
     if (text.length > 0) {
@@ -36,17 +42,29 @@ async function extractDOCXContent(file: File): Promise<string> {
  */
 async function extractXLSXContent(file: File): Promise<string> {
   try {
-    const XLSX = await import('xlsx')
+    const xlsxModule = await import('xlsx')
+    // xlsx kann als default export oder direkt exportiert sein
+    const XLSX = (xlsxModule as any).default || xlsxModule
+    if (!XLSX || typeof XLSX.read !== 'function') {
+      throw new Error('xlsx Modul konnte nicht korrekt geladen werden')
+    }
+    
     const arrayBuffer = await file.arrayBuffer()
-    const workbook = XLSX.default.read(arrayBuffer, { type: 'array' })
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+    
+    if (!workbook || !workbook.SheetNames || !workbook.Sheets) {
+      throw new Error('Excel-Datei konnte nicht gelesen werden')
+    }
     
     // Extrahiere Text aus allen Sheets
     const textParts: string[] = []
-    workbook.SheetNames.forEach((sheetName) => {
+    workbook.SheetNames.forEach((sheetName: string) => {
       const worksheet = workbook.Sheets[sheetName]
-      const sheetData = XLSX.default.utils.sheet_to_txt(worksheet)
-      if (sheetData) {
-        textParts.push(`Sheet: ${sheetName}\n${sheetData}`)
+      if (worksheet && XLSX.utils && typeof XLSX.utils.sheet_to_txt === 'function') {
+        const sheetData = XLSX.utils.sheet_to_txt(worksheet)
+        if (sheetData) {
+          textParts.push(`Sheet: ${sheetName}\n${sheetData}`)
+        }
       }
     })
     
@@ -99,6 +117,10 @@ async function extractPDFContent(file: File): Promise<string> {
     const PDFParserModule = await import('pdf2json')
     // pdf2json exportiert PDFParser als default export
     const PDFParser = (PDFParserModule as any).default || PDFParserModule.PDFParser
+    if (!PDFParser || typeof PDFParser !== 'function') {
+      throw new Error('pdf2json Modul konnte nicht korrekt geladen werden')
+    }
+    
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     

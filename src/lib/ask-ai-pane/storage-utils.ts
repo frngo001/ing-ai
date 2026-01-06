@@ -162,11 +162,14 @@ export const persistConversation = async (msgs: ChatMessage[], id: string, setHi
         }, userId)
       }
 
-      // Lösche alte Messages und erstelle neue
-      await chatMessagesUtils.deleteChatMessagesByConversation(id)
-      
+      // Sichere Strategie: Erstelle zuerst neue Messages, dann lösche alte
+      // Dies verhindert Datenverlust bei Fehlern während des Deployments
       if (msgs.length > 0) {
-        await chatMessagesUtils.createChatMessages(
+        // Hole bestehende Messages VOR dem Erstellen (als Backup)
+        const existingMessagesBefore = await chatMessagesUtils.getChatMessages(id)
+        
+        // Erstelle neue Messages zuerst (bekommen neue UUIDs)
+        const createdMessages = await chatMessagesUtils.createChatMessages(
           msgs.map(msg => ({
             conversation_id: id,
             role: msg.role,
@@ -179,6 +182,20 @@ export const persistConversation = async (msgs: ChatMessage[], id: string, setHi
             context: msg.context || [],
           }))
         )
+        
+        // Lösche nur Messages, die vor dem Erstellen existierten
+        // Die neuen Messages haben neue UUIDs und sind daher nicht in existingMessageIds
+        for (const oldMessage of existingMessagesBefore) {
+          try {
+            await chatMessagesUtils.deleteChatMessage(oldMessage.id)
+          } catch (deleteError) {
+            // Logge Fehler, aber breche nicht ab - neue Messages sind bereits erstellt
+            console.warn(`[STORAGE] Konnte alte Message ${oldMessage.id} nicht löschen:`, deleteError)
+          }
+        }
+      } else {
+        // Wenn keine Messages vorhanden sind, lösche alle
+        await chatMessagesUtils.deleteChatMessagesByConversation(id)
       }
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Speichern der Conversation:', error)

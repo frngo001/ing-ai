@@ -323,10 +323,19 @@ export const createHandlers = (deps: HandlerDependencies) => {
                   })
 
                   if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}))
-                    throw new Error(
-                      errorData.error || `Fehler beim Extrahieren von ${file.name}`
-                    )
+                    let errorMessage = `Fehler beim Extrahieren von ${file.name}`
+                    try {
+                      const errorData = await response.json()
+                      if (errorData && typeof errorData.error === 'string') {
+                        errorMessage = errorData.error
+                      } else if (typeof errorData === 'string') {
+                        errorMessage = errorData
+                      }
+                    } catch (parseError) {
+                      // Falls JSON-Parsing fehlschlägt, verwende Status-Text
+                      errorMessage = `Fehler ${response.status}: ${response.statusText || errorMessage}`
+                    }
+                    throw new Error(errorMessage)
                   }
 
                   const data = await response.json()
