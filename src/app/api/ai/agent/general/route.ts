@@ -611,6 +611,32 @@ const saveStepDataTool = tool({
     },
 })
 
+// Tool: Thema setzen
+const addThemaTool = tool({
+    description: 'Setzt das Thema der Arbeit. Nutze dies, wenn der Nutzer das Thema angibt oder wenn du es aus der Konversation ableiten kannst.',
+    inputSchema: z.object({
+        thema: z.string().describe('Das Thema der Arbeit (z.B. "Künstliche Intelligenz im Gesundheitswesen")'),
+    }),
+    execute: async ({ thema }) => {
+        const toolResult = {
+            type: 'tool-result',
+            toolName: 'addThema',
+            thema,
+        }
+        const jsonString = JSON.stringify(toolResult)
+        const base64Payload = Buffer.from(jsonString).toString('base64')
+        
+        const response = {
+            success: true,
+            message: `Thema "${thema}" wurde gesetzt`,
+            thema,
+            // Base64-kodiertes Result für Client-Verarbeitung
+            encodedResult: `[TOOL_RESULT_B64:${base64Payload}]`,
+        }
+        return response
+    },
+})
+
 const getCurrentStepTool = tool({
     description: 'Ruft den aktuellen Schritt ab',
     inputSchema: z.object({ _placeholder: z.string().optional() }),
@@ -804,6 +830,7 @@ ${truncatedContent}
             model,
             system: systemPrompt,
             tools: {
+                addThema: addThemaTool,
                 searchSources: searchSourcesTool,
                 analyzeSources: analyzeSourcesTool,
                 evaluateSources: evaluateSourcesTool,

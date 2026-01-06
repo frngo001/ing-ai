@@ -17,11 +17,13 @@ export function setupEditorStreaming(): void {
 
     // Listener für Streaming-Start (optional, z.B. für Fokus oder Initialisierung)
     window.addEventListener('init-editor-stream', () => {
+        console.log('📝 [EDITOR STREAM] init-editor-stream Event empfangen')
         // Hole Editor-Instanz
         const editorEvent = new CustomEvent('get-editor-instance', {
             detail: {
                 callback: (editor: PlateEditor) => {
                     if (editor) {
+                        console.log('✅ [EDITOR STREAM] Editor-Instance erhalten, setze Fokus')
                         // Stelle sicher, dass der Editor fokussiert ist
                         if (!editor.selection) {
                             const endPath = editor.api.end([])
@@ -29,6 +31,8 @@ export function setupEditorStreaming(): void {
                                 editor.tf.select(endPath)
                             }
                         }
+                    } else {
+                        console.warn('⚠️ [EDITOR STREAM] Kein Editor-Instance verfügbar beim Init')
                     }
                 }
             },
@@ -39,12 +43,18 @@ export function setupEditorStreaming(): void {
     // Listener für Text-Chunks
     window.addEventListener('stream-editor-chunk', (event: any) => {
         const { chunk } = event.detail
-        if (!chunk) return
+        console.log('📝 [EDITOR STREAM] stream-editor-chunk Event empfangen, Chunk-Länge:', chunk?.length)
+        
+        if (!chunk) {
+            console.warn('⚠️ [EDITOR STREAM] Kein Chunk im Event')
+            return
+        }
 
         const editorEvent = new CustomEvent('get-editor-instance', {
             detail: {
                 callback: (editor: PlateEditor) => {
                     if (editor) {
+                        console.log('✅ [EDITOR STREAM] Editor-Instance erhalten, füge Chunk ein')
                         // Verwende PlateJS High-Level Streaming Funktionen
                         // Dies entspricht der Logic in Command AI (ai-kit.tsx)
 
@@ -62,6 +72,8 @@ export function setupEditorStreaming(): void {
                                 })
                             })
                         }, { split: false })
+                    } else {
+                        console.warn('⚠️ [EDITOR STREAM] Kein Editor-Instance verfügbar')
                     }
                 }
             },

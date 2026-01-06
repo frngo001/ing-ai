@@ -92,17 +92,18 @@ export function PlateEditor({
     const loadCurrentUser = async () => {
       try {
         const {
-          data: { session },
-        } = await supabase.auth.getSession();
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
 
-        if (session?.user) {
-          const userId = session.user.id;
+        if (!userError && user) {
+          const userId = user.id;
           const userName =
-            session.user.user_metadata?.full_name ||
-            session.user.email?.split('@')[0] ||
+            user.user_metadata?.full_name ||
+            user.email?.split('@')[0] ||
             'User';
           const avatarUrl =
-            session.user.user_metadata?.avatar_url ||
+            user.user_metadata?.avatar_url ||
             `https://api.dicebear.com/9.x/glass/svg?seed=${userId}`;
 
           // Hole aktuelle Users-Daten aus dem Plugin

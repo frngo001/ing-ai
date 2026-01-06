@@ -4,7 +4,6 @@
 
 import type { PlateEditor } from 'platejs/react'
 import { MarkdownPlugin } from '@platejs/markdown'
-import { toast } from 'sonner'
 
 /**
  * Fügt Markdown-Text am Ende des Editors ein
@@ -78,7 +77,6 @@ export function insertMarkdownText(
         editor.tf.insertNodes(nodes, { at: [0], select: false })
       }
     }
-  toast.success('Text erfolgreich eingefügt')
   } catch (error) {
     console.error('❌ [EDITOR] Fehler beim Einfügen von Text:', error)
   }
@@ -92,11 +90,23 @@ export function setupEditorTextInsertion(): void {
   if (typeof window === 'undefined') return
 
   window.addEventListener('insert-text-in-editor', async (event: any) => {
+    console.log('📝 [EDITOR] insert-text-in-editor Event empfangen:', {
+      hasMarkdown: !!event.detail?.markdown,
+      markdownLength: event.detail?.markdown?.length,
+      position: event.detail?.position,
+    })
+
     const { markdown, position } = event.detail
+
+    if (!markdown) {
+      console.error('❌ [EDITOR] Kein Markdown im Event-Detail')
+      return
+    }
 
     const editorEvent = new CustomEvent('get-editor-instance', {
       detail: { callback: (editor: PlateEditor) => {
         if (editor) {
+          console.log('✅ [EDITOR] Editor-Instance erhalten, füge Text ein')
           insertMarkdownText(editor, markdown, position)
         } else {
           console.warn('⚠️ [EDITOR] Kein Editor-Instance verfügbar')

@@ -6,7 +6,7 @@ import { invalidateUserIdCache } from "@/lib/supabase/utils/auth"
 
 /**
  * Hook zum Prüfen des Authentifizierungsstatus
- * Nutzt getSession() statt getUser() um API-Calls zu vermeiden
+ * Nutzt getUser() für authentifizierte Daten vom Supabase Auth Server
  * @returns {boolean} true wenn der User eingeloggt ist, false wenn nicht
  */
 export function useIsAuthenticated() {
@@ -16,11 +16,12 @@ export function useIsAuthenticated() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Nutze getSession() statt getUser() - kein API-Call
+        // Nutze getUser() für authentifizierte Daten vom Supabase Auth Server
         const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        setIsAuthenticated(!!session?.user)
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
+        setIsAuthenticated(!userError && !!user)
       } catch (error) {
         console.error("Auth check error:", error)
         setIsAuthenticated(false)
@@ -48,7 +49,7 @@ export function useIsAuthenticated() {
 
 /**
  * Hook der die User-ID cached zurückgibt
- * Nutzt getSession() statt getUser() um API-Calls zu vermeiden
+ * Nutzt getUser() für authentifizierte Daten vom Supabase Auth Server
  * @returns {string | null} User-ID oder null wenn nicht eingeloggt
  */
 export function useCurrentUserId(): string | null {
@@ -58,11 +59,12 @@ export function useCurrentUserId(): string | null {
   useEffect(() => {
     const loadUserId = async () => {
       try {
-        // Nutze getSession() statt getUser() - kein API-Call
+        // Nutze getUser() für authentifizierte Daten vom Supabase Auth Server
         const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        setUserId(session?.user?.id || null)
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
+        setUserId((!userError && user?.id) || null)
       } catch (error) {
         console.error("Error loading user ID:", error)
         setUserId(null)

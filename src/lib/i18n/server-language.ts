@@ -43,10 +43,10 @@ export async function getLanguageForServer(): Promise<Language> {
         // 2. Prüfe Supabase User Preferences (wenn User eingeloggt)
         try {
             const supabase = await createClient()
-            const { data: { session } } = await supabase.auth.getSession()
+            const { data: { user }, error: userError } = await supabase.auth.getUser()
             
-            if (session?.user?.id) {
-                const userId = session.user.id
+            if (!userError && user?.id) {
+                const userId = user.id
                 // Verwende direkt den Server-Client für User Preferences
                 const { data: prefs, error } = await supabase
                     .from('user_preferences')

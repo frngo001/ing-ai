@@ -888,7 +888,7 @@ function createGetEditorContentTool(editorContent: string) {
 // Tool: Text im Editor hinzufügen
 const insertTextInEditorTool = tool({
   description:
-    'Fügt Markdown-Text direkt im Editor hinzu. KRITISCH: Du MUSST den VOLLSTÄNDIGEN Text im "markdown" Parameter übergeben, nicht nur eine Beschreibung! Der Text wird am Ende des Dokuments eingefügt. Verwende strukturierte Headings (H1, H2, H3) für bessere Übersicht.',
+    'Fügt Markdown-Text direkt im Editor hinzu. KRITISCH: Du MUSST den VOLLSTÄNDIGEN Text im "markdown" Parameter übergeben, nicht nur eine Beschreibung! Der Text wird am Ende des Dokuments eingefügt. Verwende strukturierte Headings (H1, H2, H3) für bessere Übersicht. WICHTIG: Wenn du dieses Tool verwendest, gib den Text NICHT zusätzlich im Chat aus! Der Text wird automatisch im Editor eingefügt. Du kannst nur eine kurze Bestätigung im Chat geben, z.B. "Ich habe den Text im Editor eingefügt."',
   inputSchema: z.object({
     markdown: z
       .string()
@@ -1230,6 +1230,23 @@ ${fileSections.join('\n\n---\n\n')}
                 if (result.success !== undefined) output.success = result.success
                 if (result.error !== undefined) output.error = result.error
                 if (result.message !== undefined) output.message = result.message
+                
+                // WICHTIG: Wenn das Tool einen _streamMarker zurückgibt, schreibe ihn in den Stream
+                // Dies ist notwendig für insertTextInEditor und andere Tools, die Events auslösen
+                if (result._streamMarker && typeof result._streamMarker === 'string') {
+                  devWarn('📝 [AGENT STREAM] Schreibe _streamMarker in Stream:', {
+                    toolName: event.toolName,
+                    markerLength: result._streamMarker.length,
+                    markerPreview: result._streamMarker.substring(0, 50),
+                  })
+                  controller.enqueue(encoder.encode(result._streamMarker))
+                  await new Promise(resolve => setTimeout(resolve, 10))
+                } else if (event.toolName === 'insertTextInEditor') {
+                  devWarn('⚠️ [AGENT STREAM] insertTextInEditor Tool-Result hat keinen _streamMarker!', {
+                    hasResult: !!result,
+                    resultKeys: result ? Object.keys(result) : [],
+                  })
+                }
               }
               
               const endMarker = createToolStepMarker('end', {

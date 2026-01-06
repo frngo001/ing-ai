@@ -47,9 +47,6 @@ export async function parseAgentStream(
   let fullText = ""
   let buffer = ""
   let toolResultProcessed = false
-  let isStreamingToEditor = false
-  let streamStartIndex = -1
-  let dispatchedStreamLength = 0
   
   // Parts Tracking (für Inline-Darstellung)
   let parts: MessagePart[] = []
@@ -86,26 +83,16 @@ export async function parseAgentStream(
     // Wir verarbeiten den Buffer Stück für Schritt und extrahieren entweder Text oder Marker
     while (buffer.length > 0) {
       // Suche nach allen möglichen Marker-Typen
-      // Marker mit Payload (haben ":") und Marker ohne Payload
+      // Marker mit Payload (haben ":")
       const markerWithPayloadRegex = /\[(TOOL_STEP_START|TOOL_STEP_END|TOOL_RESULT|TOOL_RESULT_B64|REASONING_DELTA):/
-      const editorStreamStartRegex = /\[START_EDITOR_STREAM\]/
-      const editorStreamEndRegex = /\[END_EDITOR_STREAM\]/
       
       const matchWithPayload = buffer.match(markerWithPayloadRegex)
-      const matchEditorStart = buffer.match(editorStreamStartRegex)
-      const matchEditorEnd = buffer.match(editorStreamEndRegex)
       
       // Finde den frühesten Marker
-      let earliestMatch: { index: number; type: 'payload' | 'editor-start' | 'editor-end' } | null = null
+      let earliestMatch: { index: number; type: 'payload' } | null = null
       
       if (matchWithPayload) {
         earliestMatch = { index: matchWithPayload.index!, type: 'payload' }
-      }
-      if (matchEditorStart && (!earliestMatch || matchEditorStart.index! < earliestMatch.index)) {
-        earliestMatch = { index: matchEditorStart.index!, type: 'editor-start' }
-      }
-      if (matchEditorEnd && (!earliestMatch || matchEditorEnd.index! < earliestMatch.index)) {
-        earliestMatch = { index: matchEditorEnd.index!, type: 'editor-end' }
       }
 
       if (earliestMatch) {
@@ -114,46 +101,20 @@ export async function parseAgentStream(
         // Wenn Text vor dem Marker ist, füge ihn als Text-Part hinzu
         if (markerStartIndex > 0) {
           const textBefore = buffer.substring(0, markerStartIndex)
-          if (parts.length > 0 && parts[parts.length - 1].type === 'text') {
-            (parts[parts.length - 1] as { type: 'text', text: string }).text += textBefore
-          } else {
-            parts.push({ type: 'text', text: textBefore })
+          if (textBefore.length > 0) {
+            if (parts.length > 0 && parts[parts.length - 1].type === 'text') {
+              (parts[parts.length - 1] as { type: 'text', text: string }).text += textBefore
+            } else {
+              parts.push({ type: 'text', text: textBefore })
+            }
+            updateMessage()
           }
           buffer = buffer.substring(markerStartIndex)
-          updateMessage()
           // Weitermachen mit dem Marker am Anfang des Buffers
           continue
         }
 
         // Marker ist am Anfang des Buffers
-        // Für Editor-Stream-Tags: Sie sind komplett ohne Payload
-        if (earliestMatch.type === 'editor-start') {
-          const tag = '[START_EDITOR_STREAM]'
-          if (buffer.startsWith(tag)) {
-            isStreamingToEditor = true
-            streamStartIndex = fullText.indexOf(tag) + tag.length
-            dispatchedStreamLength = 0
-            buffer = buffer.substring(tag.length)
-            console.log('📝 [AGENT PARSER] Editor-Stream gestartet')
-            continue
-          }
-        }
-        
-        if (earliestMatch.type === 'editor-end') {
-          const tag = '[END_EDITOR_STREAM]'
-          if (buffer.startsWith(tag)) {
-            isStreamingToEditor = false
-            buffer = buffer.substring(tag.length)
-            console.log('📝 [AGENT PARSER] Editor-Stream beendet')
-            
-            // Sende end-event für Finalisierung
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('end-editor-stream'))
-            }
-            continue
-          }
-        }
-        
         // Für Marker mit Payload: Suche das Ende ']'
         const markerEndIndex = buffer.indexOf(']')
         if (markerEndIndex === -1) {
@@ -246,7 +207,10 @@ export async function parseAgentStream(
           }
         } else if (fullMarker.startsWith('[TOOL_RESULT_B64:')) {
           const base64 = fullMarker.match(/\[TOOL_RESULT_B64:([^\]]+)\]/)?.[1]
-          if (base64 && agentStore.isActive) {
+          if (base64) {
+            if (!agentStore.isActive) {
+              console.warn('⚠️ [AGENT PARSER] Tool-Result erkannt, aber agentStore.isActive ist false')
+            }
             try {
               const binaryString = atob(base64)
               const bytes = new Uint8Array(binaryString.length)
@@ -256,9 +220,22 @@ export async function parseAgentStream(
               const decodedJson = new TextDecoder().decode(bytes)
               const toolResult = JSON.parse(decodedJson)
               
+              console.log('📝 [AGENT PARSER] Tool-Result dekodiert:', {
+                type: toolResult.type,
+                toolName: toolResult.toolName,
+                hasMarkdown: !!toolResult.markdown,
+                markdownLength: toolResult.markdown?.length,
+              })
+              
               // Event-Handling (Editor, Citations, etc.)
+              // WICHTIG: Auch wenn agentStore.isActive false ist, sollten Tool-Results verarbeitet werden
+              // für insertTextInEditor, da dies unabhängig vom Agent-Status funktionieren sollte
               handleToolResult(toolResult)
-            } catch (e) { console.error(e) }
+            } catch (e) { 
+              console.error('❌ [AGENT PARSER] Fehler beim Dekodieren von TOOL_RESULT_B64:', e) 
+            }
+          } else {
+            console.warn('⚠️ [AGENT PARSER] TOOL_RESULT_B64 Marker gefunden, aber kein Base64-Payload')
           }
         } else if (fullMarker.startsWith('[REASONING_DELTA:')) {
           // Reasoning-Delta verarbeiten und als Part hinzufügen
@@ -287,7 +264,6 @@ export async function parseAgentStream(
             }
           }
         }
-        // Editor-Stream-Tags werden oben bereits behandelt
 
         // Marker aus Buffer entfernen
         buffer = buffer.substring(markerEndIndex + 1)
@@ -304,9 +280,9 @@ export async function parseAgentStream(
             } else {
               parts.push({ type: 'text', text: textBefore })
             }
-            buffer = buffer.substring(lastOpenBracket)
             updateMessage()
           }
+          buffer = buffer.substring(lastOpenBracket)
           // Rest im Buffer lassen für nächsten Chunk
           break
         } else {
@@ -316,30 +292,9 @@ export async function parseAgentStream(
           } else {
             parts.push({ type: 'text', text: buffer })
           }
-          buffer = ""
           updateMessage()
+          buffer = ""
         }
-      }
-    }
-
-    // Editor Live-Update (Chunk-basiertes Streaming für Live-Gefühl)
-    if (isStreamingToEditor) {
-      const currentStreamContent = fullText.substring(streamStartIndex)
-      // Entferne den END-Marker aus dem Content, falls vorhanden
-      const cleanContent = currentStreamContent.replace(/\[END_EDITOR_STREAM\].*$/s, '')
-      const newContent = cleanContent.substring(dispatchedStreamLength)
-      
-      if (newContent.length > 0 && typeof window !== 'undefined') {
-        // Sende init-event beim ersten Chunk
-        if (dispatchedStreamLength === 0) {
-          window.dispatchEvent(new CustomEvent('init-editor-stream'))
-        }
-        
-        // Sende den neuen Chunk für Live-Streaming
-        window.dispatchEvent(new CustomEvent('stream-editor-chunk', {
-          detail: { chunk: newContent },
-        }))
-        dispatchedStreamLength = cleanContent.length
       }
     }
   }
@@ -348,9 +303,24 @@ export async function parseAgentStream(
 }
 
 function handleToolResult(toolResult: any) {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') {
+    console.warn('⚠️ [AGENT PARSER] handleToolResult aufgerufen, aber window ist undefined')
+    return
+  }
+
+  console.log('📝 [AGENT PARSER] handleToolResult aufgerufen:', {
+    type: toolResult.type,
+    toolName: toolResult.toolName,
+    hasMarkdown: !!toolResult.markdown,
+    hasSourceId: !!toolResult.sourceId,
+    hasThema: !!toolResult.thema,
+  })
 
   if (toolResult.type === 'tool-result' && toolResult.toolName === 'insertTextInEditor' && toolResult.markdown) {
+    console.log('✅ [AGENT PARSER] Dispatching insert-text-in-editor Event:', {
+      markdownLength: toolResult.markdown.length,
+      position: toolResult.position || 'end',
+    })
     window.dispatchEvent(new CustomEvent('insert-text-in-editor', {
       detail: {
         markdown: toolResult.markdown,

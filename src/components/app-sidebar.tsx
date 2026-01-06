@@ -102,14 +102,15 @@ export function AppSidebar({
   React.useEffect(() => {
     const fetchUser = async () => {
       const {
-        data: { session },
-      } = await supabase.auth.getSession()
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
 
-      if (session?.user) {
+      if (!userError && user) {
         setUser({
-          name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || t('sidebar.user'),
-          email: session.user.email || "",
-          avatar: session.user.user_metadata?.avatar_url || `/logos/logosApp/ing_AI.png`,
+          name: user.user_metadata?.full_name || user.email?.split("@")[0] || t('sidebar.user'),
+          email: user.email || "",
+          avatar: user.user_metadata?.avatar_url || `/logos/logosApp/ing_AI.png`,
         })
       } else {
         setUser(null)

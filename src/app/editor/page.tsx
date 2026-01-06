@@ -4,7 +4,6 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { type ImperativePanelHandle } from "react-resizable-panels"
 import { Toaster } from "sonner"
-
 import { AppSidebar } from "@/components/app-sidebar"
 import { AskAiPane } from "@/components/ask-ai-pane"
 import { DocumentsPane } from "@/components/documents-pane"
@@ -21,7 +20,6 @@ import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as documentsUtils from "@/lib/supabase/utils/documents"
 import { extractTextFromNode } from "@/lib/supabase/utils/document-title"
 import { useIsAuthenticated } from "@/hooks/use-auth"
-
 type Pane = "documents" | "library" | "askAi"
 
 export default function Page() {
@@ -35,7 +33,6 @@ export default function Page() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsInitialNav, setSettingsInitialNav] = useState<string | undefined>(undefined)
 
-  // Authentifizierungsprüfung: Weiterleitung zur Login-Seite wenn nicht authentifiziert
   useEffect(() => {
     if (isAuthenticated === false && typeof window !== 'undefined') {
       const currentPath = window.location.pathname + window.location.search
@@ -43,7 +40,6 @@ export default function Page() {
     }
   }, [isAuthenticated, router])
 
-  // Setup Editor-Text-Einfügung beim Mount
   useEffect(() => {
     setupEditorTextInsertion()
     setupEditorStreaming()

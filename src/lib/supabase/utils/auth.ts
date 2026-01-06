@@ -6,7 +6,7 @@ let cacheTimestamp: number = 0
 const CACHE_DURATION = 5 * 60 * 1000 // 5 Minuten
 
 /**
- * Ruft die User-ID ab, nutzt zuerst getSession() (kein API-Call) 
+ * Ruft die User-ID ab, nutzt getUser() für authentifizierte Daten
  * und cached das Ergebnis für 5 Minuten
  */
 export async function getCurrentUserId(): Promise<string | null> {
@@ -19,20 +19,20 @@ export async function getCurrentUserId(): Promise<string | null> {
       return cachedUserId
     }
     
-    // Nutze getSession() statt getUser() - liest aus lokalem Storage, kein API-Call
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // Nutze getUser() für authentifizierte Daten vom Supabase Auth Server
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
     
-    if (sessionError) {
-      console.warn('⚠️ [AUTH] Fehler beim Abrufen der Session:', {
-        message: sessionError.message,
-        error: sessionError,
+    if (userError) {
+      console.warn('⚠️ [AUTH] Fehler beim Abrufen des Users:', {
+        message: userError.message,
+        error: userError,
       })
       cachedUserId = null
       cacheTimestamp = now
       return null
     }
     
-    const userId = session?.user?.id || null
+    const userId = user?.id || null
     
     // Cache aktualisieren
     cachedUserId = userId
