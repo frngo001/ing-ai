@@ -14,10 +14,16 @@ function getEditorContentAsMarkdown(): Promise<string> {
       return
     }
     
+    let resolved = false
+    
     const editorEvent = new CustomEvent('get-editor-instance', {
       detail: {
         callback: (editor: any) => {
+          if (resolved) return
+          
           if (!editor) {
+            console.warn('[EDITOR] Kein Editor-Instance verfügbar für getEditorContent')
+            resolved = true
             resolve('')
             return
           }
@@ -45,18 +51,28 @@ function getEditorContentAsMarkdown(): Promise<string> {
               const markdownApi = editor.getApi?.({ key: 'markdown' })
               if (markdownApi?.markdown?.serialize) {
                 const markdown = markdownApi.markdown.serialize({ value: content })
-                if (markdown) {
+                if (markdown && markdown.trim().length > 0) {
+                  console.log(`[EDITOR] Editor-Inhalt als Markdown extrahiert: ${markdown.length} Zeichen`)
+                  resolved = true
                   resolve(markdown)
                   return
                 }
               }
-            } catch {
-              // Fallback auf Plain Text
+            } catch (error) {
+              console.warn('[EDITOR] Fehler bei Markdown-Serialisierung, verwende Plain Text:', error)
             }
             
+            if (text.length > 0) {
+              console.log(`[EDITOR] Editor-Inhalt als Plain Text extrahiert: ${text.length} Zeichen`)
+            } else {
+              console.warn('[EDITOR] Editor-Inhalt ist leer')
+            }
+            
+            resolved = true
             resolve(text)
           } catch (error) {
-            console.error('Fehler beim Extrahieren des Editor-Inhalts:', error)
+            console.error('[EDITOR] Fehler beim Extrahieren des Editor-Inhalts:', error)
+            resolved = true
             resolve('')
           }
         }
@@ -65,8 +81,14 @@ function getEditorContentAsMarkdown(): Promise<string> {
     
     window.dispatchEvent(editorEvent)
     
-    // Timeout falls kein Editor verfuegbar
-    setTimeout(() => resolve(''), 100)
+    // Timeout erhöht auf 1000ms, damit der Event-Handler Zeit hat zu antworten
+    setTimeout(() => {
+      if (!resolved) {
+        console.warn('[EDITOR] Timeout beim Abrufen des Editor-Inhalts (1000ms)')
+        resolved = true
+        resolve('')
+      }
+    }, 1000)
   })
 }
 
@@ -267,16 +289,20 @@ export const createHandlers = (deps: HandlerDependencies) => {
       // Für general-Modus: Wenn kein Thema vorhanden ist, verwende die erste Nachricht oder einen Standard-Wert
       const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
 
-      // Hole aktuellen Editor-Inhalt wenn Kontext aktiviert ist (fuer alle Modi)
-      const editorContent = context.document ? await getEditorContentAsMarkdown() : ''
+      const isAgentModeForEditor = context.agentMode === 'bachelor' || context.agentMode === 'general' || 
+                                    (agentStore.isActive && (currentArbeitType === 'bachelor' || currentArbeitType === 'master' || currentArbeitType === 'general'))
+      const shouldFetchEditorContent = isAgentModeForEditor || context.document
+      const editorContent = shouldFetchEditorContent ? await getEditorContentAsMarkdown() : ''
+      
+      if (isAgentModeForEditor) {
+        console.log(`[HANDLER] Editor-Inhalt für Agent-Modus geholt: ${editorContent.length} Zeichen`)
+      }
 
       // Extrahiere Content aus hochgeladenen Dateien
       let fileContents: Array<{ name: string; content: string; type: string }> = []
       if (files && files.length > 0) {
         try {
-          // Toast wird bei Fehlern angezeigt
 
-          // Trenne Dateien in clientseitig und serverseitig extrahierbare
           const clientFiles: File[] = []
           const serverFiles: File[] = []
 
@@ -332,7 +358,6 @@ export const createHandlers = (deps: HandlerDependencies) => {
                         errorMessage = errorData
                       }
                     } catch (parseError) {
-                      // Falls JSON-Parsing fehlschlägt, verwende Status-Text
                       errorMessage = `Fehler ${response.status}: ${response.statusText || errorMessage}`
                     }
                     throw new Error(errorMessage)
@@ -385,14 +410,11 @@ export const createHandlers = (deps: HandlerDependencies) => {
           toast.error(
             `Fehler beim Extrahieren von Dateien: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`
           )
-          // Weiter mit leeren fileContents - Metadaten werden trotzdem gesendet
         }
       }
 
-      // Wenn WebSearch-Agent verwendet wird, verwende Agent-Format
       const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
       
-      // Baue Context-Text aus MessageContext für den Prompt
       let messageContextText = ''
       if (contextToInclude && contextToInclude.length > 0) {
         const contextTexts = contextToInclude.map((ctx) => ctx.text).join('\n\n')

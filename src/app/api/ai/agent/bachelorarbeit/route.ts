@@ -827,7 +827,17 @@ function createGetEditorContentTool(editorContent: string) {
       const stepId = generateToolStepId()
       const toolName = 'getEditorContent'
       
+      // Debug-Logging
+      devWarn('📄 [BACHELORARBEIT AGENT] getEditorContent Tool aufgerufen', {
+        editorContentLength: editorContent?.length || 0,
+        editorContentType: typeof editorContent,
+        editorContentPreview: editorContent?.substring(0, 100) || '(leer)',
+        includeFullText,
+        maxLength,
+      })
+      
       if (!editorContent || editorContent.trim().length === 0) {
+        devWarn('⚠️ [BACHELORARBEIT AGENT] Editor-Inhalt ist leer oder nicht vorhanden')
         return {
           success: true,
           isEmpty: true,
@@ -879,6 +889,15 @@ function createGetEditorContentTool(editorContent: string) {
           },
         }),
       }
+      
+      // Debug-Logging für erfolgreichen Abruf
+      devWarn('✅ [BACHELORARBEIT AGENT] Editor-Inhalt erfolgreich abgerufen', {
+        wordCount,
+        characterCount,
+        paragraphCount,
+        headingCount: headings.length,
+        contentLength: content.length,
+      })
       
       return response
     },
@@ -973,8 +992,25 @@ export async function POST(req: NextRequest) {
 
     const { messages, agentState, editorContent, documentContextEnabled, fileContents } = await req.json()
 
+    // Debug-Logging für editorContent
+    devWarn('📥 [BACHELORARBEIT AGENT] Request-Body empfangen', {
+      editorContentLength: editorContent?.length || 0,
+      editorContentType: typeof editorContent,
+      editorContentIsEmpty: !editorContent || editorContent.trim().length === 0,
+      documentContextEnabled,
+      hasFileContents: !!fileContents && Array.isArray(fileContents) && fileContents.length > 0,
+    })
     
     const currentEditorContent: string = editorContent || ''
+    
+    if (currentEditorContent.length > 0) {
+      devWarn('✅ [BACHELORARBEIT AGENT] Editor-Inhalt im Request vorhanden', {
+        length: currentEditorContent.length,
+        preview: currentEditorContent.substring(0, 200),
+      })
+    } else {
+      devWarn('⚠️ [BACHELORARBEIT AGENT] Editor-Inhalt ist leer im Request')
+    }
     if (!agentState) {
       return NextResponse.json(
         { error: 'Agent State erforderlich' },
