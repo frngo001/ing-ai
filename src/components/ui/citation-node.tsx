@@ -78,6 +78,18 @@ export function CitationElement(
     title,
     doi,
     url,
+    // Alle verfügbaren Metadaten aus dem Element verwenden
+    sourceType: typeof element.sourceType === 'string' ? element.sourceType : undefined,
+    journal: typeof element.journal === 'string' ? element.journal : undefined,
+    containerTitle: typeof element.containerTitle === 'string' ? element.containerTitle : undefined,
+    publisher: typeof element.publisher === 'string' ? element.publisher : undefined,
+    volume: typeof element.volume === 'string' ? element.volume : undefined,
+    issue: typeof element.issue === 'string' ? element.issue : undefined,
+    pages: typeof element.pages === 'string' ? element.pages : undefined,
+    isbn: typeof element.isbn === 'string' ? element.isbn : undefined,
+    issn: typeof element.issn === 'string' ? element.issn : undefined,
+    note: typeof element.note === 'string' ? element.note : undefined,
+    accessedAt: typeof element.accessedAt === 'string' ? element.accessedAt : undefined,
   };
 
   const buildOrderMap = () => {
@@ -342,14 +354,33 @@ export function CitationElement(
   const displayText = React.useMemo(() => {
     if (citationFormat === 'numeric') {
       if (runInfo && !runInfo.isFirst) return '';
-      return formatNumericRun();
+      const numericText = formatNumericRun();
+      // Fallback falls formatNumericRun() leer ist
+      if (!numericText || numericText.trim() === '') {
+        return formatNumeric(inlineNumber ?? 1);
+      }
+      return numericText;
     }
-    if (citationFormat === 'author-date') return formatAuthorDate();
-    if (citationFormat === 'author') return formatAuthorOnly();
-    if (citationFormat === 'label') return formatLabel();
-    if (citationFormat === 'note') return formatNote();
+    if (citationFormat === 'author-date') {
+      const authorDateText = formatAuthorDate();
+      return authorDateText || `(${citationData.year || 'n.d.'})`;
+    }
+    if (citationFormat === 'author') {
+      const authorText = formatAuthorOnly();
+      return authorText || translations.noAuthor;
+    }
+    if (citationFormat === 'label') {
+      const labelText = formatLabel();
+      return labelText || '[cite]';
+    }
+    if (citationFormat === 'note') {
+      const noteText = formatNote();
+      return noteText || formatNumeric(inlineNumber ?? 1);
+    }
     if (externalLabel) return externalLabel;
-    return formatCitation(citationData, citationStyle);
+    const formatted = formatCitation(citationData, citationStyle);
+    // Fallback falls formatCitation() leer ist
+    return formatted || `[${title}]`;
   }, [
     citationStyle,
     citationFormat,
@@ -362,6 +393,8 @@ export function CitationElement(
     externalLabel,
     citationData,
     runInfo,
+    title,
+    translations,
   ]);
 
   const removeCitationAt = React.useCallback(

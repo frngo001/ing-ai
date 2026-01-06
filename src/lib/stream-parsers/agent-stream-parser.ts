@@ -3,8 +3,9 @@
  * Mit Tool-Step-Visualisierung und Reasoning-Tracking
  */
 
-import { useCitationStore } from '@/lib/stores/citation-store'
+import { useCitationStore, type SavedCitation } from '@/lib/stores/citation-store'
 import type { ToolStep, MessagePart, ChatMessage } from '@/lib/ask-ai-pane/types'
+import { devLog, devWarn, devError } from '@/lib/utils/logger'
 
 export interface AgentStreamParserOptions {
   assistantId: string
@@ -304,11 +305,11 @@ export async function parseAgentStream(
 
 function handleToolResult(toolResult: any) {
   if (typeof window === 'undefined') {
-    console.warn('⚠️ [AGENT PARSER] handleToolResult aufgerufen, aber window ist undefined')
+    devWarn('⚠️ [AGENT PARSER] handleToolResult aufgerufen, aber window ist undefined')
     return
   }
 
-  console.log('📝 [AGENT PARSER] handleToolResult aufgerufen:', {
+  devLog('📝 [AGENT PARSER] handleToolResult aufgerufen:', {
     type: toolResult.type,
     toolName: toolResult.toolName,
     hasMarkdown: !!toolResult.markdown,
@@ -317,7 +318,7 @@ function handleToolResult(toolResult: any) {
   })
 
   if (toolResult.type === 'tool-result' && toolResult.toolName === 'insertTextInEditor' && toolResult.markdown) {
-    console.log('✅ [AGENT PARSER] Dispatching insert-text-in-editor Event:', {
+    devLog('✅ [AGENT PARSER] Dispatching insert-text-in-editor Event:', {
       markdownLength: toolResult.markdown.length,
       position: toolResult.position || 'end',
     })
@@ -329,20 +330,150 @@ function handleToolResult(toolResult: any) {
       },
     }))
   } else if (toolResult.type === 'tool-result' && toolResult.toolName === 'addCitation' && toolResult.sourceId) {
+    devLog('📝 [AGENT PARSER] addCitation Tool-Result verarbeitet:', {
+      sourceId: toolResult.sourceId,
+      targetText: toolResult.targetText,
+    })
+    
     const state = useCitationStore.getState()
-    const citation = state.savedCitations.find(c => c.id === toolResult.sourceId)
-    if (citation) {
-      window.dispatchEvent(new CustomEvent('insert-citation', {
-        detail: {
-          sourceId: citation.id,
-          title: citation.title,
-          year: typeof citation.year === 'string' ? parseInt(citation.year) : citation.year,
-          authors: citation.authors?.map(a => ({ fullName: a })) || [],
-          doi: citation.doi,
-          url: citation.externalUrl || citation.href
-        }
-      }))
+    devLog('📝 [AGENT PARSER] Citation Store State:', {
+      savedCitationsCount: state.savedCitations.length,
+      savedCitationIds: state.savedCitations.map(c => c.id),
+      librariesCount: state.libraries.length,
+      allCitationsCount: state.libraries.reduce((sum, lib) => sum + lib.citations.length, 0),
+    })
+    
+    // Suche in ALLEN Bibliotheken, nicht nur in savedCitations (aktive Bibliothek)
+    let citation: SavedCitation | undefined = undefined
+    for (const library of state.libraries) {
+      citation = library.citations.find(c => c.id === toolResult.sourceId)
+      if (citation) {
+        devLog('✅ [AGENT PARSER] Citation gefunden in Bibliothek:', {
+          libraryId: library.id,
+          libraryName: library.name,
+        })
+        break
+      }
     }
+    
+    // Fallback: Suche auch in savedCitations (für Kompatibilität)
+    if (!citation) {
+      citation = state.savedCitations.find(c => c.id === toolResult.sourceId)
+    }
+    
+    let citationData: {
+      sourceId: string
+      title: string
+      year?: number
+      authors: Array<{ fullName?: string; firstName?: string; lastName?: string }>
+      doi?: string
+      url?: string
+      sourceType?: string
+      journal?: string
+      containerTitle?: string
+      publisher?: string
+      volume?: string
+      issue?: string
+      pages?: string
+      isbn?: string
+      issn?: string
+      note?: string
+      accessedAt?: string
+      targetText?: string
+    }
+    
+    if (citation) {
+      devLog('✅ [AGENT PARSER] Citation gefunden im Store:', {
+        sourceId: citation.id,
+        title: citation.title,
+        year: citation.year,
+        authors: citation.authors,
+        source: citation.source,
+        doi: citation.doi,
+        externalUrl: citation.externalUrl,
+        abstract: citation.abstract,
+      })
+      
+      // Konvertiere Jahr
+      const year = typeof citation.year === 'string' ? parseInt(citation.year) : citation.year
+      
+      // Konvertiere Autoren (kann String oder Array sein)
+      const authors = citation.authors?.map((a: string) => {
+        if (typeof a === 'string') {
+          // Versuche, Vor- und Nachname zu extrahieren
+          const parts = a.trim().split(/\s+/)
+          if (parts.length >= 2) {
+            return {
+              fullName: a,
+              firstName: parts[0],
+              lastName: parts.slice(1).join(' ')
+            }
+          }
+          return { fullName: a }
+        }
+        return { fullName: a }
+      }) || []
+      
+      // Konvertiere lastEdited zu accessedAt (ISO-Format)
+      let accessedAt: string | undefined
+      if (citation.lastEdited) {
+        try {
+          // Versuche, das Datum zu parsen
+          const date = new Date(citation.lastEdited)
+          if (!isNaN(date.getTime())) {
+            accessedAt = date.toISOString()
+          }
+        } catch (e) {
+          // Ignoriere Parsing-Fehler
+        }
+      }
+      
+      // Extrahiere source-Informationen (könnte Journal, Publisher, etc. sein)
+      const source = citation.source || ''
+      
+      citationData = {
+        sourceId: citation.id,
+        title: citation.title || '',
+        year,
+        authors,
+        doi: citation.doi,
+        url: citation.externalUrl || citation.href,
+        // Verwende source für verschiedene Felder, je nach Kontext
+        journal: source || undefined,
+        containerTitle: source || undefined,
+        publisher: source || undefined,
+        sourceType: source ? 'article' : undefined,
+        note: citation.abstract || undefined,
+        accessedAt,
+        targetText: toolResult.targetText,
+      }
+    } else {
+      devError('❌ [AGENT PARSER] Citation nicht im Store gefunden! Die Quelle muss zuerst in einer Bibliothek gespeichert sein:', {
+        requestedSourceId: toolResult.sourceId,
+        availableIds: state.savedCitations.map(c => c.id),
+        availableLibraries: state.libraries.map(l => ({ id: l.id, name: l.name, count: l.citations.length })),
+      })
+      
+      // Fallback: Erstelle eine minimale Citation mit nur der sourceId
+      // Die Citation sollte eigentlich in der Bibliothek sein - dies ist nur ein Notfall-Fallback
+      citationData = {
+        sourceId: toolResult.sourceId,
+        title: `Quelle ${toolResult.sourceId}`,
+        year: undefined,
+        authors: [],
+        url: undefined,
+        doi: undefined,
+        targetText: toolResult.targetText,
+      }
+      
+      devWarn('⚠️ [AGENT PARSER] Fallback Citation erstellt (Citation sollte in Bibliothek sein!):', citationData)
+    }
+    
+    window.dispatchEvent(new CustomEvent('insert-citation', {
+      detail: citationData
+    }))
+    
+    devLog('✅ [AGENT PARSER] insert-citation Event dispatched mit Daten:', citationData)
   } else if (toolResult.type === 'tool-result' && toolResult.toolName === 'addThema' && toolResult.thema) {
     window.dispatchEvent(new CustomEvent('set-agent-thema', { detail: { thema: toolResult.thema } }))
   }

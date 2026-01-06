@@ -8,12 +8,14 @@ import {
   type TCitationElement,
 } from '@/components/editor/plugins/citation-kit';
 import { useCitationStore } from '@/lib/stores/citation-store';
+import { devLog, devWarn, devError } from '@/lib/utils/logger';
 
 type InsertCitationInput = Omit<TCitationElement, 'type' | 'children'> & {
   children?: TCitationElement['children'];
   sourceId: string;
   authors: Array<{ fullName?: string; firstName?: string; lastName?: string }>;
   title: string;
+  targetText?: string;
 };
 
 const debug = (...args: unknown[]) => {
@@ -62,6 +64,106 @@ const findNearestCitation = (
   }
 
   return candidate;
+};
+
+/**
+ * Sucht nach einem Text im Editor und gibt die Position nach dem Text zurück
+ * @param editor PlateEditor Instanz
+ * @param targetText Der zu suchende Text
+ * @returns Path und Offset nach dem gefundenen Text, oder null wenn nicht gefunden
+ */
+const findTextInEditor = (
+  editor: PlateEditor,
+  targetText: string
+): { path: Path; offset: number } | null => {
+  if (!targetText || !targetText.trim()) {
+    return null;
+  }
+
+  const searchText = targetText.trim();
+  devLog('🔍 [FIND TEXT] Suche nach Text:', searchText);
+
+  // Durchsuche alle Blöcke im Editor rekursiv
+  const blocks = editor.children || [];
+  
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i] as any;
+    const blockPath: Path = [i];
+
+    // Extrahiere Text aus dem Block rekursiv
+    const extractText = (node: any): string => {
+      if (typeof node?.text === 'string') {
+        return node.text;
+      }
+      if (node?.children && Array.isArray(node.children)) {
+        return node.children
+          .map((child: any) => extractText(child))
+          .join('');
+      }
+      return '';
+    };
+
+    const blockText = extractText(block);
+    if (blockText && blockText.includes(searchText)) {
+      // Finde die Position im Block
+      const textIndex = blockText.indexOf(searchText);
+      const targetOffset = textIndex + searchText.length;
+
+      // Finde das spezifische Text-Node und den Offset
+      let currentOffset = 0;
+      let targetPath: Path | null = null;
+      let finalOffset = 0;
+
+      const findInChildren = (children: any[], parentPath: Path): boolean => {
+        for (let j = 0; j < children.length; j++) {
+          const child = children[j];
+          const childPath = [...parentPath, j];
+
+          if (typeof child?.text === 'string') {
+            const textLength = child.text.length;
+            const nodeStart = currentOffset;
+            const nodeEnd = currentOffset + textLength;
+
+            // Prüfe, ob der gesuchte Text in diesem Node ist
+            if (nodeStart <= textIndex && nodeEnd >= targetOffset) {
+              // Der Text ist in diesem Node
+              targetPath = childPath;
+              finalOffset = targetOffset - nodeStart;
+              return true;
+            } else if (nodeEnd >= textIndex && nodeStart < targetOffset) {
+              // Der Text überspannt mehrere Nodes - verwende das Ende des ersten Nodes
+              targetPath = childPath;
+              finalOffset = textLength;
+              return true;
+            }
+
+            currentOffset += textLength;
+          } else if (child?.children && Array.isArray(child.children)) {
+            if (findInChildren(child.children, childPath)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+
+      if (block.children && Array.isArray(block.children)) {
+        findInChildren(block.children, blockPath);
+      }
+
+      if (targetPath) {
+        devLog('✅ [FIND TEXT] Text in Block gefunden:', {
+          path: formatPath(targetPath),
+          offset: finalOffset,
+          blockIndex: i,
+        });
+        return { path: targetPath, offset: finalOffset };
+      }
+    }
+  }
+
+  devWarn('⚠️ [FIND TEXT] Text nicht gefunden:', searchText);
+  return null;
 };
 
 const getCitationRun = (
@@ -144,17 +246,80 @@ export const insertCitationWithMerge = (
   editor: PlateEditor,
   data: InsertCitationInput
 ) => {
-  if (!editor) return;
+  if (!editor) {
+    devError('❌ [INSERT CITATION] Kein Editor verfügbar')
+    return;
+  }
+
+  devLog('📝 [INSERT CITATION] Starte Citation-Einfügung:', {
+    sourceId: data.sourceId,
+    title: data.title,
+    year: data.year,
+    authors: data.authors,
+    targetText: data.targetText,
+  });
 
   debug('insert start', { data });
+
+  // Validiere erforderliche Felder
+  if (!data.sourceId) {
+    devError('❌ [INSERT CITATION] sourceId fehlt')
+    return
+  }
+  if (!data.title) {
+    devError('❌ [INSERT CITATION] title fehlt')
+    return
+  }
+
+  // Wenn targetText angegeben ist, suche nach dem Text und setze die Selection
+  if (data.targetText && data.targetText.trim()) {
+    const textPosition = findTextInEditor(editor, data.targetText);
+    if (textPosition) {
+      devLog('✅ [INSERT CITATION] Text gefunden, setze Selection:', {
+        path: formatPath(textPosition.path),
+        offset: textPosition.offset,
+      });
+      // Setze die Selection auf die Position nach dem gefundenen Text
+      editor.tf.select({
+        anchor: { path: textPosition.path, offset: textPosition.offset },
+        focus: { path: textPosition.path, offset: textPosition.offset },
+      });
+    } else {
+      devWarn('⚠️ [INSERT CITATION] targetText nicht gefunden, verwende aktuelle Cursor-Position:', data.targetText);
+    }
+  }
 
   const citationNode: TCitationElement = {
     type: CITATION_KEY,
     children: [{ text: '' }],
-    ...data,
+    sourceId: data.sourceId,
+    title: data.title,
+    authors: data.authors || [],
+    year: typeof data.year === 'number' ? data.year : undefined,
+    doi: typeof data.doi === 'string' ? data.doi : undefined,
+    url: typeof data.url === 'string' ? data.url : undefined,
+    sourceType: typeof data.sourceType === 'string' ? data.sourceType : undefined,
+    journal: typeof data.journal === 'string' ? data.journal : undefined,
+    containerTitle: typeof data.containerTitle === 'string' ? data.containerTitle : undefined,
+    publisher: typeof data.publisher === 'string' ? data.publisher : undefined,
+    volume: typeof data.volume === 'string' ? data.volume : undefined,
+    issue: typeof data.issue === 'string' ? data.issue : undefined,
+    pages: typeof data.pages === 'string' ? data.pages : undefined,
+    isbn: typeof data.isbn === 'string' ? data.isbn : undefined,
+    issn: typeof data.issn === 'string' ? data.issn : undefined,
+    note: typeof data.note === 'string' ? data.note : undefined,
+    accessedAt: typeof data.accessedAt === 'string' ? data.accessedAt : undefined,
   };
 
-  editor.tf.insertNodes(citationNode, { select: true });
+  devLog('📝 [INSERT CITATION] Citation-Node erstellt:', citationNode);
+
+  try {
+    editor.tf.insertNodes(citationNode, { select: true });
+    devLog('✅ [INSERT CITATION] Citation-Node erfolgreich eingefügt')
+  } catch (error) {
+    devError('❌ [INSERT CITATION] Fehler beim Einfügen des Citation-Nodes:', error)
+    throw error
+  }
 
   // Nach dem Einfügen den Pfad des neu eingefügten Knotens ermitteln (letzter Citation in Doc).
   const allAfterInsert = Array.from(

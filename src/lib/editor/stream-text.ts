@@ -7,6 +7,7 @@ import { streamInsertChunk } from '@platejs/ai/react'
 import { getPluginType, KEYS } from 'platejs'
 import type { PlateEditor } from 'platejs/react'
 import { insertCitationWithMerge } from '@/components/editor/utils/insert-citation-with-merge'
+import { devLog, devWarn, devError } from '@/lib/utils/logger'
 
 /**
  * Globaler Event-Handler für Editor-Text-Streaming
@@ -17,13 +18,13 @@ export function setupEditorStreaming(): void {
 
     // Listener für Streaming-Start (optional, z.B. für Fokus oder Initialisierung)
     window.addEventListener('init-editor-stream', () => {
-        console.log('📝 [EDITOR STREAM] init-editor-stream Event empfangen')
+        devLog('📝 [EDITOR STREAM] init-editor-stream Event empfangen')
         // Hole Editor-Instanz
         const editorEvent = new CustomEvent('get-editor-instance', {
             detail: {
                 callback: (editor: PlateEditor) => {
                     if (editor) {
-                        console.log('✅ [EDITOR STREAM] Editor-Instance erhalten, setze Fokus')
+                        devLog('✅ [EDITOR STREAM] Editor-Instance erhalten, setze Fokus')
                         // Stelle sicher, dass der Editor fokussiert ist
                         if (!editor.selection) {
                             const endPath = editor.api.end([])
@@ -32,7 +33,7 @@ export function setupEditorStreaming(): void {
                             }
                         }
                     } else {
-                        console.warn('⚠️ [EDITOR STREAM] Kein Editor-Instance verfügbar beim Init')
+                        devWarn('⚠️ [EDITOR STREAM] Kein Editor-Instance verfügbar beim Init')
                     }
                 }
             },
@@ -43,10 +44,10 @@ export function setupEditorStreaming(): void {
     // Listener für Text-Chunks
     window.addEventListener('stream-editor-chunk', (event: any) => {
         const { chunk } = event.detail
-        console.log('📝 [EDITOR STREAM] stream-editor-chunk Event empfangen, Chunk-Länge:', chunk?.length)
+        devLog('📝 [EDITOR STREAM] stream-editor-chunk Event empfangen, Chunk-Länge:', chunk?.length)
         
         if (!chunk) {
-            console.warn('⚠️ [EDITOR STREAM] Kein Chunk im Event')
+            devWarn('⚠️ [EDITOR STREAM] Kein Chunk im Event')
             return
         }
 
@@ -54,7 +55,7 @@ export function setupEditorStreaming(): void {
             detail: {
                 callback: (editor: PlateEditor) => {
                     if (editor) {
-                        console.log('✅ [EDITOR STREAM] Editor-Instance erhalten, füge Chunk ein')
+                        devLog('✅ [EDITOR STREAM] Editor-Instance erhalten, füge Chunk ein')
                         // Verwende PlateJS High-Level Streaming Funktionen
                         // Dies entspricht der Logic in Command AI (ai-kit.tsx)
 
@@ -73,7 +74,7 @@ export function setupEditorStreaming(): void {
                             })
                         }, { split: false })
                     } else {
-                        console.warn('⚠️ [EDITOR STREAM] Kein Editor-Instance verfügbar')
+                        devWarn('⚠️ [EDITOR STREAM] Kein Editor-Instance verfügbar')
                     }
                 }
             },
@@ -83,7 +84,7 @@ export function setupEditorStreaming(): void {
 
     // Listener für Streaming-Ende
     window.addEventListener('end-editor-stream', () => {
-        console.log('📝 [EDITOR STREAM] Streaming beendet')
+        devLog('📝 [EDITOR STREAM] Streaming beendet')
         // Optional: Hier könnte man z.B. den Cursor ans Ende setzen oder andere Finalisierungen durchführen
         const editorEvent = new CustomEvent('get-editor-instance', {
             detail: {
@@ -103,21 +104,35 @@ export function setupEditorStreaming(): void {
 
     // Listener für Zitat-Einfügen (vom AI-Agent)
     window.addEventListener('insert-citation', (event: any) => {
+        devLog('📝 [EDITOR STREAM] insert-citation Event empfangen:', event.detail)
+        
         const citationData = event.detail
-        if (!citationData || !citationData.sourceId) return
+        if (!citationData || !citationData.sourceId) {
+            devError('❌ [EDITOR STREAM] insert-citation Event ohne gültige citationData:', citationData)
+            return
+        }
+
+        devLog('✅ [EDITOR STREAM] Citation-Daten validiert:', {
+            sourceId: citationData.sourceId,
+            title: citationData.title,
+            year: citationData.year,
+            authors: citationData.authors,
+            targetText: citationData.targetText,
+        })
 
         const editorEvent = new CustomEvent('get-editor-instance', {
             detail: {
                 callback: (editor: PlateEditor) => {
-                    // Importieren wir dynamisch, um Circular Deps zu vermeiden, falls möglich
-                    // Aber hier im File ist static import besser. Wir fügen den Import oben hinzu.
-                    // Da wir replace_file_content nutzen, müssen wir den Import im Header hinzufügen.
-                    // Aber insertCitationWithMerge ist ein Utility.
                     if (editor) {
-                        // Wir rufen die Utility Funktion auf
-                        // Beachten: insertCitationWithMerge muss importiert sein.
-                        // Wir gehen davon aus, dass wir den Import gleich hinzufügen. 
-                        insertCitationWithMerge(editor, citationData)
+                        devLog('✅ [EDITOR STREAM] Editor-Instance erhalten, füge Citation ein')
+                        try {
+                            insertCitationWithMerge(editor, citationData)
+                            devLog('✅ [EDITOR STREAM] Citation erfolgreich eingefügt')
+                        } catch (error) {
+                            devError('❌ [EDITOR STREAM] Fehler beim Einfügen der Citation:', error)
+                        }
+                    } else {
+                        devWarn('⚠️ [EDITOR STREAM] Kein Editor-Instance verfügbar für Citation-Einfügung')
                     }
                 }
             },

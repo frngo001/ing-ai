@@ -39,3 +39,9 @@ debug.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cursor rules
+.cursor/rules/
+
+#test files
+test.md

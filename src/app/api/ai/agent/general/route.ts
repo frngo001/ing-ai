@@ -501,10 +501,70 @@ function addSourcesToLibraryToolWithUser(userId: string) {
     })
 }
 
+function listAllLibrariesToolWithUser(userId: string) {
+    return tool({
+        description:
+            'Listet alle verfügbaren Bibliotheken mit ihren Details auf. Nutze dies, um zu sehen, welche Bibliotheken existieren, bevor du getLibrarySources aufrufst.',
+        inputSchema: z.object({
+            _placeholder: z.string().optional().describe('Placeholder parameter'),
+        }),
+        execute: async () => {
+            const stepId = generateToolStepId()
+            const toolName = 'listAllLibraries'
+
+            try {
+                const libraries = await citationLibrariesUtils.getCitationLibraries(userId)
+                
+                // Für jede Bibliothek die Anzahl der Citations ermitteln
+                const librariesWithCounts = await Promise.all(
+                    libraries.map(async (lib) => {
+                        const citations = await citationsUtils.getCitationsByLibrary(lib.id, userId)
+                        return {
+                            id: lib.id,
+                            name: lib.name,
+                            citationCount: citations.length,
+                            isDefault: lib.is_default || false,
+                            createdAt: lib.created_at ? new Date(lib.created_at).toLocaleDateString('de-DE', { dateStyle: 'short' }) : undefined,
+                        }
+                    })
+                )
+
+                return {
+                    success: true,
+                    libraries: librariesWithCounts,
+                    count: librariesWithCounts.length,
+                    message: librariesWithCounts.length === 0
+                        ? 'Keine Bibliotheken gefunden. Erstelle zuerst eine Bibliothek mit createLibrary.'
+                        : `${librariesWithCounts.length} Bibliothek(en) gefunden. Verwende getLibrarySources mit der libraryId, um die Quellen einer Bibliothek abzurufen.`,
+                    _toolStep: createToolStepMarker('end', {
+                        id: stepId,
+                        toolName,
+                        status: 'completed',
+                        output: { count: librariesWithCounts.length },
+                    }),
+                }
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                    libraries: [],
+                    count: 0,
+                    _toolStep: createToolStepMarker('end', {
+                        id: stepId,
+                        toolName,
+                        status: 'error',
+                        error: error instanceof Error ? error.message : 'Unknown error',
+                    }),
+                }
+            }
+        },
+    })
+}
+
 function getLibrarySourcesToolWithUser(userId: string) {
     return tool({
-        description: 'Ruft Quellen aus einer Bibliothek ab.',
-        inputSchema: z.object({ libraryId: z.string() }),
+        description: 'Ruft Quellen aus einer Bibliothek ab. Nutze zuerst listAllLibraries, um die verfügbaren Bibliotheken zu sehen.',
+        inputSchema: z.object({ libraryId: z.string().describe('ID der Bibliothek (von listAllLibraries)') }),
         execute: async ({ libraryId }) => {
             const stepId = generateToolStepId()
             const toolName = 'getLibrarySources'
@@ -540,13 +600,16 @@ function getLibrarySourcesToolWithUser(userId: string) {
 
                 return {
                     success: true,
+                    libraryId: library.id,
+                    libraryName: library.name,
                     sources: savedCitations,
                     count: savedCitations.length,
+                    message: `Bibliothek "${library.name}" enthält ${savedCitations.length} Quelle(n)`,
                     _toolStep: createToolStepMarker('end', {
                         id: stepId,
                         toolName,
                         status: 'completed',
-                        output: { count: savedCitations.length },
+                        output: { count: savedCitations.length, libraryName: library.name },
                     }),
                 }
             } catch (error) {
@@ -587,13 +650,13 @@ const insertTextInEditorTool = tool({
 })
 
 const addCitationTool = tool({
-    description: 'Fügt ein formales Zitat an der aktuellen Cursor-Position im Editor ein.',
+    description: 'Fügt ein formales Zitat an der aktuellen Cursor-Position im Editor ein. Alle Metadaten (Titel, Autoren, Jahr, DOI, etc.) werden automatisch aus der Bibliothek geladen und im Zitat angezeigt. Optional kannst du targetText angeben, um das Zitat nach einem bestimmten Text einzufügen.',
     inputSchema: z.object({
-        sourceId: z.string(),
-        citationText: z.string(),
+        sourceId: z.string().describe('ID der Quelle aus der Bibliothek (von getLibrarySources)'),
+        targetText: z.string().optional().describe('Optional: Text nach dem das Zitat eingefügt werden soll. Wenn nicht angegeben, wird an der aktuellen Cursor-Position eingefügt. Verwende einen eindeutigen Text-Snippet aus dem Editor-Inhalt.'),
     }),
-    execute: async ({ sourceId, citationText }) => {
-        const payload = JSON.stringify({ type: 'tool-result', toolName: 'addCitation', sourceId, citationText })
+    execute: async ({ sourceId, targetText }) => {
+        const payload = JSON.stringify({ type: 'tool-result', toolName: 'addCitation', sourceId, targetText })
         const base64Payload = Buffer.from(payload).toString('base64')
         return {
             success: true,
@@ -765,6 +828,7 @@ export async function POST(req: NextRequest) {
 
         const createLibraryTool = createLibraryToolWithUser(user.id)
         const addSourcesToLibraryTool = addSourcesToLibraryToolWithUser(user.id)
+        const listAllLibrariesTool = listAllLibrariesToolWithUser(user.id)
         const getLibrarySourcesTool = getLibrarySourcesToolWithUser(user.id)
         const getEditorContentTool = createGetEditorContentTool(currentEditorContent)
 
@@ -836,6 +900,7 @@ ${truncatedContent}
                 evaluateSources: evaluateSourcesTool,
                 createLibrary: createLibraryTool,
                 addSourcesToLibrary: addSourcesToLibraryTool,
+                listAllLibraries: listAllLibrariesTool,
                 getLibrarySources: getLibrarySourcesTool,
                 getEditorContent: getEditorContentTool,
                 insertTextInEditor: insertTextInEditorTool,

@@ -54,7 +54,10 @@ export function PlateEditor({
   const { t, language } = useLanguage();
   const hasHydrated = React.useRef(false);
   const discussionsApplied = React.useRef(false);
-  const latestContentRef = React.useRef<Value>(DEFAULT_VALUE);
+  
+  // Lade initialen Wert synchron aus localStorage für Hot Reload-Kompatibilität
+  const initialValue = React.useMemo(() => getInitialValue(storageId), [storageId]);
+  const latestContentRef = React.useRef<Value>(initialValue);
   const contentSaveTimeout = React.useRef<number | ReturnType<typeof setTimeout> | null>(null);
   const discussionsSaveTimeout = React.useRef<number | ReturnType<typeof setTimeout> | null>(null);
   const topToolbarRef = React.useRef<HTMLDivElement | null>(null);
@@ -78,7 +81,7 @@ export function PlateEditor({
   
   const editor = usePlateEditor({
     plugins: editorKit,
-    value: DEFAULT_VALUE,
+    value: initialValue,
   });
   const addCitation = useCitationStore((state) => state.addCitation);
   const pendingCitation = useCitationStore((state) => state.pendingCitation);
@@ -183,7 +186,20 @@ export function PlateEditor({
   }, [editor]);
 
   React.useEffect(() => {
-    if (typeof window === 'undefined' || !editor || hasHydrated.current) return;
+    if (typeof window === 'undefined' || !editor) return;
+
+    // Reset hasHydrated beim Remount (Hot Reload)
+    // Prüfe ob der Editor-Inhalt bereits geladen wurde, indem wir den aktuellen Wert mit initialValue vergleichen
+    const currentContent = JSON.stringify(editor.children);
+    const initialContentStr = JSON.stringify(initialValue);
+    const needsReload = currentContent !== initialContentStr || !hasHydrated.current;
+
+    if (!needsReload && hasHydrated.current) {
+      return; // Bereits geladen und synchronisiert
+    }
+
+    // Setze hasHydrated zurück beim Remount
+    hasHydrated.current = false;
 
     const loadContent = async () => {
       // Versuche zuerst aus Supabase zu laden, wenn storageId eine UUID ist (Supabase-Dokument)
@@ -215,26 +231,25 @@ export function PlateEditor({
           content = localData.content;
           discussions = localData.discussions;
         }
-      }
-
-      // Wenn kein Content aus Supabase geladen wurde, lade aus localStorage
-      if (!content) {
+      } else {
+        // Für non-UUID storageIds wurde der Content bereits synchron geladen (initialValue)
+        // Lade nur Discussions aus localStorage
         const localData = loadPersistedState(storageKeys);
-        content = localData.content;
         discussions = localData.discussions;
-        
-        // Prüfe ob localStorage-Content tatsächlich Text enthält
-        if (content) {
-          const hasContent = extractTextFromNode(content).trim().length > 0;
-          if (!hasContent) {
-            content = null; // Verwende DEFAULT_VALUE wenn kein Content vorhanden
-          }
-        }
+        // Verwende den bereits geladenen initialValue als Content
+        content = initialValue !== DEFAULT_VALUE ? initialValue : null;
       }
 
-      // Verwende Content oder DEFAULT_VALUE
-      const finalContent = content || DEFAULT_VALUE;
-      (editor as any).tf.setValue?.(finalContent);
+      // Wenn kein Content vorhanden ist, verwende den initialValue
+      const finalContent = content || initialValue;
+      
+      // Setze nur wenn sich der Content geändert hat
+      const currentContentStr = JSON.stringify(editor.children);
+      const newContentStr = JSON.stringify(finalContent);
+      if (currentContentStr !== newContentStr) {
+        (editor as any).tf.setValue?.(finalContent);
+      }
+      
       latestContentRef.current = finalContent;
       (editor as any).tf.redecorate?.();
       // stelle Anker für Kommentare/Vorschläge sofort wieder her
@@ -253,7 +268,7 @@ export function PlateEditor({
     };
 
     loadContent();
-  }, [editor, storageKeys, storageId]);
+  }, [editor, storageKeys, storageId, initialValue]);
 
   const handleChange = React.useCallback(
     ({ value: nextValue }: { value: Value }) => {
@@ -432,6 +447,77 @@ const LOCAL_STORAGE_KEY_LEGACY = 'plate-editor-content';
 const LOCAL_STORAGE_DISCUSSIONS_KEY_LEGACY = 'plate-editor-discussions';
 const SAVE_DEBOUNCE_MS = 400;
 const DEFAULT_VALUE = normalizeNodeId([{ type: 'p', children: [{ text: '' }] }]);
+
+/**
+ * Lädt synchron den initialen Editor-Inhalt aus localStorage.
+ * Wird beim Initialisieren des Editors verwendet, um Hot Reload-Probleme zu vermeiden.
+ * @param storageId Die Storage-ID für das Dokument
+ * @returns Der geladene Content oder DEFAULT_VALUE als Fallback
+ */
+function getInitialValue(storageId: string): Value {
+  if (typeof window === 'undefined') {
+    return DEFAULT_VALUE;
+  }
+
+  const storageKeys = {
+    content: `${LOCAL_STORAGE_KEY_PREFIX}-${storageId}`,
+    discussions: `${LOCAL_STORAGE_DISCUSSIONS_KEY_PREFIX}-${storageId}`,
+    state: `${LOCAL_STORAGE_STATE_PREFIX}-${storageId}`,
+    legacyContent: LOCAL_STORAGE_KEY_LEGACY,
+    legacyDiscussions: LOCAL_STORAGE_DISCUSSIONS_KEY_LEGACY,
+  };
+
+  // Prüfe ob storageId eine UUID ist (Supabase-Dokument) - diese werden asynchron geladen
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storageId);
+  if (isUUID) {
+    // Für Supabase-Dokumente verwenden wir DEFAULT_VALUE, da diese asynchron geladen werden
+    return DEFAULT_VALUE;
+  }
+
+  // Lade synchron aus localStorage
+  try {
+    const tryParse = <T,>(raw: string | null, revive: (data: any) => T): T | null => {
+      if (!raw) return null;
+      try {
+        return revive(JSON.parse(raw));
+      } catch (error) {
+        return null;
+      }
+    };
+
+    const state = tryParse<{ content?: Value; discussions?: TDiscussion[] }>(
+      window.localStorage.getItem(storageKeys.state),
+      (data) => data
+    );
+
+    const contentFromState = state?.content ? normalizeNodeId(state.content) : null;
+
+    const contentFallback =
+      tryParse<Value>(
+        window.localStorage.getItem(storageKeys.content),
+        (data) => normalizeNodeId(data as Value)
+      ) ??
+      tryParse<Value>(
+        window.localStorage.getItem(storageKeys.legacyContent),
+        (data) => normalizeNodeId(data as Value)
+      );
+
+    const loadedContent = contentFromState ?? contentFallback;
+
+    // Prüfe ob Content tatsächlich Text enthält
+    if (loadedContent) {
+      const hasContent = extractTextFromNode(loadedContent).trim().length > 0;
+      if (hasContent) {
+        return loadedContent;
+      }
+    }
+  } catch (error) {
+    // Bei Fehlern verwende DEFAULT_VALUE
+    console.warn('[PLATE EDITOR] Fehler beim synchronen Laden des initialen Contents:', error);
+  }
+
+  return DEFAULT_VALUE;
+}
 const LATEX_MARKERS = [
   '\\frac',
   '\\hat',

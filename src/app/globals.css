@@ -774,4 +774,29 @@ body {
   .equation-number::before {
     content: '(' counter(equation) ')';
   }
+
+  /* Tabellen-Styling für AI Chat Panel */
+  /* Stelle sicher, dass Tabellen im Chat-Panel korrekt gerendert werden */
+  [data-plate-editor] table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    display: table;
+  }
+
+  [data-plate-editor] table th,
+  [data-plate-editor] table td {
+    border: 1px solid hsl(var(--border));
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+
+  [data-plate-editor] table th {
+    font-weight: 600;
+    background-color: hsl(var(--muted) / 0.5);
+  }
+
+  [data-plate-editor] table tbody tr:nth-child(even) {
+    background-color: hsl(var(--muted) / 0.2);
+  }
 }

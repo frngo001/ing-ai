@@ -19,7 +19,8 @@ import {
   Terminal,
   Activity,
   Globe,
-  Download
+  Download,
+  List
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -41,6 +42,7 @@ function getToolConfig(toolName: string, t: (key: string) => string) {
     createLibrary: { label: t('askAi.toolCreateLibrary'), icon: Library },
     addSourcesToLibrary: { label: t('askAi.toolAddSourcesToLibrary'), icon: Plus },
     getLibrarySources: { label: t('askAi.toolGetLibrarySources'), icon: Library },
+    listAllLibraries: { label: t('askAi.toolListAllLibraries'), icon: List },
     getEditorContent: { label: t('askAi.toolGetEditorContent'), icon: FileText },
     insertTextInEditor: { label: t('askAi.toolInsertTextInEditor'), icon: FileText },
     addCitation: { label: t('askAi.toolAddCitation'), icon: Quote },
@@ -79,13 +81,11 @@ function translateToolDetailKey(key: string, t: (key: string) => string): string
     'extract depth': t('askAi.toolDetailExtractDepth'),
   }
   
-  // Wenn direkte Übersetzung vorhanden, verwende sie (case-insensitive)
   const lowerKey = key.toLowerCase()
   if (translations[lowerKey]) {
     return translations[lowerKey]
   }
   
-  // Ansonsten formatiere den Key (z.B. "totalResults" -> "Total Results")
   return key.replace(/([A-Z])/g, ' $1').trim()
 }
 

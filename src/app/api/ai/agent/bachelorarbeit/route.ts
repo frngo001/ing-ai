@@ -13,10 +13,18 @@ import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries
 import * as citationsUtils from '@/lib/supabase/utils/citations'
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
 import { devWarn, devError } from '@/lib/utils/logger'
-
-
+import { translations, type Language } from '@/lib/i18n/translations'
+import { getLanguageForServer } from '@/lib/i18n/server-language'
 export const runtime = 'nodejs'
 
+const queryLanguage = async () => {
+  try {
+    const language = await getLanguageForServer()
+    return language
+  } catch (error) {
+    return 'de'
+  }
+}
 function createToolStepMarker(
   type: 'start' | 'end',
   data: {
@@ -265,13 +273,14 @@ const searchSourcesTool = tool({
 
         const analysisTime = Date.now() - analysisStartTime
 
+        const language = await queryLanguage()
         const response = {
           success: true,
           totalResults: results.totalResults,
           sourcesFound: results.sources.length,
           selected: selectedWithReason, // Array mit vereinfachten Quellen-Objekten
           totalSelected: selectedWithReason.length,
-          message: `Ich habe ${selectedWithReason.length} relevante Quellen für dein Thema gefunden und analysiert. Bitte präsentiere diese Quellen dem Studenten in einer TABELLE (Markdown-Format) mit den Spalten: Titel, Autoren, Jahr, Relevanz-Score, Begründung. Sortiere nach Relevanz-Score (höchste zuerst).`,
+          message: (translations[language as Language]?.askAi?.toolSearchSourcesMessage || 'Ich habe {count} relevante Quellen für dein Thema gefunden und analysiert. Bitte präsentiere diese Quellen dem Studenten in einer TABELLE (Markdown-Format) mit den Spalten: Titel, Autoren, Jahr, Relevanz-Score, Begründung. Sortiere nach Relevanz-Score (höchste zuerst).').replace('{count}', selectedWithReason.length.toString()),
           apis: validApis,
           searchTime: results.searchTime,
           analysisTime: `${analysisTime}ms`,
@@ -319,7 +328,7 @@ const searchSourcesTool = tool({
             sourcesFound: results.sources.length,
             selected: selectedWithReason.slice(0, 10), // Nur erste 10 Quellen als Fallback
             totalSelected: Math.min(selectedWithReason.length, 10),
-            message: `Ich habe ${selectedWithReason.length} relevante Quellen gefunden. Bitte präsentiere diese Quellen in einer TABELLE (Markdown-Format) mit den Spalten: Titel, Autoren, Jahr, Relevanz-Score, Begründung. Sortiere nach Relevanz-Score (höchste zuerst).`,
+            message: (translations[language as Language]?.askAi?.toolSearchSourcesMessage || 'Ich habe {count} relevante Quellen für dein Thema gefunden und analysiert. Bitte präsentiere diese Quellen dem Studenten in einer TABELLE (Markdown-Format) mit den Spalten: Titel, Autoren, Jahr, Relevanz-Score, Begründung. Sortiere nach Relevanz-Score (höchste zuerst).').replace('{count}', Math.min(selectedWithReason.length, 10).toString()),
             _toolStep: createToolStepMarker('end', {
               id: stepId,
               toolName,
@@ -432,6 +441,7 @@ const analyzeSourcesTool = tool({
         reason: generateSourceReason(source, thema),
       }))
 
+      const language = await queryLanguage()
       const analysisTime = Date.now() - startTime
       const statistics = {
         avgRelevanceScore: selected.reduce((sum, s) => sum + s.relevanceScore, 0) / selected.length,
@@ -449,6 +459,7 @@ const analyzeSourcesTool = tool({
         totalAnalyzed: analyzed.length,
         totalSelected: selectedWithReason.length,
         statistics,
+        message: (translations[language as Language]?.askAi?.toolAnalyzeSourcesMessage || 'Analyse abgeschlossen. {totalSelected} Quellen aus {totalAnalyzed} analysierten Quellen ausgewählt.').replace('{totalSelected}', selectedWithReason.length.toString()).replace('{totalAnalyzed}', analyzed.length.toString()),
         _toolStep: createToolStepMarker('end', {
           id: stepId,
           toolName,
@@ -512,6 +523,7 @@ const addThemaTool = tool({
     thema: z.string().describe('Das Thema der Bachelorarbeit oder Masterarbeit (z.B. "Künstliche Intelligenz in der Medizin")'),
   }),
   execute: async ({ thema }) => {
+    const language = await queryLanguage()
     const toolResult = {
       type: 'tool-result',
       toolName: 'addThema',
@@ -522,7 +534,7 @@ const addThemaTool = tool({
     
     const response = {
       success: true,
-      message: `Thema "${thema}" wurde gesetzt`,
+      message: (translations[language as Language]?.askAi?.toolAddThemaMessage || 'Thema "{thema}" wurde gesetzt').replace('{thema}', thema),
       thema,
       // Base64-kodiertes Result für Client-Verarbeitung
       encodedResult: `[TOOL_RESULT_B64:${base64Payload}]`,
@@ -538,8 +550,9 @@ const getCurrentStepTool = tool({
     _placeholder: z.string().optional().describe('Placeholder parameter'),
   }),
   execute: async () => {
+    const language = await queryLanguage()
     const response = {
-      message: 'Verwende den Agent State Store um den aktuellen Schritt zu ermitteln',
+      message: translations[language as Language]?.askAi?.toolGetCurrentStepMessage || 'Verwende den Agent State Store um den aktuellen Schritt zu ermitteln',
     }
     return response
   },
@@ -586,6 +599,7 @@ function createLibraryToolWithUser(userId: string, supabaseClient: Awaited<Retur
       name: z.string().describe('Name der Bibliothek (z.B. "Künstlicher Intelligenz")'),
     }),
     execute: async ({ name }) => {
+      const language = await queryLanguage()
       const stepId = generateToolStepId()
       const toolName = 'createLibrary'
       
@@ -600,7 +614,7 @@ function createLibraryToolWithUser(userId: string, supabaseClient: Awaited<Retur
           success: true,
           libraryId: newLibrary.id,
           libraryName: newLibrary.name,
-          message: `Bibliothek "${newLibrary.name}" erfolgreich erstellt`,
+          message: `${translations[language as Language]?.askAi?.toolCreateLibrary || 'Bibliothek'} "${newLibrary.name}" ${translations[language as Language]?.askAi?.toolCreateLibraryMessage || 'erfolgreich erstellt'}`,
           _toolStep: createToolStepMarker('end', {
             id: stepId,
             toolName,
@@ -635,18 +649,19 @@ function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited
         .describe('Array von Quellen-Objekten (aus searchSources.selected)'),
     }),
     execute: async ({ libraryId, sources }) => {
+      const language = await queryLanguage()
       const stepId = generateToolStepId()
       const toolName = 'addSourcesToLibrary'
       
       if (!sources || !Array.isArray(sources) || sources.length === 0) {
         return {
           success: false,
-          error: 'Keine Quellen zum Hinzufügen',
+          error: translations[language as Language]?.askAi?.toolSearchSourcesNoSources || 'Keine Quellen zum Hinzufügen',
           _toolStep: createToolStepMarker('end', {
             id: stepId,
             toolName,
             status: 'error',
-            error: 'Keine Quellen zum Hinzufügen',
+            error: translations[language as Language]?.askAi?.toolSearchSourcesNoSources || 'Keine Quellen zum Hinzufügen',
           }),
         }
       }
@@ -656,12 +671,12 @@ function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited
         if (!library) {
           return {
             success: false,
-            error: 'Bibliothek nicht gefunden',
+            error: translations[language as Language]?.askAi?.toolGetLibrarySourcesNotFound || 'Bibliothek nicht gefunden',
             _toolStep: createToolStepMarker('end', {
               id: stepId,
               toolName,
               status: 'error',
-              error: 'Bibliothek nicht gefunden',
+              error: translations[language as Language]?.askAi?.toolGetLibrarySourcesNotFound || 'Bibliothek nicht gefunden',
             }),
           }
         }
@@ -703,7 +718,7 @@ function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited
           libraryName: library.name,
           added: uniqueCitations.length,
           total: existingCitations.length + uniqueCitations.length,
-          message: `${uniqueCitations.length} Quelle(n) zur Bibliothek "${library.name}" hinzugefügt`,
+          message: `${uniqueCitations.length} ${translations[language as Language]?.askAi?.toolAddSourcesToLibrary || 'Quellen'} zur Bibliothek "${library.name}" ${translations[language as Language]?.askAi?.toolAddSourcesToLibraryMessage || 'hinzugefügt'}`,
           _toolStep: createToolStepMarker('end', {
             id: stepId,
             toolName,
@@ -727,29 +742,92 @@ function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited
   })
 }
 
+// Factory-Funktion für listAllLibrariesTool mit User-ID
+function listAllLibrariesToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>) {
+  return tool({
+    description:
+      'Listet alle verfügbaren Bibliotheken mit ihren Details auf. Nutze dies, um zu sehen, welche Bibliotheken existieren, bevor du getLibrarySources aufrufst.',
+    inputSchema: z.object({
+      _placeholder: z.string().optional().describe('Placeholder parameter'),
+    }),
+    execute: async () => {
+      const stepId = generateToolStepId()
+      const toolName = 'listAllLibraries'
+
+      try {
+        const language = await queryLanguage()
+        const libraries = await citationLibrariesUtils.getCitationLibraries(userId, supabaseClient)
+        
+        // Für jede Bibliothek die Anzahl der Citations ermitteln
+        const librariesWithCounts = await Promise.all(
+          libraries.map(async (lib) => {
+            const citations = await citationsUtils.getCitationsByLibrary(lib.id, userId, supabaseClient)
+            return {
+              id: lib.id,
+              name: lib.name,
+              citationCount: citations.length,
+              isDefault: lib.is_default || false,
+              createdAt: lib.created_at ? new Date(lib.created_at).toLocaleDateString('de-DE', { dateStyle: 'short' }) : undefined,
+            }
+          })
+        )
+
+        return {
+          success: true,
+          libraries: librariesWithCounts,
+          count: librariesWithCounts.length,
+          message: librariesWithCounts.length === 0
+            ? (translations[language as Language]?.askAi?.toolListAllLibrariesNoLibraries || 'Keine Bibliotheken gefunden. Erstelle zuerst eine Bibliothek mit createLibrary.')
+            : (translations[language as Language]?.askAi?.toolListAllLibrariesFound || '{count} Bibliothek(en) gefunden. Verwende getLibrarySources mit der libraryId, um die Quellen einer Bibliothek abzurufen.').replace('{count}', librariesWithCounts.length.toString()),
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'completed',
+            output: { count: librariesWithCounts.length },
+          }),
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          libraries: [],
+          count: 0,
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }),
+        }
+      }
+    },
+  })
+}
+
 // Factory-Funktion für getLibrarySourcesTool mit User-ID
 function getLibrarySourcesToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>) {
   return tool({
     description:
-      'Ruft alle Quellen aus einer Bibliothek ab. Kann verwendet werden, um bereits gespeicherte Quellen zu zitieren.',
+      'Ruft alle Quellen aus einer Bibliothek ab. Kann verwendet werden, um bereits gespeicherte Quellen zu zitieren. Nutze zuerst listAllLibraries, um die verfügbaren Bibliotheken zu sehen.',
     inputSchema: z.object({
-      libraryId: z.string().describe('ID der Bibliothek'),
+      libraryId: z.string().describe('ID der Bibliothek (von listAllLibraries)'),
     }),
     execute: async ({ libraryId }) => {
       const stepId = generateToolStepId()
       const toolName = 'getLibrarySources'
 
       try {
+        const language = await queryLanguage()
         const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId, supabaseClient)
         if (!library) {
           return {
             success: false,
-            error: 'Bibliothek nicht gefunden',
+            error: translations[language as Language]?.askAi?.toolGetLibrarySourcesNotFound || 'Bibliothek nicht gefunden',
             _toolStep: createToolStepMarker('end', {
               id: stepId,
               toolName,
               status: 'error',
-              error: 'Bibliothek nicht gefunden',
+              error: translations[language as Language]?.askAi?.toolGetLibrarySourcesNotFound || 'Bibliothek nicht gefunden',
             }),
           }
         }
@@ -774,7 +852,7 @@ function getLibrarySourcesToolWithUser(userId: string, supabaseClient: Awaited<R
           libraryName: library.name,
           sources: savedCitations,
           count: savedCitations.length,
-          message: `Bibliothek "${library.name}" enthält ${savedCitations.length} Quelle(n)`,
+          message: (translations[language as Language]?.askAi?.toolGetLibrarySourcesContains || 'Bibliothek "{name}" enthält {count} Quelle(n)').replace('{name}', library.name).replace('{count}', savedCitations.length.toString()),
           _toolStep: createToolStepMarker('end', {
             id: stepId,
             toolName,
@@ -806,9 +884,10 @@ const saveStepDataTool = tool({
     data: z.object({}).passthrough().describe('Daten die gespeichert werden sollen (als Objekt)'),
   }),
   execute: async ({ step, data }) => {
+    const language = await queryLanguage()
     const response = {
       success: true,
-      message: 'Daten sollten im Client-State gespeichert werden',
+      message: translations[language as Language]?.askAi?.toolSaveStepDataMessage || 'Daten sollten im Client-State gespeichert werden',
       step,
     }
     return response
@@ -836,13 +915,14 @@ function createGetEditorContentTool(editorContent: string) {
         maxLength,
       })
       
+      const language = await queryLanguage()
       if (!editorContent || editorContent.trim().length === 0) {
         devWarn('⚠️ [BACHELORARBEIT AGENT] Editor-Inhalt ist leer oder nicht vorhanden')
         return {
           success: true,
           isEmpty: true,
           content: '',
-          message: 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
+          message: translations[language as Language]?.askAi?.toolGetEditorContentEmpty || 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
           characterCount: 0,
           wordCount: 0,
           _toolStep: createToolStepMarker('end', {
@@ -871,7 +951,7 @@ function createGetEditorContentTool(editorContent: string) {
         isEmpty: false,
         content: includeFullText ? content : undefined,
         summary: !includeFullText ? `${wordCount} Wörter, ${paragraphCount} Absätze, ${headings.length} Überschriften` : undefined,
-        message: `Editor-Inhalt abgerufen: ${wordCount} Wörter, ${characterCount} Zeichen.`,
+        message: (translations[language as Language]?.askAi?.toolGetEditorContentMessage || 'Editor-Inhalt abgerufen: {wordCount} Wörter, {characterCount} Zeichen.').replace('{wordCount}', wordCount.toString()).replace('{characterCount}', characterCount.toString()),
         characterCount,
         wordCount,
         paragraphCount,
@@ -927,6 +1007,7 @@ const insertTextInEditorTool = tool({
       ),
   }),
   execute: async ({ markdown, position = 'end', focusOnHeadings = true }) => {
+    const language = await queryLanguage()
     const payload = JSON.stringify({
       type: 'tool-result',
       toolName: 'insertTextInEditor',
@@ -943,7 +1024,7 @@ const insertTextInEditorTool = tool({
       headingCount: (markdown.match(/^#+\s/gm) || []).length,
       position,
       markdown: markdown,
-      message: 'Text bereit für Einfügung im Editor',
+      message: translations[language as Language]?.askAi?.toolInsertTextInEditorMessage || 'Text bereit für Einfügung im Editor',
       eventType: 'insert-text-in-editor',
       _streamMarker: `[TOOL_RESULT_B64:${base64Payload}]`,
     }
@@ -953,24 +1034,25 @@ const insertTextInEditorTool = tool({
 // Tool: Zitat hinzufügen
 const addCitationTool = tool({
   description:
-    'Fügt ein formales Zitat an der aktuellen Cursor-Position im Editor ein. Nutze dies, um Aussagen direkt mit einer Quelle zu belegen.',
+    'Fügt ein formales Zitat an der aktuellen Cursor-Position im Editor ein. Nutze dies, um Aussagen direkt mit einer Quelle zu belegen. Alle Metadaten (Titel, Autoren, Jahr, DOI, etc.) werden automatisch aus der Bibliothek geladen und im Zitat angezeigt. Optional kannst du targetText angeben, um das Zitat nach einem bestimmten Text einzufügen.',
   inputSchema: z.object({
-    sourceId: z.string().describe('ID der Quelle aus der Bibliothek'),
-    citationText: z.string().describe('Der Text des Zitats, z.B. "(Müller, 2023)" oder Fußnote'),
+    sourceId: z.string().describe('ID der Quelle aus der Bibliothek (von getLibrarySources)'),
+    targetText: z.string().optional().describe('Optional: Text nach dem das Zitat eingefügt werden soll. Wenn nicht angegeben, wird an der aktuellen Cursor-Position eingefügt. Verwende einen eindeutigen Text-Snippet aus dem Editor-Inhalt.'),
   }),
-  execute: async ({ sourceId, citationText }) => {
+  execute: async ({ sourceId, targetText }) => {
+    const language = await queryLanguage()
     const payload = JSON.stringify({
       type: 'tool-result',
       toolName: 'addCitation',
       sourceId,
-      citationText,
+      targetText,
     })
 
     const base64Payload = Buffer.from(payload).toString('base64')
 
     return {
       success: true,
-      message: 'Zitat bereit für Einfügung',
+      message: translations[language as Language]?.askAi?.toolAddCitationMessage || 'Zitat bereit für Einfügung',
       eventType: 'insert-citation',
       _streamMarker: `[TOOL_RESULT_B64:${base64Payload}]`,
     }
@@ -1110,6 +1192,7 @@ ${fileSections.join('\n\n---\n\n')}
 
     const createLibraryTool = createLibraryToolWithUser(user.id, supabase)
     const addSourcesToLibraryTool = addSourcesToLibraryToolWithUser(user.id, supabase)
+    const listAllLibrariesTool = listAllLibrariesToolWithUser(user.id, supabase)
     const getLibrarySourcesTool = getLibrarySourcesToolWithUser(user.id, supabase)
     const getEditorContentTool = createGetEditorContentTool(currentEditorContent)
 
@@ -1201,6 +1284,7 @@ ${fileSections.join('\n\n---\n\n')}
         evaluateSources: evaluateSourcesTool,
         createLibrary: createLibraryTool,
         addSourcesToLibrary: addSourcesToLibraryTool,
+        listAllLibraries: listAllLibrariesTool,
         getLibrarySources: getLibrarySourcesTool,
         getEditorContent: getEditorContentTool,
         insertTextInEditor: insertTextInEditorTool,

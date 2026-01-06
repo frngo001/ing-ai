@@ -868,7 +868,6 @@ export function AskAiPane({
                         value={context.agentMode}
                         onValueChange={(value: AgentMode) => {
                           setContext((prev) => {
-                            // Deaktiviere Editor-Context automatisch beim Wechsel zu Standard-Chat
                             const document = value === 'standard' ? false : prev.document
                             return { ...prev, agentMode: value, document }
                           })
