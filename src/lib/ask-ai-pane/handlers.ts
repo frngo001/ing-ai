@@ -200,8 +200,9 @@ export const createHandlers = (deps: HandlerDependencies) => {
     const thema = extractThema(trimmed)
 
     // Wenn Arbeitstyp erkannt aber Agent noch nicht aktiv UND Agent-Modus ausgewählt
-    if ((arbeitType || context.agentMode === 'general') && !agentStore.isActive && context.agentMode !== 'standard') {
-      // Nutze den ausgewählten Modus oder den erkannten Arbeitstyp
+    // Default ist 'bachelor' oder 'master', nicht 'general'
+    if ((arbeitType || context.agentMode === 'bachelor') && !agentStore.isActive && context.agentMode !== 'standard') {
+      // Nutze den ausgewählten Modus oder den erkannten Arbeitstyp, Default ist 'bachelor'
       const typeToStart = context.agentMode === 'general' ? 'general' : (arbeitType || 'bachelor')
 
       agentStore.startAgent(typeToStart, thema || undefined)
@@ -259,7 +260,8 @@ export const createHandlers = (deps: HandlerDependencies) => {
     try {
       
       let apiEndpoint = "/api/ai/ask"
-      const currentArbeitType = agentStore.arbeitType || (context.agentMode === 'general' ? 'general' : (context.agentMode === 'bachelor' ? 'bachelor' : null))
+      // Default ist 'bachelor', nicht 'general'
+      const currentArbeitType = agentStore.arbeitType || (context.agentMode === 'bachelor' ? 'bachelor' : (context.agentMode === 'general' ? 'general' : 'bachelor'))
       
       if (context.agentMode === 'standard') {
         // Standard Chat Modus - wenn Websuche aktiviert, verwende WebSearch-Agent
@@ -287,6 +289,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
       })
 
       // Für general-Modus: Wenn kein Thema vorhanden ist, verwende die erste Nachricht oder einen Standard-Wert
+      // Default ist 'bachelor', daher verwenden wir die erste Nachricht nur für expliziten general-Modus
       const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
 
       const isAgentModeForEditor = context.agentMode === 'bachelor' || context.agentMode === 'general' || 
