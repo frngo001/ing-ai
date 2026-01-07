@@ -74,13 +74,15 @@ export function PlateEditor({
     [storageId]
   );
   
-  const editorKit = React.useMemo(
-    () => createEditorKit(t('toolbar.placeholderWrite')),
-    [t, language]
-  );
-  
+  // Erstelle editorKit nur einmal beim ersten Mount
+  // Verwende useRef um HMR-bedingtes Neuladen zu verhindern
+  const editorKitRef = React.useRef<ReturnType<typeof createEditorKit> | null>(null);
+  if (!editorKitRef.current) {
+    editorKitRef.current = createEditorKit(t('toolbar.placeholderWrite'));
+  }
+
   const editor = usePlateEditor({
-    plugins: editorKit,
+    plugins: editorKitRef.current,
     value: initialValue,
   });
   const addCitation = useCitationStore((state) => state.addCitation);

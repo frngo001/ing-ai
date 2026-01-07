@@ -469,8 +469,7 @@ export function LibraryPane({
                   key={item.id}
                   className={cn(
                     "border-border/50 hover:bg-muted/50 group rounded-md border px-2 py-2 transition focus:outline-none focus:ring-0 cursor-default",
-                    index !== (citations.length ? citations : fallbackCitations).length - 1 &&
-                      "mb-2"
+                    index !== filteredCitations.length - 1 && "mb-2"
                   )}
                   tabIndex={-1}
                 >

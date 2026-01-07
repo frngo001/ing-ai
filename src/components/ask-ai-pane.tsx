@@ -230,13 +230,17 @@ export function AskAiPane({
       if (loadedHistory[0]) {
         setConversationId(loadedHistory[0].id)
         setMessages(loadedHistory[0].messages)
+        // Restore agent mode from the loaded conversation
+        if (loadedHistory[0].agentMode) {
+          setContext((prev) => ({ ...prev, agentMode: loadedHistory[0].agentMode! }))
+        }
       }
-      
+
       // Lade gespeicherte Nachrichten
       const saved = await loadSavedMessages()
       setSavedMessages(new Set(saved.map((m: { messageId: string }) => m.messageId)))
       setSavedMessagesList(saved)
-      
+
       setIsHydrated(true)
     }
     loadData()
@@ -289,7 +293,7 @@ export function AskAiPane({
       
       isPersistingRef.current = true
       try {
-        await persistConversationRef.current(messages, conversationId, setHistoryRef.current)
+        await persistConversationRef.current(messages, conversationId, setHistoryRef.current, context.agentMode)
       } finally {
         isPersistingRef.current = false
       }
@@ -971,31 +975,33 @@ export function AskAiPane({
                         }
                       }}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 space-y-1">
-                          <div className="font-medium truncate">
+                      <div className="flex items-start gap-1.5">
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="text-sm font-medium truncate">
                             {item.title || translations.newChatTitle}
                           </div>
                           <div className="text-xs text-muted-foreground line-clamp-2">
                             {lastRelevantMessage}
                           </div>
                         </div>
-                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                          {new Date(item.updatedAt).toLocaleString(language)}
-                        </span>
+                        <div className="flex flex-col items-end gap-0.5 shrink-0">
+                          <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                            {new Date(item.updatedAt).toLocaleString(language)}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setChatToDelete({ id: item.id, title: item.title || translations.newChatTitle })
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute bottom-2 right-2 h-6 w-6 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setChatToDelete({ id: item.id, title: item.title || translations.newChatTitle })
-                        }}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
                     </div>
                   )
                 })

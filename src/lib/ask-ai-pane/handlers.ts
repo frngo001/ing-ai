@@ -1,4 +1,4 @@
-import type { ChatMessage, Mentionable, SlashCommand, ContextSelection, MessageContext } from './types'
+import type { ChatMessage, Mentionable, SlashCommand, ContextSelection, MessageContext, StoredConversation, AgentMode } from './types'
 import { detectArbeitType, extractThema } from './agent-utils'
 import { buildContextSummary } from './context-utils'
 import { parseAgentStream } from '@/lib/stream-parsers/agent-stream-parser'
@@ -110,7 +110,7 @@ export interface HandlerDependencies {
   selectedMentions: Mentionable[]
   isSending: boolean
   abortController: AbortController | null
-  history: Array<{ id: string; messages: ChatMessage[] }>
+  history: StoredConversation[]
   conversationId: string
   slashQuery: string | null
   agentStore: AgentStore
@@ -700,6 +700,10 @@ export const createHandlers = (deps: HandlerDependencies) => {
     }
     setConversationId(entry.id)
     setMessages(entry.messages)
+    // Restore agent mode from conversation if available
+    if (entry.agentMode) {
+      setContext((prev) => ({ ...prev, agentMode: entry.agentMode as AgentMode }))
+    }
     setStreamingId(null)
     setFeedback({})
     setSelectedMentions([])

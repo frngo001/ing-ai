@@ -140,7 +140,12 @@ export const getDefaultSlashCommands = (): SlashCommand[] => {
   ]
 }
 
-export const persistConversation = async (msgs: ChatMessage[], id: string, setHistory: (updater: (prev: StoredConversation[]) => StoredConversation[]) => void) => {
+export const persistConversation = async (
+  msgs: ChatMessage[],
+  id: string,
+  setHistory: (updater: (prev: StoredConversation[]) => StoredConversation[]) => void,
+  agentMode?: 'bachelor' | 'general' | 'standard'
+) => {
   const userId = await getCurrentUserId()
   const title = deriveConversationTitle(msgs)
   
@@ -206,6 +211,7 @@ export const persistConversation = async (msgs: ChatMessage[], id: string, setHi
           title,
           messages: msgs,
           updatedAt: Date.now(),
+          agentMode,
         }
         const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY)
         const prev = stored ? JSON.parse(stored) as StoredConversation[] : []
@@ -222,6 +228,7 @@ export const persistConversation = async (msgs: ChatMessage[], id: string, setHi
         title,
         messages: msgs,
         updatedAt: Date.now(),
+        agentMode,
       }
       const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY)
       const prev = stored ? JSON.parse(stored) as StoredConversation[] : []
@@ -238,6 +245,7 @@ export const persistConversation = async (msgs: ChatMessage[], id: string, setHi
       title,
       messages: msgs,
       updatedAt: Date.now(),
+      agentMode,
     }
     const filtered = prev.filter((item) => item.id !== id)
     const next = [nextConversation, ...filtered].slice(0, 50)

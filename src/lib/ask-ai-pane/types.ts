@@ -54,6 +54,7 @@ export type StoredConversation = {
   title: string
   messages: ChatMessage[]
   updatedAt: number
+  agentMode?: AgentMode // Zuletzt verwendeter Agent für diesen Chat
 }
 
 export type AgentMode = 'bachelor' | 'general' | 'standard'

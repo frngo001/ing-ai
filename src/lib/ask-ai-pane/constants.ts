@@ -5,9 +5,9 @@ export const CHAT_HISTORY_STORAGE_KEY = "ask-ai-chat-history"
 export const SAVED_MESSAGES_STORAGE_KEY = "ask-ai-saved-messages"
 
 export const defaultContext: ContextSelection = {
-  document: false, // Deaktiviert für Standard-Chat
+  document: true, // Aktiviert für Bachelor-Agent
   web: true,
-  agentMode: 'standard',
+  agentMode: 'bachelor',
 }
 
 export const STREAMING_PHRASES = [
