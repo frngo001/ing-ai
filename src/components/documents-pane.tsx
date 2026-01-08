@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { FilePenLine, PanelLeftClose, Plus, Search, Trash, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -69,12 +77,14 @@ export function DocumentsPane({
   onClose?: () => void
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { t, language } = useLanguage()
   const currentProjectId = useProjectStore((state) => state.currentProjectId)
   const [documents, setDocuments] = React.useState<DocumentItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
   const [docToDelete, setDocToDelete] = React.useState<DocumentItem | null>(null)
   const [showDeleteAllDialog, setShowDeleteAllDialog] = React.useState(false)
+  const [showNoDocumentsDialog, setShowNoDocumentsDialog] = React.useState(false)
 
   const untitledDocText = React.useMemo(() => t('documents.untitledDocument'), [t, language])
   const savedText = React.useMemo(() => t('documents.saved'), [t, language])
@@ -236,6 +246,11 @@ export function DocumentsPane({
 
     const userId = await getCurrentUserId()
     const id = docToDelete.id
+    const currentDocId = searchParams.get("doc")
+    const isCurrentDocument = currentDocId === id
+    
+    // Berechne verbleibende Dokumente vor dem Löschen
+    const remainingDocs = documents.filter(doc => doc.id !== id)
     
     // Prüfe ob es eine UUID ist (Supabase-Dokument)
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -255,27 +270,39 @@ export function DocumentsPane({
     if (isUUID && userId) {
       try {
         await documentsUtils.deleteDocument(id, userId)
-        // Lade Dokumente neu
-        loadFromSupabase()
       } catch (error) {
         console.error("Fehler beim Löschen des Dokuments aus Supabase:", error)
-        // Lade Dokumente neu
-        loadFromSupabase()
       }
-    } else {
-      // Nur Supabase-Dokumente werden angezeigt, lokale Dokumente werden ignoriert
-      // localStorage wurde bereits bereinigt
-      loadFromSupabase()
     }
 
+    // Wenn das gelöschte Dokument das aktuelle war, navigiere zum nächsten oder leere Editor
+    if (isCurrentDocument) {
+      if (remainingDocs.length > 0) {
+        // Öffne das erste verbleibende Dokument
+        router.push(`/editor?doc=${encodeURIComponent(remainingDocs[0].id)}`)
+      } else {
+        // Keine Dokumente mehr - leere Editor und entferne doc Parameter
+        router.push("/editor")
+        // Öffne Dokumentpane um Dialog anzuzeigen
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("documents:open-pane"))
+        }
+      }
+    }
+
+    // Lade Dokumente neu
+    loadFromSupabase()
     setDocToDelete(null)
-  }, [docToDelete, loadFromSupabase])
+  }, [docToDelete, loadFromSupabase, searchParams, router, documents])
 
   const handleDeleteAllDocuments = React.useCallback(async () => {
     if (!currentProjectId) return
 
     const userId = await getCurrentUserId()
     if (!userId) return
+
+    const currentDocId = searchParams.get("doc")
+    const isCurrentDocumentInList = documents.some(doc => doc.id === currentDocId)
 
     try {
       // Lösche alle Dokumente aus localStorage
@@ -295,8 +322,17 @@ export function DocumentsPane({
       await documentsUtils.deleteAllDocumentsByProject(currentProjectId, userId)
       
       // Lade Dokumente neu
-      loadFromSupabase()
+      await loadFromSupabase()
       setShowDeleteAllDialog(false)
+      
+      // Wenn das aktuelle Dokument gelöscht wurde, leere Editor
+      if (isCurrentDocumentInList) {
+        router.push("/editor")
+        // Öffne Dokumentpane um Dialog anzuzeigen
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("documents:open-pane"))
+        }
+      }
       
       // Dispatch Event für andere Komponenten
       if (typeof window !== "undefined") {
@@ -305,7 +341,7 @@ export function DocumentsPane({
     } catch (error) {
       console.error("Fehler beim Löschen aller Dokumente:", error)
     }
-  }, [currentProjectId, documents, loadFromSupabase])
+  }, [currentProjectId, documents, loadFromSupabase, searchParams, router])
 
   React.useEffect(() => {
     // Initialer Load beim Mount oder wenn Projekt wechselt
@@ -347,6 +383,28 @@ export function DocumentsPane({
       }
     }
   }, [loadFromSupabase, currentProjectId])
+
+  // Öffne Dokumentpane und Dialog automatisch wenn keine Dokumente vorhanden sind oder das aktuelle Dokument nicht mehr existiert
+  React.useEffect(() => {
+    if (!hasInitialLoadRef.current) return // Warte auf initialen Load
+    
+    const currentDocId = searchParams.get("doc")
+    const hasNoDocuments = documents.length === 0
+    const currentDocExists = currentDocId ? documents.some(doc => doc.id === currentDocId) : false
+
+    // Öffne Dokumentpane wenn:
+    // 1. Keine Dokumente vorhanden sind (immer, unabhängig vom geöffneten Dokument)
+    // 2. Ein Dokument geöffnet ist, aber nicht mehr in der Liste existiert
+    if (hasNoDocuments || (currentDocId && !currentDocExists)) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("documents:open-pane"))
+      }
+      // Zeige Dialog wenn keine Dokumente vorhanden sind
+      if (hasNoDocuments) {
+        setShowNoDocumentsDialog(true)
+      }
+    }
+  }, [documents, searchParams])
 
   const filteredDocs = React.useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -435,7 +493,7 @@ export function DocumentsPane({
       </div>
       <ScrollArea className="flex-1">
         <div className="flex flex-col">
-          {filteredDocs.length === 0 ? (
+          {documents.length === 0 || filteredDocs.length === 0 ? (
             <div className="px-3 py-6">
               <div className="rounded-md border border-dashed border-border/70 bg-muted/30 px-4 py-4 flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -557,6 +615,40 @@ export function DocumentsPane({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showNoDocumentsDialog} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-[500px]" showCloseButton={false}>
+          <div className="flex flex-col space-y-6 py-2">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted border-2 border-border">
+                <FilePenLine className="size-8 text-muted-foreground" />
+              </div>
+              <DialogHeader className="space-y-2 text-center sm:text-center">
+                <DialogTitle className="text-xl font-semibold text-center">
+                  {t('documents.welcomeDialogTitle')}
+                </DialogTitle>
+                <DialogDescription className="text-sm text-center">
+                  {t('documents.welcomeDialogDescription')}
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+
+            <DialogFooter className="w-full sm:justify-center pt-4">
+              <Button
+                variant="default"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setShowNoDocumentsDialog(false)
+                  createNewDocument()
+                }}
+              >
+                <Plus className="size-4 mr-2" />
+                {t('documents.newDocument')}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -284,6 +284,9 @@ function PageContent({
       // Event nur auslösen wenn sich der doc Parameter wirklich ändert
       // Debounce wird in DocumentsPane gehandhabt
       window.dispatchEvent(new Event("documents:reload"))
+    } else if (!paramId && storageId) {
+      // Wenn doc Parameter entfernt wurde, setze storageId auf null um Editor zu leeren
+      setStorageId(null)
     }
   }, [searchParams, storageId])
 
@@ -407,6 +410,24 @@ function PageContent({
 
   const { setOpen: setSidebarOpen } = useSidebar()
 
+  // Event-Handler für das Öffnen des Dokumentpanes
+  useEffect(() => {
+    const handleOpenDocumentsPane = () => {
+      setPanes({
+        documents: true,
+        library: false,
+        askAi: false,
+      })
+    }
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("documents:open-pane", handleOpenDocumentsPane)
+      return () => {
+        window.removeEventListener("documents:open-pane", handleOpenDocumentsPane)
+      }
+    }
+  }, [setPanes])
+
   // Onboarding actions für den OnboardingController
   const onboardingActions: OnboardingActions = useMemo(() => ({
     openSidebar: () => setSidebarOpen(true),
@@ -488,15 +509,13 @@ function PageContent({
                 >
                   <div className="flex h-full flex-col overflow-hidden">
                     <div className="flex-1 overflow-auto">
-                      {storageId && (
-                        <PlateEditor
-                          key={storageId}
-                          storageId={storageId}
-                          showToc={tocVisible}
-                          showCommentToc={commentTocVisible}
-                          showSuggestionToc={suggestionTocVisible}
-                        />
-                      )}
+                      <PlateEditor
+                        key={storageId || 'empty'}
+                        storageId={storageId || 'empty'}
+                        showToc={tocVisible}
+                        showCommentToc={commentTocVisible}
+                        showSuggestionToc={suggestionTocVisible}
+                      />
                     </div>
                   </div>
                 </div>

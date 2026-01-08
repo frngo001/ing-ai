@@ -204,6 +204,15 @@ export function PlateEditor({
     hasHydrated.current = false;
 
     const loadContent = async () => {
+      // Wenn storageId 'empty' ist, zeige leeren Editor
+      if (storageId === 'empty') {
+        (editor as any).tf.setValue?.(DEFAULT_VALUE);
+        latestContentRef.current = DEFAULT_VALUE;
+        (editor as any).tf.redecorate?.();
+        hasHydrated.current = true;
+        return;
+      }
+
       // Versuche zuerst aus Supabase zu laden, wenn storageId eine UUID ist (Supabase-Dokument)
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storageId);
       let content: Value | null = null;
