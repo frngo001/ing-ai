@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from "react"
-import { ExternalLink, RefreshCcw, ThumbsDown, ThumbsUp, Bookmark } from "lucide-react"
+import { ExternalLink, RefreshCcw, ThumbsDown, ThumbsUp, Bookmark, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CopyButton } from "@/components/ui/copy-button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -14,29 +14,33 @@ import { getWebSources } from './message-utils'
 export interface RendererDependencies {
   // State
   lastAssistantId: string | null
+  lastUserId: string | null
   feedback: Record<string, "up" | "down">
   isSending: boolean
   sourcesDialogOpen: Record<string, boolean>
   savedMessages: Set<string>
-  
+
   // Setters
   setSourcesDialogOpen: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
-  
+
   // Handlers
   handleFeedback: (id: string, value: "up" | "down") => void
   handleRegenerate: () => void
+  handleEditLastMessage: () => void
   handleSaveMessage: (messageId: string) => void
 }
 
 export const createRenderers = (deps: RendererDependencies) => {
   const {
     lastAssistantId,
+    lastUserId,
     feedback,
     isSending,
     sourcesDialogOpen,
     setSourcesDialogOpen,
     handleFeedback,
     handleRegenerate,
+    handleEditLastMessage,
     handleSaveMessage,
     savedMessages,
   } = deps
@@ -284,14 +288,35 @@ export const createRenderers = (deps: RendererDependencies) => {
 
   const UserActions = React.memo(({ message }: { message: ChatMessage }) => {
     const { t, language } = useLanguage()
-    
+    const isLastUser = lastUserId === message.id
+
     // Memoize translations to update when language changes
     const translations = useMemo(() => ({
       copied: t('askAi.copied'),
+      editMessage: t('askAi.editMessage'),
     }), [t, language])
-    
+
     return (
       <div className="mt-2 flex w-full flex-wrap items-center justify-end gap-0.5 text-muted-foreground">
+        {isLastUser && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 hover:bg-muted"
+                onClick={handleEditLastMessage}
+                aria-label={translations.editMessage}
+                disabled={isSending}
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {translations.editMessage}
+            </TooltipContent>
+          </Tooltip>
+        )}
         <CopyButton className="h-8 w-8" content={message.content} copyMessage={translations.copied} />
       </div>
     )

@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import { useCitationStore, type SavedCitation } from "@/lib/stores/citation-store"
+import { useProjectStore } from "@/lib/stores/project-store"
 import * as React from "react"
 import { useLanguage } from "@/lib/i18n/use-language"
 
@@ -53,6 +54,7 @@ export function LibraryPane({
   onClose?: () => void
 }) {
   const { t, language } = useLanguage()
+  const currentProjectId = useProjectStore((state) => state.currentProjectId)
   const openSearch = useCitationStore((state) => state.openSearch)
   const setPendingCitation = useCitationStore((state) => state.setPendingCitation)
   const addCitation = useCitationStore((state) => state.addCitation)
@@ -64,6 +66,7 @@ export function LibraryPane({
   const addLibrary = useCitationStore((state) => state.addLibrary)
   const deleteLibrary = useCitationStore((state) => state.deleteLibrary)
   const syncLibrariesFromBackend = useCitationStore((state) => state.syncLibrariesFromBackend)
+  const setCurrentProjectId = useCitationStore((state) => state.setCurrentProjectId)
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const [isCreateLibraryOpen, setIsCreateLibraryOpen] = React.useState(false)
   const [newLibraryName, setNewLibraryName] = React.useState("")
@@ -106,10 +109,13 @@ export function LibraryPane({
     addedOn: t('library.addedOn'),
   }), [t, language])
 
-  // Synchronisiere Bibliotheken vom Backend beim Mount
+  // Synchronisiere Bibliotheken vom Backend beim Mount und bei Projektwechsel
   React.useEffect(() => {
-    syncLibrariesFromBackend()
-  }, [syncLibrariesFromBackend])
+    // Update the citation store with the current project ID
+    setCurrentProjectId(currentProjectId ?? null)
+    // Sync libraries for the current project
+    syncLibrariesFromBackend(currentProjectId)
+  }, [syncLibrariesFromBackend, setCurrentProjectId, currentProjectId])
   const confirmCitation = React.useMemo(
     () => citations.find((c) => c.id === confirmDeleteId),
     [citations, confirmDeleteId]
@@ -227,6 +233,7 @@ export function LibraryPane({
 
   return (
     <div
+      data-onboarding="library-pane"
       className={cn(
         "text-foreground flex h-full min-w-[260px] max-w-[320px] flex-col px-3 pb-3 pt-0 border-r border-border/70",
         className
@@ -315,6 +322,7 @@ export function LibraryPane({
             className="h-7 w-7 bg-transparent"
             onClick={openSearch}
                 aria-label={translations.addCitations}
+                data-onboarding="add-source-btn"
           >
             <Plus className="size-4" />
           </Button>
@@ -428,6 +436,7 @@ export function LibraryPane({
             placeholder={translations.searchSources}
             className="h-9 pl-8 text-sm"
             aria-label={translations.searchSources}
+            data-onboarding="library-search"
           />
         </div>
       </div>

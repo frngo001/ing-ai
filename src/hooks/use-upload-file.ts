@@ -10,6 +10,10 @@ import { generateReactHelpers } from '@uploadthing/react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { createClient } from '@/lib/supabase/client';
+import { uploadMediaToSupabase, type MediaUploadResult } from '@/lib/supabase/utils/media-storage';
+import { devLog, devError } from '@/lib/utils/logger';
+
 export type UploadedFile<T = unknown> = ClientUploadedFileData<T>;
 
 interface UseUploadFileProps
@@ -19,11 +23,17 @@ interface UseUploadFileProps
   > {
   onUploadComplete?: (file: UploadedFile) => void;
   onUploadError?: (error: unknown) => void;
+  /** Optional: Dokument-ID für Supabase-Zuordnung */
+  documentId?: string;
+  /** Optional: Projekt-ID für Supabase-Zuordnung */
+  projectId?: string;
 }
 
 export function useUploadFile({
   onUploadComplete,
   onUploadError,
+  documentId,
+  projectId,
   ...props
 }: UseUploadFileProps = {}) {
   const [uploadedFile, setUploadedFile] = React.useState<UploadedFile>();
@@ -31,11 +41,63 @@ export function useUploadFile({
   const [progress, setProgress] = React.useState<number>(0);
   const [isUploading, setIsUploading] = React.useState(false);
 
+  /**
+   * Versucht Upload zu Supabase Storage
+   * Fallback: UploadThing wenn Supabase fehlschlägt
+   */
+  async function uploadToSupabase(file: File): Promise<UploadedFile | null> {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        devLog('[Upload] No authenticated user, skipping Supabase upload');
+        return null;
+      }
+
+      devLog('[Upload] Uploading to Supabase Storage:', file.name);
+
+      const result = await uploadMediaToSupabase(file, {
+        userId: user.id,
+        documentId,
+        projectId,
+        onProgress: (p) => setProgress(p),
+      });
+
+      // Konvertiere zu UploadedFile Format
+      const uploadedFile: UploadedFile = {
+        key: result.id,
+        appUrl: result.url,
+        name: result.name,
+        size: result.size,
+        type: result.type,
+        url: result.url,
+      } as UploadedFile;
+
+      devLog('[Upload] Supabase upload successful:', result.url);
+      return uploadedFile;
+    } catch (error) {
+      devError('[Upload] Supabase upload failed:', error);
+      return null;
+    }
+  }
+
   async function uploadThing(file: File) {
     setIsUploading(true);
     setUploadingFile(file);
 
     try {
+      // Versuche zuerst Supabase Storage
+      const supabaseResult = await uploadToSupabase(file);
+
+      if (supabaseResult) {
+        setUploadedFile(supabaseResult);
+        onUploadComplete?.(supabaseResult);
+        return supabaseResult;
+      }
+
+      // Fallback: UploadThing
+      devLog('[Upload] Trying UploadThing fallback');
       const res = await uploadFiles('editorUploader', {
         ...props,
         files: [file],
@@ -45,10 +107,9 @@ export function useUploadFile({
       });
 
       setUploadedFile(res[0]);
-
       onUploadComplete?.(res[0]);
 
-      return uploadedFile;
+      return res[0];
     } catch (error) {
       const errorMessage = getErrorMessage(error);
 
@@ -57,15 +118,26 @@ export function useUploadFile({
           ? errorMessage
           : 'Something went wrong, please try again later.';
 
-      toast.error(message);
+      // Versuche nochmal Supabase als letzten Fallback
+      devLog('[Upload] UploadThing failed, trying Supabase as final fallback');
+      const supabaseResult = await uploadToSupabase(file);
 
+      if (supabaseResult) {
+        setUploadedFile(supabaseResult);
+        onUploadComplete?.(supabaseResult);
+        return supabaseResult;
+      }
+
+      toast.error(message);
       onUploadError?.(error);
 
-      // Mock upload for unauthenticated users
-      // toast.info('User not logged in. Mocking upload process.');
-      const mockUploadedFile = {
-        key: 'mock-key-0',
-        appUrl: `https://mock-app-url.com/${file.name}`,
+      // Letzter Fallback: Lokale blob-URL (nur für Preview, nicht persistent!)
+      devError('[Upload] All upload methods failed, using temporary blob URL');
+      toast.warning('Bild wird nur temporär gespeichert. Bitte melden Sie sich an für permanente Speicherung.');
+
+      const tempUploadedFile = {
+        key: `temp-${Date.now()}`,
+        appUrl: URL.createObjectURL(file),
         name: file.name,
         size: file.size,
         type: file.type,
@@ -73,21 +145,21 @@ export function useUploadFile({
       } as UploadedFile;
 
       // Simulate upload progress
-      let progress = 0;
-
+      let prog = 0;
       const simulateProgress = async () => {
-        while (progress < 100) {
+        while (prog < 100) {
           await new Promise((resolve) => setTimeout(resolve, 50));
-          progress += 2;
-          setProgress(Math.min(progress, 100));
+          prog += 5;
+          setProgress(Math.min(prog, 100));
         }
       };
 
       await simulateProgress();
 
-      setUploadedFile(mockUploadedFile);
+      setUploadedFile(tempUploadedFile);
+      onUploadComplete?.(tempUploadedFile);
 
-      return mockUploadedFile;
+      return tempUploadedFile;
     } finally {
       setProgress(0);
       setIsUploading(false);

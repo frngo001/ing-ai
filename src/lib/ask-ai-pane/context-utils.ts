@@ -6,19 +6,50 @@ export const buildContextSummary = (
   context: ContextSelection,
   selectedMentions: Mentionable[]
 ): string => {
-  const tags = []
-  if (context.document) tags.push("Current document enabled")
-  if (context.web) tags.push("Web search allowed")
-  if (context.agentMode !== 'standard') tags.push(`Agent Mode: ${context.agentMode}`)
-  if (selectedMentions.length) {
-    tags.push(`Mentions: ${selectedMentions.map((m) => m.label).join(", ")}`)
-  }
+  const parts: string[] = []
+
+  // Add context flags
+  const flags: string[] = []
+  if (context.document) flags.push("Dokument-Kontext aktiviert")
+  if (context.web) flags.push("Websuche aktiviert")
+  if (context.agentMode !== 'standard') flags.push(`Agent-Modus: ${context.agentMode}`)
   if (attachments?.length) {
-    tags.push(`Attachments: ${attachments.map((file) => file.name).join(", ")}`)
+    flags.push(`Anhänge: ${attachments.map((file) => file.name).join(", ")}`)
   }
-  const mentions = (question.match(/@\S+/g) || []).join(", ")
-  const mentionPart = mentions && !selectedMentions.length ? `Mentions: ${mentions}` : ""
-  return [...tags, mentionPart].filter(Boolean).join(" | ")
+
+  if (flags.length > 0) {
+    parts.push(flags.join(" | "))
+  }
+
+  // Add actual mention content as context
+  if (selectedMentions.length > 0) {
+    const mentionContents = selectedMentions
+      .filter((m) => m.content || m.type === 'citation')
+      .map((m) => {
+        if (m.type === 'citation') {
+          // Format citation context
+          let citationContext = `\n--- Referenziertes Zitat: "${m.label}" ---\n`
+          if (m.content) {
+            citationContext += m.content
+          } else {
+            citationContext += `Titel: ${m.label}`
+            if (m.hint) citationContext += `\nQuelle: ${m.hint}`
+          }
+          return citationContext
+        } else if (m.type === 'document') {
+          return `\n--- Aktuelles Dokument wird als Kontext verwendet ---`
+        } else {
+          return m.content ? `\n--- ${m.label} ---\n${m.content}` : ''
+        }
+      })
+      .filter(Boolean)
+
+    if (mentionContents.length > 0) {
+      parts.push(mentionContents.join('\n'))
+    }
+  }
+
+  return parts.join('\n\n')
 }
 
 export const filterMentionables = (

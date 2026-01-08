@@ -170,6 +170,7 @@ interface CitationState {
   savedCitations: SavedCitation[]
   libraries: CitationLibrary[]
   activeLibraryId?: string
+  currentProjectId?: string | null
   pendingCitation?: SavedCitation
   citationRenderVersion: number
   openSearch: () => void
@@ -190,9 +191,10 @@ interface CitationState {
   setActiveLibrary: (id: string) => void
   setPendingCitation: (citation?: SavedCitation) => void
   bumpCitationRenderVersion: () => void
-  syncLibrariesFromBackend: () => Promise<void>
+  setCurrentProjectId: (projectId: string | null) => void
+  syncLibrariesFromBackend: (projectId?: string | null) => Promise<void>
   setLibraries: (libraries: CitationLibrary[]) => void
-  loadLibrariesFromSupabase: () => Promise<void>
+  loadLibrariesFromSupabase: (projectId?: string | null) => Promise<void>
 }
 
 const createDefaultLibrary = (): CitationLibrary => ({
@@ -258,8 +260,12 @@ export const useCitationStore = create<CitationState>()(
       savedCitations: [],
       libraries: [createDefaultLibrary()],
       activeLibraryId: 'library_default',
+      currentProjectId: undefined,
       pendingCitation: undefined,
       citationRenderVersion: 0,
+      setCurrentProjectId: (projectId: string | null) => {
+        set({ currentProjectId: projectId })
+      },
       openSearch: () => set({ isSearchOpen: true }),
       closeSearch: () => set({ isSearchOpen: false }),
       toggleSearch: () => set((state) => ({ isSearchOpen: !state.isSearchOpen })),
@@ -466,6 +472,7 @@ export const useCitationStore = create<CitationState>()(
       },
       addLibrary: async (name: string) => {
         const userId = await getCurrentUserId()
+        const currentProjectId = get().currentProjectId
         if (!userId) {
           // Fallback: nur lokal
           const id = `library_${Date.now()}`
@@ -483,6 +490,7 @@ export const useCitationStore = create<CitationState>()(
             user_id: userId,
             name,
             is_default: false,
+            project_id: currentProjectId ?? undefined,
           })
           const library: CitationLibrary = { id: newLib.id, name: newLib.name, citations: [] }
           set((state) => ({
@@ -588,23 +596,27 @@ export const useCitationStore = create<CitationState>()(
           }
         })
       },
-      loadLibrariesFromSupabase: async () => {
+      loadLibrariesFromSupabase: async (projectId?: string | null) => {
         const userId = await getCurrentUserId()
         if (!userId) {
           devWarn('⚠️ [CITATION STORE] Kein User eingeloggt, kann keine Libraries laden')
           return
         }
 
+        // Use provided projectId or fall back to stored currentProjectId
+        const effectiveProjectId = projectId ?? get().currentProjectId
+
         try {
-          devLog('🔄 [CITATION STORE] Lade Bibliotheken aus Supabase...')
-          
-          const libraries = await citationLibrariesUtils.getCitationLibraries(userId)
+          devLog('🔄 [CITATION STORE] Lade Bibliotheken aus Supabase...', { projectId: effectiveProjectId })
+
+          // Filter libraries by project if projectId is provided
+          const libraries = await citationLibrariesUtils.getCitationLibraries(userId, undefined, effectiveProjectId ?? undefined)
           
           if (!libraries.length) {
             // Prüfe zuerst, ob bereits eine Standardbibliothek existiert
             // Verwende getDefaultCitationLibrary, das jetzt .limit(1) statt .single() verwendet
             let defaultLib = await citationLibrariesUtils.getDefaultCitationLibrary(userId)
-            
+
             if (!defaultLib) {
               // Erstelle Standardbibliothek nur wenn keine existiert
               try {
@@ -612,6 +624,7 @@ export const useCitationStore = create<CitationState>()(
                   user_id: userId,
                   name: 'Standardbibliothek',
                   is_default: true,
+                  project_id: effectiveProjectId ?? undefined,
                 })
               } catch (error: any) {
                 // 23503 = Foreign Key Constraint (Profile existiert nicht)
@@ -703,9 +716,9 @@ export const useCitationStore = create<CitationState>()(
           }))
         }
       },
-      syncLibrariesFromBackend: async () => {
+      syncLibrariesFromBackend: async (projectId?: string | null) => {
         // Verwende jetzt Supabase direkt
-        await get().loadLibrariesFromSupabase()
+        await get().loadLibrariesFromSupabase(projectId)
       },
     }),
     {

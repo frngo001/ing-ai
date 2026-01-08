@@ -13,6 +13,7 @@ import { ResizableProvider, useResizableValue } from '@platejs/resizable';
 import { PlateElement, withHOC } from 'platejs/react';
 
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { Caption, CaptionTextarea } from './caption';
 import { MediaToolbar } from './media-toolbar';
@@ -25,6 +26,7 @@ import {
 export const MediaEmbedElement = withHOC(
   ResizableProvider,
   function MediaEmbedElement(props: PlateElementProps<TMediaEmbedElement>) {
+    const { t } = useLanguage();
     const {
       align = 'center',
       embed,
@@ -126,7 +128,7 @@ export const MediaEmbedElement = withHOC(
             </Resizable>
 
             <Caption style={{ width }} align={align}>
-              <CaptionTextarea placeholder="Write a caption..." />
+              <CaptionTextarea placeholder={t('toolbar.mediaWriteCaption')} />
             </Caption>
           </figure>
 

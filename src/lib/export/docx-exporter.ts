@@ -19,9 +19,11 @@ import {
   CODE_STYLE,
   BLOCKQUOTE_STYLE,
   BIBLIOGRAPHY_STYLE,
+  HYPERLINK_STYLE,
 } from './docx-converters/styles';
 import {
   convertElement,
+  prepareImagesForExport,
   type ConverterContext,
 } from './docx-converters/element-converter';
 import {
@@ -35,6 +37,16 @@ import {
 
 /**
  * Exportiert Editor-Inhalt zu DOCX
+ *
+ * Diese Funktion exportiert den Editor-Inhalt zu einem Word-Dokument mit:
+ * - Korrekte Überschriften-Styles (H1-H6)
+ * - Zitate als Word Citation Fields
+ * - Quellenverzeichnis mit BIBLIOGRAPHY Field
+ * - Sources XML für Word-Erkennung
+ * - Formeln als Word OMath
+ * - Tabellen mit Borders
+ * - Bilder (Base64 oder Platzhalter)
+ * - Hyperlinks mit Word-Styling
  */
 export async function exportToDocx(
   editorValue: Value,
@@ -47,6 +59,10 @@ export async function exportToDocx(
     citationStyle,
     citationFormat,
     citationNumberFormat,
+    citationAuthorDateVariant,
+    citationAuthorVariant,
+    citationLabelVariant,
+    citationNoteVariant,
   } = store;
 
   // Sammle alle Zitate aus dem Dokument
@@ -84,12 +100,16 @@ export async function exportToDocx(
   // Erstelle Citation-Order-Map
   const citationOrder = buildCitationOrderMap(citationNodes);
 
-  // Erstelle Converter-Context
+  // Erstelle Converter-Context mit allen Zitierstil-Varianten
   const context: ConverterContext = {
     citationStyle: citationStyle || 'apa',
     citationFormat: citationFormat || 'author-date',
     citationNumberFormat: citationNumberFormat || 'bracket',
     citationOrder,
+    citationAuthorDateVariant: citationAuthorDateVariant || 'comma',
+    citationAuthorVariant: citationAuthorVariant || 'with-parens',
+    citationLabelVariant: citationLabelVariant || 'bracket',
+    citationNoteVariant: citationNoteVariant || 'superscript',
   };
 
   // Prüfe, ob bereits ein Quellenverzeichnis im Editor-Inhalt vorhanden ist
@@ -119,17 +139,20 @@ export async function exportToDocx(
     }
   }
 
+  // Bereite Bilder für Export vor (lädt externe URLs herunter)
+  const preparedContent = await prepareImagesForExport(editorValue as any[]);
+
   // Konvertiere alle Elemente
   const children: (Paragraph | import('docx').Table)[] = [];
 
-  for (let i = 0; i < editorValue.length; i++) {
-    const node = editorValue[i];
+  for (let i = 0; i < preparedContent.length; i++) {
+    const node = preparedContent[i];
     if ('type' in node) {
       const element = node as TElement;
       
       // Prüfe, ob dieser Paragraph nach einem Equation-Element kommt und möglicherweise die Formel enthält
-      if (element.type === 'p' && i > 0 && editorValue[i - 1] && 'type' in editorValue[i - 1]) {
-        const prevElement = editorValue[i - 1] as TElement;
+      if (element.type === 'p' && i > 0 && preparedContent[i - 1] && 'type' in preparedContent[i - 1]) {
+        const prevElement = preparedContent[i - 1] as TElement;
         if (prevElement.type === 'equation') {
           const equationText = (prevElement as any).texExpression || '';
           const paragraphText = (element.children || []).map((c: any) => {
@@ -295,7 +318,7 @@ export async function exportToDocx(
     },
   ] as const;
 
-  // Erstelle DOCX-Dokument
+  // Erstelle DOCX-Dokument mit allen Styles
   const doc = new Document({
     sections: [
       {
@@ -310,6 +333,17 @@ export async function exportToDocx(
         CODE_STYLE,
         BLOCKQUOTE_STYLE,
         BIBLIOGRAPHY_STYLE,
+      ],
+      characterStyles: [
+        {
+          id: 'Hyperlink',
+          name: 'Hyperlink',
+          basedOn: 'DefaultParagraphFont',
+          run: {
+            color: '0563C1',
+            underline: {},
+          },
+        },
       ],
     },
     numbering: {

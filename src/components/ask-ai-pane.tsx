@@ -21,6 +21,10 @@ import {
   X,
   Bookmark,
   Trash2,
+  BookOpen,
+  Sparkles,
+  Command,
+  AtSign,
 } from "lucide-react"
 import { PlateMarkdown } from "@/components/ui/plate-markdown"
 import { ChatSelectionToolbar } from "./ask-ai-pane/chat-selection-toolbar"
@@ -210,6 +214,11 @@ export function AskAiPane({
     [messages]
   )
 
+  const lastUserId = useMemo(
+    () => [...messages].reverse().find((m) => m.role === "user")?.id ?? null,
+    [messages]
+  )
+
   const mentionables = useMentionables(citations || [])
   const mentionQuery = useMentionQuery(input)
   const slashQuery = useSlashQuery(input)
@@ -225,6 +234,19 @@ export function AskAiPane({
 
   useEffect(() => {
     const loadData = async () => {
+      // Lade Agent State aus Supabase (Thema, Schritt, etc.)
+      try {
+        await agentStore.loadAgentStateFromSupabase()
+        console.log('📝 [ASK-AI-PANE] Agent State aus Supabase geladen:', {
+          isActive: agentStore.isActive,
+          thema: agentStore.thema,
+          currentStep: agentStore.currentStep,
+          arbeitType: agentStore.arbeitType,
+        })
+      } catch (error) {
+        console.warn('⚠️ [ASK-AI-PANE] Fehler beim Laden des Agent States:', error)
+      }
+
       const loadedHistory = await loadChatHistory()
       setHistory(loadedHistory)
       if (loadedHistory[0]) {
@@ -368,6 +390,7 @@ export function AskAiPane({
     resetChat,
     handleSend,
     handleRegenerate,
+    handleEditLastMessage,
     handleStop,
     handleMentionSelect,
     handleSlashInsert,
@@ -496,12 +519,14 @@ export function AskAiPane({
   // Create renderers
   const renderers = createRenderers({
     lastAssistantId,
+    lastUserId,
     feedback,
     isSending,
     sourcesDialogOpen,
     setSourcesDialogOpen,
     handleFeedback,
     handleRegenerate,
+    handleEditLastMessage,
     handleSaveMessage,
     savedMessages,
   })
@@ -517,10 +542,13 @@ export function AskAiPane({
   const hasMessages = messages.some((m) => m.role === "assistant" || m.role === "user")
 
   return (
-    <div className={cn(
-      "bg-background text-foreground flex h-full min-h-0 w-full flex-col px-3 pb-3 pt-0 border-r border-border/70",
-      className
-    )}>
+    <div
+      data-onboarding="ask-ai-pane"
+      className={cn(
+        "bg-background text-foreground flex h-full min-h-0 w-full flex-col px-3 pb-3 pt-0 border-r border-border/70",
+        className
+      )}
+    >
       <div className="mt-1.5 flex items-center justify-between gap-1.5 sm:gap-2 pb-2 sm:pb-3">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold">
@@ -776,14 +804,14 @@ export function AskAiPane({
                   {selectedMentions.map((mention) => (
                     <Badge
                       key={mention.id}
-                      variant="secondary"
-                      className="flex items-center gap-1.5 px-2 py-1 text-xs"
+                      variant="outline"
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-muted/50 border-border/50 text-foreground"
                     >
-                      <span className="truncate max-w-[150px]">{mention.label}</span>
+                      <span className="truncate max-w-[140px]">{mention.label}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveMention(mention.id)}
-                        className="ml-0.5 hover:bg-muted-foreground/20 rounded-full p-0.5 transition-colors"
+                        className="ml-0.5 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
                         aria-label={`${mention.label} ${translations.removeMention}`}
                       >
                         <X className="h-3 w-3" />
@@ -792,30 +820,71 @@ export function AskAiPane({
                   ))}
                 </div>
               )}
-              <div className="mb-2 flex items-center gap-1 w-full">
-              </div>
               {mentionQuery !== null && filteredMentionables.length > 0 && (
-                <div className="absolute bottom-[100%] left-0 z-20 mb-1.5 sm:mb-2 w-full rounded-md border border-border/60 bg-popover shadow-lg">
-                  <div className="max-h-40 sm:max-h-48 overflow-auto py-1.5 sm:py-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="absolute bottom-[100%] left-0 z-20 mb-1.5 sm:mb-2 w-full rounded-xl border border-border/40 bg-popover/95 backdrop-blur-sm shadow-xl">
+                  {/* Header */}
+                  <div className="px-3 py-2 border-b border-border/40 flex items-center gap-2">
+                    <AtSign className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground">Kontext hinzufügen</span>
+                  </div>
+                  <div className="max-h-52 overflow-auto py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {filteredMentionables.map((item) => (
                       <button
                         type="button"
                         key={item.id}
-                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm hover:bg-muted"
+                        className="w-full px-3 py-2.5 text-left hover:bg-primary/5 transition-colors flex items-start gap-3 group"
                         onClick={() => handleMentionSelect(item)}
                       >
-                        <div className="font-medium truncate">{item.label}</div>
-                        {item.hint && (
-                          <div className="text-muted-foreground text-[10px] sm:text-xs truncate">{item.hint}</div>
-                        )}
+                        <div className={cn(
+                          "mt-0.5 p-1.5 rounded-md transition-colors",
+                          item.type === 'citation'
+                            ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50"
+                            : item.type === 'document'
+                            ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50"
+                            : "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50"
+                        )}>
+                          {item.type === 'citation' ? (
+                            <BookOpen className="h-3.5 w-3.5" />
+                          ) : item.type === 'document' ? (
+                            <FileText className="h-3.5 w-3.5" />
+                          ) : (
+                            <Sparkles className="h-3.5 w-3.5" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm truncate">{item.label}</span>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "h-4 px-1.5 text-[9px] font-normal border-0",
+                                item.type === 'citation'
+                                  ? "bg-blue-100/50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                                  : item.type === 'document'
+                                  ? "bg-emerald-100/50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
+                                  : "bg-purple-100/50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
+                              )}
+                            >
+                              {item.type === 'citation' ? 'Zitat' : item.type === 'document' ? 'Dokument' : 'Prompt'}
+                            </Badge>
+                          </div>
+                          {item.hint && (
+                            <div className="text-muted-foreground text-xs mt-0.5 truncate">{item.hint}</div>
+                          )}
+                        </div>
                       </button>
                     ))}
                   </div>
                 </div>
               )}
               {mentionQuery === null && slashQuery !== null && (
-                <div className="absolute bottom-[100%] left-0 z-20 mb-1.5 sm:mb-2 w-full rounded-md border border-border/60 bg-popover shadow-lg">
-                  <div className="max-h-64 overflow-auto py-2 sm:py-3 space-y-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="absolute bottom-[100%] left-0 z-20 mb-1.5 sm:mb-2 w-full rounded-xl border border-border/40 bg-popover/95 backdrop-blur-sm shadow-xl">
+                  {/* Header */}
+                  <div className="px-3 py-2 border-b border-border/40 flex items-center gap-2">
+                    <Command className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground">Schnellbefehle</span>
+                  </div>
+                  <div className="max-h-52 overflow-auto py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {slashCommands
                       .filter((cmd) =>
                         slashQuery
@@ -827,24 +896,33 @@ export function AskAiPane({
                         <button
                           type="button"
                           key={cmd.id}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-left text-sm sm:text-sm hover:bg-muted rounded-md"
+                          className="w-full px-3 py-2.5 text-left hover:bg-primary/5 transition-colors flex items-start gap-3 group"
                           onClick={() => handleSlashInsert(cmd)}
                         >
-                          <div className="font-medium truncate">{cmd.label}</div>
-                          <div className="text-muted-foreground text-[12px] sm:text-xs truncate">
-                            {cmd.content}
+                          <div className="mt-0.5 p-1.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/50 transition-colors">
+                            <Sparkles className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{cmd.label}</span>
+                            </div>
+                            <div className="text-muted-foreground text-xs mt-0.5 line-clamp-2">
+                              {cmd.content}
+                            </div>
                           </div>
                         </button>
                       ))}
-                    <div className="border-t border-border/60 pt-2 px-3 sm:px-4 pb-1 sticky bottom-0 bg-popover">
-                      <button
-                        type="button"
-                        className="w-full rounded-md border border-primary/50 bg-primary text-primary-foreground px-2.5 py-1.5 text-xs font-normal hover:bg-primary/90 transition-colors"
-                        onClick={handleSlashCreate}
-                      >
-                        {translations.saveCommand}
-                      </button>
-                    </div>
+                  </div>
+                  {/* Footer with create button */}
+                  <div className="border-t border-border/40 p-2 bg-muted/30">
+                    <button
+                      type="button"
+                      className="w-full rounded-lg bg-primary/10 text-primary px-3 py-2 text-xs font-medium hover:bg-primary/20 transition-colors flex items-center justify-center gap-2"
+                      onClick={handleSlashCreate}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      {translations.saveCommand}
+                    </button>
                   </div>
                 </div>
               )}

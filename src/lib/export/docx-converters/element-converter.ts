@@ -30,6 +30,7 @@ import {
   FONT_SIZES,
   CODE_STYLE,
   BLOCKQUOTE_STYLE,
+  NORMAL_STYLE,
 } from './styles';
 import { createInlineCitation, type CitationContext } from './citation-converter';
 
@@ -130,7 +131,7 @@ function convertInlineElements(
       const element = child as TElement;
       const type = element.type;
 
-      // Link
+      // Link mit Word-Hyperlink-Styling
       if (type === 'a' || type === 'link') {
         const linkElement = element as any;
         const url = linkElement.url || linkElement.href || '';
@@ -142,6 +143,11 @@ function convertInlineElements(
               children: [
                 new TextRun({
                   text: linkText || url,
+                  style: 'Hyperlink',
+                  color: '0563C1', // Standard Word-Hyperlink-Blau
+                  underline: {},
+                  font: FONTS.default,
+                  size: FONT_SIZES.default,
                 }),
               ],
               link: url,
@@ -151,6 +157,8 @@ function convertInlineElements(
           runs.push(
             new TextRun({
               text: linkText,
+              font: FONTS.default,
+              size: FONT_SIZES.default,
             })
           );
         }
@@ -442,7 +450,16 @@ export function convertList(
 }
 
 /**
- * Konvertiert eine Tabelle
+ * Standard-Border-Style für Tabellen
+ */
+const TABLE_BORDER_STYLE = {
+  style: 'single' as const,
+  size: 1,
+  color: '000000',
+};
+
+/**
+ * Konvertiert eine Tabelle mit vollständigem Styling
  */
 export function convertTable(
   element: TElement,
@@ -450,16 +467,33 @@ export function convertTable(
 ): Table {
   const rows: TableRow[] = [];
   const tableRows = element.children || [];
+  const tableElement = element as any;
 
+  // Ermittle Anzahl der Spalten für konsistente Breiten
+  let maxColumns = 0;
+  for (const rowElement of tableRows) {
+    if ('type' in rowElement && (rowElement as TElement).type === 'tr') {
+      const row = rowElement as TElement;
+      const colCount = (row.children || []).filter(
+        (c: any) => c.type === 'td' || c.type === 'th'
+      ).length;
+      maxColumns = Math.max(maxColumns, colCount);
+    }
+  }
+
+  let rowIndex = 0;
   for (const rowElement of tableRows) {
     if ('type' in rowElement && (rowElement as TElement).type === 'tr') {
       const row = rowElement as TElement;
       const cells: TableCell[] = [];
       const tableCells = row.children || [];
+      const isFirstRow = rowIndex === 0;
 
       for (const cellElement of tableCells) {
         if ('type' in cellElement && ((cellElement as TElement).type === 'td' || (cellElement as TElement).type === 'th')) {
           const cell = cellElement as TElement;
+          const cellData = cell as any;
+          const isHeader = cellData.type === 'th' || isFirstRow;
           const cellParagraphs: Paragraph[] = [];
 
           // Konvertiere Zellen-Inhalt
@@ -472,12 +506,30 @@ export function convertTable(
                 cellParagraphs.push(convertParagraph(childElement, context));
               } else if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(childType)) {
                 cellParagraphs.push(convertHeading(childElement, context));
+              } else if (childType === 'ul' || childType === 'ol' || childType === 'list') {
+                // Listen in Tabellenzellen
+                const listParagraphs = convertList(childElement, context);
+                cellParagraphs.push(...listParagraphs);
               } else {
                 // Fallback: als Paragraph behandeln
                 const text = extractTextFromChildren(childElement.children || []);
                 cellParagraphs.push(
                   new Paragraph({
-                    children: [new TextRun({ text })],
+                    children: [new TextRun({
+                      text,
+                      font: FONTS.default,
+                      size: FONT_SIZES.default,
+                    })],
+                  })
+                );
+              }
+            } else if ('text' in child) {
+              // Direkter Text-Knoten
+              const textNode = child as TText;
+              if (textNode.text) {
+                cellParagraphs.push(
+                  new Paragraph({
+                    children: convertTextNode(textNode, context),
                   })
                 );
               }
@@ -492,11 +544,39 @@ export function convertTable(
             );
           }
 
+          // Zellen-Hintergrundfarbe
+          const backgroundColor = cellData.background || cellData.backgroundColor;
+          const fillColor = isHeader
+            ? 'E8E8E8' // Hellgrau für Header
+            : backgroundColor
+              ? backgroundColor.replace('#', '')
+              : undefined;
+
+          // Colspan und Rowspan
+          const colSpan = cellData.colSpan || 1;
+          const rowSpan = cellData.rowSpan || 1;
+
           cells.push(
             new TableCell({
               children: cellParagraphs,
-              shading: {
-                fill: (cellElement as any).type === 'th' ? 'E0E0E0' : undefined,
+              shading: fillColor ? {
+                fill: fillColor,
+                type: ShadingType.CLEAR,
+              } : undefined,
+              columnSpan: colSpan > 1 ? colSpan : undefined,
+              rowSpan: rowSpan > 1 ? rowSpan : undefined,
+              borders: {
+                top: TABLE_BORDER_STYLE,
+                bottom: TABLE_BORDER_STYLE,
+                left: TABLE_BORDER_STYLE,
+                right: TABLE_BORDER_STYLE,
+              },
+              verticalAlign: 'center' as any,
+              margins: {
+                top: 50,
+                bottom: 50,
+                left: 100,
+                right: 100,
               },
             })
           );
@@ -507,9 +587,11 @@ export function convertTable(
         rows.push(
           new TableRow({
             children: cells,
+            tableHeader: isFirstRow, // Markiere erste Zeile als Header
           })
         );
       }
+      rowIndex++;
     }
   }
 
@@ -519,11 +601,305 @@ export function convertTable(
       size: 100,
       type: WidthType.PERCENTAGE,
     },
+    borders: {
+      top: TABLE_BORDER_STYLE,
+      bottom: TABLE_BORDER_STYLE,
+      left: TABLE_BORDER_STYLE,
+      right: TABLE_BORDER_STYLE,
+      insideHorizontal: TABLE_BORDER_STYLE,
+      insideVertical: TABLE_BORDER_STYLE,
+    },
   });
 }
 
 /**
- * Konvertiert ein Bild
+ * Konvertiert ein Bild zu Word ImageRun
+ * Unterstützt Base64-Daten und URLs
+ */
+export async function convertImageAsync(
+  element: TElement,
+  context: ConverterContext
+): Promise<Paragraph> {
+  const imageElement = element as any;
+  const url = imageElement.url || imageElement.src || '';
+  const caption = imageElement.caption || '';
+  const width = imageElement.width || 400;
+  const height = imageElement.height;
+
+  // Versuche das Bild zu laden und einzubetten
+  try {
+    if (url.startsWith('data:')) {
+      // Base64-Daten direkt verwenden
+      const base64Match = url.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
+      if (base64Match) {
+        const imageData = base64Match[2];
+        const buffer = Buffer.from(imageData, 'base64');
+
+        const children: any[] = [
+          new ImageRun({
+            data: buffer,
+            transformation: {
+              width: Math.min(width, 600), // Max 600px Breite
+              height: height || Math.round((Math.min(width, 600) / width) * (height || width * 0.75)),
+            },
+            type: 'png', // Fallback type
+          }),
+        ];
+
+        // Füge Caption hinzu wenn vorhanden
+        if (caption) {
+          return new Paragraph({
+            children: [
+              ...children,
+              new TextRun({ text: '\n' }),
+              new TextRun({
+                text: caption,
+                italics: true,
+                size: FONT_SIZES.code, // Kleinere Schrift für Caption
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: {
+              before: 120,
+              after: 120,
+            },
+          });
+        }
+
+        return new Paragraph({
+          children,
+          alignment: AlignmentType.CENTER,
+          spacing: {
+            before: 120,
+            after: 120,
+          },
+        });
+      }
+    }
+
+    // Für externe URLs: Platzhalter mit Link
+    const children: any[] = [
+      new TextRun({
+        text: '[Bild: ',
+        italics: true,
+      }),
+    ];
+
+    if (url) {
+      children.push(
+        new ExternalHyperlink({
+          children: [
+            new TextRun({
+              text: url.length > 50 ? url.substring(0, 50) + '...' : url,
+              style: 'Hyperlink',
+              color: '0563C1',
+              underline: {},
+              italics: true,
+            }),
+          ],
+          link: url,
+        })
+      );
+    } else {
+      children.push(
+        new TextRun({
+          text: 'Unbenannt',
+          italics: true,
+        })
+      );
+    }
+
+    children.push(
+      new TextRun({
+        text: ']',
+        italics: true,
+      })
+    );
+
+    // Füge Caption hinzu wenn vorhanden
+    if (caption) {
+      children.push(
+        new TextRun({ text: ' - ' }),
+        new TextRun({
+          text: caption,
+          italics: true,
+        })
+      );
+    }
+
+    return new Paragraph({
+      children,
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        before: 120,
+        after: 120,
+      },
+    });
+  } catch (error) {
+    console.warn('Fehler beim Konvertieren des Bildes:', error);
+    // Fallback: Platzhalter-Text
+    return new Paragraph({
+      children: [
+        new TextRun({
+          text: `[Bild: ${url || 'Unbenannt'}]`,
+          italics: true,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+    });
+  }
+}
+
+/**
+ * Lädt ein Bild von einer URL und konvertiert es zu einem Uint8Array
+ */
+async function fetchImageAsBuffer(url: string): Promise<{ buffer: Uint8Array; type: string } | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn('Fehler beim Laden des Bildes:', response.status, response.statusText);
+      return null;
+    }
+
+    const contentType = response.headers.get('content-type') || 'image/png';
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+
+    // Extrahiere Bildtyp aus Content-Type
+    let type = 'png';
+    if (contentType.includes('jpeg') || contentType.includes('jpg')) {
+      type = 'jpg';
+    } else if (contentType.includes('gif')) {
+      type = 'gif';
+    } else if (contentType.includes('webp')) {
+      type = 'png'; // WebP wird als PNG behandelt
+    }
+
+    return { buffer, type };
+  } catch (error) {
+    console.warn('Fehler beim Abrufen des Bildes:', error);
+    return null;
+  }
+}
+
+/**
+ * Erstellt einen Paragraph mit eingebettetem Bild
+ */
+function createImageParagraph(
+  buffer: Uint8Array,
+  type: string,
+  width: number,
+  height: number,
+  caption?: string
+): Paragraph {
+  const scaledWidth = Math.min(width, 600);
+  const scaledHeight = Math.round((scaledWidth / width) * height);
+
+  const children: any[] = [
+    new ImageRun({
+      data: buffer,
+      transformation: {
+        width: scaledWidth,
+        height: scaledHeight,
+      },
+      type: type as 'png' | 'jpg' | 'gif',
+    }),
+  ];
+
+  if (caption) {
+    return new Paragraph({
+      children: [
+        ...children,
+        new TextRun({ text: '\n' }),
+        new TextRun({
+          text: caption,
+          italics: true,
+          size: FONT_SIZES.code,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        before: 120,
+        after: 120,
+      },
+    });
+  }
+
+  return new Paragraph({
+    children,
+    alignment: AlignmentType.CENTER,
+    spacing: {
+      before: 120,
+      after: 120,
+    },
+  });
+}
+
+/**
+ * Erstellt einen Platzhalter-Paragraph für ein Bild das nicht eingebettet werden konnte
+ */
+function createImagePlaceholder(url: string, caption?: string): Paragraph {
+  const children: any[] = [
+    new TextRun({
+      text: '[Bild: ',
+      italics: true,
+    }),
+  ];
+
+  if (url) {
+    children.push(
+      new ExternalHyperlink({
+        children: [
+          new TextRun({
+            text: url.length > 50 ? url.substring(0, 50) + '...' : url,
+            style: 'Hyperlink',
+            color: '0563C1',
+            underline: {},
+            italics: true,
+          }),
+        ],
+        link: url,
+      })
+    );
+  } else {
+    children.push(
+      new TextRun({
+        text: 'Unbenannt',
+        italics: true,
+      })
+    );
+  }
+
+  children.push(
+    new TextRun({
+      text: ']',
+      italics: true,
+    })
+  );
+
+  if (caption) {
+    children.push(
+      new TextRun({ text: ' - ' }),
+      new TextRun({
+        text: caption,
+        italics: true,
+      })
+    );
+  }
+
+  return new Paragraph({
+    children,
+    alignment: AlignmentType.CENTER,
+    spacing: {
+      before: 120,
+      after: 120,
+    },
+  });
+}
+
+/**
+ * Konvertiert ein Bild (synchrone Version für Fallback)
+ * Verwendet gecachte Bilddaten wenn verfügbar
  */
 export function convertImage(
   element: TElement,
@@ -533,16 +909,104 @@ export function convertImage(
   const url = imageElement.url || imageElement.src || '';
   const caption = imageElement.caption || '';
 
-  // Bilder können nicht direkt eingebettet werden ohne Base64-Konvertierung
-  // Für jetzt fügen wir einen Platzhalter-Text hinzu
-  return new Paragraph({
-    children: [
-      new TextRun({
-        text: `[Bild: ${url || 'Unbenannt'}]`,
-        italics: true,
-      }),
-    ],
-  });
+  // Prüfe auf gecachte Bilddaten (von prepareImagesForExport)
+  if (imageElement._imageBuffer && imageElement._imageType) {
+    const width = imageElement.width || 400;
+    const height = imageElement.height || Math.round(width * 0.75);
+    return createImageParagraph(
+      imageElement._imageBuffer,
+      imageElement._imageType,
+      width,
+      height,
+      caption
+    );
+  }
+
+  // Prüfe auf Base64-Daten
+  if (url.startsWith('data:')) {
+    const base64Match = url.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
+    if (base64Match) {
+      try {
+        const imageType = base64Match[1];
+        const imageData = base64Match[2];
+        // In Node.js verwende Buffer, im Browser Uint8Array
+        let buffer: Buffer | Uint8Array;
+        if (typeof Buffer !== 'undefined') {
+          buffer = Buffer.from(imageData, 'base64');
+        } else {
+          // Browser-Fallback
+          const binaryString = atob(imageData);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          buffer = bytes;
+        }
+
+        const width = imageElement.width || 400;
+        const height = imageElement.height || Math.round(width * 0.75);
+
+        // Mappe Bildtyp
+        let type: 'png' | 'jpg' | 'gif' = 'png';
+        if (imageType === 'jpeg' || imageType === 'jpg') {
+          type = 'jpg';
+        } else if (imageType === 'gif') {
+          type = 'gif';
+        }
+
+        return createImageParagraph(buffer, type, width, height, caption);
+      } catch (error) {
+        console.warn('Fehler beim Einbetten des Base64-Bildes:', error);
+      }
+    }
+  }
+
+  // Fallback: Platzhalter mit Link
+  return createImagePlaceholder(url, caption);
+}
+
+/**
+ * Bereitet alle Bilder im Editor-Content für den Export vor
+ * Lädt externe URLs herunter und speichert die Daten im Element
+ */
+export async function prepareImagesForExport(content: any[]): Promise<any[]> {
+  const preparedContent = JSON.parse(JSON.stringify(content));
+
+  async function processNode(node: any): Promise<void> {
+    if (!node || typeof node !== 'object') return;
+
+    // Prüfe ob es ein Bild-Element ist
+    if (node.type === 'img' || node.type === 'image') {
+      const url = node.url || node.src || '';
+
+      // Überspringe wenn bereits Base64 oder kein URL
+      if (!url || url.startsWith('data:')) return;
+
+      // Überspringe blob:-URLs (diese sind nicht mehr gültig nach Page-Reload)
+      if (url.startsWith('blob:')) return;
+
+      // Lade das Bild herunter
+      const imageData = await fetchImageAsBuffer(url);
+      if (imageData) {
+        // Speichere die Daten temporär im Element
+        node._imageBuffer = imageData.buffer;
+        node._imageType = imageData.type;
+      }
+    }
+
+    // Rekursiv durch Kinder
+    if (Array.isArray(node.children)) {
+      for (const child of node.children) {
+        await processNode(child);
+      }
+    }
+  }
+
+  // Verarbeite alle Nodes parallel für bessere Performance
+  const promises = preparedContent.map((node: any) => processNode(node));
+  await Promise.all(promises);
+
+  return preparedContent;
 }
 
 /**

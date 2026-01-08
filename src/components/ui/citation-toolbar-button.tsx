@@ -28,6 +28,7 @@ export function CitationToolbarButton(
         openSearch();
       }}
       tooltip={tooltipText}
+      data-onboarding="citation-btn"
     >
       <Quote />
     </ToolbarButton>

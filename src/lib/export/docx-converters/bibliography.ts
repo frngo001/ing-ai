@@ -6,23 +6,39 @@ import {
   AlignmentType,
   HeadingLevel,
   SimpleField,
+  Bookmark,
 } from 'docx';
 import type { TCitationElement } from '@/components/editor/plugins/citation-kit';
-import { BIBLIOGRAPHY_STYLE } from './styles';
+import { BIBLIOGRAPHY_STYLE, FONTS, FONT_SIZES } from './styles';
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils';
 import type { CitationStyle } from '@/lib/stores/citation-store';
+import { createSourceTag } from './citation-converter';
+
+/** Mapt Citation-Style zu Word-Style-Name */
+const WORD_STYLE_MAP: Record<string, string> = {
+  'apa': 'APA',
+  'mla': 'MLA',
+  'chicago': 'Chicago',
+  'harvard': 'Harvard - Anglia',
+  'ieee': 'IEEE',
+  'vancouver': 'Vancouver',
+};
 
 /**
  * Generiert ein Quellenverzeichnis aus einer Liste von Zitaten
  */
 
 export interface BibliographyEntry {
+  /** Das originale Citation-Element */
   citation: TCitationElement;
+  /** Formatierte Teile für die Anzeige */
   formatted: {
     authors: string;
     rest: string;
     link?: string;
   };
+  /** Index in der Reihenfolge der Erwähnung (für Vancouver/IEEE) */
+  orderIndex?: number;
 }
 
 /**
@@ -203,23 +219,35 @@ export function formatBibliographyEntry(
 
 /**
  * Erstellt einen Bibliographie-Eintrag als Word-Paragraph
+ * Mit echten Hyperlinks für DOI und URL
  */
 export function createBibliographyParagraph(
   entry: BibliographyEntry,
   index?: number,
   citationStyle: CitationStyle = 'apa'
 ): Paragraph {
-  const { formatted } = entry;
+  const { formatted, citation } = entry;
   const prefix = citationStyle === 'vancouver' && index !== undefined ? `[${index + 1}] ` : '';
+  const sourceTag = createSourceTag(citation);
 
-  const children: (TextRun | ExternalHyperlink)[] = [];
+  const children: (TextRun | ExternalHyperlink | Bookmark)[] = [];
 
-  // Prefix für nummerische Stile
+  // Bookmark für interne Verlinkung (z.B. von Zitaten im Text)
+  children.push(
+    new Bookmark({
+      id: `bib_${sourceTag}`,
+      children: [],
+    })
+  );
+
+  // Prefix für nummerische Stile (IEEE, Vancouver)
   if (prefix) {
     children.push(
       new TextRun({
         text: prefix,
         bold: true,
+        font: FONTS.default,
+        size: FONT_SIZES.default,
       })
     );
   }
@@ -230,28 +258,90 @@ export function createBibliographyParagraph(
       new TextRun({
         text: formatted.authors,
         bold: true,
+        font: FONTS.default,
+        size: FONT_SIZES.default,
       })
     );
   }
 
-  // Rest des Eintrags
+  // Rest des Eintrags (ohne URL/DOI am Ende, die werden als Hyperlinks hinzugefügt)
   if (formatted.rest) {
+    // Entferne URL und DOI aus dem Rest, da wir sie als Hyperlinks hinzufügen
+    let cleanRest = formatted.rest;
+
+    // Entferne DOI-Segment wenn vorhanden
+    const doiValue = getNormalizedDoi(citation.doi);
+    if (doiValue) {
+      cleanRest = cleanRest.replace(`DOI: ${doiValue}`, '').replace(/;\s*;/g, ';').replace(/;\s*$/, '.');
+    }
+
+    // Entferne URL-Segment wenn vorhanden
+    const url = citation.url || '';
+    if (url) {
+      cleanRest = cleanRest.replace(`URL: ${url}`, '').replace(/;\s*;/g, ';').replace(/;\s*$/, '.');
+    }
+
     children.push(
       new TextRun({
-        text: formatted.rest,
+        text: cleanRest,
+        font: FONTS.default,
+        size: FONT_SIZES.default,
       })
     );
   }
 
-  // Link als Hyperlink (falls vorhanden)
-  if (formatted.link) {
+  // DOI als klickbarer Hyperlink
+  const doiValue = getNormalizedDoi(citation.doi);
+  if (doiValue) {
     children.push(
       new TextRun({
-        text: ' ',
+        text: ' DOI: ',
+        font: FONTS.default,
+        size: FONT_SIZES.default,
       })
     );
-    // Link wird als Text hinzugefügt, da ExternalHyperlink komplexer ist
-    // In Word kann der Benutzer den Link manuell hinzufügen
+    children.push(
+      new ExternalHyperlink({
+        children: [
+          new TextRun({
+            text: doiValue,
+            style: 'Hyperlink',
+            color: '0563C1',
+            underline: {},
+            font: FONTS.default,
+            size: FONT_SIZES.default,
+          }),
+        ],
+        link: `https://doi.org/${doiValue}`,
+      })
+    );
+  }
+
+  // URL als klickbarer Hyperlink (nur wenn kein DOI vorhanden)
+  const url = citation.url || '';
+  if (url && !doiValue) {
+    children.push(
+      new TextRun({
+        text: ' URL: ',
+        font: FONTS.default,
+        size: FONT_SIZES.default,
+      })
+    );
+    children.push(
+      new ExternalHyperlink({
+        children: [
+          new TextRun({
+            text: url,
+            style: 'Hyperlink',
+            color: '0563C1',
+            underline: {},
+            font: FONTS.default,
+            size: FONT_SIZES.default,
+          }),
+        ],
+        link: url,
+      })
+    );
   }
 
   return new Paragraph({
@@ -260,8 +350,25 @@ export function createBibliographyParagraph(
   });
 }
 
+/** Mapt Citation-Style zu Word-internem Style-Pfad */
+const WORD_BIBLIOGRAPHY_STYLE_MAP: Record<string, string> = {
+  'apa': '\\APASixthEditionOfficeOnline.XSL',
+  'mla': '\\MLASeventhEdition.XSL',
+  'chicago': '\\ChicagoFifteenthEdition.XSL',
+  'harvard': '\\HarvardAnglia2008OfficeOnline.XSL',
+  'ieee': '\\IEEE2006OfficeOnline.XSL',
+  'vancouver': '\\Turabian.XSL',
+};
+
 /**
- * Erstellt das vollständige Quellenverzeichnis
+ * Erstellt das Quellenverzeichnis NUR als Word BIBLIOGRAPHY-Feld
+ * Word generiert das Verzeichnis automatisch aus den Sources im Custom XML
+ *
+ * WICHTIG: Die eigentlichen Einträge werden NICHT manuell erstellt!
+ * Word generiert sie automatisch basierend auf:
+ * 1. Den CITATION-Feldern im Dokument
+ * 2. Den Sources im customXml/item1.xml
+ * 3. Dem ausgewählten Stil
  */
 export function createBibliographySection(
   citations: TCitationElement[],
@@ -273,44 +380,55 @@ export function createBibliographySection(
 
   const paragraphs: Paragraph[] = [];
 
-  // Überschrift "Literaturverzeichnis" mit korrektem Style
+  // Word Bibliography Field - generiert automatisch das Quellenverzeichnis
+  // Syntax: BIBLIOGRAPHY \l LCID
+  // \l 1031 = Sprache (Deutsch)
+  // Word verwendet die Sources aus customXml/item1.xml
+  const wordStylePath = WORD_BIBLIOGRAPHY_STYLE_MAP[citationStyle] || '\\APASixthEditionOfficeOnline.XSL';
+
+  // Das BIBLIOGRAPHY-Feld wird von Word beim Öffnen oder F9 aktualisiert
+  // und generiert automatisch alle Einträge aus den CITATION-Quellen
   paragraphs.push(
     new Paragraph({
-      text: 'Literaturverzeichnis',
-      heading: HeadingLevel.HEADING_1,
-      style: 'Heading1', // Wichtig: Style-Name für Word-Erkennung
+      children: [
+        // Leerer Platzhalter - Word füllt dies beim Aktualisieren
+        new SimpleField(
+          `BIBLIOGRAPHY \\l 1031`,
+          '' // Leer - Word generiert den Inhalt automatisch
+        ),
+      ],
       spacing: {
-        before: 480, // 24pt before
-        after: 240, // 12pt after
+        before: 480,
+        after: 240,
       },
     })
   );
 
-  // Erstelle Word Bibliography Field - Word erkennt dies als automatisches Literaturverzeichnis
-  // Syntax: BIBLIOGRAPHY \l 1031 \s "APA"
-  // \l 1031 = Sprache (Deutsch) - WICHTIG: 1031, nicht 1033!
-  // \s "APA" = Style (kann angepasst werden)
-  const bibliographyStyleMap: Record<string, string> = {
-    'apa': 'APA',
-    'mla': 'MLA',
-    'chicago': 'Chicago',
-    'harvard': 'Harvard',
-    'ieee': 'IEEE',
-    'vancouver': 'Vancouver',
-  };
-  const wordStyle = bibliographyStyleMap[citationStyle] || 'APA';
-  
-  // Erstelle Bibliography Field
+  return paragraphs;
+}
+
+/**
+ * Erstellt ein manuelles Quellenverzeichnis (als Fallback)
+ * Wird nur verwendet, wenn automatische Generierung nicht gewünscht ist
+ */
+export function createManualBibliographySection(
+  citations: TCitationElement[],
+  citationStyle: CitationStyle = 'apa'
+): Paragraph[] {
+  if (citations.length === 0) {
+    return [];
+  }
+
+  const paragraphs: Paragraph[] = [];
+
+  // Überschrift
   paragraphs.push(
     new Paragraph({
-      children: [
-        new SimpleField(
-          `BIBLIOGRAPHY \\l 1031 \\s "${wordStyle}"`,
-          'Literaturverzeichnis' // Cached value für Anzeige
-        ),
-      ],
+      text: 'Literaturverzeichnis',
+      heading: HeadingLevel.HEADING_1,
       spacing: {
-        after: 120,
+        before: 480,
+        after: 240,
       },
     })
   );
@@ -322,10 +440,7 @@ export function createBibliographySection(
   }));
 
   // Sortierung nach Stil
-  if (citationStyle === 'vancouver') {
-    // Vancouver: Reihenfolge beibehalten (bereits sortiert)
-  } else {
-    // Alphabetisch sortieren
+  if (citationStyle !== 'vancouver') {
     entries.sort((a, b) => {
       const keyA = `${a.formatted.authors} ${a.citation.year ?? ''} ${normalizeTitle(a.citation.title)}`.toLowerCase();
       const keyB = `${b.formatted.authors} ${b.citation.year ?? ''} ${normalizeTitle(b.citation.title)}`.toLowerCase();

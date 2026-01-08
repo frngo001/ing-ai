@@ -409,7 +409,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown data-onboarding="export-btn">
         <ArrowDownToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>

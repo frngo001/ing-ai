@@ -52,6 +52,238 @@ export const translations = {
             pleaseTryAgain: 'Please try again.',
             comments: 'Comments',
         },
+        projects: {
+            title: 'Projects',
+            activeProject: 'Active Project',
+            yourProjects: 'Your Projects',
+            default: 'Default',
+            newProject: 'New Project',
+            createProject: 'Create Project',
+            createProjectDescription: 'Create a new project to organize your documents and research.',
+            projectName: 'Project Name',
+            projectNamePlaceholder: 'Enter project name...',
+            projectDescription: 'Description (optional)',
+            projectDescriptionPlaceholder: 'Enter description...',
+            create: 'Create',
+            deleteProject: 'Delete Project',
+            cannotDeleteDefault: 'Cannot delete the default project',
+            cannotDeleteOnly: 'Cannot delete the only project',
+            switchProject: 'Switch Project',
+            projectSettings: 'Project Settings',
+            createFirstProject: 'Create Project',
+            noProjectsYet: 'No projects yet',
+        },
+        onboarding: {
+            title: 'Welcome to Ing AI',
+            skip: 'Skip',
+            back: 'Back',
+            next: 'Next',
+            finish: 'Get Started',
+            continue: 'Continue',
+            start: 'Start Tour',
+            stepOf: 'Step {current} of {total}',
+            stepProgress: '{completed} of {total} completed',
+            startOnboarding: 'Quick Start Guide',
+            continueOnboarding: 'Continue Guide',
+            steps: {
+                welcome: {
+                    title: 'Welcome to Ing AI!',
+                    description: 'Your AI-powered writing assistant for academic excellence. Let us show you around and help you get started with creating professional documents.',
+                },
+                createDocument: {
+                    title: 'Create Your First Document',
+                    description: 'Start by creating a new document. Click the "New Document" button in the sidebar or use the keyboard shortcut to begin writing.',
+                },
+                editorBasics: {
+                    title: 'Editor Basics',
+                    description: 'Our rich text editor supports formatting, headings, lists, and more. Use the toolbar or keyboard shortcuts to style your text.',
+                },
+                aiAssistant: {
+                    title: 'Meet Your AI Assistant',
+                    description: 'Select any text and ask AI for help, or open the AI Chat panel to get writing suggestions, explanations, and research assistance.',
+                },
+                citations: {
+                    title: 'Smart Citations',
+                    description: 'Add citations with ease. Search for sources, and Ing AI will format them automatically in your preferred citation style.',
+                },
+                library: {
+                    title: 'Your Source Library',
+                    description: 'Organize all your research sources in one place. Import PDFs, add URLs, or manually add sources to build your reference library.',
+                },
+                research: {
+                    title: 'Research Assistant',
+                    description: 'Let AI help you find relevant academic papers and sources. Search across databases and add promising results to your library.',
+                },
+                export: {
+                    title: 'Export Your Work',
+                    description: 'Export your finished documents in multiple formats including DOCX, PDF, HTML, and Markdown. Perfect for submission or sharing.',
+                },
+                settings: {
+                    title: 'Personalize Your Experience',
+                    description: 'Customize citation styles, language preferences, theme, and AI settings to match your workflow and requirements.',
+                },
+                complete: {
+                    title: 'You\'re All Set!',
+                    description: 'Congratulations! You now know the essentials. Start writing and let Ing AI help you create outstanding academic work.',
+                },
+            },
+            tips: {
+                welcome: 'Click "Next" to learn about key features|You can skip this guide anytime|Access this guide later from the sidebar',
+                createDocument: 'Use Cmd/Ctrl + N for quick document creation|Documents auto-save as you type|Organize documents with titles',
+                editorBasics: 'Cmd/Ctrl + B for bold, I for italic|Use # for headings in markdown mode|Drag and drop to rearrange sections',
+                aiAssistant: 'Select text and press Cmd/Ctrl + J|Ask for writing improvements|Get explanations for complex topics',
+                citations: 'Search by title, author, or DOI|Citations update automatically|Switch styles with one click',
+                library: 'Drag PDFs directly into the library|Use tags to organize sources|Export your library anytime',
+                research: 'Filter by publication year and type|Preview abstracts before adding|Save searches for later',
+                export: 'Include or exclude citations|Choose page formatting|Preview before downloading',
+                settings: 'Set default citation style|Choose your preferred language|Configure AI behavior',
+                complete: 'Explore the dashboard|Create your first document|Reach out if you need help',
+            },
+            subSteps: {
+                welcome: {
+                    intro: {
+                        title: 'Welcome to Ing AI!',
+                        description: 'We\'re excited to help you get started. This quick tour will show you the most important features.',
+                        tip: 'Take your time|You can always come back|Let\'s begin!',
+                    },
+                    sidebar: {
+                        title: 'Your Sidebar',
+                        description: 'The sidebar is your navigation hub. Here you can access documents, library, AI chat, and settings.',
+                    },
+                },
+                createDocument: {
+                    button: {
+                        title: 'Create New Document',
+                        description: 'Click this button to create your first document. You can also use the keyboard shortcut Cmd/Ctrl + N.',
+                    },
+                    action: {
+                        title: 'Let\'s Create One',
+                        description: 'Go ahead and click the button to create a new document. We\'ll show you what happens next.',
+                    },
+                    pane: {
+                        title: 'Documents Pane',
+                        description: 'Here you can see all your documents. New documents appear here automatically.',
+                    },
+                },
+                editorBasics: {
+                    editor: {
+                        title: 'The Editor',
+                        description: 'This is where the magic happens. Start typing to create your content. The editor supports rich formatting and more.',
+                    },
+                    toolbar: {
+                        title: 'Formatting Toolbar',
+                        description: 'Use the toolbar to format your text. You can make text bold, italic, add headings, lists, and much more.',
+                        tip: 'Keyboard shortcuts are faster|Try Cmd/Ctrl + B for bold|Explore all formatting options',
+                    },
+                    slashCommands: {
+                        title: 'Slash Commands',
+                        description: 'Type "/" anywhere in the editor to open the command menu. Quickly insert headings, lists, code blocks, equations, and more.',
+                        tip: 'Type /h1 for heading|/list for bullet points|/code for code blocks',
+                    },
+                    inlineAi: {
+                        title: 'AI Writing Assistant',
+                        description: 'Select any text and press Cmd/Ctrl + J to open the AI menu. Get suggestions, rewrite text, expand ideas, or fix grammar instantly.',
+                        tip: 'Select text + Cmd/Ctrl + J|Ask AI to improve your writing|Generate content from prompts',
+                    },
+                    comments: {
+                        title: 'Comments',
+                        description: 'Select text and click the comment button to add notes. Perfect for collaboration, feedback, or reminders for yourself.',
+                        tip: 'Great for peer review|Add questions or notes|Resolve when done',
+                    },
+                    suggestions: {
+                        title: 'Suggestion Mode',
+                        description: 'Enable suggestion mode to track your changes. Others can review and accept or reject your edits - perfect for collaborative writing.',
+                    },
+                },
+                aiAssistant: {
+                    nav: {
+                        title: 'AI Chat',
+                        description: 'Access the AI assistant from the sidebar. It can help with writing, research, and answering questions.',
+                    },
+                    open: {
+                        title: 'Open AI Chat',
+                        description: 'Click here to open the AI chat panel. You can ask questions and get writing suggestions.',
+                    },
+                    pane: {
+                        title: 'AI Assistant',
+                        description: 'Chat with the AI to get help with your writing. Ask questions, request improvements, or get explanations.',
+                        tip: 'Be specific in your requests|Try asking for explanations|Use it for research help',
+                    },
+                },
+                citations: {
+                    button: {
+                        title: 'Citation Button',
+                        description: 'Click this button to add citations to your document. Search for sources and insert them with proper formatting.',
+                    },
+                    explain: {
+                        title: 'Smart Citations',
+                        description: 'Ing AI automatically formats citations in your preferred style. Search by title, author, or DOI.',
+                        tip: '9000+ citation styles available|Auto-formatting saves time|Change styles anytime',
+                    },
+                },
+                library: {
+                    nav: {
+                        title: 'Library',
+                        description: 'Your research library is where you organize all your sources. Access it from the sidebar.',
+                    },
+                    open: {
+                        title: 'Open Library',
+                        description: 'Click here to open your library. You can import PDFs, add URLs, or manually add sources.',
+                    },
+                    features: {
+                        title: 'Library Features',
+                        description: 'Organize your sources, import BibTeX files, search your library, and export references.',
+                    },
+                },
+                research: {
+                    intro: {
+                        title: 'Search Your Library',
+                        description: 'Use the search bar to quickly find sources in your library. Filter by title, author, or keywords.',
+                    },
+                    addSource: {
+                        title: 'Add Sources',
+                        description: 'Click the plus button to add new sources. You can import PDFs, add URLs, or create entries manually.',
+                        tip: 'Import from BibTeX files|Add sources as you research|Keep your library organized',
+                    },
+                },
+                export: {
+                    button: {
+                        title: 'Export Your Work',
+                        description: 'When you\'re done writing, export your document in various formats like DOCX, PDF, HTML, or Markdown.',
+                    },
+                    formats: {
+                        title: 'Export Formats',
+                        description: 'Choose from multiple export formats. DOCX for Word, PDF for printing, HTML for web, and more.',
+                        tip: 'Citations included automatically|Preview before exporting|Multiple format options',
+                    },
+                },
+                settings: {
+                    nav: {
+                        title: 'Settings',
+                        description: 'Customize your experience in settings. Adjust citation styles, language, theme, and AI preferences.',
+                    },
+                    open: {
+                        title: 'Open Settings',
+                        description: 'Click here to open the settings dialog. Personalize Ing AI to match your workflow.',
+                    },
+                    intro: {
+                        title: 'Settings Overview',
+                        description: 'Configure citation styles, language preferences, theme settings, and AI behavior to your liking.',
+                    },
+                },
+                complete: {
+                    celebration: {
+                        title: 'Congratulations!',
+                        description: 'You\'ve completed the onboarding tour! You now know the essential features of Ing AI.',
+                    },
+                    start: {
+                        title: 'Start Writing',
+                        description: 'You\'re all set! Start creating your first document and experience the power of AI-assisted writing.',
+                        tip: 'Create your first document|Explore advanced features|Contact support if needed',
+                    },
+                },
+            },
+        },
         editor: {
             untitled: 'Untitled Document',
             chat: 'Chat',
@@ -266,6 +498,10 @@ export const translations = {
             commentSave: 'Save',
             commentEdited: 'edited',
             commentPlaceholderInput: 'Comment...',
+            mediaEditLink: 'Edit link',
+            mediaCaption: 'Caption',
+            mediaEmbedPlaceholder: 'Paste the embed link...',
+            mediaWriteCaption: 'Write a caption...',
         },
         slash: {
             noResults: 'No results',
@@ -454,6 +690,7 @@ export const translations = {
             save: 'Save',
             commandSaved: 'Command saved successfully',
             commandSaveError: 'Failed to save command',
+            editMessage: 'Edit message',
             attachFile: 'Attach file',
             voiceInput: 'Voice input',
             stopGenerating: 'Stop generating',
@@ -480,6 +717,8 @@ export const translations = {
             toolGetEditorContentMessage: 'Editor content retrieved: {wordCount} words, {characterCount} characters.',
             toolInsertTextInEditor: 'Insert text',
             toolInsertTextInEditorMessage: 'Text ready for insertion in editor',
+            toolDeleteTextFromEditor: 'Delete text',
+            toolDeleteTextFromEditorMessage: 'Text ready for deletion in editor',
             toolAddCitation: 'Add citation',
             toolAddCitationMessage: 'Citation ready for insertion',
             toolAddThema: 'Set topic',
@@ -624,6 +863,9 @@ export const translations = {
             security: 'Security',
             account: 'Account',
             languageDescription: 'Choose the language for the user interface.',
+            restartOnboarding: 'Onboarding Tour',
+            restartOnboardingDescription: 'Restart the guided tour to learn about all features.',
+            restartOnboardingButton: 'Restart Tour',
             autoUpdates: 'Automatic Updates',
             autoUpdatesDescription: 'Automatically install new versions when available.',
             keyboardShortcuts: 'Keyboard Shortcuts',
@@ -1592,6 +1834,238 @@ export const translations = {
             pleaseTryAgain: 'Por favor, inténtalo de nuevo.',
             comments: 'Comentarios',
         },
+        projects: {
+            title: 'Proyectos',
+            activeProject: 'Proyecto Activo',
+            yourProjects: 'Tus Proyectos',
+            default: 'Predeterminado',
+            newProject: 'Nuevo Proyecto',
+            createProject: 'Crear Proyecto',
+            createProjectDescription: 'Crea un nuevo proyecto para organizar tus documentos e investigaciones.',
+            projectName: 'Nombre del Proyecto',
+            projectNamePlaceholder: 'Ingresa el nombre del proyecto...',
+            projectDescription: 'Descripcion (opcional)',
+            projectDescriptionPlaceholder: 'Ingresa la descripcion...',
+            create: 'Crear',
+            deleteProject: 'Eliminar Proyecto',
+            cannotDeleteDefault: 'No se puede eliminar el proyecto predeterminado',
+            cannotDeleteOnly: 'No se puede eliminar el unico proyecto',
+            switchProject: 'Cambiar Proyecto',
+            projectSettings: 'Configuracion del Proyecto',
+            createFirstProject: 'Crear Proyecto',
+            noProjectsYet: 'Sin proyectos aún',
+        },
+        onboarding: {
+            title: 'Bienvenido a Ing AI',
+            skip: 'Omitir',
+            back: 'Atrás',
+            next: 'Siguiente',
+            finish: 'Comenzar',
+            continue: 'Continuar',
+            start: 'Iniciar Tour',
+            stepOf: 'Paso {current} de {total}',
+            stepProgress: '{completed} de {total} completados',
+            startOnboarding: 'Guía de Inicio Rápido',
+            continueOnboarding: 'Continuar Guía',
+            steps: {
+                welcome: {
+                    title: '¡Bienvenido a Ing AI!',
+                    description: 'Tu asistente de escritura con IA para la excelencia académica. Déjanos mostrarte las funciones clave y ayudarte a crear documentos profesionales.',
+                },
+                createDocument: {
+                    title: 'Crea tu Primer Documento',
+                    description: 'Comienza creando un nuevo documento. Haz clic en "Nuevo Documento" en la barra lateral o usa el atajo de teclado.',
+                },
+                editorBasics: {
+                    title: 'Fundamentos del Editor',
+                    description: 'Nuestro editor de texto enriquecido soporta formato, encabezados, listas y más. Usa la barra de herramientas o atajos de teclado.',
+                },
+                aiAssistant: {
+                    title: 'Conoce tu Asistente de IA',
+                    description: 'Selecciona texto y pide ayuda a la IA, o abre el Chat de IA para sugerencias de escritura, explicaciones y asistencia en investigación.',
+                },
+                citations: {
+                    title: 'Citas Inteligentes',
+                    description: 'Añade citas fácilmente. Busca fuentes e Ing AI las formateará automáticamente en tu estilo de citación preferido.',
+                },
+                library: {
+                    title: 'Tu Biblioteca de Fuentes',
+                    description: 'Organiza todas tus fuentes de investigación en un solo lugar. Importa PDFs, añade URLs o añade fuentes manualmente.',
+                },
+                research: {
+                    title: 'Asistente de Investigación',
+                    description: 'Deja que la IA encuentre artículos académicos relevantes. Busca en bases de datos y añade resultados prometedores a tu biblioteca.',
+                },
+                export: {
+                    title: 'Exporta tu Trabajo',
+                    description: 'Exporta documentos terminados en múltiples formatos incluyendo DOCX, PDF, HTML y Markdown. Perfecto para entregar o compartir.',
+                },
+                settings: {
+                    title: 'Personaliza tu Experiencia',
+                    description: 'Personaliza estilos de citación, preferencias de idioma, tema y configuración de IA según tu flujo de trabajo.',
+                },
+                complete: {
+                    title: '¡Todo Listo!',
+                    description: '¡Felicitaciones! Ya conoces lo esencial. Comienza a escribir y deja que Ing AI te ayude a crear trabajo académico excepcional.',
+                },
+            },
+            tips: {
+                welcome: 'Haz clic en "Siguiente" para conocer las funciones clave|Puedes omitir esta guía en cualquier momento|Accede a esta guía después desde la barra lateral',
+                createDocument: 'Usa Cmd/Ctrl + N para crear documentos rápidamente|Los documentos se guardan automáticamente|Organiza documentos con títulos',
+                editorBasics: 'Cmd/Ctrl + B para negrita, I para cursiva|Usa # para encabezados en modo markdown|Arrastra y suelta para reorganizar secciones',
+                aiAssistant: 'Selecciona texto y presiona Cmd/Ctrl + J|Pide mejoras de escritura|Obtén explicaciones de temas complejos',
+                citations: 'Busca por título, autor o DOI|Las citas se actualizan automáticamente|Cambia estilos con un clic',
+                library: 'Arrastra PDFs directamente a la biblioteca|Usa etiquetas para organizar|Exporta tu biblioteca cuando quieras',
+                research: 'Filtra por año y tipo de publicación|Vista previa de resúmenes antes de añadir|Guarda búsquedas para después',
+                export: 'Incluye o excluye citas|Elige formato de página|Vista previa antes de descargar',
+                settings: 'Establece estilo de citación predeterminado|Elige tu idioma preferido|Configura comportamiento de IA',
+                complete: 'Explora el panel|Crea tu primer documento|Contáctanos si necesitas ayuda',
+            },
+            subSteps: {
+                welcome: {
+                    intro: {
+                        title: '¡Bienvenido a Ing AI!',
+                        description: 'Estamos emocionados de ayudarte a comenzar. Esta breve guía te mostrará las funciones más importantes.',
+                        tip: 'Tómate tu tiempo|Siempre puedes volver|¡Comencemos!',
+                    },
+                    sidebar: {
+                        title: 'Tu Barra Lateral',
+                        description: 'La barra lateral es tu centro de navegación. Aquí puedes acceder a documentos, biblioteca, chat de IA y ajustes.',
+                    },
+                },
+                createDocument: {
+                    button: {
+                        title: 'Crear Nuevo Documento',
+                        description: 'Haz clic en este botón para crear tu primer documento. También puedes usar el atajo Cmd/Ctrl + N.',
+                    },
+                    action: {
+                        title: 'Vamos a Crear Uno',
+                        description: 'Adelante, haz clic en el botón para crear un nuevo documento. Te mostraremos qué pasa después.',
+                    },
+                    pane: {
+                        title: 'Panel de Documentos',
+                        description: 'Aquí puedes ver todos tus documentos. Los nuevos documentos aparecen aquí automáticamente.',
+                    },
+                },
+                editorBasics: {
+                    editor: {
+                        title: 'El Editor',
+                        description: 'Aquí es donde ocurre la magia. Comienza a escribir para crear tu contenido. El editor soporta formato enriquecido y más.',
+                    },
+                    toolbar: {
+                        title: 'Barra de Formato',
+                        description: 'Usa la barra de herramientas para dar formato a tu texto. Puedes poner texto en negrita, cursiva, añadir encabezados, listas y mucho más.',
+                        tip: 'Los atajos de teclado son más rápidos|Prueba Cmd/Ctrl + B para negrita|Explora todas las opciones de formato',
+                    },
+                    slashCommands: {
+                        title: 'Comandos Slash',
+                        description: 'Escribe "/" en cualquier lugar del editor para abrir el menú de comandos. Inserta rápidamente encabezados, listas, bloques de código, ecuaciones y más.',
+                        tip: 'Escribe /h1 para encabezado|/list para viñetas|/code para bloques de código',
+                    },
+                    inlineAi: {
+                        title: 'Asistente de Escritura IA',
+                        description: 'Selecciona cualquier texto y presiona Cmd/Ctrl + J para abrir el menú de IA. Obtén sugerencias, reescribe texto, expande ideas o corrige gramática al instante.',
+                        tip: 'Selecciona texto + Cmd/Ctrl + J|Pide a la IA que mejore tu escritura|Genera contenido desde prompts',
+                    },
+                    comments: {
+                        title: 'Comentarios',
+                        description: 'Selecciona texto y haz clic en el botón de comentario para añadir notas. Perfecto para colaboración, feedback o recordatorios para ti mismo.',
+                        tip: 'Ideal para revisión por pares|Añade preguntas o notas|Resuelve cuando termines',
+                    },
+                    suggestions: {
+                        title: 'Modo Sugerencias',
+                        description: 'Activa el modo sugerencias para rastrear tus cambios. Otros pueden revisar y aceptar o rechazar tus ediciones - perfecto para escritura colaborativa.',
+                    },
+                },
+                aiAssistant: {
+                    nav: {
+                        title: 'Chat de IA',
+                        description: 'Accede al asistente de IA desde la barra lateral. Puede ayudar con escritura, investigación y responder preguntas.',
+                    },
+                    open: {
+                        title: 'Abrir Chat de IA',
+                        description: 'Haz clic aquí para abrir el panel de chat de IA. Puedes hacer preguntas y obtener sugerencias de escritura.',
+                    },
+                    pane: {
+                        title: 'Asistente de IA',
+                        description: 'Chatea con la IA para obtener ayuda con tu escritura. Haz preguntas, pide mejoras u obtén explicaciones.',
+                        tip: 'Sé específico en tus solicitudes|Intenta pedir explicaciones|Úsalo para ayuda en investigación',
+                    },
+                },
+                citations: {
+                    button: {
+                        title: 'Botón de Citas',
+                        description: 'Haz clic en este botón para añadir citas a tu documento. Busca fuentes e insértalas con el formato correcto.',
+                    },
+                    explain: {
+                        title: 'Citas Inteligentes',
+                        description: 'Ing AI formatea automáticamente las citas en tu estilo preferido. Busca por título, autor o DOI.',
+                        tip: 'Más de 9000 estilos de citas disponibles|El formato automático ahorra tiempo|Cambia estilos en cualquier momento',
+                    },
+                },
+                library: {
+                    nav: {
+                        title: 'Biblioteca',
+                        description: 'Tu biblioteca de investigación es donde organizas todas tus fuentes. Accede desde la barra lateral.',
+                    },
+                    open: {
+                        title: 'Abrir Biblioteca',
+                        description: 'Haz clic aquí para abrir tu biblioteca. Puedes importar PDFs, añadir URLs o añadir fuentes manualmente.',
+                    },
+                    features: {
+                        title: 'Funciones de Biblioteca',
+                        description: 'Organiza tus fuentes, importa archivos BibTeX, busca en tu biblioteca y exporta referencias.',
+                    },
+                },
+                research: {
+                    intro: {
+                        title: 'Buscar en tu Biblioteca',
+                        description: 'Usa la barra de búsqueda para encontrar rápidamente fuentes en tu biblioteca. Filtra por título, autor o palabras clave.',
+                    },
+                    addSource: {
+                        title: 'Añadir Fuentes',
+                        description: 'Haz clic en el botón más para añadir nuevas fuentes. Puedes importar PDFs, añadir URLs o crear entradas manualmente.',
+                        tip: 'Importa desde archivos BibTeX|Añade fuentes mientras investigas|Mantén tu biblioteca organizada',
+                    },
+                },
+                export: {
+                    button: {
+                        title: 'Exportar tu Trabajo',
+                        description: 'Cuando termines de escribir, exporta tu documento en varios formatos como DOCX, PDF, HTML o Markdown.',
+                    },
+                    formats: {
+                        title: 'Formatos de Exportación',
+                        description: 'Elige entre múltiples formatos de exportación. DOCX para Word, PDF para imprimir, HTML para web y más.',
+                        tip: 'Citas incluidas automáticamente|Vista previa antes de exportar|Múltiples opciones de formato',
+                    },
+                },
+                settings: {
+                    nav: {
+                        title: 'Ajustes',
+                        description: 'Personaliza tu experiencia en ajustes. Configura estilos de citas, idioma, tema y preferencias de IA.',
+                    },
+                    open: {
+                        title: 'Abrir Ajustes',
+                        description: 'Haz clic aquí para abrir el diálogo de ajustes. Personaliza Ing AI para que se adapte a tu flujo de trabajo.',
+                    },
+                    intro: {
+                        title: 'Vista General de Ajustes',
+                        description: 'Configura estilos de citas, preferencias de idioma, ajustes de tema y comportamiento de IA a tu gusto.',
+                    },
+                },
+                complete: {
+                    celebration: {
+                        title: '¡Felicitaciones!',
+                        description: '¡Has completado el tour de introducción! Ahora conoces las funciones esenciales de Ing AI.',
+                    },
+                    start: {
+                        title: 'Comienza a Escribir',
+                        description: '¡Todo listo! Comienza a crear tu primer documento y experimenta el poder de la escritura asistida por IA.',
+                        tip: 'Crea tu primer documento|Explora funciones avanzadas|Contacta soporte si lo necesitas',
+                    },
+                },
+            },
+        },
         editor: {
             untitled: 'Documento sin título',
             chat: 'Chat',
@@ -1806,6 +2280,10 @@ export const translations = {
             commentSave: 'Guardar',
             commentEdited: 'editado',
             commentPlaceholderInput: 'Comentar...',
+            mediaEditLink: 'Editar enlace',
+            mediaCaption: 'Leyenda',
+            mediaEmbedPlaceholder: 'Pegar el enlace de inserción...',
+            mediaWriteCaption: 'Escribir una leyenda...',
         },
         slash: {
             noResults: 'Sin resultados',
@@ -1994,6 +2472,7 @@ export const translations = {
             save: 'Guardar',
             commandSaved: 'Comando guardado exitosamente',
             commandSaveError: 'Error al guardar el comando',
+            editMessage: 'Editar mensaje',
             attachFile: 'Adjuntar archivo',
             voiceInput: 'Entrada de voz',
             stopGenerating: 'Detener generación',
@@ -2020,6 +2499,8 @@ export const translations = {
             toolGetEditorContentMessage: 'Contenido del editor recuperado: {wordCount} palabras, {characterCount} caracteres.',
             toolInsertTextInEditor: 'Insertar texto',
             toolInsertTextInEditorMessage: 'Texto listo para insertar en el editor',
+            toolDeleteTextFromEditor: 'Eliminar texto',
+            toolDeleteTextFromEditorMessage: 'Texto listo para eliminación en el editor',
             toolAddCitation: 'Añadir cita',
             toolAddCitationMessage: 'Cita lista para insertar',
             toolAddThema: 'Establecer tema',
@@ -2164,6 +2645,9 @@ export const translations = {
             security: 'Seguridad',
             account: 'Cuenta',
             languageDescription: 'Elige el idioma para la interfaz de usuario.',
+            restartOnboarding: 'Tour de Introducción',
+            restartOnboardingDescription: 'Reinicia el tour guiado para conocer todas las funciones.',
+            restartOnboardingButton: 'Reiniciar Tour',
             autoUpdates: 'Actualizaciones Automáticas',
             autoUpdatesDescription: 'Instalar automáticamente nuevas versiones cuando estén disponibles.',
             keyboardShortcuts: 'Atajos de Teclado',
@@ -3132,6 +3616,238 @@ export const translations = {
             pleaseTryAgain: 'Veuillez réessayer.',
             comments: 'Commentaires',
         },
+        projects: {
+            title: 'Projets',
+            activeProject: 'Projet Actif',
+            yourProjects: 'Vos Projets',
+            default: 'Par défaut',
+            newProject: 'Nouveau Projet',
+            createProject: 'Créer un Projet',
+            createProjectDescription: 'Créez un nouveau projet pour organiser vos documents et recherches.',
+            projectName: 'Nom du Projet',
+            projectNamePlaceholder: 'Entrez le nom du projet...',
+            projectDescription: 'Description (optionnel)',
+            projectDescriptionPlaceholder: 'Entrez la description...',
+            create: 'Créer',
+            deleteProject: 'Supprimer le Projet',
+            cannotDeleteDefault: 'Impossible de supprimer le projet par défaut',
+            cannotDeleteOnly: 'Impossible de supprimer le seul projet',
+            switchProject: 'Changer de Projet',
+            projectSettings: 'Paramètres du Projet',
+            createFirstProject: 'Créer un Projet',
+            noProjectsYet: 'Pas encore de projets',
+        },
+        onboarding: {
+            title: 'Bienvenue sur Ing AI',
+            skip: 'Passer',
+            back: 'Retour',
+            next: 'Suivant',
+            finish: 'Commencer',
+            continue: 'Continuer',
+            start: 'Démarrer la visite',
+            stepOf: 'Étape {current} sur {total}',
+            stepProgress: '{completed} sur {total} terminées',
+            startOnboarding: 'Guide de démarrage rapide',
+            continueOnboarding: 'Continuer le guide',
+            steps: {
+                welcome: {
+                    title: 'Bienvenue sur Ing AI !',
+                    description: 'Votre assistant d\'écriture IA pour l\'excellence académique. Laissez-nous vous présenter les fonctionnalités clés et vous aider à créer des documents professionnels.',
+                },
+                createDocument: {
+                    title: 'Créez votre premier document',
+                    description: 'Commencez par créer un nouveau document. Cliquez sur "Nouveau Document" dans la barre latérale ou utilisez le raccourci clavier.',
+                },
+                editorBasics: {
+                    title: 'Bases de l\'éditeur',
+                    description: 'Notre éditeur de texte riche prend en charge la mise en forme, les titres, les listes et plus encore. Utilisez la barre d\'outils ou les raccourcis clavier.',
+                },
+                aiAssistant: {
+                    title: 'Découvrez votre assistant IA',
+                    description: 'Sélectionnez du texte et demandez de l\'aide à l\'IA, ou ouvrez le Chat IA pour des suggestions d\'écriture, des explications et une aide à la recherche.',
+                },
+                citations: {
+                    title: 'Citations intelligentes',
+                    description: 'Ajoutez des citations facilement. Recherchez des sources et Ing AI les formatera automatiquement dans votre style de citation préféré.',
+                },
+                library: {
+                    title: 'Votre bibliothèque de sources',
+                    description: 'Organisez toutes vos sources de recherche en un seul endroit. Importez des PDFs, ajoutez des URLs ou ajoutez des sources manuellement.',
+                },
+                research: {
+                    title: 'Assistant de recherche',
+                    description: 'Laissez l\'IA trouver des articles académiques pertinents. Recherchez dans les bases de données et ajoutez les résultats prometteurs à votre bibliothèque.',
+                },
+                export: {
+                    title: 'Exportez votre travail',
+                    description: 'Exportez vos documents terminés dans plusieurs formats dont DOCX, PDF, HTML et Markdown. Parfait pour la soumission ou le partage.',
+                },
+                settings: {
+                    title: 'Personnalisez votre expérience',
+                    description: 'Personnalisez les styles de citation, les préférences de langue, le thème et les paramètres IA selon votre flux de travail.',
+                },
+                complete: {
+                    title: 'Vous êtes prêt !',
+                    description: 'Félicitations ! Vous connaissez maintenant l\'essentiel. Commencez à écrire et laissez Ing AI vous aider à créer un travail académique exceptionnel.',
+                },
+            },
+            tips: {
+                welcome: 'Cliquez sur "Suivant" pour découvrir les fonctionnalités clés|Vous pouvez passer ce guide à tout moment|Accédez à ce guide plus tard depuis la barre latérale',
+                createDocument: 'Utilisez Cmd/Ctrl + N pour créer rapidement|Les documents s\'enregistrent automatiquement|Organisez les documents avec des titres',
+                editorBasics: 'Cmd/Ctrl + B pour gras, I pour italique|Utilisez # pour les titres en mode markdown|Glissez-déposez pour réorganiser les sections',
+                aiAssistant: 'Sélectionnez du texte et appuyez sur Cmd/Ctrl + J|Demandez des améliorations d\'écriture|Obtenez des explications sur des sujets complexes',
+                citations: 'Recherchez par titre, auteur ou DOI|Les citations se mettent à jour automatiquement|Changez de style en un clic',
+                library: 'Glissez les PDFs directement dans la bibliothèque|Utilisez des tags pour organiser|Exportez votre bibliothèque à tout moment',
+                research: 'Filtrez par année et type de publication|Aperçu des résumés avant d\'ajouter|Sauvegardez les recherches pour plus tard',
+                export: 'Incluez ou excluez les citations|Choisissez le format de page|Aperçu avant téléchargement',
+                settings: 'Définissez le style de citation par défaut|Choisissez votre langue préférée|Configurez le comportement de l\'IA',
+                complete: 'Explorez le tableau de bord|Créez votre premier document|Contactez-nous si vous avez besoin d\'aide',
+            },
+            subSteps: {
+                welcome: {
+                    intro: {
+                        title: 'Bienvenue sur Ing AI !',
+                        description: 'Nous sommes ravis de vous aider à démarrer. Cette visite rapide vous montrera les fonctionnalités les plus importantes.',
+                        tip: 'Prenez votre temps|Vous pouvez toujours revenir|Commençons !',
+                    },
+                    sidebar: {
+                        title: 'Votre Barre Latérale',
+                        description: 'La barre latérale est votre centre de navigation. Ici, vous pouvez accéder aux documents, à la bibliothèque, au chat IA et aux paramètres.',
+                    },
+                },
+                createDocument: {
+                    button: {
+                        title: 'Créer un Nouveau Document',
+                        description: 'Cliquez sur ce bouton pour créer votre premier document. Vous pouvez également utiliser le raccourci clavier Cmd/Ctrl + N.',
+                    },
+                    action: {
+                        title: 'Créons-en Un',
+                        description: 'Allez-y et cliquez sur le bouton pour créer un nouveau document. Nous vous montrerons ce qui se passe ensuite.',
+                    },
+                    pane: {
+                        title: 'Panneau des Documents',
+                        description: 'Ici, vous pouvez voir tous vos documents. Les nouveaux documents apparaissent ici automatiquement.',
+                    },
+                },
+                editorBasics: {
+                    editor: {
+                        title: 'L\'Éditeur',
+                        description: 'C\'est ici que la magie opère. Commencez à taper pour créer votre contenu. L\'éditeur prend en charge le formatage riche et plus encore.',
+                    },
+                    toolbar: {
+                        title: 'Barre d\'Outils de Formatage',
+                        description: 'Utilisez la barre d\'outils pour formater votre texte. Vous pouvez mettre le texte en gras, en italique, ajouter des titres, des listes et bien plus encore.',
+                        tip: 'Les raccourcis clavier sont plus rapides|Essayez Cmd/Ctrl + B pour le gras|Explorez toutes les options de formatage',
+                    },
+                    slashCommands: {
+                        title: 'Commandes Slash',
+                        description: 'Tapez "/" n\'importe où dans l\'éditeur pour ouvrir le menu de commandes. Insérez rapidement des titres, listes, blocs de code, équations et plus.',
+                        tip: 'Tapez /h1 pour un titre|/list pour les puces|/code pour les blocs de code',
+                    },
+                    inlineAi: {
+                        title: 'Assistant d\'Écriture IA',
+                        description: 'Sélectionnez du texte et appuyez sur Cmd/Ctrl + J pour ouvrir le menu IA. Obtenez des suggestions, réécrivez du texte, développez des idées ou corrigez la grammaire instantanément.',
+                        tip: 'Sélectionner texte + Cmd/Ctrl + J|Demandez à l\'IA d\'améliorer votre écriture|Générez du contenu à partir de prompts',
+                    },
+                    comments: {
+                        title: 'Commentaires',
+                        description: 'Sélectionnez du texte et cliquez sur le bouton de commentaire pour ajouter des notes. Parfait pour la collaboration, les retours ou les rappels pour vous-même.',
+                        tip: 'Idéal pour la révision par les pairs|Ajoutez des questions ou des notes|Résolvez quand c\'est fait',
+                    },
+                    suggestions: {
+                        title: 'Mode Suggestions',
+                        description: 'Activez le mode suggestions pour suivre vos modifications. Les autres peuvent examiner et accepter ou rejeter vos modifications - parfait pour l\'écriture collaborative.',
+                    },
+                },
+                aiAssistant: {
+                    nav: {
+                        title: 'Chat IA',
+                        description: 'Accédez à l\'assistant IA depuis la barre latérale. Il peut aider à l\'écriture, à la recherche et à répondre aux questions.',
+                    },
+                    open: {
+                        title: 'Ouvrir le Chat IA',
+                        description: 'Cliquez ici pour ouvrir le panneau de chat IA. Vous pouvez poser des questions et obtenir des suggestions d\'écriture.',
+                    },
+                    pane: {
+                        title: 'Assistant IA',
+                        description: 'Discutez avec l\'IA pour obtenir de l\'aide avec votre écriture. Posez des questions, demandez des améliorations ou obtenez des explications.',
+                        tip: 'Soyez précis dans vos demandes|Essayez de demander des explications|Utilisez-le pour l\'aide à la recherche',
+                    },
+                },
+                citations: {
+                    button: {
+                        title: 'Bouton de Citation',
+                        description: 'Cliquez sur ce bouton pour ajouter des citations à votre document. Recherchez des sources et insérez-les avec le formatage approprié.',
+                    },
+                    explain: {
+                        title: 'Citations Intelligentes',
+                        description: 'Ing AI formate automatiquement les citations dans votre style préféré. Recherchez par titre, auteur ou DOI.',
+                        tip: 'Plus de 9000 styles de citation disponibles|Le formatage automatique fait gagner du temps|Changez de style à tout moment',
+                    },
+                },
+                library: {
+                    nav: {
+                        title: 'Bibliothèque',
+                        description: 'Votre bibliothèque de recherche est l\'endroit où vous organisez toutes vos sources. Accédez-y depuis la barre latérale.',
+                    },
+                    open: {
+                        title: 'Ouvrir la Bibliothèque',
+                        description: 'Cliquez ici pour ouvrir votre bibliothèque. Vous pouvez importer des PDFs, ajouter des URLs ou ajouter des sources manuellement.',
+                    },
+                    features: {
+                        title: 'Fonctionnalités de la Bibliothèque',
+                        description: 'Organisez vos sources, importez des fichiers BibTeX, recherchez dans votre bibliothèque et exportez des références.',
+                    },
+                },
+                research: {
+                    intro: {
+                        title: 'Rechercher dans Votre Bibliothèque',
+                        description: 'Utilisez la barre de recherche pour trouver rapidement des sources dans votre bibliothèque. Filtrez par titre, auteur ou mots-clés.',
+                    },
+                    addSource: {
+                        title: 'Ajouter des Sources',
+                        description: 'Cliquez sur le bouton plus pour ajouter de nouvelles sources. Vous pouvez importer des PDFs, ajouter des URLs ou créer des entrées manuellement.',
+                        tip: 'Importer depuis des fichiers BibTeX|Ajoutez des sources pendant vos recherches|Gardez votre bibliothèque organisée',
+                    },
+                },
+                export: {
+                    button: {
+                        title: 'Exporter Votre Travail',
+                        description: 'Lorsque vous avez terminé d\'écrire, exportez votre document dans divers formats comme DOCX, PDF, HTML ou Markdown.',
+                    },
+                    formats: {
+                        title: 'Formats d\'Export',
+                        description: 'Choisissez parmi plusieurs formats d\'export. DOCX pour Word, PDF pour l\'impression, HTML pour le web et plus encore.',
+                        tip: 'Citations incluses automatiquement|Aperçu avant exportation|Plusieurs options de format',
+                    },
+                },
+                settings: {
+                    nav: {
+                        title: 'Paramètres',
+                        description: 'Personnalisez votre expérience dans les paramètres. Ajustez les styles de citation, la langue, le thème et les préférences IA.',
+                    },
+                    open: {
+                        title: 'Ouvrir les Paramètres',
+                        description: 'Cliquez ici pour ouvrir la boîte de dialogue des paramètres. Personnalisez Ing AI pour correspondre à votre flux de travail.',
+                    },
+                    intro: {
+                        title: 'Aperçu des Paramètres',
+                        description: 'Configurez les styles de citation, les préférences de langue, les paramètres de thème et le comportement de l\'IA selon vos préférences.',
+                    },
+                },
+                complete: {
+                    celebration: {
+                        title: 'Félicitations !',
+                        description: 'Vous avez terminé la visite d\'introduction ! Vous connaissez maintenant les fonctionnalités essentielles d\'Ing AI.',
+                    },
+                    start: {
+                        title: 'Commencer à Écrire',
+                        description: 'Tout est prêt ! Commencez à créer votre premier document et découvrez la puissance de l\'écriture assistée par IA.',
+                        tip: 'Créez votre premier document|Explorez les fonctionnalités avancées|Contactez le support si nécessaire',
+                    },
+                },
+            },
+        },
         editor: {
             untitled: 'Document sans titre',
             chat: 'Discussion',
@@ -3346,6 +4062,10 @@ export const translations = {
             commentSave: 'Enregistrer',
             commentEdited: 'modifié',
             commentPlaceholderInput: 'Commenter...',
+            mediaEditLink: 'Modifier le lien',
+            mediaCaption: 'Légende',
+            mediaEmbedPlaceholder: 'Coller le lien d\'intégration...',
+            mediaWriteCaption: 'Écrire une légende...',
         },
         slash: {
             noResults: 'Aucun résultat',
@@ -3534,6 +4254,7 @@ export const translations = {
             save: 'Enregistrer',
             commandSaved: 'Commande enregistrée avec succès',
             commandSaveError: 'Échec de l\'enregistrement de la commande',
+            editMessage: 'Modifier le message',
             attachFile: 'Joindre un fichier',
             voiceInput: 'Saisie vocale',
             stopGenerating: 'Arrêter la génération',
@@ -3560,6 +4281,8 @@ export const translations = {
             toolGetEditorContentMessage: 'Contenu de l\'éditeur récupéré: {wordCount} mots, {characterCount} caractères.',
             toolInsertTextInEditor: 'Insérer du texte',
             toolInsertTextInEditorMessage: 'Texte prêt pour insertion dans l\'éditeur',
+            toolDeleteTextFromEditor: 'Supprimer le texte',
+            toolDeleteTextFromEditorMessage: 'Texte prêt pour suppression dans l\'éditeur',
             toolAddCitation: 'Ajouter une citation',
             toolAddCitationMessage: 'Citation prête pour insertion',
             toolAddThema: 'Définir le sujet',
@@ -3704,6 +4427,9 @@ export const translations = {
             security: 'Sécurité',
             account: 'Compte',
             languageDescription: 'Choisissez la langue de l\'interface utilisateur.',
+            restartOnboarding: 'Visite Guidée',
+            restartOnboardingDescription: 'Recommencez la visite guidée pour découvrir toutes les fonctionnalités.',
+            restartOnboardingButton: 'Recommencer',
             autoUpdates: 'Mises à Jour Automatiques',
             autoUpdatesDescription: 'Installer automatiquement les nouvelles versions lorsqu\'elles sont disponibles.',
             keyboardShortcuts: 'Raccourcis Clavier',
@@ -4672,6 +5398,238 @@ export const translations = {
             pleaseTryAgain: 'Bitte erneut versuchen.',
             comments: 'Kommentare',
         },
+        projects: {
+            title: 'Projekte',
+            activeProject: 'Aktives Projekt',
+            yourProjects: 'Deine Projekte',
+            default: 'Standard',
+            newProject: 'Neues Projekt',
+            createProject: 'Projekt erstellen',
+            createProjectDescription: 'Erstelle ein neues Projekt, um deine Dokumente und Recherchen zu organisieren.',
+            projectName: 'Projektname',
+            projectNamePlaceholder: 'Projektnamen eingeben...',
+            projectDescription: 'Beschreibung (optional)',
+            projectDescriptionPlaceholder: 'Beschreibung eingeben...',
+            create: 'Erstellen',
+            deleteProject: 'Projekt löschen',
+            cannotDeleteDefault: 'Das Standardprojekt kann nicht gelöscht werden',
+            cannotDeleteOnly: 'Das einzige Projekt kann nicht gelöscht werden',
+            switchProject: 'Projekt wechseln',
+            projectSettings: 'Projekteinstellungen',
+            createFirstProject: 'Projekt erstellen',
+            noProjectsYet: 'Noch keine Projekte',
+        },
+        onboarding: {
+            title: 'Willkommen bei Ing AI',
+            skip: 'Überspringen',
+            back: 'Zurück',
+            next: 'Weiter',
+            finish: 'Los geht\'s',
+            continue: 'Fortsetzen',
+            start: 'Tour starten',
+            stepOf: 'Schritt {current} von {total}',
+            stepProgress: '{completed} von {total} abgeschlossen',
+            startOnboarding: 'Schnellstart-Guide',
+            continueOnboarding: 'Guide fortsetzen',
+            steps: {
+                welcome: {
+                    title: 'Willkommen bei Ing AI!',
+                    description: 'Dein KI-gestützter Schreibassistent für akademische Exzellenz. Lass uns dir die wichtigsten Funktionen zeigen und dir beim Erstellen professioneller Dokumente helfen.',
+                },
+                createDocument: {
+                    title: 'Erstelle dein erstes Dokument',
+                    description: 'Beginne mit einem neuen Dokument. Klicke auf "Neues Dokument" in der Sidebar oder nutze die Tastenkombination zum Schreiben.',
+                },
+                editorBasics: {
+                    title: 'Editor-Grundlagen',
+                    description: 'Unser Rich-Text-Editor unterstützt Formatierungen, Überschriften, Listen und mehr. Nutze die Toolbar oder Tastenkombinationen zum Formatieren.',
+                },
+                aiAssistant: {
+                    title: 'Lerne deinen KI-Assistenten kennen',
+                    description: 'Markiere Text und bitte die KI um Hilfe, oder öffne den KI-Chat für Schreibvorschläge, Erklärungen und Recherche-Unterstützung.',
+                },
+                citations: {
+                    title: 'Intelligente Zitationen',
+                    description: 'Füge Zitationen einfach hinzu. Suche nach Quellen und Ing AI formatiert sie automatisch in deinem bevorzugten Zitierstil.',
+                },
+                library: {
+                    title: 'Deine Quellen-Bibliothek',
+                    description: 'Organisiere alle Forschungsquellen an einem Ort. Importiere PDFs, füge URLs hinzu oder erfasse Quellen manuell.',
+                },
+                research: {
+                    title: 'Recherche-Assistent',
+                    description: 'Lass die KI relevante akademische Paper und Quellen finden. Durchsuche Datenbanken und füge vielversprechende Ergebnisse zu deiner Bibliothek hinzu.',
+                },
+                export: {
+                    title: 'Exportiere deine Arbeit',
+                    description: 'Exportiere fertige Dokumente in verschiedenen Formaten wie DOCX, PDF, HTML und Markdown. Perfekt zum Einreichen oder Teilen.',
+                },
+                settings: {
+                    title: 'Personalisiere deine Erfahrung',
+                    description: 'Passe Zitierstile, Spracheinstellungen, Theme und KI-Einstellungen an deinen Workflow und deine Anforderungen an.',
+                },
+                complete: {
+                    title: 'Alles bereit!',
+                    description: 'Glückwunsch! Du kennst jetzt die Grundlagen. Beginne zu schreiben und lass Ing AI dir bei herausragender akademischer Arbeit helfen.',
+                },
+            },
+            tips: {
+                welcome: 'Klicke "Weiter" um die wichtigsten Funktionen kennenzulernen|Du kannst diesen Guide jederzeit überspringen|Greife später über die Sidebar auf diesen Guide zu',
+                createDocument: 'Nutze Cmd/Ctrl + N für schnelle Dokumenterstellung|Dokumente speichern automatisch|Organisiere Dokumente mit Titeln',
+                editorBasics: 'Cmd/Ctrl + B für fett, I für kursiv|Nutze # für Überschriften im Markdown-Modus|Ziehe Abschnitte per Drag & Drop um',
+                aiAssistant: 'Markiere Text und drücke Cmd/Ctrl + J|Bitte um Schreibverbesserungen|Erhalte Erklärungen zu komplexen Themen',
+                citations: 'Suche nach Titel, Autor oder DOI|Zitationen aktualisieren automatisch|Wechsle Stile mit einem Klick',
+                library: 'Ziehe PDFs direkt in die Bibliothek|Nutze Tags zur Organisation|Exportiere deine Bibliothek jederzeit',
+                research: 'Filtere nach Erscheinungsjahr und Typ|Vorschau von Abstracts vor dem Hinzufügen|Speichere Suchen für später',
+                export: 'Zitationen ein- oder ausschließen|Seitenformatierung wählen|Vorschau vor dem Download',
+                settings: 'Standard-Zitierstil festlegen|Bevorzugte Sprache wählen|KI-Verhalten konfigurieren',
+                complete: 'Erkunde das Dashboard|Erstelle dein erstes Dokument|Melde dich bei Fragen',
+            },
+            subSteps: {
+                welcome: {
+                    intro: {
+                        title: 'Willkommen bei Ing AI!',
+                        description: 'Wir freuen uns, dir beim Einstieg zu helfen. Diese kurze Tour zeigt dir die wichtigsten Funktionen.',
+                        tip: 'Nimm dir Zeit|Du kannst jederzeit zurückkommen|Lass uns beginnen!',
+                    },
+                    sidebar: {
+                        title: 'Deine Sidebar',
+                        description: 'Die Sidebar ist dein Navigationszentrum. Hier kannst du auf Dokumente, Bibliothek, KI-Chat und Einstellungen zugreifen.',
+                    },
+                },
+                createDocument: {
+                    button: {
+                        title: 'Neues Dokument Erstellen',
+                        description: 'Klicke auf diese Schaltfläche, um dein erstes Dokument zu erstellen. Du kannst auch die Tastenkombination Cmd/Ctrl + N verwenden.',
+                    },
+                    action: {
+                        title: 'Lass Uns Eins Erstellen',
+                        description: 'Klicke auf die Schaltfläche, um ein neues Dokument zu erstellen. Wir zeigen dir, was als Nächstes passiert.',
+                    },
+                    pane: {
+                        title: 'Dokumente-Bereich',
+                        description: 'Hier siehst du alle deine Dokumente. Neue Dokumente erscheinen hier automatisch.',
+                    },
+                },
+                editorBasics: {
+                    editor: {
+                        title: 'Der Editor',
+                        description: 'Hier passiert die Magie. Beginne zu tippen, um deinen Inhalt zu erstellen. Der Editor unterstützt Rich-Formatierung und mehr.',
+                    },
+                    toolbar: {
+                        title: 'Formatierungs-Symbolleiste',
+                        description: 'Nutze die Symbolleiste, um deinen Text zu formatieren. Du kannst Text fett, kursiv machen, Überschriften, Listen und vieles mehr hinzufügen.',
+                        tip: 'Tastenkombinationen sind schneller|Probiere Cmd/Ctrl + B für fett|Erkunde alle Formatierungsoptionen',
+                    },
+                    slashCommands: {
+                        title: 'Slash-Befehle',
+                        description: 'Tippe "/" irgendwo im Editor, um das Befehlsmenü zu öffnen. Füge schnell Überschriften, Listen, Code-Blöcke, Gleichungen und mehr ein.',
+                        tip: 'Tippe /h1 für Überschrift|/list für Aufzählung|/code für Code-Blöcke',
+                    },
+                    inlineAi: {
+                        title: 'KI-Schreibassistent',
+                        description: 'Markiere Text und drücke Cmd/Ctrl + J, um das KI-Menü zu öffnen. Erhalte Vorschläge, schreibe Text um, erweitere Ideen oder korrigiere Grammatik sofort.',
+                        tip: 'Text markieren + Cmd/Ctrl + J|KI um Verbesserungen bitten|Inhalte aus Prompts generieren',
+                    },
+                    comments: {
+                        title: 'Kommentare',
+                        description: 'Markiere Text und klicke auf den Kommentar-Button, um Notizen hinzuzufügen. Perfekt für Zusammenarbeit, Feedback oder Erinnerungen für dich selbst.',
+                        tip: 'Ideal für Peer-Review|Fragen oder Notizen hinzufügen|Erledigen wenn fertig',
+                    },
+                    suggestions: {
+                        title: 'Vorschlags-Modus',
+                        description: 'Aktiviere den Vorschlags-Modus, um deine Änderungen zu verfolgen. Andere können deine Bearbeitungen überprüfen und annehmen oder ablehnen - perfekt für kollaboratives Schreiben.',
+                    },
+                },
+                aiAssistant: {
+                    nav: {
+                        title: 'KI-Chat',
+                        description: 'Greife auf den KI-Assistenten über die Sidebar zu. Er kann bei Schreiben, Recherche und Beantwortung von Fragen helfen.',
+                    },
+                    open: {
+                        title: 'KI-Chat Öffnen',
+                        description: 'Klicke hier, um den KI-Chat-Bereich zu öffnen. Du kannst Fragen stellen und Schreibvorschläge erhalten.',
+                    },
+                    pane: {
+                        title: 'KI-Assistent',
+                        description: 'Chatte mit der KI, um Hilfe beim Schreiben zu erhalten. Stelle Fragen, bitte um Verbesserungen oder erhalte Erklärungen.',
+                        tip: 'Sei spezifisch in deinen Anfragen|Versuche um Erklärungen zu bitten|Nutze es für Recherche-Hilfe',
+                    },
+                },
+                citations: {
+                    button: {
+                        title: 'Zitations-Schaltfläche',
+                        description: 'Klicke auf diese Schaltfläche, um Zitationen zu deinem Dokument hinzuzufügen. Suche nach Quellen und füge sie mit korrekter Formatierung ein.',
+                    },
+                    explain: {
+                        title: 'Intelligente Zitationen',
+                        description: 'Ing AI formatiert Zitationen automatisch in deinem bevorzugten Stil. Suche nach Titel, Autor oder DOI.',
+                        tip: 'Über 9000 Zitierstile verfügbar|Automatische Formatierung spart Zeit|Wechsle Stile jederzeit',
+                    },
+                },
+                library: {
+                    nav: {
+                        title: 'Bibliothek',
+                        description: 'Deine Forschungsbibliothek ist der Ort, an dem du alle deine Quellen organisierst. Greife über die Sidebar darauf zu.',
+                    },
+                    open: {
+                        title: 'Bibliothek Öffnen',
+                        description: 'Klicke hier, um deine Bibliothek zu öffnen. Du kannst PDFs importieren, URLs hinzufügen oder Quellen manuell hinzufügen.',
+                    },
+                    features: {
+                        title: 'Bibliotheks-Funktionen',
+                        description: 'Organisiere deine Quellen, importiere BibTeX-Dateien, durchsuche deine Bibliothek und exportiere Referenzen.',
+                    },
+                },
+                research: {
+                    intro: {
+                        title: 'Durchsuche Deine Bibliothek',
+                        description: 'Nutze die Suchleiste, um schnell Quellen in deiner Bibliothek zu finden. Filtere nach Titel, Autor oder Stichwörtern.',
+                    },
+                    addSource: {
+                        title: 'Quellen Hinzufügen',
+                        description: 'Klicke auf die Plus-Schaltfläche, um neue Quellen hinzuzufügen. Du kannst PDFs importieren, URLs hinzufügen oder Einträge manuell erstellen.',
+                        tip: 'Importiere aus BibTeX-Dateien|Füge Quellen während der Recherche hinzu|Halte deine Bibliothek organisiert',
+                    },
+                },
+                export: {
+                    button: {
+                        title: 'Deine Arbeit Exportieren',
+                        description: 'Wenn du mit dem Schreiben fertig bist, exportiere dein Dokument in verschiedenen Formaten wie DOCX, PDF, HTML oder Markdown.',
+                    },
+                    formats: {
+                        title: 'Export-Formate',
+                        description: 'Wähle aus mehreren Export-Formaten. DOCX für Word, PDF zum Drucken, HTML für Web und mehr.',
+                        tip: 'Zitationen automatisch enthalten|Vorschau vor dem Exportieren|Mehrere Formatoptionen',
+                    },
+                },
+                settings: {
+                    nav: {
+                        title: 'Einstellungen',
+                        description: 'Personalisiere deine Erfahrung in den Einstellungen. Passe Zitierstile, Sprache, Theme und KI-Präferenzen an.',
+                    },
+                    open: {
+                        title: 'Einstellungen Öffnen',
+                        description: 'Klicke hier, um den Einstellungsdialog zu öffnen. Personalisiere Ing AI, um zu deinem Workflow zu passen.',
+                    },
+                    intro: {
+                        title: 'Einstellungs-Übersicht',
+                        description: 'Konfiguriere Zitierstile, Spracheinstellungen, Theme-Einstellungen und KI-Verhalten nach deinen Wünschen.',
+                    },
+                },
+                complete: {
+                    celebration: {
+                        title: 'Glückwunsch!',
+                        description: 'Du hast die Einführungs-Tour abgeschlossen! Du kennst jetzt die wesentlichen Funktionen von Ing AI.',
+                    },
+                    start: {
+                        title: 'Mit dem Schreiben Beginnen',
+                        description: 'Alles ist bereit! Beginne mit der Erstellung deines ersten Dokuments und erlebe die Kraft des KI-gestützten Schreibens.',
+                        tip: 'Erstelle dein erstes Dokument|Erkunde erweiterte Funktionen|Kontaktiere den Support bei Bedarf',
+                    },
+                },
+            },
+        },
         editor: {
             untitled: 'Unbenanntes Dokument',
             chat: 'Chat',
@@ -4886,6 +5844,10 @@ export const translations = {
             commentSave: 'Speichern',
             commentEdited: 'bearbeitet',
             commentPlaceholderInput: 'Kommentieren...',
+            mediaEditLink: 'Link bearbeiten',
+            mediaCaption: 'Beschriftung',
+            mediaEmbedPlaceholder: 'Einbettungslink einfügen...',
+            mediaWriteCaption: 'Beschriftung hinzufügen...',
         },
         slash: {
             noResults: 'Keine Ergebnisse',
@@ -5074,6 +6036,7 @@ export const translations = {
             save: 'Speichern',
             commandSaved: 'Command erfolgreich gespeichert',
             commandSaveError: 'Fehler beim Speichern des Commands',
+            editMessage: 'Nachricht bearbeiten',
             attachFile: 'Datei anhängen',
             voiceInput: 'Spracheingabe',
             stopGenerating: 'Generierung stoppen',
@@ -5100,6 +6063,8 @@ export const translations = {
             toolGetEditorContentMessage: 'Editor-Inhalt abgerufen: {wordCount} Wörter, {characterCount} Zeichen.',
             toolInsertTextInEditor: 'Text einfügen',
             toolInsertTextInEditorMessage: 'Text bereit für Einfügung im Editor',
+            toolDeleteTextFromEditor: 'Text löschen',
+            toolDeleteTextFromEditorMessage: 'Text bereit für Löschung im Editor',
             toolAddCitation: 'Zitat hinzufügen',
             toolAddCitationMessage: 'Zitat bereit für Einfügung',
             toolAddThema: 'Thema setzen',
@@ -5244,6 +6209,9 @@ export const translations = {
             security: 'Sicherheit',
             account: 'Konto',
             languageDescription: 'Wähle die Sprache für die Benutzeroberfläche.',
+            restartOnboarding: 'Einführungs-Tour',
+            restartOnboardingDescription: 'Starte die geführte Tour neu, um alle Funktionen kennenzulernen.',
+            restartOnboardingButton: 'Tour neu starten',
             autoUpdates: 'Automatische Updates',
             autoUpdatesDescription: 'Neue Versionen automatisch installieren, wenn verfügbar.',
             keyboardShortcuts: 'Tastenkürzel',

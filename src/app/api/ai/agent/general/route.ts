@@ -13,6 +13,7 @@ import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries
 import * as citationsUtils from '@/lib/supabase/utils/citations'
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
 import { devLog, devError } from '@/lib/utils/logger'
+import { tavilySearch, tavilyCrawl, tavilyExtract } from '@tavily/ai-sdk'
 
 // Edge Runtime hat Probleme mit Tool-Ergebnis-Serialisierung
 // Wechsel zu Node.js Runtime für bessere Tool-Call-Verarbeitung
@@ -384,19 +385,20 @@ function convertSourceToCitation(source: any) {
 }
 
 // Factory-Funktionen für Tools mit User-ID
-function createLibraryToolWithUser(userId: string) {
+function createLibraryToolWithUser(userId: string, projectId?: string) {
     return tool({
-        description: 'Erstellt eine neue Bibliothek.',
+        description: 'Erstellt eine neue Bibliothek für das aktuelle Projekt.',
         inputSchema: z.object({ name: z.string() }),
         execute: async ({ name }) => {
             const stepId = generateToolStepId()
             const toolName = 'createLibrary'
-            
+
             try {
                 const newLibrary = await citationLibrariesUtils.createCitationLibrary({
                     user_id: userId,
                     name: name.trim(),
                     is_default: false,
+                    project_id: projectId || null,
                 })
                 return {
                     success: true,
@@ -501,10 +503,10 @@ function addSourcesToLibraryToolWithUser(userId: string) {
     })
 }
 
-function listAllLibrariesToolWithUser(userId: string) {
+function listAllLibrariesToolWithUser(userId: string, projectId?: string) {
     return tool({
         description:
-            'Listet alle verfügbaren Bibliotheken mit ihren Details auf. Nutze dies, um zu sehen, welche Bibliotheken existieren, bevor du getLibrarySources aufrufst.',
+            'Listet alle verfügbaren Bibliotheken des aktuellen Projekts mit ihren Details auf. Nutze dies, um zu sehen, welche Bibliotheken existieren, bevor du getLibrarySources aufrufst.',
         inputSchema: z.object({
             _placeholder: z.string().optional().describe('Placeholder parameter'),
         }),
@@ -513,7 +515,8 @@ function listAllLibrariesToolWithUser(userId: string) {
             const toolName = 'listAllLibraries'
 
             try {
-                const libraries = await citationLibrariesUtils.getCitationLibraries(userId)
+                // Filter nach projectId wenn vorhanden
+                const libraries = await citationLibrariesUtils.getCitationLibraries(userId, undefined, projectId)
                 
                 // Für jede Bibliothek die Anzahl der Citations ermitteln
                 const librariesWithCounts = await Promise.all(
@@ -629,21 +632,49 @@ function getLibrarySourcesToolWithUser(userId: string) {
 }
 
 const insertTextInEditorTool = tool({
-    description: 'Fügt Markdown-Text direkt im Editor hinzu.',
+    description: 'Fügt Markdown-Text direkt im Editor hinzu. Unterstützt zielbasiertes Einfügen nach/vor bestimmtem Text oder Überschriften.',
     inputSchema: z.object({
-        markdown: z.string().min(100),
-        position: z.enum(['start', 'end', 'current']).optional(),
+        markdown: z.string().min(10).describe('Markdown-Text der eingefügt werden soll'),
+        position: z.enum(['start', 'end', 'current', 'before-bibliography', 'after-target', 'before-target', 'replace-target']).optional().describe('Position im Editor (Standard: end). "after-target"/"before-target"/"replace-target" erfordern targetText.'),
+        targetText: z.string().optional().describe('Optional: Text im Editor nach/vor dem der neue Text eingefügt werden soll'),
+        targetHeading: z.string().optional().describe('Optional: Überschrift nach der der Text eingefügt werden soll (z.B. "## Einleitung")'),
         focusOnHeadings: z.boolean().optional(),
     }),
-    execute: async ({ markdown, position = 'end', focusOnHeadings = true }) => {
-        const payload = JSON.stringify({ type: 'tool-result', toolName: 'insertTextInEditor', markdown, position, focusOnHeadings })
+    execute: async ({ markdown, position = 'end', targetText, targetHeading, focusOnHeadings = true }) => {
+        const payload = JSON.stringify({ type: 'tool-result', toolName: 'insertTextInEditor', markdown, position, targetText, targetHeading, focusOnHeadings })
         const base64Payload = Buffer.from(payload).toString('base64')
         return {
             success: true,
             markdownLength: markdown.length,
             position,
+            targetText,
+            targetHeading,
             markdown,
             eventType: 'insert-text-in-editor',
+            _streamMarker: `[TOOL_RESULT_B64:${base64Payload}]`,
+        }
+    },
+})
+
+const deleteTextFromEditorTool = tool({
+    description: 'Löscht Text aus dem Editor. Nutze dies, um Text zu entfernen, bevor du eine verbesserte Version einfügst, oder um veralteten Inhalt zu löschen. WICHTIG: Lies IMMER zuerst den Editor-Inhalt mit getEditorContent, um den genauen Text zu finden, den du löschen möchtest.',
+    inputSchema: z.object({
+        targetText: z.string().optional().describe('Text der gelöscht werden soll. Der genaue Text aus dem Editor-Inhalt. Bei mode "block" wird der gesamte Block gelöscht, bei mode "text" nur dieser exakte Text.'),
+        targetHeading: z.string().optional().describe('Überschrift die gelöscht werden soll (z.B. "## Einleitung"). Bei mode "heading-section" werden auch alle folgenden Inhalte bis zur nächsten gleichwertigen Überschrift gelöscht.'),
+        mode: z.enum(['block', 'text', 'heading-section', 'range']).optional().describe('Lösch-Modus: "block" (Standard) löscht den gesamten Absatz/Block, "text" löscht nur den exakten Text, "heading-section" löscht Überschrift + alle folgenden Inhalte, "range" löscht alle Blöcke zwischen startText und endText.'),
+        startText: z.string().optional().describe('Bei mode "range": Text am Anfang des zu löschenden Bereichs.'),
+        endText: z.string().optional().describe('Bei mode "range": Text am Ende des zu löschenden Bereichs.'),
+    }),
+    execute: async ({ targetText, targetHeading, mode = 'block', startText, endText }) => {
+        const payload = JSON.stringify({ type: 'tool-result', toolName: 'deleteTextFromEditor', targetText, targetHeading, mode, startText, endText })
+        const base64Payload = Buffer.from(payload).toString('base64')
+        return {
+            success: true,
+            targetText: targetText?.substring(0, 100),
+            targetHeading,
+            mode,
+            message: 'Text bereit für Löschung im Editor',
+            eventType: 'delete-text-from-editor',
             _streamMarker: `[TOOL_RESULT_B64:${base64Payload}]`,
         }
     },
@@ -806,13 +837,14 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const { messages, agentState, editorContent, documentContextEnabled, fileContents } = await req.json()
+        const { messages, agentState, editorContent, documentContextEnabled, fileContents, projectId } = await req.json()
 
         if (!agentState) {
             return NextResponse.json({ error: 'Agent State erforderlich' }, { status: 400 })
         }
-        
+
         const currentEditorContent: string = editorContent || ''
+        const currentProjectId: string | undefined = projectId
 
         let thema = agentState.thema
         if (!thema && messages && messages.length > 0) {
@@ -826,9 +858,9 @@ export async function POST(req: NextRequest) {
             thema = 'Allgemeine Schreibarbeit'
         }
 
-        const createLibraryTool = createLibraryToolWithUser(user.id)
+        const createLibraryTool = createLibraryToolWithUser(user.id, currentProjectId)
         const addSourcesToLibraryTool = addSourcesToLibraryToolWithUser(user.id)
-        const listAllLibrariesTool = listAllLibrariesToolWithUser(user.id)
+        const listAllLibrariesTool = listAllLibrariesToolWithUser(user.id, currentProjectId)
         const getLibrarySourcesTool = getLibrarySourcesToolWithUser(user.id)
         const getEditorContentTool = createGetEditorContentTool(currentEditorContent)
 
@@ -904,9 +936,14 @@ ${truncatedContent}
                 getLibrarySources: getLibrarySourcesTool,
                 getEditorContent: getEditorContentTool,
                 insertTextInEditor: insertTextInEditorTool,
+                deleteTextFromEditor: deleteTextFromEditorTool,
                 addCitation: addCitationTool,
                 getCurrentStep: getCurrentStepTool,
                 saveStepData: saveStepDataTool,
+                // Web-Tools für aktuelle Internet-Recherche
+                webSearch: tavilySearch(),
+                webCrawl: tavilyCrawl(),
+                webExtract: tavilyExtract(),
             },
             toolChoice: 'auto',
             stopWhen: stepCountIs(30),

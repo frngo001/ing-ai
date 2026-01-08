@@ -15,6 +15,8 @@ import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
 import { devWarn, devError } from '@/lib/utils/logger'
 import { translations, type Language } from '@/lib/i18n/translations'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
+import { tavilySearch, tavilyCrawl, tavilyExtract } from '@tavily/ai-sdk'
+
 export const runtime = 'nodejs'
 
 const queryLanguage = async () => {
@@ -591,7 +593,7 @@ function convertSourceToCitation(source: any) {
   }
 }
 
-function createLibraryToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>) {
+function createLibraryToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>, projectId?: string) {
   return tool({
     description:
       'Erstellt eine neue Bibliothek für die gespeicherten Quellen. Der Name sollte thematisch zur Arbeit passen (z.B. "[Thema]").',
@@ -602,12 +604,13 @@ function createLibraryToolWithUser(userId: string, supabaseClient: Awaited<Retur
       const language = await queryLanguage()
       const stepId = generateToolStepId()
       const toolName = 'createLibrary'
-      
+
       try {
         const newLibrary = await citationLibrariesUtils.createCitationLibrary({
           user_id: userId,
           name: name.trim(),
           is_default: false,
+          project_id: projectId || null,
         }, supabaseClient)
 
         return {
@@ -743,10 +746,10 @@ function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited
 }
 
 // Factory-Funktion für listAllLibrariesTool mit User-ID
-function listAllLibrariesToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>) {
+function listAllLibrariesToolWithUser(userId: string, supabaseClient: Awaited<ReturnType<typeof createClient>>, projectId?: string) {
   return tool({
     description:
-      'Listet alle verfügbaren Bibliotheken mit ihren Details auf. Nutze dies, um zu sehen, welche Bibliotheken existieren, bevor du getLibrarySources aufrufst.',
+      'Listet alle verfügbaren Bibliotheken des aktuellen Projekts mit ihren Details auf. Nutze dies, um zu sehen, welche Bibliotheken existieren, bevor du getLibrarySources aufrufst.',
     inputSchema: z.object({
       _placeholder: z.string().optional().describe('Placeholder parameter'),
     }),
@@ -756,7 +759,8 @@ function listAllLibrariesToolWithUser(userId: string, supabaseClient: Awaited<Re
 
       try {
         const language = await queryLanguage()
-        const libraries = await citationLibrariesUtils.getCitationLibraries(userId, supabaseClient)
+        // Filter nach projectId wenn vorhanden
+        const libraries = await citationLibrariesUtils.getCitationLibraries(userId, supabaseClient, projectId)
         
         // Für jede Bibliothek die Anzahl der Citations ermitteln
         const librariesWithCounts = await Promise.all(
@@ -987,18 +991,26 @@ function createGetEditorContentTool(editorContent: string) {
 // Tool: Text im Editor hinzufügen
 const insertTextInEditorTool = tool({
   description:
-    'Fügt Markdown-Text direkt im Editor hinzu. KRITISCH: Du MUSST den VOLLSTÄNDIGEN Text im "markdown" Parameter übergeben, nicht nur eine Beschreibung! Der Text wird am Ende des Dokuments eingefügt. Verwende strukturierte Headings (H1, H2, H3) für bessere Übersicht. WICHTIG: Wenn du dieses Tool verwendest, gib den Text NICHT zusätzlich im Chat aus! Der Text wird automatisch im Editor eingefügt. Du kannst nur eine kurze Bestätigung im Chat geben, z.B. "Ich habe den Text im Editor eingefügt."',
+    'Fügt Markdown-Text direkt im Editor hinzu. KRITISCH: Du MUSST den VOLLSTÄNDIGEN Text im "markdown" Parameter übergeben, nicht nur eine Beschreibung! Der Text kann am Ende des Dokuments, an einer bestimmten Position oder nach einem bestimmten Text eingefügt werden. Verwende strukturierte Headings (H1, H2, H3) für bessere Übersicht. WICHTIG: Wenn du dieses Tool verwendest, gib den Text NICHT zusätzlich im Chat aus! Der Text wird automatisch im Editor eingefügt. Du kannst nur eine kurze Bestätigung im Chat geben, z.B. "Ich habe den Text im Editor eingefügt."',
   inputSchema: z.object({
     markdown: z
       .string()
-      .min(100)
+      .min(10)
       .describe(
-        'VOLLSTÄNDIGER Markdown-Text der eingefügt werden soll (MINDESTENS 100 Zeichen). NICHT nur eine Beschreibung, sondern der KOMPLETTE Text mit allen Inhalten! Verwende strukturierte Headings: # für H1, ## für H2, ### für H3, etc. Der Text muss vollständig und lesbar sein, nicht nur eine Zusammenfassung!'
+        'Markdown-Text der eingefügt werden soll. NICHT nur eine Beschreibung, sondern der KOMPLETTE Text mit allen Inhalten! Verwende strukturierte Headings: # für H1, ## für H2, ### für H3, etc. Der Text muss vollständig und lesbar sein, nicht nur eine Zusammenfassung!'
       ),
     position: z
-      .enum(['start', 'end', 'current'])
+      .enum(['start', 'end', 'current', 'before-bibliography', 'after-target', 'before-target', 'replace-target'])
       .optional()
-      .describe('Position im Editor (Standard: end = am Ende des Dokuments)'),
+      .describe('Position im Editor (Standard: end). "after-target"/"before-target"/"replace-target" erfordern targetText.'),
+    targetText: z
+      .string()
+      .optional()
+      .describe('Optional: Text im Editor nach/vor dem der neue Text eingefügt werden soll. Wird bei position "after-target", "before-target" oder "replace-target" benötigt. Verwende einen eindeutigen Text-Snippet aus dem Editor-Inhalt.'),
+    targetHeading: z
+      .string()
+      .optional()
+      .describe('Optional: Überschrift nach der der Text eingefügt werden soll. Alternativ zu targetText für Heading-basiertes Einfügen (z.B. "## Einleitung").'),
     focusOnHeadings: z
       .boolean()
       .optional()
@@ -1006,13 +1018,15 @@ const insertTextInEditorTool = tool({
         'Fokus auf Headings legen - strukturiert den Text mit klarer Heading-Hierarchie (Standard: true)'
       ),
   }),
-  execute: async ({ markdown, position = 'end', focusOnHeadings = true }) => {
+  execute: async ({ markdown, position = 'end', targetText, targetHeading, focusOnHeadings = true }) => {
     const language = await queryLanguage()
     const payload = JSON.stringify({
       type: 'tool-result',
       toolName: 'insertTextInEditor',
       markdown,
       position,
+      targetText,
+      targetHeading,
       focusOnHeadings,
     })
 
@@ -1023,9 +1037,69 @@ const insertTextInEditorTool = tool({
       markdownLength: markdown.length,
       headingCount: (markdown.match(/^#+\s/gm) || []).length,
       position,
+      targetText,
+      targetHeading,
       markdown: markdown,
       message: translations[language as Language]?.askAi?.toolInsertTextInEditorMessage || 'Text bereit für Einfügung im Editor',
       eventType: 'insert-text-in-editor',
+      _streamMarker: `[TOOL_RESULT_B64:${base64Payload}]`,
+    }
+  },
+})
+
+// Tool: Text aus dem Editor löschen
+const deleteTextFromEditorTool = tool({
+  description:
+    'Löscht Text aus dem Editor. Nutze dies, um Text zu entfernen, bevor du eine verbesserte Version einfügst, oder um veralteten Inhalt zu löschen. WICHTIG: Lies IMMER zuerst den Editor-Inhalt mit getEditorContent, um den genauen Text zu finden, den du löschen möchtest.',
+  inputSchema: z.object({
+    targetText: z
+      .string()
+      .optional()
+      .describe(
+        'Text der gelöscht werden soll. Der genaue Text aus dem Editor-Inhalt. Bei mode "block" wird der gesamte Block gelöscht, bei mode "text" nur dieser exakte Text.'
+      ),
+    targetHeading: z
+      .string()
+      .optional()
+      .describe(
+        'Überschrift die gelöscht werden soll (z.B. "## Einleitung"). Bei mode "heading-section" werden auch alle folgenden Inhalte bis zur nächsten gleichwertigen Überschrift gelöscht.'
+      ),
+    mode: z
+      .enum(['block', 'text', 'heading-section', 'range'])
+      .optional()
+      .describe(
+        'Lösch-Modus: "block" (Standard) löscht den gesamten Absatz/Block, "text" löscht nur den exakten Text, "heading-section" löscht Überschrift + alle folgenden Inhalte, "range" löscht alle Blöcke zwischen startText und endText.'
+      ),
+    startText: z
+      .string()
+      .optional()
+      .describe('Bei mode "range": Text am Anfang des zu löschenden Bereichs.'),
+    endText: z
+      .string()
+      .optional()
+      .describe('Bei mode "range": Text am Ende des zu löschenden Bereichs.'),
+  }),
+  execute: async ({ targetText, targetHeading, mode = 'block', startText, endText }) => {
+    const language = await queryLanguage()
+    const payload = JSON.stringify({
+      type: 'tool-result',
+      toolName: 'deleteTextFromEditor',
+      targetText,
+      targetHeading,
+      mode,
+      startText,
+      endText,
+    })
+
+    const base64Payload = Buffer.from(payload).toString('base64')
+
+    return {
+      success: true,
+      targetText: targetText?.substring(0, 100),
+      targetHeading,
+      mode,
+      message: translations[language as Language]?.askAi?.toolDeleteTextFromEditorMessage || 'Text bereit für Löschung im Editor',
+      eventType: 'delete-text-from-editor',
       _streamMarker: `[TOOL_RESULT_B64:${base64Payload}]`,
     }
   },
@@ -1072,7 +1146,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { messages, agentState, editorContent, documentContextEnabled, fileContents } = await req.json()
+    const { messages, agentState, editorContent, documentContextEnabled, fileContents, projectId } = await req.json()
 
     // Debug-Logging für editorContent
     devWarn('📥 [BACHELORARBEIT AGENT] Request-Body empfangen', {
@@ -1125,11 +1199,37 @@ export async function POST(req: NextRequest) {
     }
 
     const model = deepseek(DEEPSEEK_CHAT_MODEL)
+
+    // Bestimme den aktuellen Schritt-Text
+    const stepTitles: Record<number, string> = {
+      4: 'Schritt 4: Literaturrecherche',
+      5: 'Schritt 5: Forschungsstand analysieren',
+      6: 'Schritt 6: Methodik entwickeln',
+      7: 'Schritt 7: Datenerhebung',
+      8: 'Schritt 8: Datenanalyse',
+      9: 'Schritt 9: Gliederung finalisieren',
+      10: 'Schritt 10: Einleitung schreiben',
+      11: 'Schritt 11: Theoretischer Teil schreiben',
+      12: 'Schritt 12: Methodik schreiben',
+      13: 'Schritt 13: Ergebnisse schreiben',
+      14: 'Schritt 14: Diskussion schreiben',
+      15: 'Schritt 15: Fazit schreiben',
+      16: 'Schritt 16: Überarbeitung',
+      17: 'Schritt 17: Korrektur',
+      18: 'Schritt 18: Zitierweise prüfen',
+      19: 'Schritt 19: Formatierung',
+      20: 'Schritt 20: Finale Prüfung',
+      21: 'Schritt 21: Abgabe',
+    }
+    const currentStepNumber = agentState.currentStep || 4
+    const currentStepText = stepTitles[currentStepNumber] || 'Kein Schritt aktiv'
+
     let systemPrompt = BACHELORARBEIT_AGENT_PROMPT.replace(
       '{{THEMA}}',
       thema
     ).replace('{{CURRENT_DATE}}', new Date().toLocaleDateString('de-DE', { dateStyle: 'full' }))
-    
+    .replace('{{CURRENT_STEP}}', currentStepText)
+
     // Ersetze Platzhalter für Arbeitstyp
     systemPrompt = systemPrompt.replace(/{{ARBEIT_TYPE}}/g, arbeitTypeText)
     systemPrompt = systemPrompt.replace(/{{ARBEIT_TYPE_LOWER}}/g, arbeitTypeText.toLowerCase())
@@ -1190,9 +1290,9 @@ ${fileSections.join('\n\n---\n\n')}
     }
 
 
-    const createLibraryTool = createLibraryToolWithUser(user.id, supabase)
+    const createLibraryTool = createLibraryToolWithUser(user.id, supabase, projectId)
     const addSourcesToLibraryTool = addSourcesToLibraryToolWithUser(user.id, supabase)
-    const listAllLibrariesTool = listAllLibrariesToolWithUser(user.id, supabase)
+    const listAllLibrariesTool = listAllLibrariesToolWithUser(user.id, supabase, projectId)
     const getLibrarySourcesTool = getLibrarySourcesToolWithUser(user.id, supabase)
     const getEditorContentTool = createGetEditorContentTool(currentEditorContent)
 
@@ -1288,13 +1388,18 @@ ${fileSections.join('\n\n---\n\n')}
         getLibrarySources: getLibrarySourcesTool,
         getEditorContent: getEditorContentTool,
         insertTextInEditor: insertTextInEditorTool,
+        deleteTextFromEditor: deleteTextFromEditorTool,
         addCitation: addCitationTool,
         getCurrentStep: getCurrentStepTool,
         saveStepData: saveStepDataTool,
+        // Web-Tools für aktuelle Internet-Recherche
+        webSearch: tavilySearch(),
+        webCrawl: tavilyCrawl(),
+        webExtract: tavilyExtract(),
       },
       toolChoice: 'auto',
       stopWhen: stepCountIs(20),
-      maxOutputTokens: 8192, 
+      maxOutputTokens: 8192,
     })
 
 

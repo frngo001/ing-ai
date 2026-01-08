@@ -10,14 +10,22 @@ type SupabaseClientType = SupabaseClient<Database>
 
 export async function getCitationLibraries(
   userId: string,
-  supabaseClient?: SupabaseClientType
+  supabaseClient?: SupabaseClientType,
+  projectId?: string
 ): Promise<CitationLibrary[]> {
   const supabase = supabaseClient || createClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from('citation_libraries')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+
+  // Filter nach project_id wenn angegeben
+  if (projectId) {
+    query = query.eq('project_id', projectId)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
   return data || []

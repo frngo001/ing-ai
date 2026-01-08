@@ -6,6 +6,160 @@ import type { PlateEditor } from 'platejs/react'
 import { MarkdownPlugin } from '@platejs/markdown'
 import { devLog, devWarn, devError } from '@/lib/utils/logger'
 
+// Path type from slate (array of numbers representing position in document tree)
+type Path = number[]
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export type InsertPosition = 'start' | 'end' | 'current' | 'before-bibliography' | 'after-target' | 'before-target' | 'replace-target'
+
+export interface InsertTextOptions {
+  markdown: string
+  position?: InsertPosition
+  targetText?: string
+  targetHeading?: string
+  focusOnHeadings?: boolean
+}
+
+export type DeleteMode = 'block' | 'text' | 'heading-section' | 'range'
+
+export interface DeleteTextOptions {
+  targetText?: string
+  targetHeading?: string
+  mode?: DeleteMode
+  startText?: string
+  endText?: string
+}
+
+// ============================================================================
+// Helper Functions for Text Finding
+// ============================================================================
+
+/**
+ * Extracts all text content from a node recursively
+ */
+const extractText = (node: any): string => {
+  if (typeof node?.text === 'string') {
+    return node.text
+  }
+  if (node?.children && Array.isArray(node.children)) {
+    return node.children.map(extractText).join('')
+  }
+  return ''
+}
+
+/**
+ * Finds text in the editor and returns the path and position information
+ */
+const findTextInEditor = (
+  editor: PlateEditor,
+  targetText: string
+): { blockIndex: number; path: Path; offset: number } | null => {
+  const searchText = targetText?.trim()
+  if (!searchText) return null
+
+  const blocks = editor.children || []
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i] as any
+    const blockPath: Path = [i]
+    const blockText = extractText(block)
+
+    if (!blockText?.includes(searchText)) continue
+
+    const textIndex = blockText.indexOf(searchText)
+    const targetOffset = textIndex + searchText.length
+
+    let currentOffset = 0
+    let targetPath: Path | null = null
+    let finalOffset = 0
+
+    const findInChildren = (children: any[], parentPath: Path): boolean => {
+      for (let j = 0; j < children.length; j++) {
+        const child = children[j]
+        const childPath = [...parentPath, j]
+
+        if (typeof child?.text === 'string') {
+          const textLength = child.text.length
+          const nodeStart = currentOffset
+          const nodeEnd = currentOffset + textLength
+
+          if (nodeStart <= textIndex && nodeEnd >= targetOffset) {
+            targetPath = childPath
+            finalOffset = targetOffset - nodeStart
+            return true
+          } else if (nodeEnd >= textIndex && nodeStart < targetOffset) {
+            targetPath = childPath
+            finalOffset = textLength
+            return true
+          }
+
+          currentOffset += textLength
+        } else if (child?.children && Array.isArray(child.children)) {
+          if (findInChildren(child.children, childPath)) {
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    if (block.children && Array.isArray(block.children)) {
+      findInChildren(block.children, blockPath)
+    }
+
+    if (targetPath) {
+      return { blockIndex: i, path: targetPath, offset: finalOffset }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Finds a heading in the editor and returns the block index
+ */
+const findHeadingInEditor = (
+  editor: PlateEditor,
+  targetHeading: string
+): { blockIndex: number } | null => {
+  const searchHeading = targetHeading?.trim()
+  if (!searchHeading) return null
+
+  // Normalize heading (remove # symbols for matching)
+  const normalizedSearch = searchHeading.replace(/^#+\s*/, '').toLowerCase()
+
+  const blocks = editor.children || []
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i] as any
+
+    // Check if it's a heading element
+    if (block.type && (block.type === 'h1' || block.type === 'h2' || block.type === 'h3' ||
+        block.type === 'h4' || block.type === 'h5' || block.type === 'h6' ||
+        block.type.startsWith('heading'))) {
+      const blockText = extractText(block).toLowerCase()
+
+      if (blockText.includes(normalizedSearch) || normalizedSearch.includes(blockText)) {
+        return { blockIndex: i }
+      }
+    }
+
+    // Also check text content for markdown-style headings
+    const blockText = extractText(block)
+    if (blockText.startsWith('#')) {
+      const normalizedBlockText = blockText.replace(/^#+\s*/, '').toLowerCase()
+      if (normalizedBlockText.includes(normalizedSearch) || normalizedSearch.includes(normalizedBlockText)) {
+        return { blockIndex: i }
+      }
+    }
+  }
+
+  return null
+}
+
 /**
  * Teilt Markdown-Text in logische Blöcke auf
  * Berücksichtigt Headings, Code-Blöcke und Listen, damit sie nicht mitten drin getrennt werden
@@ -118,117 +272,160 @@ function splitMarkdownIntoBlocks(markdown: string): string[] {
 }
 
 /**
- * Fügt Markdown-Text am Ende des Editors ein
- * Teilt den Text in mehrere Blöcke auf und fügt sie sequenziell ein
+ * Fügt Markdown-Text im Editor ein
+ * Teilt den Text in mehrere Blöcke auf und fügt sie sequenziell ein (wie bei Copy/Paste)
+ * Unterstützt verschiedene Positionen und zielbasiertes Einfügen
  */
 export function insertMarkdownText(
   editor: PlateEditor,
   markdown: string,
-  position: 'start' | 'end' | 'current' | 'before-bibliography' = 'end'
+  position: InsertPosition = 'end',
+  targetText?: string,
+  targetHeading?: string
 ): void {
   if (!markdown || typeof markdown !== 'string') {
     devWarn('⚠️ [EDITOR] Kein Markdown-Text zum Einfügen')
     return
   }
 
-  try {
-    // Teile Markdown in logische Blöcke auf
-    const blocks = splitMarkdownIntoBlocks(markdown)
+  devLog(`📝 [EDITOR] insertMarkdownText aufgerufen mit:`, {
+    markdownLength: markdown.length,
+    markdownPreview: markdown.substring(0, 200),
+    position,
+    targetText,
+    targetHeading,
+  })
 
-    if (blocks.length === 0) {
-      devWarn('⚠️ [EDITOR] Keine Blöcke aus Markdown generiert')
+  try {
+    // Deserialisiere den gesamten Markdown-Text
+    // Das MarkdownPlugin erstellt separate Nodes für jeden Block (Headings, Paragraphen, Listen, etc.)
+    let allNodes: any[] = []
+
+    try {
+      const deserializedNodes = editor.getApi(MarkdownPlugin).markdown.deserialize(markdown)
+      if (deserializedNodes && deserializedNodes.length > 0) {
+        allNodes = deserializedNodes
+        devLog(`✅ [EDITOR] Markdown deserialisiert: ${allNodes.length} Nodes`, {
+          nodeTypes: allNodes.map(n => n.type || 'unknown'),
+        })
+      }
+    } catch (deserializeError) {
+      devError(`❌ [EDITOR] Deserialisierung fehlgeschlagen:`, deserializeError)
+    }
+
+    // Fallback: Wenn die Deserialisierung fehlschlägt, teile in Blöcke auf
+    if (allNodes.length === 0) {
+      devLog(`📝 [EDITOR] Fallback: Teile Markdown in Blöcke auf`)
+      const blocks = splitMarkdownIntoBlocks(markdown)
+
+      if (blocks.length === 0) {
+        devWarn('⚠️ [EDITOR] Keine Blöcke aus Markdown generiert')
+        return
+      }
+
+      devLog(`📝 [EDITOR] ${blocks.length} Blöcke zum Verarbeiten`)
+
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i]
+        try {
+          const nodes = editor.getApi(MarkdownPlugin).markdown.deserialize(block)
+          if (nodes && nodes.length > 0) {
+            allNodes.push(...nodes)
+          } else {
+            // Fallback: Erstelle einen einfachen Paragraph
+            allNodes.push({
+              type: 'p',
+              children: [{ text: block }],
+            })
+          }
+        } catch (blockError) {
+          devError(`❌ [EDITOR] Block ${i + 1} Deserialisierung fehlgeschlagen:`, blockError)
+          allNodes.push({
+            type: 'p',
+            children: [{ text: block }],
+          })
+        }
+      }
+    }
+
+    if (allNodes.length === 0) {
+      devError('❌ [EDITOR] Keine Nodes zum Einfügen generiert')
       return
     }
 
-    devLog(`📝 [EDITOR] Füge ${blocks.length} Blöcke ein`)
+    devLog(`📝 [EDITOR] ${allNodes.length} Nodes bereit zum Einfügen`)
 
-    // Bestimme die Startposition
-    let insertPath: number[] | null = null
+    // Bestimme die Start-Block-Position (Index im editor.children Array)
+    let startBlockIndex: number = editor.children.length // Default: Am Ende
+    let shouldReplaceBlock = false
 
-    if (position === 'start') {
-      insertPath = [0]
+    // Zielbasierte Positionen
+    if ((position === 'after-target' || position === 'before-target' || position === 'replace-target') && (targetText || targetHeading)) {
+      let targetBlockIndex: number | null = null
+
+      if (targetText) {
+        const textResult = findTextInEditor(editor, targetText)
+        if (textResult) {
+          targetBlockIndex = textResult.blockIndex
+          devLog(`✅ [EDITOR] targetText gefunden in Block ${targetBlockIndex}`)
+        }
+      }
+
+      if (targetBlockIndex === null && targetHeading) {
+        const headingResult = findHeadingInEditor(editor, targetHeading)
+        if (headingResult) {
+          targetBlockIndex = headingResult.blockIndex
+          devLog(`✅ [EDITOR] targetHeading gefunden in Block ${targetBlockIndex}`)
+        }
+      }
+
+      if (targetBlockIndex !== null) {
+        if (position === 'before-target') {
+          startBlockIndex = targetBlockIndex
+        } else if (position === 'after-target') {
+          startBlockIndex = targetBlockIndex + 1
+        } else if (position === 'replace-target') {
+          startBlockIndex = targetBlockIndex
+          shouldReplaceBlock = true
+        }
+      }
+    } else if (position === 'start') {
+      startBlockIndex = 0
     } else if (position === 'current') {
       const selection = editor.selection
       if (selection) {
-        insertPath = selection.anchor.path
-      } else {
-        const endPath = editor.api.end([])
-        insertPath = endPath ? endPath.path : [0]
+        startBlockIndex = selection.anchor.path[0]
       }
     } else if (position === 'before-bibliography') {
-      let bibliographyPath: number[] | null = null
       for (let i = 0; i < editor.children.length; i++) {
         const child = editor.children[i] as any
         if (child && child.bibliography === true) {
-          bibliographyPath = [i]
+          startBlockIndex = i
           break
         }
       }
-      insertPath = bibliographyPath || (editor.api.end([])?.path || [0])
-    } else {
-      // position === 'end'
-      const endPath = editor.api.end([])
-      if (endPath) {
-        const lastNodeEntry = editor.api.node(endPath.path)
-        const lastNode = lastNodeEntry ? lastNodeEntry[0] : null
-        if (lastNode && 'type' in lastNode && lastNode.type !== 'p') {
-          // Füge leeren Absatz ein, wenn letzter Block kein Paragraph ist
-          editor.tf.insertNodes(
-            editor.api.create.block({ type: 'p', children: [{ text: '' }] }),
-            { at: endPath.path, select: false }
-          )
-        }
-        insertPath = endPath.path
-      } else {
-        insertPath = [0]
-      }
     }
+    // else: position === 'end' -> startBlockIndex bleibt editor.children.length
 
-    if (!insertPath) {
-      devError('❌ [EDITOR] Konnte keine Einfügeposition bestimmen')
-      return
-    }
+    devLog(`📝 [EDITOR] Start-Position: Block ${startBlockIndex}`)
 
-    // Füge jeden Block sequenziell ein
-    let currentPath = [...insertPath]
-
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i]
-      
+    // Bei replace-target: Lösche zuerst den Zielblock
+    if (shouldReplaceBlock) {
       try {
-        // Konvertiere Block zu Plate-Nodes
-        const nodes = editor.getApi(MarkdownPlugin).markdown.deserialize(block)
-
-        if (!nodes || nodes.length === 0) {
-          devWarn(`⚠️ [EDITOR] Block ${i + 1}/${blocks.length} konnte nicht deserialisiert werden`)
-          continue
-        }
-
-        // Füge Nodes ein
-        editor.tf.insertNodes(nodes, { at: currentPath, select: false })
-
-        // Aktualisiere die Position für den nächsten Block
-        if (position === 'end' || position === 'before-bibliography') {
-          // Bei 'end' oder 'before-bibliography' die Endposition neu berechnen
-          const newEndPath = editor.api.end([])
-          if (newEndPath) {
-            currentPath = [...newEndPath.path]
-          }
-        } else {
-          // Bei 'start' oder 'current' die Position inkrementell erhöhen
-          const pathIndex = currentPath[currentPath.length - 1]
-          const insertedNodeCount = nodes.length
-          currentPath = [...currentPath]
-          currentPath[currentPath.length - 1] = pathIndex + insertedNodeCount
-        }
+        editor.tf.removeNodes({ at: [startBlockIndex] })
+        devLog(`🗑️ [EDITOR] Block ${startBlockIndex} entfernt für Ersetzung`)
       } catch (error) {
-        devError(`❌ [EDITOR] Fehler beim Einfügen von Block ${i + 1}/${blocks.length}:`, error)
-        // Weiter mit dem nächsten Block
-        continue
+        devError('❌ [EDITOR] Fehler beim Entfernen des Zielblocks:', error)
       }
     }
 
-    devLog(`✅ [EDITOR] ${blocks.length} Blöcke erfolgreich eingefügt`)
+    // Füge alle Nodes auf einmal ein (schneller, nur ein Re-Render)
+    try {
+      editor.tf.insertNodes(allNodes, { at: [startBlockIndex], select: false })
+      devLog(`✅ [EDITOR] ${allNodes.length} Nodes eingefügt an Position ${startBlockIndex}`)
+    } catch (insertError) {
+      devError(`❌ [EDITOR] Batch-Einfügung fehlgeschlagen:`, insertError)
+    }
   } catch (error) {
     devError('❌ [EDITOR] Fehler beim Einfügen von Text:', error)
   }
@@ -246,9 +443,11 @@ export function setupEditorTextInsertion(): void {
       hasMarkdown: !!event.detail?.markdown,
       markdownLength: event.detail?.markdown?.length,
       position: event.detail?.position,
+      targetText: event.detail?.targetText,
+      targetHeading: event.detail?.targetHeading,
     })
 
-    const { markdown, position } = event.detail
+    const { markdown, position, targetText, targetHeading } = event.detail
 
     if (!markdown) {
       devError('❌ [EDITOR] Kein Markdown im Event-Detail')
@@ -259,7 +458,294 @@ export function setupEditorTextInsertion(): void {
       detail: { callback: (editor: PlateEditor) => {
         if (editor) {
           devLog('✅ [EDITOR] Editor-Instance erhalten, füge Text ein')
-          insertMarkdownText(editor, markdown, position)
+          insertMarkdownText(editor, markdown, position, targetText, targetHeading)
+        } else {
+          devWarn('⚠️ [EDITOR] Kein Editor-Instance verfügbar')
+        }
+      }},
+    })
+    window.dispatchEvent(editorEvent)
+  })
+}
+
+// ============================================================================
+// Delete Text Functions
+// ============================================================================
+
+/**
+ * Findet den End-Block-Index für eine Heading-Section
+ * Eine Heading-Section endet beim nächsten Heading mit gleichem oder höherem Level
+ */
+const findHeadingSectionEnd = (
+  editor: PlateEditor,
+  startBlockIndex: number
+): number => {
+  const blocks = editor.children || []
+  const startBlock = blocks[startBlockIndex] as any
+
+  // Bestimme das Level des Start-Headings (h1=1, h2=2, etc.)
+  let startLevel = 6 // Default to lowest heading level
+  if (startBlock?.type) {
+    const match = startBlock.type.match(/h(\d)/)
+    if (match) {
+      startLevel = parseInt(match[1])
+    }
+  }
+
+  // Suche nach dem nächsten Heading mit gleichem oder höherem Level
+  for (let i = startBlockIndex + 1; i < blocks.length; i++) {
+    const block = blocks[i] as any
+    if (block?.type) {
+      const match = block.type.match(/h(\d)/)
+      if (match) {
+        const level = parseInt(match[1])
+        if (level <= startLevel) {
+          return i - 1 // Stoppe vor diesem Heading
+        }
+      }
+    }
+  }
+
+  // Wenn kein passendes Heading gefunden wurde, bis zum Ende des Dokuments
+  return blocks.length - 1
+}
+
+/**
+ * Findet einen Textbereich (von startText bis endText) und gibt die Block-Indizes zurück
+ */
+const findTextRange = (
+  editor: PlateEditor,
+  startText: string,
+  endText: string
+): { startBlockIndex: number; endBlockIndex: number } | null => {
+  const blocks = editor.children || []
+  let startBlockIndex: number | null = null
+  let endBlockIndex: number | null = null
+
+  const startSearchText = startText?.trim()
+  const endSearchText = endText?.trim()
+
+  if (!startSearchText || !endSearchText) return null
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i] as any
+    const blockText = extractText(block)
+
+    if (startBlockIndex === null && blockText.includes(startSearchText)) {
+      startBlockIndex = i
+    }
+
+    if (startBlockIndex !== null && blockText.includes(endSearchText)) {
+      endBlockIndex = i
+      break
+    }
+  }
+
+  if (startBlockIndex !== null && endBlockIndex !== null) {
+    return { startBlockIndex, endBlockIndex }
+  }
+
+  return null
+}
+
+/**
+ * Löscht Text aus dem Editor
+ * Unterstützt verschiedene Modi:
+ * - 'block': Löscht den gesamten Block, der den targetText enthält
+ * - 'text': Löscht nur den exakten targetText innerhalb eines Blocks
+ * - 'heading-section': Löscht eine Überschrift und alle folgenden Inhalte bis zur nächsten gleichwertigen Überschrift
+ * - 'range': Löscht alle Blöcke von startText bis endText
+ */
+export function deleteTextFromEditor(
+  editor: PlateEditor,
+  options: DeleteTextOptions
+): { success: boolean; deletedCount: number; message: string } {
+  const { targetText, targetHeading, mode = 'block', startText, endText } = options
+
+  if (!targetText && !targetHeading && !startText) {
+    devWarn('⚠️ [EDITOR] Kein Ziel für Löschung angegeben')
+    return { success: false, deletedCount: 0, message: 'Kein Ziel für Löschung angegeben' }
+  }
+
+  try {
+    let deletedCount = 0
+
+    if (mode === 'range' && startText && endText) {
+      // Range-Modus: Lösche alle Blöcke von startText bis endText
+      const range = findTextRange(editor, startText, endText)
+      if (range) {
+        const { startBlockIndex, endBlockIndex } = range
+        const blocksToDelete = endBlockIndex - startBlockIndex + 1
+
+        devLog(`🗑️ [EDITOR] Lösche Range von Block ${startBlockIndex} bis ${endBlockIndex} (${blocksToDelete} Blöcke)`)
+
+        // Lösche von hinten nach vorne, um Index-Verschiebung zu vermeiden
+        for (let i = endBlockIndex; i >= startBlockIndex; i--) {
+          try {
+            editor.tf.removeNodes({ at: [i] })
+            deletedCount++
+          } catch (error) {
+            devError(`❌ [EDITOR] Fehler beim Löschen von Block ${i}:`, error)
+          }
+        }
+
+        return {
+          success: deletedCount > 0,
+          deletedCount,
+          message: `${deletedCount} Block(s) im Bereich gelöscht`,
+        }
+      } else {
+        return { success: false, deletedCount: 0, message: 'Textbereich nicht gefunden' }
+      }
+    }
+
+    if (mode === 'heading-section' && targetHeading) {
+      // Heading-Section-Modus: Lösche Überschrift und alle folgenden Inhalte
+      const headingResult = findHeadingInEditor(editor, targetHeading)
+      if (headingResult) {
+        const { blockIndex } = headingResult
+        const endIndex = findHeadingSectionEnd(editor, blockIndex)
+        const blocksToDelete = endIndex - blockIndex + 1
+
+        devLog(`🗑️ [EDITOR] Lösche Heading-Section von Block ${blockIndex} bis ${endIndex} (${blocksToDelete} Blöcke)`)
+
+        // Lösche von hinten nach vorne
+        for (let i = endIndex; i >= blockIndex; i--) {
+          try {
+            editor.tf.removeNodes({ at: [i] })
+            deletedCount++
+          } catch (error) {
+            devError(`❌ [EDITOR] Fehler beim Löschen von Block ${i}:`, error)
+          }
+        }
+
+        return {
+          success: deletedCount > 0,
+          deletedCount,
+          message: `Überschrift "${targetHeading}" und ${deletedCount - 1} folgende(r) Block(s) gelöscht`,
+        }
+      } else {
+        return { success: false, deletedCount: 0, message: `Überschrift "${targetHeading}" nicht gefunden` }
+      }
+    }
+
+    if (mode === 'block') {
+      // Block-Modus: Lösche den gesamten Block
+      let blockIndex: number | null = null
+
+      if (targetHeading) {
+        const headingResult = findHeadingInEditor(editor, targetHeading)
+        if (headingResult) {
+          blockIndex = headingResult.blockIndex
+        }
+      } else if (targetText) {
+        const textResult = findTextInEditor(editor, targetText)
+        if (textResult) {
+          blockIndex = textResult.blockIndex
+        }
+      }
+
+      if (blockIndex !== null) {
+        devLog(`🗑️ [EDITOR] Lösche Block ${blockIndex}`)
+        try {
+          editor.tf.removeNodes({ at: [blockIndex] })
+          deletedCount = 1
+          return {
+            success: true,
+            deletedCount: 1,
+            message: 'Block erfolgreich gelöscht',
+          }
+        } catch (error) {
+          devError('❌ [EDITOR] Fehler beim Löschen des Blocks:', error)
+          return { success: false, deletedCount: 0, message: 'Fehler beim Löschen des Blocks' }
+        }
+      } else {
+        return { success: false, deletedCount: 0, message: 'Zieltext nicht gefunden' }
+      }
+    }
+
+    if (mode === 'text' && targetText) {
+      // Text-Modus: Lösche nur den exakten Text innerhalb eines Blocks
+      const textResult = findTextInEditor(editor, targetText)
+      if (textResult) {
+        const { blockIndex, path, offset } = textResult
+        const searchText = targetText.trim()
+
+        devLog(`🗑️ [EDITOR] Lösche Text "${searchText.substring(0, 50)}..." in Block ${blockIndex}`)
+
+        // Berechne Start-Offset (offset ist das Ende des gefundenen Texts)
+        const startOffset = offset - searchText.length
+
+        try {
+          // Setze die Auswahl auf den zu löschenden Text
+          const startPath = [...path]
+          const endPath = [...path]
+
+          editor.tf.select({
+            anchor: { path: startPath, offset: startOffset },
+            focus: { path: endPath, offset: offset },
+          })
+
+          // Lösche die Auswahl
+          editor.tf.delete()
+          deletedCount = 1
+
+          return {
+            success: true,
+            deletedCount: 1,
+            message: 'Text erfolgreich gelöscht',
+          }
+        } catch (error) {
+          devError('❌ [EDITOR] Fehler beim Löschen des Texts:', error)
+          return { success: false, deletedCount: 0, message: 'Fehler beim Löschen des Texts' }
+        }
+      } else {
+        return { success: false, deletedCount: 0, message: `Text "${targetText}" nicht gefunden` }
+      }
+    }
+
+    return { success: false, deletedCount: 0, message: 'Ungültiger Modus oder fehlende Parameter' }
+  } catch (error) {
+    devError('❌ [EDITOR] Fehler beim Löschen von Text:', error)
+    return { success: false, deletedCount: 0, message: error instanceof Error ? error.message : 'Unbekannter Fehler' }
+  }
+}
+
+/**
+ * Globaler Event-Handler für Editor-Text-Löschung
+ * Wird vom Agent über window.dispatchEvent aufgerufen
+ */
+export function setupEditorTextDeletion(): void {
+  if (typeof window === 'undefined') return
+
+  window.addEventListener('delete-text-from-editor', async (event: any) => {
+    devLog('🗑️ [EDITOR] delete-text-from-editor Event empfangen:', {
+      targetText: event.detail?.targetText,
+      targetHeading: event.detail?.targetHeading,
+      mode: event.detail?.mode,
+      startText: event.detail?.startText,
+      endText: event.detail?.endText,
+    })
+
+    const { targetText, targetHeading, mode, startText, endText } = event.detail
+
+    if (!targetText && !targetHeading && !startText) {
+      devError('❌ [EDITOR] Kein Ziel für Löschung im Event-Detail')
+      return
+    }
+
+    const editorEvent = new CustomEvent('get-editor-instance', {
+      detail: { callback: (editor: PlateEditor) => {
+        if (editor) {
+          devLog('✅ [EDITOR] Editor-Instance erhalten, lösche Text')
+          const result = deleteTextFromEditor(editor, {
+            targetText,
+            targetHeading,
+            mode,
+            startText,
+            endText,
+          })
+          devLog('🗑️ [EDITOR] Lösch-Ergebnis:', result)
         } else {
           devWarn('⚠️ [EDITOR] Kein Editor-Instance verfügbar')
         }

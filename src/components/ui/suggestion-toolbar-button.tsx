@@ -20,6 +20,7 @@ export function SuggestionToolbarButton() {
       onClick={() => setOption('isSuggesting', !isSuggesting)}
       onMouseDown={(e) => e.preventDefault()}
       tooltip={isSuggesting ? 'Turn off suggesting' : 'Suggestion edits'}
+      data-onboarding="suggestion-btn"
     >
       <PencilLineIcon />
     </ToolbarButton>

@@ -45,3 +45,11 @@ next-env.d.ts
 
 #test files
 test.md
+
+# claude
+.claude/
+.claude/*
+!.claude/settings.local.json
+!.claude/settings.local.jsonc
+.mcp.json
+CLAUDE.md

@@ -1,5 +1,8 @@
 import { createClient } from '../client'
 import type { Database } from '../types'
+import { ensurePermanentUrls, hasBlobUrls } from '@/lib/editor/convert-blob-urls'
+import { devLog, devWarn } from '@/lib/utils/logger'
+import type { Value } from 'platejs'
 
 type Document = Database['public']['Tables']['documents']['Row']
 type DocumentInsert = Database['public']['Tables']['documents']['Insert']
@@ -14,50 +17,60 @@ const pendingRequests = new Map<string, Promise<Document[]>>()
 /**
  * Ruft alle Dokumente für einen User ab, nutzt Cache um mehrfache API-Calls zu vermeiden
  * Verhindert parallele Requests durch Promise-Sharing
+ * @param userId - User ID
+ * @param projectId - Optional: Filtert nach Projekt-ID
  */
-export async function getDocuments(userId: string): Promise<Document[]> {
+export async function getDocuments(userId: string, projectId?: string): Promise<Document[]> {
+  const cacheKey = projectId ? `${userId}:${projectId}` : userId
   const now = Date.now()
-  const cached = documentsCache.get(userId)
-  
+  const cached = documentsCache.get(cacheKey)
+
   // Prüfe Cache zuerst
   if (cached && (now - cached.timestamp) < CACHE_DURATION) {
     return cached.documents
   }
-  
+
   // Prüfe ob bereits ein Request für diesen User läuft
-  const pendingRequest = pendingRequests.get(userId)
+  const pendingRequest = pendingRequests.get(cacheKey)
   if (pendingRequest) {
     // Warte auf den laufenden Request statt einen neuen zu starten
     return pendingRequest
   }
-  
+
   // Starte neuen Request
   const requestPromise = (async () => {
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
+      let query = supabase
         .from('documents')
         .select('*')
         .eq('user_id', userId)
         .order('updated_at', { ascending: false })
 
+      // Filter nach project_id wenn angegeben
+      if (projectId) {
+        query = query.eq('project_id', projectId)
+      }
+
+      const { data, error } = await query
+
       if (error) throw error
-      
+
       const documents = data || []
-      
+
       // Cache aktualisieren
-      documentsCache.set(userId, { documents, timestamp: Date.now() })
-      
+      documentsCache.set(cacheKey, { documents, timestamp: Date.now() })
+
       return documents
     } finally {
       // Entferne Promise aus pendingRequests nach Abschluss
-      pendingRequests.delete(userId)
+      pendingRequests.delete(cacheKey)
     }
   })()
-  
+
   // Speichere Promise für andere parallele Aufrufe
-  pendingRequests.set(userId, requestPromise)
-  
+  pendingRequests.set(cacheKey, requestPromise)
+
   return requestPromise
 }
 
@@ -85,19 +98,36 @@ export async function getDocumentById(id: string, userId: string): Promise<Docum
 
 export async function createDocument(document: DocumentInsert): Promise<Document> {
   const supabase = createClient()
+
+  // Konvertiere blob-URLs zu permanenten Supabase URLs, wenn Content vorhanden ist
+  let processedDocument = document
+  if (document.content) {
+    try {
+      const content = document.content as Value
+      if (hasBlobUrls(content)) {
+        devLog('[DOCUMENTS] Converting blob URLs to permanent URLs before create...')
+        const permanentContent = await ensurePermanentUrls(content)
+        processedDocument = { ...document, content: permanentContent as any }
+        devLog('[DOCUMENTS] Blob URLs converted successfully')
+      }
+    } catch (error) {
+      devWarn('[DOCUMENTS] Failed to convert blob URLs, saving with original content:', error)
+    }
+  }
+
   const { data, error } = await supabase
     .from('documents')
-    .insert(document)
+    .insert(processedDocument)
     .select()
     .single()
 
   if (error) throw error
-  
+
   // Cache invalidieren für diesen User
   if (document.user_id) {
     invalidateDocumentsCache(document.user_id)
   }
-  
+
   return data
 }
 
@@ -107,7 +137,23 @@ export async function updateDocument(
   userId: string
 ): Promise<Document> {
   const supabase = createClient()
-  
+
+  // Konvertiere blob-URLs zu permanenten Supabase URLs, wenn Content vorhanden ist
+  if (updates.content) {
+    try {
+      const content = updates.content as Value
+      if (hasBlobUrls(content)) {
+        devLog('[DOCUMENTS] Converting blob URLs to permanent URLs before saving...')
+        const permanentContent = await ensurePermanentUrls(content, id)
+        updates = { ...updates, content: permanentContent as any }
+        devLog('[DOCUMENTS] Blob URLs converted successfully')
+      }
+    } catch (error) {
+      devWarn('[DOCUMENTS] Failed to convert blob URLs, saving with original content:', error)
+      // Fahre trotzdem mit dem Speichern fort - blob URLs funktionieren zumindest temporär
+    }
+  }
+
   // Prüfe zuerst, ob das Dokument existiert
   const existingDoc = await getDocumentById(id, userId)
   if (!existingDoc) {
@@ -196,27 +242,49 @@ export async function deleteDocument(id: string, userId: string): Promise<void> 
 
 export async function upsertDocument(document: DocumentInsert & { id?: string }): Promise<Document> {
   const supabase = createClient()
+
+  // Konvertiere blob-URLs zu permanenten Supabase URLs, wenn Content vorhanden ist
+  let processedDocument = document
+  if (document.content) {
+    try {
+      const content = document.content as Value
+      if (hasBlobUrls(content)) {
+        devLog('[DOCUMENTS] Converting blob URLs to permanent URLs before upsert...')
+        const permanentContent = await ensurePermanentUrls(content, document.id)
+        processedDocument = { ...document, content: permanentContent as any }
+        devLog('[DOCUMENTS] Blob URLs converted successfully')
+      }
+    } catch (error) {
+      devWarn('[DOCUMENTS] Failed to convert blob URLs, saving with original content:', error)
+    }
+  }
+
   const { data, error } = await supabase
     .from('documents')
-    .upsert(document, { onConflict: 'id' })
+    .upsert(processedDocument, { onConflict: 'id' })
     .select()
     .single()
 
   if (error) throw error
-  
+
   // Cache invalidieren für diesen User
   if (document.user_id) {
     invalidateDocumentsCache(document.user_id)
   }
-  
+
   return data
 }
 
 /**
- * Invalidiert den Dokumente-Cache für einen User
+ * Invalidiert den Dokumente-Cache für einen User (inkl. aller Projekt-spezifischen Caches)
  */
 export function invalidateDocumentsCache(userId: string): void {
-  documentsCache.delete(userId)
+  // Lösche alle Cache-Einträge die mit diesem userId beginnen
+  for (const key of documentsCache.keys()) {
+    if (key === userId || key.startsWith(`${userId}:`)) {
+      documentsCache.delete(key)
+    }
+  }
 }
 
 /**

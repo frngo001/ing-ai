@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/collapsible"
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
@@ -57,7 +56,6 @@ export function NavMain({
   return (
     <div suppressHydrationWarning>
       <SidebarGroup>
-        <SidebarGroupLabel suppressHydrationWarning>{t('sidebar.platform')}</SidebarGroupLabel>
         <SidebarMenu>
           {items.map((item) => {
             const hasChildren = !!item.items?.length
@@ -74,7 +72,11 @@ export function NavMain({
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActiveTop} tooltip={item.title}>
-                    <Link href={item.url} onClick={handleClick}>
+                    <Link
+                      href={item.url}
+                      onClick={handleClick}
+                      data-onboarding={item.isSettings ? 'nav-settings' : undefined}
+                    >
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
                     </Link>
@@ -107,22 +109,33 @@ export function NavMain({
 
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <Link
-                              href={subItem.url}
-                              onClick={() => {
-                                if (subItem.isDocuments) onSelectDocument?.()
-                                if (subItem.isLibrary) onSelectLibrary?.()
-                                if (subItem.isAskAi) onSelectAskAi?.()
-                              }}
-                            >
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
+                      {item.items?.map((subItem) => {
+                        const onboardingId = subItem.isDocuments
+                          ? 'nav-documents'
+                          : subItem.isLibrary
+                          ? 'nav-library'
+                          : subItem.isAskAi
+                          ? 'nav-ai-chat'
+                          : undefined
+
+                        return (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link
+                                href={subItem.url}
+                                onClick={() => {
+                                  if (subItem.isDocuments) onSelectDocument?.()
+                                  if (subItem.isLibrary) onSelectLibrary?.()
+                                  if (subItem.isAskAi) onSelectAskAi?.()
+                                }}
+                                data-onboarding={onboardingId}
+                              >
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        )
+                      })}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>

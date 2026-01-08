@@ -14,6 +14,7 @@ import { ResizableProvider, useResizableValue } from '@platejs/resizable';
 import { PlateElement, useEditorMounted, withHOC } from 'platejs/react';
 
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { Caption, CaptionTextarea } from './caption';
 import {
@@ -27,6 +28,7 @@ export const VideoElement = withHOC(
   function VideoElement(
     props: PlateElementProps<TVideoElement & TResizableProps>
   ) {
+    const { t } = useLanguage();
     const {
       align = 'center',
       embed,
@@ -112,7 +114,7 @@ export const VideoElement = withHOC(
           <Caption style={{ width }} align={align}>
             <CaptionTextarea
               readOnly={readOnly}
-              placeholder="Write a caption..."
+              placeholder={t('toolbar.mediaWriteCaption')}
             />
           </Caption>
         </figure>

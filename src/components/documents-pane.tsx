@@ -24,6 +24,7 @@ import { useLanguage } from "@/lib/i18n/use-language"
 import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as documentsUtils from "@/lib/supabase/utils/documents"
 import { extractTextFromNode, extractTitleFromContent } from "@/lib/supabase/utils/document-title"
+import { useProjectStore } from "@/lib/stores/project-store"
 
 type DocumentItem = {
   id: string
@@ -69,6 +70,7 @@ export function DocumentsPane({
 }) {
   const router = useRouter()
   const { t, language } = useLanguage()
+  const currentProjectId = useProjectStore((state) => state.currentProjectId)
   const [documents, setDocuments] = React.useState<DocumentItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
   const [docToDelete, setDocToDelete] = React.useState<DocumentItem | null>(null)
@@ -137,7 +139,7 @@ export function DocumentsPane({
     }
 
     const userId = await getCurrentUserId()
-    
+
     if (!userId) {
       // Fallback auf localStorage wenn kein User eingeloggt
       loadFromLocalStorage()
@@ -151,7 +153,8 @@ export function DocumentsPane({
 
     isLoadingRef.current = true
     try {
-      const docs = await documentsUtils.getDocuments(userId)
+      // Filter documents by current project
+      const docs = await documentsUtils.getDocuments(userId, currentProjectId ?? undefined)
       
       const nextDocs: DocumentItem[] = await Promise.all(
         docs.map(async (doc) => {
@@ -195,7 +198,7 @@ export function DocumentsPane({
     } finally {
       isLoadingRef.current = false
     }
-  }, [untitledDocText, savedText, meText, language, loadFromLocalStorage])
+  }, [untitledDocText, savedText, meText, language, loadFromLocalStorage, currentProjectId])
 
   const createNewDocument = React.useCallback(async () => {
     const userId = await getCurrentUserId()
@@ -227,13 +230,14 @@ export function DocumentsPane({
     }
 
     try {
-      // Erstelle Dokument in Supabase
+      // Erstelle Dokument in Supabase with project association
       const newDoc = await documentsUtils.createDocument({
         user_id: userId,
         title: untitledDocText,
         content: [{ type: "p", children: [{ text: "" }] }],
         document_type: "essay",
         word_count: 0,
+        project_id: currentProjectId ?? undefined,
       })
 
       router.push(`/editor?doc=${encodeURIComponent(newDoc.id)}`)
@@ -264,7 +268,7 @@ export function DocumentsPane({
 
       router.push(`/editor?doc=${encodeURIComponent(newId)}`)
     }
-  }, [router, untitledDocText, loadFromSupabase])
+  }, [router, untitledDocText, loadFromSupabase, currentProjectId])
 
   const handleConfirmDelete = React.useCallback(async () => {
     if (!docToDelete) return
@@ -310,11 +314,11 @@ export function DocumentsPane({
   }, [docToDelete, loadFromSupabase, loadFromLocalStorage])
 
   React.useEffect(() => {
-    // Initialer Load beim Mount
+    // Initialer Load beim Mount oder wenn Projekt wechselt
     loadFromSupabase()
 
     const handleStorage = () => loadFromLocalStorage()
-    
+
     // Debounced Event-Handler für documents:reload
     // Verhindert mehrfache Requests bei schnellen Event-Auslösungen
     const handleReloadEvent = () => {
@@ -327,7 +331,7 @@ export function DocumentsPane({
       if (reloadDebounceTimeoutRef.current) {
         clearTimeout(reloadDebounceTimeoutRef.current)
       }
-      
+
       // Setze neuen Timeout - nur wenn nicht bereits ein Request läuft
       reloadDebounceTimeoutRef.current = setTimeout(() => {
         // Prüfe ob bereits ein Request läuft
@@ -339,7 +343,7 @@ export function DocumentsPane({
         reloadDebounceTimeoutRef.current = null
       }, 300) // 300ms Debounce
     }
-    
+
     if (typeof window !== "undefined") {
       window.addEventListener("storage", handleStorage)
       window.addEventListener("focus", handleStorage)
@@ -354,7 +358,7 @@ export function DocumentsPane({
         }
       }
     }
-  }, [loadFromSupabase, loadFromLocalStorage])
+  }, [loadFromSupabase, loadFromLocalStorage, currentProjectId])
 
   const filteredDocs = React.useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -367,6 +371,7 @@ export function DocumentsPane({
 
   return (
     <div
+      data-onboarding="documents-pane"
       className={cn(
         "bg-background text-foreground flex h-full min-w-[260px] max-w-[320px] flex-col px-3 pb-3 pt-0 border-r border-border/70",
         className

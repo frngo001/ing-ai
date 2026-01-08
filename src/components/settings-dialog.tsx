@@ -1,8 +1,9 @@
 "use client"
 import * as React from "react"
 import { useTheme } from "next-themes"
-import { BadgeCheck, Bell, CreditCard, Database, Paintbrush, Settings, ShieldCheck, User } from "lucide-react"
+import { BadgeCheck, Bell, CreditCard, Database, GraduationCap, Paintbrush, Settings, ShieldCheck, User } from "lucide-react"
 import { useLanguage } from "@/lib/i18n/use-language"
+import { useOnboardingStore } from "@/lib/stores/onboarding-store"
 
 import {
   Breadcrumb,
@@ -366,7 +367,7 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden p-0 md:max-h-[500px] md:max-w-[700px] lg:max-w-[800px]">
+      <DialogContent data-onboarding="settings-dialog" className="overflow-hidden p-0 md:max-h-[500px] md:max-w-[700px] lg:max-w-[800px]">
         <DialogTitle className="sr-only">{t('settings.title')}</DialogTitle>
         <DialogDescription className="sr-only">
           {t('settings.description')}
@@ -445,6 +446,27 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                     {generalToggles.map((item) => (
                       <ToggleRow key={item.title} {...item} />
                     ))}
+                    <Separator />
+                    <div className="grid grid-cols-[1fr_auto] items-start gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{t('settings.restartOnboarding')}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('settings.restartOnboardingDescription')}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="inline-flex h-9 min-w-[140px] items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors hover:bg-muted"
+                        onClick={async () => {
+                          const { resetOnboarding } = useOnboardingStore.getState()
+                          await resetOnboarding()
+                          onOpenChange(false)
+                        }}
+                      >
+                        <GraduationCap className="h-4 w-4" />
+                        {t('settings.restartOnboardingButton')}
+                      </button>
+                    </div>
                   </div>
                 )}
 

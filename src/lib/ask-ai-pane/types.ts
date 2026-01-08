@@ -71,6 +71,16 @@ export type Mentionable = {
   value: string
   hint?: string
   type?: "citation" | "prompt" | "document"
+  // Actual content to send as context to the AI
+  content?: string
+  // Additional metadata for citations
+  metadata?: {
+    authors?: string[]
+    year?: number | string
+    source?: string
+    doi?: string
+    abstract?: string
+  }
 }
 
 export type SlashCommand = {

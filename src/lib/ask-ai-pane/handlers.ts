@@ -5,6 +5,7 @@ import { parseAgentStream } from '@/lib/stream-parsers/agent-stream-parser'
 import { parseStandardStream } from '@/lib/stream-parsers/standard-stream-parser'
 import { extractFileContent, extractMultipleFilesContent, type FileContentResult } from '@/lib/file-extraction/extract-file-content'
 import { canExtractClientSide } from '@/lib/file-extraction/file-types'
+import { useProjectStore } from '@/lib/stores/project-store'
 
 // Helper: Hole Editor-Inhalt als Markdown ueber Event-System
 function getEditorContentAsMarkdown(): Promise<string> {
@@ -417,7 +418,10 @@ export const createHandlers = (deps: HandlerDependencies) => {
       }
 
       const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
-      
+
+      // Hole aktuelle projectId aus dem Store
+      const currentProjectId = useProjectStore.getState().currentProjectId
+
       let messageContextText = ''
       if (contextToInclude && contextToInclude.length > 0) {
         const contextTexts = contextToInclude.map((ctx) => ctx.text).join('\n\n')
@@ -440,9 +444,10 @@ export const createHandlers = (deps: HandlerDependencies) => {
             }
           }),
           useWeb: context.web,
-          editorContent, 
-          documentContextEnabled: context.document, 
+          editorContent,
+          documentContextEnabled: context.document,
           fileContents: fileContents.length > 0 ? fileContents : undefined,
+          projectId: currentProjectId, // Projekt-ID für Library/Citation-Tools
           agentState: isWebSearchAgent ? {
             isActive: false,
             arbeitType: null,
@@ -563,14 +568,20 @@ export const createHandlers = (deps: HandlerDependencies) => {
     }
 
     const assistantId = messages[lastAssistantIndex].id
-    const contextSummary = buildContextSummary(lastUserMessage.content, files, context, selectedMentions)
+    const trimmed = lastUserMessage.content.trim()
 
+    // Erkenne Bachelor/Masterarbeit (gleiche Logik wie handleSend)
+    const arbeitType = detectArbeitType(trimmed)
+    const thema = extractThema(trimmed)
+
+    // Messages ohne die letzte Assistant-Nachricht (wird neu generiert)
     const messagesWithoutLastAssistant = messages.filter((_, idx) => idx !== lastAssistantIndex)
     const historyPayload = [...messagesWithoutLastAssistant].slice(-20)
 
+    // Reset die letzte Assistant-Nachricht
     setMessages((prev) =>
       prev.map((m, idx) =>
-        idx === lastAssistantIndex ? { ...m, content: "" } : m
+        idx === lastAssistantIndex ? { ...m, content: "", parts: undefined, reasoning: undefined, toolSteps: undefined } : m
       )
     )
     setSending(true)
@@ -580,22 +591,101 @@ export const createHandlers = (deps: HandlerDependencies) => {
     setAbortController(controller)
 
     try {
-      const res = await fetch("/api/ai/ask", {
+      let apiEndpoint = "/api/ai/ask"
+      const currentArbeitType = agentStore.arbeitType || (context.agentMode === 'bachelor' ? 'bachelor' : (context.agentMode === 'general' ? 'general' : 'bachelor'))
+
+      if (context.agentMode === 'standard') {
+        if (context.web) {
+          apiEndpoint = "/api/ai/agent/websearch"
+        } else {
+          apiEndpoint = "/api/ai/ask"
+        }
+      } else if (agentStore.isActive && currentArbeitType) {
+        apiEndpoint = currentArbeitType === 'general' ? "/api/ai/agent/general" : "/api/ai/agent/bachelorarbeit"
+      } else if (context.agentMode === 'bachelor') {
+        apiEndpoint = "/api/ai/agent/bachelorarbeit"
+      } else if (context.agentMode === 'general') {
+        apiEndpoint = "/api/ai/agent/general"
+      }
+
+      console.log('[HANDLER DEBUG] Regenerate Endpoint-Auswahl:', {
+        agentMode: context.agentMode,
+        isActive: agentStore.isActive,
+        arbeitType: agentStore.arbeitType,
+        currentArbeitType,
+        selectedEndpoint: apiEndpoint,
+      })
+
+      const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
+
+      const isAgentModeForEditor = context.agentMode === 'bachelor' || context.agentMode === 'general' ||
+                                    (agentStore.isActive && (currentArbeitType === 'bachelor' || currentArbeitType === 'master' || currentArbeitType === 'general'))
+      const shouldFetchEditorContent = isAgentModeForEditor || context.document
+      const editorContent = shouldFetchEditorContent ? await getEditorContentAsMarkdown() : ''
+
+      if (isAgentModeForEditor) {
+        console.log(`[HANDLER] Editor-Inhalt für Regenerate Agent-Modus geholt: ${editorContent.length} Zeichen`)
+      }
+
+      const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
+
+      // Hole aktuelle projectId aus dem Store
+      const currentProjectId = useProjectStore.getState().currentProjectId
+
+      // Kontext aus der letzten User-Nachricht (falls vorhanden)
+      let messageContextText = ''
+      if (lastUserMessage.context && lastUserMessage.context.length > 0) {
+        const contextTexts = lastUserMessage.context.map((ctx) => ctx.text).join('\n\n')
+        messageContextText = `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
+      }
+
+      const contextSummary = buildContextSummary(trimmed, files, context, selectedMentions)
+
+      const requestBody = (context.agentMode !== 'standard' || isWebSearchAgent)
+        ? {
+          messages: historyPayload.map((m) => {
+            if (m.role === 'user' && m.id === lastUserMessage.id && messageContextText) {
+              return {
+                role: m.role,
+                content: m.content + messageContextText,
+              }
+            }
+            return {
+              role: m.role,
+              content: m.content,
+            }
+          }),
+          useWeb: context.web,
+          editorContent,
+          documentContextEnabled: context.document,
+          projectId: currentProjectId,
+          agentState: isWebSearchAgent ? {
+            isActive: false,
+            arbeitType: null,
+            thema: null,
+            currentStep: null,
+          } : {
+            isActive: agentStore.isActive,
+            arbeitType: currentArbeitType,
+            thema: resolvedThema,
+            currentStep: agentStore.currentStep,
+          },
+        }
+        : {
+          question: trimmed,
+          context: contextSummary + (messageContextText ? messageContextText : ''),
+          useWeb: context.web,
+          editorContent: context.document ? editorContent : undefined,
+          documentContextEnabled: context.document,
+          messages: historyPayload,
+          attachments: [],
+        }
+
+      const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-        body: JSON.stringify({
-          question: lastUserMessage.content,
-          context: contextSummary,
-          documentContent: context.document ? "Current document context aktiv" : undefined,
-          messages: historyPayload,
-          attachments:
-            files?.map((file) => ({
-              name: file.name,
-              size: file.size,
-              type: file.type,
-            })) ?? [],
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!res.ok) {
@@ -612,7 +702,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
         } catch {
           errorMessage = `Fehler ${res.status}: ${res.statusText || "Unbekannter Fehler"}`
         }
-        console.error("API-Fehler (/api/ai/ask):", {
+        console.error(`API-Fehler (${apiEndpoint}):`, {
           status: res.status,
           statusText: res.statusText,
           message: errorMessage,
@@ -621,22 +711,25 @@ export const createHandlers = (deps: HandlerDependencies) => {
       }
 
       if (!res.body) {
-        console.error("Kein Response-Body erhalten von /api/ai/ask")
+        console.error(`Kein Response-Body erhalten von ${apiEndpoint}`)
         throw new Error("Keine Antwortdaten erhalten")
       }
 
       const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let fullText = ""
 
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) break
-        fullText += decoder.decode(value)
-        const chunk = fullText
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: chunk } : m))
-        )
+      const isAgentMode = context.agentMode !== 'standard' || apiEndpoint === "/api/ai/agent/websearch"
+
+      if (isAgentMode) {
+        await parseAgentStream(reader, {
+          assistantId,
+          setMessages,
+          agentStore,
+        })
+      } else {
+        await parseStandardStream(reader, {
+          assistantId,
+          setMessages,
+        })
       }
     } catch (error) {
       if ((error as any)?.name !== "AbortError") {
@@ -644,7 +737,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
           error instanceof Error && error.message !== "Antwort fehlgeschlagen"
             ? error.message
             : "Entschuldigung, die Antwort konnte nicht geladen werden. Bitte versuche es erneut."
-        
+
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
@@ -664,6 +757,40 @@ export const createHandlers = (deps: HandlerDependencies) => {
     }
   }
 
+  const handleEditLastMessage = () => {
+    if (isSending) return
+
+    // Finde die letzte User-Nachricht
+    const lastUserIndex = [...messages].map((m, idx) => ({ m, idx })).reverse().find((entry) => entry.m.role === "user")?.idx
+
+    if (lastUserIndex === undefined || lastUserIndex < 0) {
+      toast.error("Keine Nachricht zum Bearbeiten gefunden.")
+      return
+    }
+
+    const lastUserMessage = messages[lastUserIndex]
+
+    // Setze den Inhalt der letzten User-Nachricht in das Input-Feld
+    setInput(lastUserMessage.content)
+
+    // Entferne die letzte User-Nachricht und alle darauf folgenden Nachrichten (inkl. Assistant-Antwort)
+    setMessages((prev) => prev.slice(0, lastUserIndex))
+
+    // Setze pendingContext auf den Context der letzten Nachricht (falls vorhanden)
+    if (lastUserMessage.context && lastUserMessage.context.length > 0) {
+      setPendingContext(lastUserMessage.context)
+    }
+
+    // Informiere den Benutzer über angehängte Dateien, die erneut angehängt werden müssen
+    if (lastUserMessage.files && lastUserMessage.files.length > 0) {
+      const fileNames = lastUserMessage.files.map((f) => f.name).join(', ')
+      toast.error(`Dateien erneut anhängen: ${fileNames}`)
+    }
+
+    // Fokussiere das Input-Feld
+    focusMessageInput()
+  }
+
   const handleStop = () => {
     if (abortController) {
       abortController.abort()
@@ -673,7 +800,8 @@ export const createHandlers = (deps: HandlerDependencies) => {
   }
 
   const handleMentionSelect = (mention: Mentionable) => {
-    setInput((prev) => prev.replace(/@([^\s@]*)$/, `${mention.value} `))
+    // Remove the @... text completely from input - the mention will be shown as a badge
+    setInput((prev) => prev.replace(/@([^\s@]*)$/, '').trimEnd())
     setSelectedMentions((prev) => {
       if (prev.find((m) => m.id === mention.id)) return prev
       return [...prev, mention]
@@ -757,6 +885,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
     resetChat,
     handleSend,
     handleRegenerate,
+    handleEditLastMessage,
     handleStop,
     handleMentionSelect,
     handleSlashInsert,

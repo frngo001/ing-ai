@@ -29,6 +29,7 @@ import {
   PopoverContent,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 import { CaptionButton } from './caption';
 
@@ -43,6 +44,7 @@ export function MediaToolbar({
   children: React.ReactNode;
   plugin: WithRequiredKey;
 }) {
+  const { t } = useLanguage();
   const editor = useEditorRef();
   const readOnly = useReadOnly();
   const selected = useSelected();
@@ -87,7 +89,7 @@ export function MediaToolbar({
 
               <FloatingMediaPrimitive.UrlInput
                 className={inputVariants()}
-                placeholder="Paste the embed link..."
+                placeholder={t('toolbar.mediaEmbedPlaceholder')}
                 options={{ plugin }}
               />
             </div>
@@ -97,11 +99,11 @@ export function MediaToolbar({
             <FloatingMediaPrimitive.EditButton
               className={buttonVariants({ size: 'sm', variant: 'ghost' })}
             >
-              Edit link
+              {t('toolbar.mediaEditLink')}
             </FloatingMediaPrimitive.EditButton>
 
             <CaptionButton size="sm" variant="ghost">
-              Caption
+              {t('toolbar.mediaCaption')}
             </CaptionButton>
 
             <Separator orientation="vertical" className="mx-1 h-6" />

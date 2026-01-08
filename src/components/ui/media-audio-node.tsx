@@ -9,11 +9,14 @@ import { useMediaState } from '@platejs/media/react';
 import { ResizableProvider } from '@platejs/resizable';
 import { PlateElement, withHOC } from 'platejs/react';
 
+import { useLanguage } from '@/lib/i18n/use-language';
+
 import { Caption, CaptionTextarea } from './caption';
 
 export const AudioElement = withHOC(
   ResizableProvider,
   function AudioElement(props: PlateElementProps<TAudioElement>) {
+    const { t } = useLanguage();
     const { align = 'center', readOnly, unsafeUrl } = useMediaState();
 
     return (
@@ -30,7 +33,7 @@ export const AudioElement = withHOC(
             <CaptionTextarea
               className="h-20"
               readOnly={readOnly}
-              placeholder="Write a caption..."
+              placeholder={t('toolbar.mediaWriteCaption')}
             />
           </Caption>
         </figure>

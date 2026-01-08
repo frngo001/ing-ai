@@ -20,6 +20,7 @@ export function FixedToolbar({
 
   return (
     <Toolbar
+      data-onboarding="fixed-toolbar"
       className={cn(
         'scrollbar-hide z-20 w-full max-w-full justify-between overflow-x-auto bg-background/95 p-1 shadow-sm backdrop-blur-sm supports-backdrop-blur:bg-background/60',
         positionClasses,

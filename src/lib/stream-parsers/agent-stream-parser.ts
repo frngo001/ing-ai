@@ -313,20 +313,51 @@ function handleToolResult(toolResult: any) {
     type: toolResult.type,
     toolName: toolResult.toolName,
     hasMarkdown: !!toolResult.markdown,
+    markdownLength: toolResult.markdown?.length,
     hasSourceId: !!toolResult.sourceId,
     hasThema: !!toolResult.thema,
   })
 
   if (toolResult.type === 'tool-result' && toolResult.toolName === 'insertTextInEditor' && toolResult.markdown) {
+    // Validiere den Markdown-Inhalt
+    const markdown = toolResult.markdown
+    if (typeof markdown !== 'string' || markdown.length === 0) {
+      devError('❌ [AGENT PARSER] insertTextInEditor: Markdown ist ungültig oder leer')
+      return
+    }
+
     devLog('✅ [AGENT PARSER] Dispatching insert-text-in-editor Event:', {
-      markdownLength: toolResult.markdown.length,
+      markdownLength: markdown.length,
+      markdownPreview: markdown.substring(0, 300),
+      markdownEnd: markdown.substring(Math.max(0, markdown.length - 100)),
       position: toolResult.position || 'end',
+      targetText: toolResult.targetText,
+      targetHeading: toolResult.targetHeading,
     })
     window.dispatchEvent(new CustomEvent('insert-text-in-editor', {
       detail: {
-        markdown: toolResult.markdown,
+        markdown: markdown,
         position: toolResult.position || 'end',
+        targetText: toolResult.targetText,
+        targetHeading: toolResult.targetHeading,
         focusOnHeadings: toolResult.focusOnHeadings !== false,
+      },
+    }))
+  } else if (toolResult.type === 'tool-result' && toolResult.toolName === 'deleteTextFromEditor') {
+    devLog('🗑️ [AGENT PARSER] Dispatching delete-text-from-editor Event:', {
+      targetText: toolResult.targetText,
+      targetHeading: toolResult.targetHeading,
+      mode: toolResult.mode || 'block',
+      startText: toolResult.startText,
+      endText: toolResult.endText,
+    })
+    window.dispatchEvent(new CustomEvent('delete-text-from-editor', {
+      detail: {
+        targetText: toolResult.targetText,
+        targetHeading: toolResult.targetHeading,
+        mode: toolResult.mode || 'block',
+        startText: toolResult.startText,
+        endText: toolResult.endText,
       },
     }))
   } else if (toolResult.type === 'tool-result' && toolResult.toolName === 'addCitation' && toolResult.sourceId) {

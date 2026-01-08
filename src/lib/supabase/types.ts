@@ -31,6 +31,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       user_preferences: {
         Row: {
@@ -66,11 +67,13 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       documents: {
         Row: {
           id: string
           user_id: string
+          project_id: string | null
           title: string
           content: Json
           document_type: string
@@ -82,6 +85,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          project_id?: string | null
           title: string
           content?: Json
           document_type?: string
@@ -93,6 +97,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          project_id?: string | null
           title?: string
           content?: Json
           document_type?: string
@@ -101,6 +106,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       document_history: {
         Row: {
@@ -121,6 +127,7 @@ export interface Database {
           content?: Json
           created_at?: string
         }
+        Relationships: []
       }
       sources: {
         Row: {
@@ -219,6 +226,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       pdf_uploads: {
         Row: {
@@ -254,6 +262,7 @@ export interface Database {
           page_count?: number | null
           created_at?: string
         }
+        Relationships: []
       }
       citations: {
         Row: {
@@ -322,11 +331,13 @@ export interface Database {
           metadata?: Json | null
           created_at?: string
         }
+        Relationships: []
       }
       citation_libraries: {
         Row: {
           id: string
           user_id: string
+          project_id: string | null
           name: string
           is_default: boolean
           created_at: string
@@ -335,6 +346,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          project_id?: string | null
           name: string
           is_default?: boolean
           created_at?: string
@@ -343,16 +355,19 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          project_id?: string | null
           name?: string
           is_default?: boolean
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       chat_conversations: {
         Row: {
           id: string
           user_id: string
+          project_id: string | null
           title: string
           updated_at: string
           created_at: string
@@ -360,6 +375,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          project_id?: string | null
           title: string
           updated_at?: string
           created_at?: string
@@ -367,10 +383,12 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          project_id?: string | null
           title?: string
           updated_at?: string
           created_at?: string
         }
+        Relationships: []
       }
       chat_messages: {
         Row: {
@@ -412,6 +430,7 @@ export interface Database {
           context?: Json
           created_at?: string
         }
+        Relationships: []
       }
       saved_messages: {
         Row: {
@@ -444,6 +463,7 @@ export interface Database {
           preview?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       slash_commands: {
         Row: {
@@ -470,11 +490,13 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       agent_states: {
         Row: {
           id: string
           user_id: string
+          project_id: string | null
           is_active: boolean
           arbeit_type: 'bachelor' | 'master' | 'general' | null
           thema: string | null
@@ -490,6 +512,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          project_id?: string | null
           is_active?: boolean
           arbeit_type?: 'bachelor' | 'master' | 'general' | null
           thema?: string | null
@@ -505,6 +528,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          project_id?: string | null
           is_active?: boolean
           arbeit_type?: 'bachelor' | 'master' | 'general' | null
           thema?: string | null
@@ -517,6 +541,7 @@ export interface Database {
           last_updated?: string
           created_at?: string
         }
+        Relationships: []
       }
       discussions: {
         Row: {
@@ -546,6 +571,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       comments: {
         Row: {
@@ -575,6 +601,70 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
+      }
+      user_onboarding: {
+        Row: {
+          id: string
+          user_id: string
+          current_step: number
+          completed_steps: number[]
+          is_completed: boolean
+          is_skipped: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          current_step?: number
+          completed_steps?: number[]
+          is_completed?: boolean
+          is_skipped?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          current_step?: number
+          completed_steps?: number[]
+          is_completed?: boolean
+          is_skipped?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          description: string | null
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          description?: string | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          description?: string | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -588,4 +678,3 @@ export interface Database {
     }
   }
 }
-

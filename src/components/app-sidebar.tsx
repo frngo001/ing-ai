@@ -11,6 +11,8 @@ import {
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
+import { OnboardingSidebarButton } from "@/components/onboarding"
+import { ProjectSwitcher } from "@/components/project-switcher"
 import { useLanguage } from "@/lib/i18n/use-language"
 import {
   Sidebar,
@@ -20,7 +22,6 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
-import Image from "next/image"
 import {
   Card,
   CardContent,
@@ -29,7 +30,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import Particles from "@/components/Particles"
+import { SparklesCore } from "@/components/ui/sparkles"
 import { createClient } from "@/lib/supabase/client"
 
 // Entfernt: defaultUser wird nicht mehr verwendet, da nur authentifizierte Benutzer die App nutzen können
@@ -171,21 +172,15 @@ export function AppSidebar({
     <div suppressHydrationWarning>
       <Sidebar collapsible="icon" {...props}>
         <SidebarHeader className="space-y-2">
-          <div className="flex items-center justify-between px-2 py-1">
-            <div className={`flex items-center justify-center flex-1 ${state === "expanded" ? "-mt-5" : ""}`}>
-              <Image
-                src="/logos/logosApp/ing_AI.png"
-                alt="Ing AI Logo"
-                width={64}
-                height={64}
-                className="object-contain"
-              />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <ProjectSwitcher />
             </div>
             {state === "expanded" && (
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8 shrink-0 -mt-5"
+                className="h-8 w-8 shrink-0"
                 onClick={handleTogglePin}
                 aria-label={isPinned ? t('sidebar.unpinSidebar') : t('sidebar.pinSidebar')}
                 title={isPinned ? t('sidebar.unpinSidebar') : t('sidebar.pinSidebar')}
@@ -201,9 +196,11 @@ export function AppSidebar({
           </div>
           <Button
             size="sm"
-            className="w-full justify-center gap-2"
+            variant="secondary"
+            className="w-full justify-center gap-2 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700"
             onClick={handleCreateDocument}
             aria-label={t('sidebar.newDocument')}
+            data-onboarding="new-document-btn"
             suppressHydrationWarning
           >
             <Plus className="h-4 w-4" />
@@ -221,28 +218,25 @@ export function AppSidebar({
           />
         </SidebarContent>
         <SidebarFooter className="gap-3">
-          <Card className="relative hidden min-h-[190px] overflow-hidden lg:flex bg-white/80 dark:bg-background/60 text-card-foreground mx-1 border border-border/60 shadow-sm group-data-[state=collapsed]:hidden">
-            <div className="absolute inset-0 z-0 bg-gradient-to-br from-white/80 via-white/40 to-white/90 dark:from-black/30 dark:via-background/20 dark:to-black/50" />
-            <Particles
-              className="absolute inset-0 z-10 opacity-100 pointer-events-none"
-              particleColors={["#ffffff", "#e5e7eb"]}
-              particleCount={200}
-              particleSpread={6}
-              speed={0.2}
-              particleBaseSize={40}
-              sizeRandomness={1}
-              moveParticlesOnHover
-              disableRotation={false}
-              particleHoverFactor={1.4}
-              alphaParticles
-              cameraDistance={6}
-              overlay
-            />
+          <OnboardingSidebarButton />
+          <Card className="relative hidden min-h-[190px] overflow-hidden lg:flex bg-black dark:bg-black text-card-foreground mx-1 border border-border/60 shadow-sm group-data-[state=collapsed]:hidden">
+            <div className="absolute inset-0 z-0">
+              <SparklesCore
+                id="sidebar-sparkles"
+                background="transparent"
+                minSize={0.4}
+                maxSize={1.2}
+                particleDensity={100}
+                className="w-full h-full"
+                particleColor="#FFFFFF"
+                speed={0.8}
+              />
+            </div>
             <CardContent className="relative z-20 space-y-3 px-4 pt-4">
-              <CardTitle className="text-sm font-semibold leading-tight" suppressHydrationWarning>
+              <CardTitle className="text-sm font-semibold leading-tight text-white" suppressHydrationWarning>
                 {t('sidebar.upgradeToPro')}
               </CardTitle>
-              <CardDescription className="text-xs leading-relaxed text-muted-foreground" suppressHydrationWarning>
+              <CardDescription className="text-xs leading-relaxed text-neutral-300" suppressHydrationWarning>
                 {t('sidebar.upgradeDescription')}
               </CardDescription>
             </CardContent>

@@ -2,7 +2,27 @@ import type { TCitationElement } from '@/components/editor/plugins/citation-kit'
 import { createSourceTag } from './citation-converter';
 
 /**
- * Normalisiert Titel - verwendet die gleiche Logik wie im Quellenverzeichnis
+ * Sources XML Generator für Word-Kompatibilität
+ *
+ * Word speichert Literaturquellen im Open XML Bibliography Format.
+ * Diese Datei generiert das XML für word/customXml/item1.xml
+ *
+ * Wichtige Felder für Word:
+ * - Tag: Eindeutiger Identifier (muss mit CITATION-Feld übereinstimmen)
+ * - SourceType: Art der Quelle (Book, JournalArticle, InternetSite, etc.)
+ * - Author: Autorenliste mit Vor- und Nachnamen
+ * - Title: Titel der Quelle
+ * - Year: Erscheinungsjahr
+ * - JournalName/BookTitle/InternetSiteTitle: Container-Titel
+ * - Publisher: Verlag
+ * - City: Erscheinungsort
+ * - Volume/Issue/Pages: Zeitschriften-Details
+ * - URL: Web-Adresse
+ * - DOI/StandardNumber: Identifier
+ */
+
+/**
+ * Normalisiert Titel - extrahiert String aus verschiedenen Formaten
  */
 function normalizeTitle(title: TCitationElement['title']): string {
   if (typeof title === 'string') return title.trim();
@@ -16,34 +36,46 @@ function normalizeTitle(title: TCitationElement['title']): string {
 }
 
 /**
- * Formatiert Zugriffsdatum - verwendet die gleiche Logik wie im Quellenverzeichnis
+ * Formatiert Datum für Word (Jahr, Monat, Tag separat)
  */
-function formatAccessDate(accessedAt?: string, accessParts?: number[]): string | undefined {
+function parseDateParts(
+  accessedAt?: string,
+  accessParts?: number[]
+): { year?: string; month?: string; day?: string } {
   const fromParts = () => {
     if (!accessParts || accessParts.length === 0) return undefined;
     const [y, m, d] = accessParts;
     if (!y) return undefined;
-    return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1));
+    return { year: String(y), month: m ? String(m) : undefined, day: d ? String(d) : undefined };
   };
 
-  const date =
-    accessedAt && !Number.isNaN(new Date(accessedAt).getTime())
-      ? new Date(accessedAt)
-      : fromParts();
+  if (accessParts && accessParts.length > 0) {
+    return fromParts() || {};
+  }
 
-  if (!date || Number.isNaN(date.getTime())) return undefined;
+  if (accessedAt && !Number.isNaN(new Date(accessedAt).getTime())) {
+    const date = new Date(accessedAt);
+    return {
+      year: String(date.getFullYear()),
+      month: String(date.getMonth() + 1),
+      day: String(date.getDate()),
+    };
+  }
 
-  return new Intl.DateTimeFormat('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(date);
+  return {};
 }
 
 /**
- * Erstellt XML für Word Sources-Liste
- * Word benötigt eine Sources-Liste im Custom XML, damit Citation Fields funktionieren
+ * Formatiert Zugriffsdatum als String
  */
+function formatAccessDate(accessedAt?: string, accessParts?: number[]): string | undefined {
+  const parts = parseDateParts(accessedAt, accessParts);
+  if (!parts.year) return undefined;
+
+  const day = parts.day?.padStart(2, '0') || '01';
+  const month = parts.month?.padStart(2, '0') || '01';
+  return `${day}.${month}.${parts.year}`;
+}
 
 export interface WordSource {
   tag: string;
@@ -51,134 +83,233 @@ export interface WordSource {
 }
 
 /**
- * Konvertiert ein Zitat zu Word Source XML
+ * Konvertiert ein Zitat zu vollständigem Word Source XML
+ *
+ * Word Bibliography Source Format (ECMA-376):
+ * Alle Felder müssen im korrekten Format sein, damit Word sie erkennt
  */
 function citationToSourceXML(source: WordSource): string {
   const { tag, citation } = source;
-  
-  // Extrahiere Titel - verwende die gleiche Logik wie im Quellenverzeichnis
+
+  // === Basis-Felder ===
   const title = normalizeTitle(citation.title) || 'Unbenannt';
-  
-  // Extrahiere Jahr - prüfe verschiedene Quellen
-  const year = citation.year || 
-               (citation.issued?.['date-parts']?.[0]?.[0]) || 
-               (citation as any)?.publicationYear ||
-               new Date().getFullYear();
-  
-  // Formatiere Autoren - verwende die gleiche Logik wie im Quellenverzeichnis
+  const sourceType = getSourceType(citation.sourceType);
+
+  // Jahr aus verschiedenen Quellen extrahieren
+  const year = citation.year ||
+               (citation.issued?.['date-parts']?.[0]?.[0]) ||
+               (citation as any)?.publicationYear;
+
+  // === Autoren ===
   const authors = citation.authors || [];
-  const authorNames = authors.length > 0
+  const authorXml = authors.length > 0
     ? authors.map(author => {
-        // Verwende die gleiche Logik wie formatAuthors in bibliography.ts
-        const lastName = author.lastName || 
-                        (author.fullName ? author.fullName.split(' ').slice(-1)[0] : '') || 
+        const lastName = author.lastName ||
+                        (author.fullName ? author.fullName.split(' ').slice(-1)[0] : '') ||
                         '';
-        const firstName = author.firstName || 
-                         (author.fullName ? author.fullName.split(' ').slice(0, -1).join(' ') : '') || 
+        const firstName = author.firstName ||
+                         (author.fullName ? author.fullName.split(' ').slice(0, -1).join(' ') : '') ||
                          '';
-        // Stelle sicher, dass mindestens ein Name vorhanden ist
+        const middle = (author as any).middleName || '';
+
         if (!lastName && !firstName) {
           return '<b:Person><b:Last>O. A.</b:Last></b:Person>';
         }
-        return `<b:Person><b:Last>${escapeXml(lastName || 'O. A.')}</b:Last><b:First>${escapeXml(firstName)}</b:First></b:Person>`;
-      }).join('')
+
+        const personParts = [`<b:Last>${escapeXml(lastName || 'O. A.')}</b:Last>`];
+        if (firstName) personParts.push(`<b:First>${escapeXml(firstName)}</b:First>`);
+        if (middle) personParts.push(`<b:Middle>${escapeXml(middle)}</b:Middle>`);
+
+        return `<b:Person>${personParts.join('')}</b:Person>`;
+      }).join('\n              ')
     : '<b:Person><b:Last>O. A.</b:Last></b:Person>';
 
-  // Extrahiere alle verfügbaren Metadaten - verwende die gleichen Felder wie im Quellenverzeichnis
-  // Prüfe auch alternative Felder und Typen
+  // === Metadaten extrahieren ===
   const journal = (typeof citation.journal === 'string' ? citation.journal : '') ||
                   (typeof citation.containerTitle === 'string' ? citation.containerTitle : '') ||
-                  (typeof (citation as any)?.journal === 'object' && (citation as any).journal?.title ? String((citation as any).journal.title) : '') ||
-                  '';
-  const publisher = (typeof citation.publisher === 'string' ? citation.publisher : '') || '';
+                  (typeof (citation as any)?.journal === 'object' ? String((citation as any).journal?.title || '') : '');
+  const collectionTitle = (typeof citation.collectionTitle === 'string' ? citation.collectionTitle : '');
+  const publisher = (typeof citation.publisher === 'string' ? citation.publisher : '');
+  const city = (typeof (citation as any)?.city === 'string' ? (citation as any).city : '') ||
+               (typeof (citation as any)?.publisherPlace === 'string' ? (citation as any).publisherPlace : '');
   const pages = (typeof citation.pages === 'string' ? citation.pages : '') ||
-                (typeof (citation as any)?.page === 'string' ? (citation as any).page : '') ||
-                '';
-  const volume = (typeof citation.volume === 'string' ? citation.volume : '') || '';
-  const issue = (typeof citation.issue === 'string' ? citation.issue : '') || '';
-  const doi = (typeof citation.doi === 'string' ? citation.doi : '') || '';
+                (typeof (citation as any)?.page === 'string' ? (citation as any).page : '');
+  const volume = (typeof citation.volume === 'string' ? citation.volume : '');
+  const issue = (typeof citation.issue === 'string' ? citation.issue : '');
+  const edition = (typeof (citation as any)?.edition === 'string' ? (citation as any).edition : '');
+  const doi = (typeof citation.doi === 'string' ? citation.doi : '');
   const url = (typeof citation.url === 'string' ? citation.url : '') ||
-              (typeof (citation as any)?.URL === 'string' ? (citation as any).URL : '') ||
-              '';
-  const isbn = (typeof citation.isbn === 'string' ? citation.isbn : '') || '';
-  const issn = (typeof citation.issn === 'string' ? citation.issn : '') || '';
-  const note = (typeof citation.note === 'string' ? citation.note : '') || '';
-  
-  // Zugriffsdatum
-  const accessedDate = formatAccessDate(citation.accessedAt, citation.accessed?.['date-parts']?.[0]);
+              (typeof (citation as any)?.URL === 'string' ? (citation as any).URL : '');
+  const isbn = (typeof citation.isbn === 'string' ? citation.isbn : '');
+  const issn = (typeof citation.issn === 'string' ? citation.issn : '');
+  const note = (typeof citation.note === 'string' ? citation.note : '');
+  const abstract = (typeof (citation as any)?.abstract === 'string' ? (citation as any).abstract : '');
+  const language = (typeof (citation as any)?.language === 'string' ? (citation as any).language : '');
 
-  // Erstelle XML mit allen Feldern
-  // Word benötigt bestimmte Felder für die korrekte Erkennung
-  // WICHTIG: Alle Felder müssen vorhanden sein, auch wenn sie leer sind, damit Word sie erkennt
-  const xmlParts = [
-    `<b:Tag>${escapeXml(tag)}</b:Tag>`,
-    `<b:SourceType>${getSourceType(citation.sourceType)}</b:SourceType>`,
-    `<b:Author>
-        <b:Author>
-          <b:NameList>
-            ${authorNames}
-          </b:NameList>
-        </b:Author>
-      </b:Author>`,
-    `<b:Title>${escapeXml(title)}</b:Title>`,
-    `<b:Year>${year}</b:Year>`,
-  ];
-  
-  // Füge alle Felder hinzu - auch leere, damit Word sie erkennt
-  // Journal/Container Title
-  if (journal) {
-    xmlParts.push(`<b:JournalName>${escapeXml(journal)}</b:JournalName>`);
+  // Zugriffsdatum parsen
+  const accessParts = parseDateParts(citation.accessedAt, citation.accessed?.['date-parts']?.[0]);
+
+  // Erscheinungsdatum parsen
+  const issuedParts = parseDateParts(
+    undefined,
+    citation.issued?.['date-parts']?.[0]
+  );
+
+  // === XML aufbauen ===
+  const xmlParts: string[] = [];
+
+  // Pflichtfelder
+  xmlParts.push(`<b:Tag>${escapeXml(tag)}</b:Tag>`);
+  xmlParts.push(`<b:SourceType>${sourceType}</b:SourceType>`);
+  xmlParts.push(`<b:Guid>{${generateGuid()}}</b:Guid>`);
+
+  // Autoren (verschiedene Rollen unterstützt)
+  xmlParts.push(`<b:Author>
+      <b:Author>
+        <b:NameList>
+          ${authorXml}
+        </b:NameList>
+      </b:Author>
+    </b:Author>`);
+
+  // Titel
+  xmlParts.push(`<b:Title>${escapeXml(title)}</b:Title>`);
+
+  // Jahr
+  if (year) {
+    xmlParts.push(`<b:Year>${year}</b:Year>`);
   }
-  
+
+  // Monat und Tag (wenn vorhanden)
+  if (issuedParts.month) {
+    xmlParts.push(`<b:Month>${issuedParts.month}</b:Month>`);
+  }
+  if (issuedParts.day) {
+    xmlParts.push(`<b:Day>${issuedParts.day}</b:Day>`);
+  }
+
+  // Container-Titel je nach SourceType
+  if (journal) {
+    if (sourceType === 'JournalArticle' || sourceType === 'ArticleInAPeriodical') {
+      xmlParts.push(`<b:JournalName>${escapeXml(journal)}</b:JournalName>`);
+    } else if (sourceType === 'BookSection') {
+      xmlParts.push(`<b:BookTitle>${escapeXml(journal)}</b:BookTitle>`);
+    } else if (sourceType === 'ConferenceProceedings') {
+      xmlParts.push(`<b:ConferenceName>${escapeXml(journal)}</b:ConferenceName>`);
+    } else {
+      xmlParts.push(`<b:JournalName>${escapeXml(journal)}</b:JournalName>`);
+    }
+  }
+
+  // Weitere Container-Titel
+  if (collectionTitle && collectionTitle !== journal) {
+    xmlParts.push(`<b:BookTitle>${escapeXml(collectionTitle)}</b:BookTitle>`);
+  }
+
   // Publisher
   if (publisher) {
     xmlParts.push(`<b:Publisher>${escapeXml(publisher)}</b:Publisher>`);
   }
-  
-  // Pages
-  if (pages) {
-    xmlParts.push(`<b:Pages>${escapeXml(pages)}</b:Pages>`);
+
+  // Stadt
+  if (city) {
+    xmlParts.push(`<b:City>${escapeXml(city)}</b:City>`);
   }
-  
+
   // Volume
   if (volume) {
     xmlParts.push(`<b:Volume>${escapeXml(volume)}</b:Volume>`);
   }
-  
+
   // Issue
   if (issue) {
     xmlParts.push(`<b:Issue>${escapeXml(issue)}</b:Issue>`);
   }
-  
-  // Standard Numbers (DOI, ISBN, ISSN)
-  // Word verwendet StandardNumber für verschiedene Identifier
-  if (doi) {
-    xmlParts.push(`<b:StandardNumber>${escapeXml(doi)}</b:StandardNumber>`);
-  } else if (isbn) {
-    xmlParts.push(`<b:StandardNumber>${escapeXml(isbn)}</b:StandardNumber>`);
-  } else if (issn) {
-    xmlParts.push(`<b:StandardNumber>${escapeXml(issn)}</b:StandardNumber>`);
+
+  // Pages
+  if (pages) {
+    xmlParts.push(`<b:Pages>${escapeXml(pages)}</b:Pages>`);
   }
-  
+
+  // Edition
+  if (edition) {
+    xmlParts.push(`<b:Edition>${escapeXml(edition)}</b:Edition>`);
+  }
+
+  // Standard Numbers - DOI hat Priorität
+  if (doi) {
+    // DOI als StandardNumber
+    xmlParts.push(`<b:StandardNumber>DOI: ${escapeXml(doi)}</b:StandardNumber>`);
+  } else if (isbn) {
+    xmlParts.push(`<b:StandardNumber>ISBN: ${escapeXml(isbn)}</b:StandardNumber>`);
+  } else if (issn) {
+    xmlParts.push(`<b:StandardNumber>ISSN: ${escapeXml(issn)}</b:StandardNumber>`);
+  }
+
   // URL
   if (url) {
     xmlParts.push(`<b:URL>${escapeXml(url)}</b:URL>`);
   }
-  
-  // Accessed Date
-  if (accessedDate) {
-    xmlParts.push(`<b:Accessed>${escapeXml(accessedDate)}</b:Accessed>`);
+
+  // Zugriffsdatum (für Websites wichtig)
+  if (accessParts.year) {
+    xmlParts.push(`<b:YearAccessed>${accessParts.year}</b:YearAccessed>`);
+    if (accessParts.month) {
+      xmlParts.push(`<b:MonthAccessed>${accessParts.month}</b:MonthAccessed>`);
+    }
+    if (accessParts.day) {
+      xmlParts.push(`<b:DayAccessed>${accessParts.day}</b:DayAccessed>`);
+    }
   }
-  
-  // Comments/Note
+
+  // Sprache
+  if (language) {
+    xmlParts.push(`<b:LCID>${getLanguageLCID(language)}</b:LCID>`);
+  }
+
+  // Kommentare/Notizen
   if (note) {
     xmlParts.push(`<b:Comments>${escapeXml(note)}</b:Comments>`);
   }
-  
+
+  // Abstract
+  if (abstract) {
+    xmlParts.push(`<b:Abstract>${escapeXml(abstract)}</b:Abstract>`);
+  }
+
   return `
     <b:Source>
       ${xmlParts.join('\n      ')}
     </b:Source>`;
+}
+
+/**
+ * Generiert eine GUID für Word
+ */
+function generateGuid(): string {
+  const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`.toUpperCase();
+}
+
+/**
+ * Konvertiert Sprachcode zu LCID
+ */
+function getLanguageLCID(language: string): number {
+  const lcidMap: Record<string, number> = {
+    'de': 1031,
+    'en': 1033,
+    'es': 3082,
+    'fr': 1036,
+    'it': 1040,
+    'pt': 2070,
+    'nl': 1043,
+    'ru': 1049,
+    'zh': 2052,
+    'ja': 1041,
+    'ko': 1042,
+  };
+  const code = language.toLowerCase().split('-')[0];
+  return lcidMap[code] || 1033;
 }
 
 /**
@@ -242,21 +373,112 @@ function escapeXml(text: string): string {
 
 /**
  * Konvertiert Source-Type zu Word Source-Type
+ *
+ * Word unterstützt folgende SourceTypes:
+ * - Book, BookSection, JournalArticle, ArticleInAPeriodical
+ * - ConferenceProceedings, Report, InternetSite, DocumentFromInternetSite
+ * - ElectronicSource, Art, SoundRecording, Performance
+ * - Film, Interview, Patent, Case, Misc
  */
 function getSourceType(sourceType?: string): string {
-  const typeMap: Record<string, string> = {
-    'article-journal': 'ArticleInAPeriodical',
-    'article': 'ArticleInAPeriodical',
-    'book': 'Book',
-    'chapter': 'ArticleInAPeriodical',
-    'paper-conference': 'ConferenceProceedings',
-    'conference': 'ConferenceProceedings',
-    'thesis': 'Thesis',
-    'webpage': 'InternetSite',
-    'website': 'InternetSite',
-    'report': 'Report',
-  };
+  if (!sourceType) return 'JournalArticle';
 
-  return typeMap[sourceType || ''] || 'Book';
+  const type = sourceType.toLowerCase().replace(/[-_\s]/g, '');
+
+  // Zeitschriftenartikel
+  if (type.includes('articlejournal') || type === 'article') {
+    return 'JournalArticle';
+  }
+
+  // Bücher
+  if ((type.includes('book') && !type.includes('section') && !type.includes('chapter')) ||
+      type === 'monograph') {
+    return 'Book';
+  }
+
+  // Buchkapitel/Abschnitte
+  if (type.includes('chapter') || type.includes('section') || type.includes('inbook') ||
+      type.includes('incollection') || type === 'booksection') {
+    return 'BookSection';
+  }
+
+  // Konferenzpapiere
+  if (type.includes('conference') || type.includes('proceeding') || type.includes('inproceedings') ||
+      type.includes('paperconference')) {
+    return 'ConferenceProceedings';
+  }
+
+  // Dissertationen und Thesen
+  if (type.includes('thesis') || type.includes('dissertation') || type.includes('phdthesis') ||
+      type.includes('masterthesis')) {
+    return 'Report';
+  }
+
+  // Websites
+  if (type.includes('website') || type.includes('webpage') || type.includes('internet') ||
+      type.includes('online') || type.includes('web')) {
+    return 'InternetSite';
+  }
+
+  // Berichte
+  if (type.includes('report') || type.includes('techreport') || type.includes('technicalreport')) {
+    return 'Report';
+  }
+
+  // Patente
+  if (type.includes('patent')) {
+    return 'Patent';
+  }
+
+  // Zeitungsartikel
+  if (type.includes('newspaper') || type.includes('magazine') || type.includes('periodical') ||
+      type.includes('articleinaperiodical')) {
+    return 'ArticleInAPeriodical';
+  }
+
+  // Elektronische Quellen
+  if (type.includes('electronic') || type.includes('software') || type.includes('dataset')) {
+    return 'ElectronicSource';
+  }
+
+  // Rechtsfälle
+  if (type.includes('case') || type.includes('legal') || type.includes('legislation')) {
+    return 'Case';
+  }
+
+  // Filme/Videos
+  if (type.includes('film') || type.includes('video') || type.includes('movie') ||
+      type.includes('broadcast')) {
+    return 'Film';
+  }
+
+  // Interviews
+  if (type.includes('interview')) {
+    return 'Interview';
+  }
+
+  // Kunst
+  if (type.includes('art') || type.includes('artwork') || type.includes('graphic')) {
+    return 'Art';
+  }
+
+  // Audio
+  if (type.includes('sound') || type.includes('audio') || type.includes('music') ||
+      type.includes('recording') || type.includes('song')) {
+    return 'SoundRecording';
+  }
+
+  // Aufführungen
+  if (type.includes('performance')) {
+    return 'Performance';
+  }
+
+  // Sonstiges
+  if (type.includes('misc') || type.includes('other')) {
+    return 'Misc';
+  }
+
+  // Default: Zeitschriftenartikel
+  return 'JournalArticle';
 }
 

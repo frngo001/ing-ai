@@ -9,9 +9,29 @@ import type { Json } from '@/lib/supabase/types'
 export type ArbeitType = 'bachelor' | 'master' | 'general' | null
 
 export type AgentStep =
+  // Phase 2: Recherche und Konzeption
   | 4  // Literaturrecherche
   | 5  // Forschungsstand analysieren
   | 6  // Methodik entwickeln
+  // Phase 3: Durchführung
+  | 7  // Datenerhebung
+  | 8  // Datenanalyse
+  // Phase 3: Strukturierung
+  | 9  // Gliederung finalisieren
+  // Phase 4: Schreiben
+  | 10 // Einleitung schreiben
+  | 11 // Theoretischer Teil schreiben
+  | 12 // Methodik schreiben
+  | 13 // Ergebnisse schreiben
+  | 14 // Diskussion schreiben
+  | 15 // Fazit schreiben
+  // Phase 5: Finalisierung
+  | 16 // Überarbeitung
+  | 17 // Korrektur
+  | 18 // Zitierweise prüfen
+  | 19 // Formatierung
+  | 20 // Finale Prüfung
+  | 21 // Abgabe
 
 export type StepData = {
   [key: number]: any
@@ -71,7 +91,7 @@ interface BachelorarbeitAgentState {
   agentStateId: string | null
 }
 
-const TOTAL_STEPS = 3 // Phase 2 hat 3 Schritte
+const TOTAL_STEPS = 18 // Schritte 4-21 (alle Phasen)
 
 export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
   persist(
@@ -351,11 +371,12 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
         const state = get()
         if (!state.currentStep) return 0
 
-        // Phase 2: Schritt 4-6
-        const stepProgress = ((state.currentStep - 4) / TOTAL_STEPS) * 100
-        const dataProgress = Object.keys(state.stepData).length > 0 ? 10 : 0
+        // Schritte 4-21: Fortschritt basierend auf aktuellem Schritt
+        // Schritt 4 = 0%, Schritt 21 = 100%
+        const stepProgress = ((state.currentStep - 4) / (TOTAL_STEPS - 1)) * 100
+        const dataProgress = Object.keys(state.stepData).length > 0 ? 5 : 0
 
-        return Math.min(stepProgress + dataProgress, 100)
+        return Math.min(Math.round(stepProgress + dataProgress), 100)
       },
 
       reset: async () => {

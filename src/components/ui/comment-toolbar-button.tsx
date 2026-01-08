@@ -22,6 +22,7 @@ export function CommentToolbarButton() {
         editor.getTransforms(commentPlugin).comment.setDraft();
       }}
       data-plate-prevent-overlay
+      data-onboarding="comment-btn"
       tooltip={tooltipText}
     >
       <MessageSquareTextIcon />

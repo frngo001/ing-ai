@@ -232,6 +232,19 @@ export const BIBLIOGRAPHY_STYLE: IParagraphStyleOptions = {
 };
 
 /**
+ * Hyperlink-Style (für Word-Erkennung)
+ */
+export const HYPERLINK_STYLE = {
+  id: 'Hyperlink',
+  name: 'Hyperlink',
+  basedOn: 'Normal',
+  run: {
+    color: '0563C1', // Standard Word-Hyperlink-Blau
+    underline: {},
+  },
+};
+
+/**
  * Standard-Section-Properties (A4, Portrait)
  */
 export const DEFAULT_SECTION: ISectionPropertiesOptions = {
