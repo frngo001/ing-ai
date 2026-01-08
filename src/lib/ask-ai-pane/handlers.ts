@@ -6,6 +6,8 @@ import { parseStandardStream } from '@/lib/stream-parsers/standard-stream-parser
 import { extractFileContent, extractMultipleFilesContent, type FileContentResult } from '@/lib/file-extraction/extract-file-content'
 import { canExtractClientSide } from '@/lib/file-extraction/file-types'
 import { useProjectStore } from '@/lib/stores/project-store'
+import { uploadChatFile, getChatFilesForMessage, createFileFromChatFile } from '@/lib/supabase/utils/chat-files'
+import { getCurrentUserId } from '@/lib/supabase/utils/auth'
 
 // Helper: Hole Editor-Inhalt als Markdown ueber Event-System
 function getEditorContentAsMarkdown(): Promise<string> {
@@ -230,13 +232,17 @@ export const createHandlers = (deps: HandlerDependencies) => {
     // Leere pendingContext SOFORT, damit er aus dem Input-Feld verschwindet
     setPendingContext([])
 
+    // Speichere die Dateien lokal, bevor sie aus dem State entfernt werden
+    const filesToUpload = files && files.length > 0 ? [...files] : null
+
     // Erstelle User-Nachricht mit Dateien und Kontext (Context nur im context-Feld, NICHT im content)
+    const userMsgId = crypto.randomUUID()
     const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: userMsgId,
       role: "user",
       content: trimmed, // Nur der originale Text, ohne Context
-      files: files && files.length > 0
-        ? files.map((file) => ({
+      files: filesToUpload
+        ? filesToUpload.map((file) => ({
             name: file.name,
             size: file.size,
             type: file.type,
@@ -518,7 +524,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
       
       const isAgentMode = context.agentMode !== 'standard' || apiEndpoint === "/api/ai/agent/websearch"
       
-      if (isAgentMode) {  
+      if (isAgentMode) {
         await parseAgentStream(reader, {
           assistantId,
           setMessages,
@@ -529,6 +535,61 @@ export const createHandlers = (deps: HandlerDependencies) => {
           assistantId,
           setMessages,
         })
+      }
+
+      // Nach erfolgreichem Streaming: Dateien in Supabase Storage speichern
+      if (filesToUpload && filesToUpload.length > 0) {
+        try {
+          const userId = await getCurrentUserId()
+          if (userId) {
+            const uploadedFiles = await Promise.all(
+              filesToUpload.map(async (file, index) => {
+                try {
+                  // Finde den extrahierten Inhalt für diese Datei
+                  const extractedContent = fileContents.find(fc => fc.name === file.name)?.content
+
+                  const result = await uploadChatFile(file, {
+                    userId,
+                    conversationId,
+                    messageId: userMsgId,
+                    projectId: currentProjectId || undefined,
+                    extractedContent,
+                  })
+
+                  return {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    id: result.id,
+                    url: result.url,
+                    extractedContent,
+                  }
+                } catch (uploadError) {
+                  console.error(`Fehler beim Hochladen von ${file.name}:`, uploadError)
+                  // Behalte die Original-Metadaten ohne ID/URL
+                  return {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                  }
+                }
+              })
+            )
+
+            // Aktualisiere die User-Nachricht mit den Datei-IDs
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === userMsgId
+                  ? { ...m, files: uploadedFiles }
+                  : m
+              )
+            )
+            console.log('[HANDLER] Dateien erfolgreich in Supabase gespeichert:', uploadedFiles.length)
+          }
+        } catch (uploadError) {
+          console.error('[HANDLER] Fehler beim Speichern der Dateien:', uploadError)
+          // Kein Throw - Nachricht wurde bereits erfolgreich gesendet
+        }
       }
     } catch (error) {
       if ((error as any)?.name !== "AbortError") {
@@ -757,7 +818,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
     }
   }
 
-  const handleEditLastMessage = () => {
+  const handleEditLastMessage = async () => {
     if (isSending) return
 
     // Finde die letzte User-Nachricht
@@ -781,10 +842,58 @@ export const createHandlers = (deps: HandlerDependencies) => {
       setPendingContext(lastUserMessage.context)
     }
 
-    // Informiere den Benutzer über angehängte Dateien, die erneut angehängt werden müssen
+    // Lade Dateien aus Supabase Storage und stelle sie wieder her
     if (lastUserMessage.files && lastUserMessage.files.length > 0) {
-      const fileNames = lastUserMessage.files.map((f) => f.name).join(', ')
-      toast.error(`Dateien erneut anhängen: ${fileNames}`)
+      const filesWithIds = lastUserMessage.files.filter(f => f.id && f.url)
+
+      if (filesWithIds.length > 0) {
+        try {
+          // Lade die Dateien parallel herunter
+          const restoredFiles = await Promise.all(
+            filesWithIds.map(async (fileInfo) => {
+              try {
+                const file = await createFileFromChatFile({
+                  id: fileInfo.id!,
+                  url: fileInfo.url!,
+                  path: '',
+                  name: fileInfo.name,
+                  size: fileInfo.size,
+                  type: fileInfo.type,
+                })
+                return file
+              } catch (error) {
+                console.error(`Fehler beim Laden von ${fileInfo.name}:`, error)
+                return null
+              }
+            })
+          )
+
+          // Filtere erfolgreich geladene Dateien
+          const validFiles = restoredFiles.filter((f): f is File => f !== null)
+
+          if (validFiles.length > 0) {
+            setFiles(validFiles)
+            if (toast.success) {
+              toast.success(`${validFiles.length} Datei(en) wiederhergestellt`)
+            }
+          }
+
+          // Informiere über nicht wiederhergestellte Dateien
+          const failedFiles = lastUserMessage.files.filter(f => !f.id || !f.url)
+          if (failedFiles.length > 0) {
+            const failedNames = failedFiles.map(f => f.name).join(', ')
+            toast.error(`Diese Dateien konnten nicht wiederhergestellt werden: ${failedNames}`)
+          }
+        } catch (error) {
+          console.error('Fehler beim Wiederherstellen der Dateien:', error)
+          const fileNames = lastUserMessage.files.map((f) => f.name).join(', ')
+          toast.error(`Dateien erneut anhängen: ${fileNames}`)
+        }
+      } else {
+        // Keine Dateien mit IDs - alte Nachricht vor dem Update
+        const fileNames = lastUserMessage.files.map((f) => f.name).join(', ')
+        toast.error(`Dateien erneut anhängen: ${fileNames}`)
+      }
     }
 
     // Fokussiere das Input-Feld

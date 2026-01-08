@@ -83,20 +83,22 @@ export function OnboardingSidebarButton() {
           <Button
             size="sm"
             onClick={resumeOnboarding}
-            variant="secondary"
-            className="flex-1 gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+            variant="default"
+            className="group/btn relative flex-1 gap-2 overflow-hidden font-medium shadow-sm transition-all hover:shadow-md dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
           >
-            {hasStarted ? (
-              <>
-                <PlayCircle className="w-3.5 h-3.5" />
-                {t('onboarding.continue')}
-              </>
-            ) : (
-              <>
-                <GraduationCap className="w-3.5 h-3.5" />
-                {t('onboarding.start')}
-              </>
-            )}
+            <span className="relative z-10 flex items-center gap-2">
+              {hasStarted ? (
+                <>
+                  <PlayCircle className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
+                  {t('onboarding.continue')}
+                </>
+              ) : (
+                <>
+                  <GraduationCap className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
+                  {t('onboarding.start')}
+                </>
+              )}
+            </span>
           </Button>
         </div>
       </div>

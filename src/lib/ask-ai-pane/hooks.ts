@@ -1,5 +1,7 @@
-import { useMemo } from "react"
+import { useMemo, useEffect, useState } from "react"
 import type { Mentionable, StoredConversation } from './types'
+import { getChatFilesForUser, type ChatFileUploadResult } from '@/lib/supabase/utils/chat-files'
+import { getCurrentUserId } from '@/lib/supabase/utils/auth'
 
 // Extended citation type that includes content/abstract
 export type CitationForMention = {
@@ -12,7 +14,17 @@ export type CitationForMention = {
   doi?: string
 }
 
-export const useMentionables = (citations: CitationForMention[]): Mentionable[] => {
+// File type for mentions
+export type FileForMention = {
+  id: string
+  name: string
+  type: string
+  size: number
+  url: string
+  extractedContent?: string
+}
+
+export const useMentionables = (citations: CitationForMention[], files?: FileForMention[]): Mentionable[] => {
   return useMemo<Mentionable[]>(() => {
     const citationItems: Mentionable[] =
       citations?.map((c) => {
@@ -52,6 +64,26 @@ export const useMentionables = (citations: CitationForMention[]): Mentionable[] 
         }
       }) || []
 
+    // Dateien als Mentionables
+    const fileItems: Mentionable[] =
+      files?.map((f) => {
+        const fileSizeKB = (f.size / 1024).toFixed(1)
+        return {
+          id: `file-${f.id}`,
+          label: f.name,
+          value: f.name,
+          hint: `${fileSizeKB} KB`,
+          type: "file" as const,
+          content: f.extractedContent || `Datei: ${f.name} (${f.type})`,
+          metadata: {
+            fileId: f.id,
+            fileUrl: f.url,
+            fileType: f.type,
+            fileSize: f.size,
+          },
+        }
+      }) || []
+
     return [
       {
         id: "doc",
@@ -61,9 +93,42 @@ export const useMentionables = (citations: CitationForMention[]): Mentionable[] 
         type: "document",
         content: "Der Nutzer möchte auf den aktuellen Editor-Inhalt Bezug nehmen.",
       },
+      ...fileItems,
       ...citationItems,
     ]
-  }, [citations])
+  }, [citations, files])
+}
+
+/**
+ * Hook zum Laden der Chat-Dateien eines Benutzers für Mentions
+ */
+export const useChatFiles = (): FileForMention[] => {
+  const [files, setFiles] = useState<FileForMention[]>([])
+
+  useEffect(() => {
+    const loadFiles = async () => {
+      try {
+        const userId = await getCurrentUserId()
+        if (!userId) return
+
+        const chatFiles = await getChatFilesForUser(userId, 30)
+        setFiles(chatFiles.map((f) => ({
+          id: f.id,
+          name: f.name,
+          type: f.type,
+          size: f.size,
+          url: f.url,
+          extractedContent: f.extractedContent,
+        })))
+      } catch (error) {
+        console.error('Fehler beim Laden der Chat-Dateien:', error)
+      }
+    }
+
+    loadFiles()
+  }, [])
+
+  return files
 }
 
 export const useMentionQuery = (input: string): string | null => {

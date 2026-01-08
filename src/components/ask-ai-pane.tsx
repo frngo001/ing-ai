@@ -12,7 +12,6 @@ import {
   FileText,
   History,
   MessageSquareQuote,
-  MessageSquarePlus,
   PanelLeftClose,
   Plus,
   Globe,
@@ -21,10 +20,6 @@ import {
   X,
   Bookmark,
   Trash2,
-  BookOpen,
-  Sparkles,
-  Command,
-  AtSign,
 } from "lucide-react"
 import { PlateMarkdown } from "@/components/ui/plate-markdown"
 import { ChatSelectionToolbar } from "./ask-ai-pane/chat-selection-toolbar"
@@ -100,6 +95,7 @@ import {
   filterMentionables,
   StreamingShimmer,
   useMentionables,
+  useChatFiles,
   useMentionQuery,
   useSlashQuery,
   useFilteredHistory,
@@ -219,7 +215,8 @@ export function AskAiPane({
     [messages]
   )
 
-  const mentionables = useMentionables(citations || [])
+  const chatFiles = useChatFiles()
+  const mentionables = useMentionables(citations || [], chatFiles)
   const mentionQuery = useMentionQuery(input)
   const slashQuery = useSlashQuery(input)
   const filteredHistory = useFilteredHistory(history, historyQuery)
@@ -821,70 +818,38 @@ export function AskAiPane({
                 </div>
               )}
               {mentionQuery !== null && filteredMentionables.length > 0 && (
-                <div className="absolute bottom-[100%] left-0 z-20 mb-1.5 sm:mb-2 w-full rounded-xl border border-border/40 bg-popover/95 backdrop-blur-sm shadow-xl">
-                  {/* Header */}
-                  <div className="px-3 py-2 border-b border-border/40 flex items-center gap-2">
-                    <AtSign className="h-3.5 w-3.5 text-primary" />
+                <div className="absolute bottom-[100%] left-0 z-20 mb-1.5 sm:mb-2 w-full rounded-lg border border-border/60 bg-popover shadow-lg">
+                  <div className="px-3 py-2 border-b border-border/40">
                     <span className="text-xs font-medium text-muted-foreground">Kontext hinzufügen</span>
                   </div>
-                  <div className="max-h-52 overflow-auto py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  <div className="max-h-48 overflow-auto py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {filteredMentionables.map((item) => (
                       <button
                         type="button"
                         key={item.id}
-                        className="w-full px-3 py-2.5 text-left hover:bg-primary/5 transition-colors flex items-start gap-3 group"
+                        className="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
                         onClick={() => handleMentionSelect(item)}
                       >
-                        <div className={cn(
-                          "mt-0.5 p-1.5 rounded-md transition-colors",
-                          item.type === 'citation'
-                            ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50"
-                            : item.type === 'document'
-                            ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50"
-                            : "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50"
-                        )}>
-                          {item.type === 'citation' ? (
-                            <BookOpen className="h-3.5 w-3.5" />
-                          ) : item.type === 'document' ? (
-                            <FileText className="h-3.5 w-3.5" />
-                          ) : (
-                            <Sparkles className="h-3.5 w-3.5" />
-                          )}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-sm truncate">{item.label}</span>
+                          <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                            {item.type === 'citation' ? 'Zitat' : item.type === 'document' ? 'Dokument' : 'Prompt'}
+                          </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm truncate">{item.label}</span>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "h-4 px-1.5 text-[9px] font-normal border-0",
-                                item.type === 'citation'
-                                  ? "bg-blue-100/50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                                  : item.type === 'document'
-                                  ? "bg-emerald-100/50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
-                                  : "bg-purple-100/50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
-                              )}
-                            >
-                              {item.type === 'citation' ? 'Zitat' : item.type === 'document' ? 'Dokument' : 'Prompt'}
-                            </Badge>
-                          </div>
-                          {item.hint && (
-                            <div className="text-muted-foreground text-xs mt-0.5 truncate">{item.hint}</div>
-                          )}
-                        </div>
+                        {item.hint && (
+                          <div className="text-muted-foreground text-xs mt-0.5 truncate">{item.hint}</div>
+                        )}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
               {mentionQuery === null && slashQuery !== null && (
-                <div className="absolute bottom-[100%] left-0 z-20 mb-1.5 sm:mb-2 w-full rounded-xl border border-border/40 bg-popover/95 backdrop-blur-sm shadow-xl">
-                  {/* Header */}
-                  <div className="px-3 py-2 border-b border-border/40 flex items-center gap-2">
-                    <Command className="h-3.5 w-3.5 text-primary" />
+                <div className="absolute bottom-[100%] left-0 z-20 mb-1.5 sm:mb-2 w-full rounded-lg border border-border/60 bg-popover shadow-lg">
+                  <div className="px-3 py-2 border-b border-border/40">
                     <span className="text-xs font-medium text-muted-foreground">Schnellbefehle</span>
                   </div>
-                  <div className="max-h-52 overflow-auto py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  <div className="max-h-48 overflow-auto py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {slashCommands
                       .filter((cmd) =>
                         slashQuery
@@ -896,31 +861,22 @@ export function AskAiPane({
                         <button
                           type="button"
                           key={cmd.id}
-                          className="w-full px-3 py-2.5 text-left hover:bg-primary/5 transition-colors flex items-start gap-3 group"
+                          className="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
                           onClick={() => handleSlashInsert(cmd)}
                         >
-                          <div className="mt-0.5 p-1.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/50 transition-colors">
-                            <Sparkles className="h-3.5 w-3.5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{cmd.label}</span>
-                            </div>
-                            <div className="text-muted-foreground text-xs mt-0.5 line-clamp-2">
-                              {cmd.content}
-                            </div>
+                          <div className="font-medium text-sm truncate">{cmd.label}</div>
+                          <div className="text-muted-foreground text-xs mt-0.5 line-clamp-2">
+                            {cmd.content}
                           </div>
                         </button>
                       ))}
                   </div>
-                  {/* Footer with create button */}
-                  <div className="border-t border-border/40 p-2 bg-muted/30">
+                  <div className="border-t border-border/40 p-2">
                     <button
                       type="button"
-                      className="w-full rounded-lg bg-primary/10 text-primary px-3 py-2 text-xs font-medium hover:bg-primary/20 transition-colors flex items-center justify-center gap-2"
+                      className="w-full rounded-md border border-border/60 bg-muted/50 text-foreground px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
                       onClick={handleSlashCreate}
                     >
-                      <Plus className="h-3.5 w-3.5" />
                       {translations.saveCommand}
                     </button>
                   </div>

@@ -22,15 +22,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardTitle,
-} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { SparklesCore } from "@/components/ui/sparkles"
 import { createClient } from "@/lib/supabase/client"
 
 // Entfernt: defaultUser wird nicht mehr verwendet, da nur authentifizierte Benutzer die App nutzen können
@@ -196,8 +188,8 @@ export function AppSidebar({
           </div>
           <Button
             size="sm"
-            variant="secondary"
-            className="w-full justify-center gap-2 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+            variant="default"
+            className="w-full justify-center gap-2 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
             onClick={handleCreateDocument}
             aria-label={t('sidebar.newDocument')}
             data-onboarding="new-document-btn"
@@ -219,33 +211,6 @@ export function AppSidebar({
         </SidebarContent>
         <SidebarFooter className="gap-3">
           <OnboardingSidebarButton />
-          <Card className="relative hidden min-h-[190px] overflow-hidden lg:flex bg-black dark:bg-black text-card-foreground mx-1 border border-border/60 shadow-sm group-data-[state=collapsed]:hidden">
-            <div className="absolute inset-0 z-0">
-              <SparklesCore
-                id="sidebar-sparkles"
-                background="transparent"
-                minSize={0.4}
-                maxSize={1.2}
-                particleDensity={100}
-                className="w-full h-full"
-                particleColor="#FFFFFF"
-                speed={0.8}
-              />
-            </div>
-            <CardContent className="relative z-20 space-y-3 px-4 pt-4">
-              <CardTitle className="text-sm font-semibold leading-tight text-white" suppressHydrationWarning>
-                {t('sidebar.upgradeToPro')}
-              </CardTitle>
-              <CardDescription className="text-xs leading-relaxed text-neutral-300" suppressHydrationWarning>
-                {t('sidebar.upgradeDescription')}
-              </CardDescription>
-            </CardContent>
-            <CardFooter className="relative z-20 px-4 pb-4 pt-1">
-              <Button className="w-full text-sm" variant="default" suppressHydrationWarning>
-                {t('sidebar.upgradeNow')}
-              </Button>
-            </CardFooter>
-          </Card>
           {user && <NavUser user={user} onOpenSettings={onOpenSettings} />}
         </SidebarFooter>
         <SidebarRail />

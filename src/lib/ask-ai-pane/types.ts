@@ -45,6 +45,12 @@ export type ChatMessage = {
     name: string
     size: number
     type: string
+    /** Datei-ID in der Datenbank (für Wiederherstellung) */
+    id?: string
+    /** Öffentliche URL der Datei */
+    url?: string
+    /** Extrahierter Textinhalt */
+    extractedContent?: string
   }>
   context?: MessageContext[]
 }
@@ -70,16 +76,21 @@ export type Mentionable = {
   label: string
   value: string
   hint?: string
-  type?: "citation" | "prompt" | "document"
+  type?: "citation" | "prompt" | "document" | "file"
   // Actual content to send as context to the AI
   content?: string
-  // Additional metadata for citations
+  // Additional metadata for citations and files
   metadata?: {
     authors?: string[]
     year?: number | string
     source?: string
     doi?: string
     abstract?: string
+    // File metadata
+    fileId?: string
+    fileUrl?: string
+    fileType?: string
+    fileSize?: number
   }
 }
 

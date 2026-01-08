@@ -112,7 +112,7 @@ export function ProjectSwitcher() {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" disabled>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-neutral-700">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground dark:bg-neutral-700 dark:text-white">
               <Loader2 className="size-4 animate-spin" />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -137,7 +137,7 @@ export function ProjectSwitcher() {
               onClick={() => setCreateDialogOpen(true)}
               className="hover:bg-muted/80 dark:hover:bg-neutral-800"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-neutral-700">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground dark:bg-neutral-700 dark:text-white">
                 <Plus className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -191,8 +191,8 @@ export function ProjectSwitcher() {
               <Button
                 onClick={handleCreateProject}
                 disabled={!newProjectName.trim() || isCreating}
-                variant="secondary"
-                className="bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                variant="default"
+                className="dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
               >
                 {isCreating ? (
                   <>
@@ -220,7 +220,7 @@ export function ProjectSwitcher() {
                 size="lg"
                 className="data-[state=open]:bg-muted/90 data-[state=open]:text-sidebar-foreground hover:bg-muted/80 dark:data-[state=open]:bg-neutral-850 dark:hover:bg-neutral-800"
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-neutral-700">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground dark:bg-neutral-700 dark:text-white">
                   <FolderOpen className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

@@ -16,8 +16,11 @@ import type { TEquationElement } from '@platejs/utils';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
 import { Plate, type PlateEditor, usePlateEditor, usePluginOption, usePlateState } from 'platejs/react';
 
+import { FilePenLine, Plus } from 'lucide-react';
 import { createEditorKit } from '@/components/editor/editor-kit';
+import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/use-language';
+import { devError, devWarn, devLog } from '@/lib/utils/logger';
 import { SourceSearchDialog, type Source } from '@/components/citations/source-search-dialog';
 import { EditorBibliography } from '@/components/ui/editor-bibliography';
 import { CommentTocSidebar } from '@/components/ui/comment-toc';
@@ -45,11 +48,13 @@ export function PlateEditor({
   showCommentToc = true,
   showSuggestionToc = true,
   storageId = 'default',
+  hasDocuments = false,
 }: {
   showToc?: boolean;
   showCommentToc?: boolean;
   showSuggestionToc?: boolean;
   storageId?: string;
+  hasDocuments?: boolean;
 }) {
   const { t, language } = useLanguage();
   const hasHydrated = React.useRef(false);
@@ -129,7 +134,7 @@ export function PlateEditor({
           editor.setOption(discussionPlugin, 'users', updatedUsers);
         }
       } catch (error) {
-        console.error('Fehler beim Laden des aktuellen Users:', error);
+        devError('Fehler beim Laden des aktuellen Users:', error);
       }
     };
 
@@ -236,7 +241,7 @@ export function PlateEditor({
             }
           }
         } catch (error) {
-          console.error('Fehler beim Laden des Dokuments aus Supabase:', error);
+          devError('Fehler beim Laden des Dokuments aus Supabase:', error);
           // Fallback auf localStorage
           const localData = loadPersistedState(storageKeys);
           content = localData.content;
@@ -297,7 +302,7 @@ export function PlateEditor({
           persistState(storageKeys, latestContentRef.current, null, storageId);
         }, SAVE_DEBOUNCE_MS);
       } catch (error) {
-        console.error('Editorinhalt konnte nicht gespeichert werden.', error);
+        devError('Editorinhalt konnte nicht gespeichert werden.', error);
       }
     },
     [editor, storageKeys, storageId]
@@ -381,7 +386,38 @@ export function PlateEditor({
         <div className="flex-1 flex flex-col h-full overflow-hidden">
           <div className="flex h-full flex-col min-h-0">
             <ConditionalFixedToolbar toolbarRef={topToolbarRef} />
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden relative">
+              {/* Overlay wenn kein Dokument erstellt wurde und keine Dokumente existieren */}
+              {storageId === 'empty' && hasDocuments === false && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                  <div className="flex flex-col items-center text-center space-y-4 p-8 max-w-md">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted border-2 border-border">
+                      <FilePenLine className="size-8 text-muted-foreground" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {t('documents.welcomeDialogTitle')}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {t('documents.welcomeDialogDescription')}
+                      </p>
+                    </div>
+                    <Button
+                      variant="default"
+                      size="default"
+                      className="mt-2"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(new Event('documents:create-new'));
+                        }
+                      }}
+                    >
+                      <Plus className="size-4 mr-2" />
+                      {t('documents.newDocument')}
+                    </Button>
+                  </div>
+                </div>
+              )}
               <EditorContainer
                 className="overflow-y-auto h-full"
                 style={toolbarVars}
@@ -524,7 +560,7 @@ function getInitialValue(storageId: string): Value {
     }
   } catch (error) {
     // Bei Fehlern verwende DEFAULT_VALUE
-    console.warn('[PLATE EDITOR] Fehler beim synchronen Laden des initialen Contents:', error);
+    devWarn('[PLATE EDITOR] Fehler beim synchronen Laden des initialen Contents:', error);
   }
 
   return DEFAULT_VALUE;
@@ -1370,7 +1406,7 @@ function DiscussionPersistence({
         persistState(storageKeys, null, latestDiscussions.current, storageId);
       }, SAVE_DEBOUNCE_MS);
     } catch (error) {
-      console.error('Diskussionen konnten nicht gespeichert werden.', error);
+      devError('Diskussionen konnten nicht gespeichert werden.', error);
     }
   }, [discussions, storageKeys, discussionsSaveTimeout, storageId]);
 
@@ -1406,7 +1442,7 @@ function loadPersistedState(keys: {
     try {
       return revive(JSON.parse(raw));
     } catch (error) {
-      console.error('Persistierte Editor-Daten konnten nicht geladen werden.', error);
+      devError('Persistierte Editor-Daten konnten nicht geladen werden.', error);
       return null;
     }
   };
@@ -1505,11 +1541,11 @@ async function persistState(
         } catch (error: any) {
           // Spezifische Fehlerbehandlung für verschiedene Fehlertypen
           if (error?.code === 'PGRST116') {
-            console.warn('[PLATE EDITOR] Dokument existiert nicht in der Datenbank. Wird beim nächsten Speichern erstellt.');
+            devWarn('[PLATE EDITOR] Dokument existiert nicht in der Datenbank. Wird beim nächsten Speichern erstellt.');
           } else if (error?.code === '23505') {
             // Unique Constraint Violation - Dokument existiert bereits
             // Versuche erneut mit Update (kann bei Race Conditions auftreten)
-            console.warn('[PLATE EDITOR] Dokument existiert bereits. Versuche Update erneut...');
+            devWarn('[PLATE EDITOR] Dokument existiert bereits. Versuche Update erneut...');
             try {
               const userId = await getCurrentUserId();
               if (userId) {
@@ -1523,15 +1559,15 @@ async function persistState(
                   },
                   userId
                 );
-                console.log('[PLATE EDITOR] Dokument erfolgreich aktualisiert nach Retry.');
+                devLog('[PLATE EDITOR] Dokument erfolgreich aktualisiert nach Retry.');
               }
             } catch (retryError) {
-              console.error('[PLATE EDITOR] Fehler beim Retry des Speicherns:', retryError);
+              devError('[PLATE EDITOR] Fehler beim Retry des Speicherns:', retryError);
             }
           } else if (error?.message?.includes('406')) {
-            console.error('[PLATE EDITOR] 406 Not Acceptable - Möglicherweise RLS-Problem oder fehlerhafter Accept-Header:', error);
+            devError('[PLATE EDITOR] 406 Not Acceptable - Möglicherweise RLS-Problem oder fehlerhafter Accept-Header:', error);
           } else {
-            console.error('[PLATE EDITOR] Fehler beim Speichern des Dokuments in Supabase:', error);
+            devError('[PLATE EDITOR] Fehler beim Speichern des Dokuments in Supabase:', error);
           }
           // Weiterhin localStorage verwenden als Fallback
         }
@@ -1540,7 +1576,7 @@ async function persistState(
     
     window.dispatchEvent(new Event('documents:reload'));
   } catch (error) {
-    console.error('Persistierte Editor-Daten konnten nicht gespeichert werden.', error);
+    devError('Persistierte Editor-Daten konnten nicht gespeichert werden.', error);
   }
 }
 
@@ -1559,7 +1595,7 @@ function syncCommentPathMap(editor: PlateEditor) {
       editor.setOption(commentPlugin, 'uniquePathMap', map);
     }
   } catch (error) {
-    console.error('Kommentarpfade konnten nicht synchronisiert werden.', error);
+    devError('Kommentarpfade konnten nicht synchronisiert werden.', error);
   }
 }
 
@@ -1578,6 +1614,6 @@ function syncSuggestionPathMap(editor: PlateEditor) {
       editor.setOption(suggestionPlugin, 'uniquePathMap', map);
     }
   } catch (error) {
-    console.error('Vorschlagspfade konnten nicht synchronisiert werden.', error);
+    devError('Vorschlagspfade konnten nicht synchronisiert werden.', error);
   }
 }

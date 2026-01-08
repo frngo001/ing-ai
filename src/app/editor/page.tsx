@@ -24,6 +24,9 @@ import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as documentsUtils from "@/lib/supabase/utils/documents"
 import { extractTextFromNode } from "@/lib/supabase/utils/document-title"
 import { useIsAuthenticated } from "@/hooks/use-auth"
+import { devError } from "@/lib/utils/logger"
+import { useLanguage } from "@/lib/i18n/use-language"
+import * as documentCountCache from "@/lib/supabase/utils/document-count-cache"
 type Pane = "documents" | "library" | "askAi"
 
 export default function Page() {
@@ -93,6 +96,18 @@ function PageContent({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const checkDocumentsExist = useCallback(async (projectId?: string | null): Promise<boolean> => {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const cached = documentCountCache.hasDocuments(userId, projectId)
+    if (cached !== null) {
+      return cached
+    }
+
+    return false
+  }, [])
+
   const findLatestDocId = useCallback(async (projectId?: string | null): Promise<string | null> => {
     if (typeof window === "undefined") return null
 
@@ -109,17 +124,14 @@ function PageContent({
     let latestId: string | null = null
     let latestTs = -Infinity
 
-    // Prüfe zuerst Supabase-Dokumente, wenn User eingeloggt
     try {
       const userId = await getCurrentUserId()
       if (userId) {
-        // Filtere nach projectId wenn vorhanden
         const docs = await documentsUtils.getDocuments(userId, projectId || undefined)
         for (const doc of docs) {
           if (seen.has(doc.id)) continue
           seen.add(doc.id)
 
-          // Prüfe ob Content vorhanden ist
           if (doc.content && hasContentText({ content: doc.content })) {
             const ts = doc.updated_at ? new Date(doc.updated_at).getTime() : 0
             if (ts >= latestTs) {
@@ -130,10 +142,9 @@ function PageContent({
         }
       }
     } catch (error) {
-      console.error("Fehler beim Laden der Dokumente aus Supabase:", error)
+      devError("Fehler beim Laden der Dokumente aus Supabase:", error)
     }
 
-    // Prüfe dann localStorage (nur wenn kein projectId-Filter aktiv)
     if (!projectId) {
       for (let i = 0; i < window.localStorage.length; i += 1) {
         const key = window.localStorage.key(i)
@@ -155,7 +166,6 @@ function PageContent({
           const hydrated = parsedState ?? (parsedContent ? { content: parsedContent } : null)
           if (!hydrated) continue
 
-          // Prüfe ob Content vorhanden ist
           if (!hasContentText(hydrated)) continue
 
           const ts = hydrated?.updatedAt ? new Date(hydrated.updatedAt).getTime() : 0
@@ -173,6 +183,7 @@ function PageContent({
     return latestId
   }, [])
   const [storageId, setStorageId] = useState<string | null>(null)
+  const [hasDocuments, setHasDocuments] = useState<boolean | null>(null)
   const hasDecidedInitialDoc = useRef(false)
 
   const showDocuments = panes.documents
@@ -217,7 +228,7 @@ function PageContent({
   // Initialer Dokument-Load (wartet auf Project-Hydration)
   useEffect(() => {
     if (hasDecidedInitialDoc.current) return
-    if (!isProjectHydrated) return // Warte auf Project-Store Hydration
+    if (!isProjectHydrated) return
 
     hasDecidedInitialDoc.current = true
     previousProjectIdRef.current = currentProjectId
@@ -225,70 +236,78 @@ function PageContent({
     const paramId = searchParams.get("doc")
     if (paramId) {
       setStorageId(paramId)
-      // Kein Event beim ersten Mount - DocumentsPane lädt bereits beim Mount
+      checkDocumentsExist(currentProjectId).then((exists) => setHasDocuments(exists))
       return
     }
 
-    // findLatestDocId ist jetzt async - verwendet currentProjectId
-    findLatestDocId(currentProjectId).then((latestExisting) => {
+    Promise.all([
+      findLatestDocId(currentProjectId),
+      checkDocumentsExist(currentProjectId)
+    ]).then(([latestExisting, exists]) => {
+      setHasDocuments(exists)
       if (latestExisting) {
         setStorageId(latestExisting)
         router.replace(`/editor?doc=${encodeURIComponent(latestExisting)}`)
-        // Event wird durch den nachfolgenden useEffect ausgelöst, wenn searchParams sich ändert
-        return
+      } else {
+        setStorageId(null)
       }
-
-      const newId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `doc-${Date.now()}`
-      setStorageId(newId)
-      router.replace(`/editor?doc=${encodeURIComponent(newId)}`)
-      // Event wird durch den nachfolgenden useEffect ausgelöst, wenn searchParams sich ändert
     })
-  }, [findLatestDocId, router, searchParams, currentProjectId, isProjectHydrated])
+  }, [findLatestDocId, checkDocumentsExist, router, searchParams, currentProjectId, isProjectHydrated])
 
   // Projektwechsel: Lade letztes Dokument des neuen Projekts
   useEffect(() => {
-    // Ignoriere initialen Mount
     if (!hasDecidedInitialDoc.current) return
     if (!isProjectHydrated) return
 
-    // Prüfe ob sich das Projekt tatsächlich geändert hat
     if (previousProjectIdRef.current === currentProjectId) return
     previousProjectIdRef.current = currentProjectId
 
-    // Lade das letzte Dokument des neuen Projekts
-    findLatestDocId(currentProjectId).then((latestDocId) => {
+    const updateForProject = async () => {
+      const userId = await getCurrentUserId()
+      if (userId) {
+        const cached = documentCountCache.hasDocuments(userId, currentProjectId)
+        if (cached !== null) {
+          setHasDocuments(cached)
+        }
+      }
+
+      const [latestDocId, exists] = await Promise.all([
+        findLatestDocId(currentProjectId),
+        checkDocumentsExist(currentProjectId)
+      ])
+      
+      setHasDocuments(exists)
       if (latestDocId) {
         setStorageId(latestDocId)
         router.replace(`/editor?doc=${encodeURIComponent(latestDocId)}`)
         window.dispatchEvent(new Event("documents:reload"))
       } else {
-        // Kein Dokument im Projekt - erstelle neues
-        const newId =
-          typeof crypto !== "undefined" && "randomUUID" in crypto
-            ? crypto.randomUUID()
-            : `doc-${Date.now()}`
-        setStorageId(newId)
-        router.replace(`/editor?doc=${encodeURIComponent(newId)}`)
+        setStorageId(null)
+        router.replace("/editor")
         window.dispatchEvent(new Event("documents:reload"))
       }
-    })
-  }, [currentProjectId, isProjectHydrated, findLatestDocId, router])
+    }
+
+    updateForProject()
+  }, [currentProjectId, isProjectHydrated, findLatestDocId, checkDocumentsExist, router])
 
   useEffect(() => {
     const paramId = searchParams.get("doc")
     if (paramId && paramId !== storageId) {
       setStorageId(paramId)
-      // Event nur auslösen wenn sich der doc Parameter wirklich ändert
-      // Debounce wird in DocumentsPane gehandhabt
       window.dispatchEvent(new Event("documents:reload"))
     } else if (!paramId && storageId) {
-      // Wenn doc Parameter entfernt wurde, setze storageId auf null um Editor zu leeren
       setStorageId(null)
+      const updateHasDocuments = async () => {
+        const userId = await getCurrentUserId()
+        if (userId) {
+          const cached = documentCountCache.hasDocuments(userId, currentProjectId)
+          setHasDocuments(cached ?? false)
+        }
+      }
+      updateHasDocuments()
     }
-  }, [searchParams, storageId])
+  }, [searchParams, storageId, currentProjectId])
 
   const togglePane = (pane: Pane) =>
     setPanes((prev) => {
@@ -311,87 +330,36 @@ function PageContent({
     })
 
   const createNewDocument = async () => {
+    const newId = crypto.randomUUID()
     const userId = await getCurrentUserId()
 
-    if (!userId) {
-      // Fallback auf localStorage wenn kein User eingeloggt
-      const newId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `doc-${Date.now()}`
-
-      if (typeof window !== "undefined") {
-        const payload = {
-          content: [{ type: "p", children: [{ text: "" }] }],
-          discussions: [],
-          updatedAt: new Date().toISOString(),
-        }
-        try {
-          window.localStorage.setItem(`plate-editor-state-${newId}`, JSON.stringify(payload))
-          window.dispatchEvent(new Event("documents:reload"))
-        } catch {
-          // ignore storage failures for now
-        }
-      }
-
-      setStorageId(newId)
-      setPanes({
-        documents: true,
-        library: false,
-        askAi: false,
-      })
-      router.push(`/editor?doc=${encodeURIComponent(newId)}`)
-      return
+    setStorageId(newId)
+    setHasDocuments(true)
+    
+    if (userId) {
+      documentCountCache.incrementDocumentCount(userId, currentProjectId ?? undefined)
     }
+    
+    router.push(`/editor?doc=${encodeURIComponent(newId)}`)
 
     try {
-      // Erstelle Dokument in Supabase mit project_id
-      const newDoc = await documentsUtils.createDocument({
-        user_id: userId,
-        title: 'Unbenanntes Dokument',
-        content: [{ type: "p", children: [{ text: "" }] }],
-        document_type: "essay",
-        word_count: 0,
-        project_id: currentProjectId ?? undefined,
-      })
-
-      setStorageId(newDoc.id)
-      setPanes({
-        documents: true,
-        library: false,
-        askAi: false,
-      })
-      router.push(`/editor?doc=${encodeURIComponent(newDoc.id)}`)
-      window.dispatchEvent(new Event("documents:reload"))
-    } catch (error) {
-      console.error("Fehler beim Erstellen des Dokuments:", error)
-      // Fallback auf localStorage
-      const newId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `doc-${Date.now()}`
-
-      if (typeof window !== "undefined") {
-        const payload = {
+      if (userId) {
+        await documentsUtils.createDocument({
+          id: newId,
+          user_id: userId,
+          title: t('documents.untitledDocument'),
           content: [{ type: "p", children: [{ text: "" }] }],
-          discussions: [],
-          updatedAt: new Date().toISOString(),
-        }
-        try {
-          window.localStorage.setItem(`plate-editor-state-${newId}`, JSON.stringify(payload))
-          window.dispatchEvent(new Event("documents:reload"))
-        } catch {
-          // ignore
-        }
+          document_type: "essay",
+          word_count: 0,
+          project_id: currentProjectId ?? undefined,
+        })
+        window.dispatchEvent(new Event("documents:reload"))
       }
-
-      setStorageId(newId)
-      setPanes({
-        documents: true,
-        library: false,
-        askAi: false,
-      })
-      router.push(`/editor?doc=${encodeURIComponent(newId)}`)
+    } catch (error) {
+      devError("Fehler beim Erstellen des Dokuments:", error)
+      if (userId) {
+        documentCountCache.decrementDocumentCount(userId, currentProjectId ?? undefined)
+      }
     }
   }
 
@@ -409,6 +377,7 @@ function PageContent({
     })
 
   const { setOpen: setSidebarOpen } = useSidebar()
+  const { t } = useLanguage()
 
   // Event-Handler für das Öffnen des Dokumentpanes
   useEffect(() => {
@@ -427,6 +396,41 @@ function PageContent({
       }
     }
   }, [setPanes])
+
+  // Event-Handler für das Erstellen eines neuen Dokuments
+  useEffect(() => {
+    const handleCreateNewDocument = () => {
+      createNewDocument()
+    }
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("documents:create-new", handleCreateNewDocument)
+      return () => {
+        window.removeEventListener("documents:create-new", handleCreateNewDocument)
+      }
+    }
+  }, [createNewDocument])
+
+  // Event-Handler für Dokument-Reload - aktualisiere hasDocuments
+  useEffect(() => {
+    const handleDocumentsLoaded = async (event: Event) => {
+      const customEvent = event as CustomEvent<{ count: number }>
+      const count = customEvent.detail.count
+      setHasDocuments(count > 0)
+      
+      const userId = await getCurrentUserId()
+      if (userId) {
+        documentCountCache.setDocumentCount(userId, count, currentProjectId ?? undefined)
+      }
+    }
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("documents:loaded", handleDocumentsLoaded)
+      return () => {
+        window.removeEventListener("documents:loaded", handleDocumentsLoaded)
+      }
+    }
+  }, [currentProjectId])
 
   // Onboarding actions für den OnboardingController
   const onboardingActions: OnboardingActions = useMemo(() => ({
@@ -507,17 +511,18 @@ function PageContent({
                   className={`h-screen overflow-hidden bg-background ${sidePaneOpen ? "border-l border-border/70" : ""
                     }`}
                 >
-                  <div className="flex h-full flex-col overflow-hidden">
-                    <div className="flex-1 overflow-auto">
-                      <PlateEditor
-                        key={storageId || 'empty'}
-                        storageId={storageId || 'empty'}
-                        showToc={tocVisible}
-                        showCommentToc={commentTocVisible}
-                        showSuggestionToc={suggestionTocVisible}
-                      />
+                    <div className="flex h-full flex-col overflow-hidden">
+                      <div className="flex-1 overflow-auto">
+                        <PlateEditor
+                          key={storageId || 'empty'}
+                          storageId={storageId || 'empty'}
+                          showToc={tocVisible}
+                          showCommentToc={commentTocVisible}
+                          showSuggestionToc={suggestionTocVisible}
+                          hasDocuments={hasDocuments ?? false}
+                        />
+                      </div>
                     </div>
-                  </div>
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
