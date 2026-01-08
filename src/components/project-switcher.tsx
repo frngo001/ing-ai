@@ -29,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useProjectStore } from "@/lib/stores/project-store"
+import { useOnboardingStore } from "@/lib/stores/onboarding-store"
 import { useLanguage } from "@/lib/i18n/use-language"
 
 export function ProjectSwitcher() {
@@ -47,6 +48,18 @@ export function ProjectSwitcher() {
   const [newProjectName, setNewProjectName] = React.useState("")
   const [newProjectDescription, setNewProjectDescription] = React.useState("")
   const [isCreating, setIsCreating] = React.useState(false)
+
+  // Onboarding integration
+  const { isOpen: isOnboardingOpen, getCurrentSubStep } = useOnboardingStore()
+  const currentSubStep = getCurrentSubStep()
+  const shouldForceOpen = isOnboardingOpen && currentSubStep?.id === 'open-projects'
+
+  // Effect to open dropdown when onboarding reaches project step
+  React.useEffect(() => {
+    if (shouldForceOpen && !dropdownOpen) {
+      setDropdownOpen(true)
+    }
+  }, [shouldForceOpen, dropdownOpen])
 
   const currentProject = React.useMemo(
     () => projects.find((p) => p.id === currentProjectId),
@@ -219,6 +232,7 @@ export function ProjectSwitcher() {
               <SidebarMenuButton
                 size="lg"
                 className="data-[state=open]:bg-muted/90 data-[state=open]:text-sidebar-foreground hover:bg-muted/80 dark:data-[state=open]:bg-neutral-850 dark:hover:bg-neutral-800"
+                data-onboarding="projects-menu"
               >
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground dark:bg-neutral-700 dark:text-white">
                   <FolderOpen className="size-4" />
@@ -237,6 +251,7 @@ export function ProjectSwitcher() {
               align="start"
               side={isMobile ? "bottom" : "right"}
               sideOffset={4}
+              data-onboarding="projects-dropdown"
             >
               <DropdownMenuLabel className="text-muted-foreground text-xs">
                 {t('projects.yourProjects')}
@@ -268,6 +283,7 @@ export function ProjectSwitcher() {
                   setDropdownOpen(false)
                   setCreateDialogOpen(true)
                 }}
+                data-onboarding="new-project-btn"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <Plus className="size-4" />

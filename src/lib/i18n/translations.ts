@@ -95,6 +95,10 @@ export const translations = {
                     title: 'Welcome to Ing AI!',
                     description: 'Your AI-powered writing assistant for academic excellence. Let us show you around and help you get started with creating professional documents.',
                 },
+                createProject: {
+                    title: 'Create a Project',
+                    description: 'Organize your work into projects. Each project can contain multiple documents and keeps your research separate and organized.',
+                },
                 createDocument: {
                     title: 'Create Your First Document',
                     description: 'Start by creating a new document. Click the "New Document" button in the sidebar or use the keyboard shortcut to begin writing.',
@@ -138,6 +142,7 @@ export const translations = {
             },
             tips: {
                 welcome: 'Click "Next" to learn about key features|You can skip this guide anytime|Access this guide later from the sidebar',
+                createProject: 'Projects keep your work organized|Switch between projects easily|Each project has its own library',
                 createDocument: 'Use Cmd/Ctrl + N for quick document creation|Documents auto-save as you type|Organize documents with titles',
                 editorBasics: 'Cmd/Ctrl + B for bold, I for italic|Use # for headings in markdown mode|Drag and drop to rearrange sections',
                 aiAssistant: 'Select text and press Cmd/Ctrl + J|Ask for writing improvements|Get explanations for complex topics',
@@ -158,6 +163,21 @@ export const translations = {
                     sidebar: {
                         title: 'Your Sidebar',
                         description: 'The sidebar is your navigation hub. Here you can access documents, library, AI chat, and settings.',
+                    },
+                },
+                createProject: {
+                    intro: {
+                        title: 'Project Organization',
+                        description: 'Projects help you organize your work. Click on the projects menu to see and manage your projects.',
+                    },
+                    dropdown: {
+                        title: 'Switch Between Projects',
+                        description: 'Here you can see all your projects. Click on any project to switch to it. Each project keeps its documents and library separate.',
+                        tip: 'Projects organize your research|Each project has its own library|Switch instantly between projects',
+                    },
+                    button: {
+                        title: 'Create New Project',
+                        description: 'Click "New Project" to create a new project for your thesis, research, or any other writing project.',
                     },
                 },
                 createDocument: {
@@ -1932,6 +1952,10 @@ export const translations = {
                     title: '¡Bienvenido a Ing AI!',
                     description: 'Tu asistente de escritura con IA para la excelencia académica. Déjanos mostrarte las funciones clave y ayudarte a crear documentos profesionales.',
                 },
+                createProject: {
+                    title: 'Crea un Proyecto',
+                    description: 'Organiza tu trabajo en proyectos. Cada proyecto puede contener múltiples documentos y mantiene tu investigación separada y organizada.',
+                },
                 createDocument: {
                     title: 'Crea tu Primer Documento',
                     description: 'Comienza creando un nuevo documento. Haz clic en "Nuevo Documento" en la barra lateral o usa el atajo de teclado.',
@@ -1975,6 +1999,7 @@ export const translations = {
             },
             tips: {
                 welcome: 'Haz clic en "Siguiente" para conocer las funciones clave|Puedes omitir esta guía en cualquier momento|Accede a esta guía después desde la barra lateral',
+                createProject: 'Los proyectos mantienen tu trabajo organizado|Cambia entre proyectos fácilmente|Cada proyecto tiene su propia biblioteca',
                 createDocument: 'Usa Cmd/Ctrl + N para crear documentos rápidamente|Los documentos se guardan automáticamente|Organiza documentos con títulos',
                 editorBasics: 'Cmd/Ctrl + B para negrita, I para cursiva|Usa # para encabezados en modo markdown|Arrastra y suelta para reorganizar secciones',
                 aiAssistant: 'Selecciona texto y presiona Cmd/Ctrl + J|Pide mejoras de escritura|Obtén explicaciones de temas complejos',
@@ -1995,6 +2020,21 @@ export const translations = {
                     sidebar: {
                         title: 'Tu Barra Lateral',
                         description: 'La barra lateral es tu centro de navegación. Aquí puedes acceder a documentos, biblioteca, chat de IA y ajustes.',
+                    },
+                },
+                createProject: {
+                    intro: {
+                        title: 'Organización de Proyectos',
+                        description: 'Los proyectos te ayudan a organizar tu trabajo. Haz clic en el menú de proyectos para ver y gestionar tus proyectos.',
+                    },
+                    dropdown: {
+                        title: 'Cambiar Entre Proyectos',
+                        description: 'Aquí puedes ver todos tus proyectos. Haz clic en cualquier proyecto para cambiar a él. Cada proyecto mantiene sus documentos y biblioteca separados.',
+                        tip: 'Los proyectos organizan tu investigación|Cada proyecto tiene su propia biblioteca|Cambia instantáneamente entre proyectos',
+                    },
+                    button: {
+                        title: 'Crear Nuevo Proyecto',
+                        description: 'Haz clic en "Nuevo Proyecto" para crear un proyecto para tu tesis, investigación u otro proyecto de escritura.',
                     },
                 },
                 createDocument: {
@@ -3769,6 +3809,10 @@ export const translations = {
                     title: 'Bienvenue sur Ing AI !',
                     description: 'Votre assistant d\'écriture IA pour l\'excellence académique. Laissez-nous vous présenter les fonctionnalités clés et vous aider à créer des documents professionnels.',
                 },
+                createProject: {
+                    title: 'Créez un Projet',
+                    description: 'Organisez votre travail en projets. Chaque projet peut contenir plusieurs documents et garde vos recherches séparées et organisées.',
+                },
                 createDocument: {
                     title: 'Créez votre premier document',
                     description: 'Commencez par créer un nouveau document. Cliquez sur "Nouveau Document" dans la barre latérale ou utilisez le raccourci clavier.',
@@ -3812,6 +3856,7 @@ export const translations = {
             },
             tips: {
                 welcome: 'Cliquez sur "Suivant" pour découvrir les fonctionnalités clés|Vous pouvez passer ce guide à tout moment|Accédez à ce guide plus tard depuis la barre latérale',
+                createProject: 'Les projets gardent votre travail organisé|Basculez facilement entre les projets|Chaque projet a sa propre bibliothèque',
                 createDocument: 'Utilisez Cmd/Ctrl + N pour créer rapidement|Les documents s\'enregistrent automatiquement|Organisez les documents avec des titres',
                 editorBasics: 'Cmd/Ctrl + B pour gras, I pour italique|Utilisez # pour les titres en mode markdown|Glissez-déposez pour réorganiser les sections',
                 aiAssistant: 'Sélectionnez du texte et appuyez sur Cmd/Ctrl + J|Demandez des améliorations d\'écriture|Obtenez des explications sur des sujets complexes',
@@ -3832,6 +3877,21 @@ export const translations = {
                     sidebar: {
                         title: 'Votre Barre Latérale',
                         description: 'La barre latérale est votre centre de navigation. Ici, vous pouvez accéder aux documents, à la bibliothèque, au chat IA et aux paramètres.',
+                    },
+                },
+                createProject: {
+                    intro: {
+                        title: 'Organisation des Projets',
+                        description: 'Les projets vous aident à organiser votre travail. Cliquez sur le menu des projets pour voir et gérer vos projets.',
+                    },
+                    dropdown: {
+                        title: 'Basculer Entre les Projets',
+                        description: 'Ici vous pouvez voir tous vos projets. Cliquez sur n\'importe quel projet pour y accéder. Chaque projet garde ses documents et sa bibliothèque séparés.',
+                        tip: 'Les projets organisent vos recherches|Chaque projet a sa propre bibliothèque|Basculez instantanément entre les projets',
+                    },
+                    button: {
+                        title: 'Créer un Nouveau Projet',
+                        description: 'Cliquez sur "Nouveau Projet" pour créer un projet pour votre thèse, recherche ou autre projet d\'écriture.',
                     },
                 },
                 createDocument: {
@@ -5606,6 +5666,10 @@ export const translations = {
                     title: 'Willkommen bei Ing AI!',
                     description: 'Dein KI-gestützter Schreibassistent für akademische Exzellenz. Lass uns dir die wichtigsten Funktionen zeigen und dir beim Erstellen professioneller Dokumente helfen.',
                 },
+                createProject: {
+                    title: 'Erstelle ein Projekt',
+                    description: 'Organisiere deine Arbeit in Projekten. Jedes Projekt kann mehrere Dokumente enthalten und hält deine Recherchen getrennt und organisiert.',
+                },
                 createDocument: {
                     title: 'Erstelle dein erstes Dokument',
                     description: 'Beginne mit einem neuen Dokument. Klicke auf "Neues Dokument" in der Sidebar oder nutze die Tastenkombination zum Schreiben.',
@@ -5649,6 +5713,7 @@ export const translations = {
             },
             tips: {
                 welcome: 'Klicke "Weiter" um die wichtigsten Funktionen kennenzulernen|Du kannst diesen Guide jederzeit überspringen|Greife später über die Sidebar auf diesen Guide zu',
+                createProject: 'Projekte halten deine Arbeit organisiert|Wechsle einfach zwischen Projekten|Jedes Projekt hat eine eigene Bibliothek',
                 createDocument: 'Nutze Cmd/Ctrl + N für schnelle Dokumenterstellung|Dokumente speichern automatisch|Organisiere Dokumente mit Titeln',
                 editorBasics: 'Cmd/Ctrl + B für fett, I für kursiv|Nutze # für Überschriften im Markdown-Modus|Ziehe Abschnitte per Drag & Drop um',
                 aiAssistant: 'Markiere Text und drücke Cmd/Ctrl + J|Bitte um Schreibverbesserungen|Erhalte Erklärungen zu komplexen Themen',
@@ -5669,6 +5734,21 @@ export const translations = {
                     sidebar: {
                         title: 'Deine Sidebar',
                         description: 'Die Sidebar ist dein Navigationszentrum. Hier kannst du auf Dokumente, Bibliothek, KI-Chat und Einstellungen zugreifen.',
+                    },
+                },
+                createProject: {
+                    intro: {
+                        title: 'Projekt-Organisation',
+                        description: 'Projekte helfen dir, deine Arbeit zu organisieren. Klicke auf das Projektmenü, um deine Projekte zu sehen und zu verwalten.',
+                    },
+                    dropdown: {
+                        title: 'Zwischen Projekten Wechseln',
+                        description: 'Hier siehst du alle deine Projekte. Klicke auf ein Projekt, um dorthin zu wechseln. Jedes Projekt hält seine Dokumente und Bibliothek getrennt.',
+                        tip: 'Projekte organisieren deine Recherche|Jedes Projekt hat seine eigene Bibliothek|Wechsle sofort zwischen Projekten',
+                    },
+                    button: {
+                        title: 'Neues Projekt Erstellen',
+                        description: 'Klicke auf "Neues Projekt", um ein neues Projekt für deine Thesis, Recherche oder andere Schreibprojekte zu erstellen.',
                     },
                 },
                 createDocument: {

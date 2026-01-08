@@ -104,7 +104,7 @@ export function OnboardingTooltip({
           break
         case 'top':
           x = targetRect.x + targetRect.width / 2 - TOOLTIP_WIDTH / 2
-          const topGap = subStep?.id === 'export-formats' || subStep?.id === 'import-formats' 
+          const topGap = subStep?.id === 'export-formats' || subStep?.id === 'import-formats' || subStep?.id === 'open-mode' || subStep?.id === 'suggestions'
             ? TOOLTIP_GAP + 120 
             : TOOLTIP_GAP
           y = targetRect.y - tooltipHeight - topGap
@@ -134,12 +134,21 @@ export function OnboardingTooltip({
       const result = tryPosition(pos)
       if (result.fits) {
         // For top position with export/import formats, ensure larger gap is maintained
-        if (pos === 'top' && (subStep?.id === 'export-formats' || subStep?.id === 'import-formats')) {
-          const topGap = TOOLTIP_GAP + 120
+        if (pos === 'top' && (subStep?.id === 'open-export' || subStep?.id === 'open-import' || subStep?.id === 'open-mode')) {
+          const topGap = TOOLTIP_GAP + 100
           const idealY = targetRect.y - tooltipHeight - topGap
           if (idealY >= VIEWPORT_PADDING) {
             return { x: result.x, y: idealY, actualPosition: pos }
           }
+        }
+        // For left position with mode dropdown, ensure tooltip stays in viewport
+        if (pos === 'left' && (subStep?.id === 'open-mode')) {
+          // Clamp Y position to keep tooltip fully visible
+          const clampedY = Math.max(
+            VIEWPORT_PADDING,
+            Math.min(result.y, viewportHeight - tooltipHeight - VIEWPORT_PADDING)
+          )
+          return { x: result.x, y: clampedY, actualPosition: pos }
         }
         return { x: result.x, y: result.y, actualPosition: pos }
       }
@@ -152,7 +161,7 @@ export function OnboardingTooltip({
     
     // For top position with export/import formats, maintain larger gap
     let finalY = result.y
-    if (preferredPosition === 'top' && (subStep?.id === 'export-formats' || subStep?.id === 'import-formats')) {
+    if (preferredPosition === 'top' && (subStep?.id === 'export-formats' || subStep?.id === 'import-formats' || subStep?.id === 'open-mode' || subStep?.id === 'suggestions')) {
       const topGap = TOOLTIP_GAP + 120
       const idealY = targetRect.y - tooltipHeight - topGap
       // Use ideal position if it fits, otherwise clamp but try to maintain gap

@@ -1,5 +1,6 @@
 import {
   Sparkles,
+  FolderPlus,
   FileText,
   PenTool,
   Bot,
@@ -41,7 +42,43 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
     ],
   },
 
-  // Step 2: Create Document
+  // Step 2: Create Project
+  {
+    id: 'create-project',
+    titleKey: 'onboarding.steps.createProject.title',
+    icon: FolderPlus,
+    color: 'from-purple-500/20 to-indigo-500/20',
+    accentColor: 'text-purple-600 dark:text-purple-400',
+    subSteps: [
+      {
+        id: 'project-intro',
+        target: '[data-onboarding="projects-menu"]',
+        position: 'right',
+        titleKey: 'onboarding.subSteps.createProject.intro.title',
+        descriptionKey: 'onboarding.subSteps.createProject.intro.description',
+        highlightPadding: 8,
+      },
+      {
+        id: 'open-projects',
+        target: '[data-onboarding="projects-dropdown"]',
+        position: 'right',
+        titleKey: 'onboarding.subSteps.createProject.dropdown.title',
+        descriptionKey: 'onboarding.subSteps.createProject.dropdown.description',
+        tipKey: 'onboarding.subSteps.createProject.dropdown.tip',
+        waitForElement: true,
+      },
+      {
+        id: 'project-create-btn',
+        target: '[data-onboarding="new-project-btn"]',
+        position: 'right',
+        titleKey: 'onboarding.subSteps.createProject.button.title',
+        descriptionKey: 'onboarding.subSteps.createProject.button.description',
+        highlightPadding: 8,
+      },
+    ],
+  },
+
+  // Step 3: Create Document
   {
     id: 'create-document',
     titleKey: 'onboarding.steps.createDocument.title',
@@ -169,7 +206,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
       {
         id: 'suggestions',
         target: '[data-onboarding="mode-btn"]',
-        position: 'left',
+        position: 'top',
         titleKey: 'onboarding.subSteps.editorBasics.suggestions.title',
         descriptionKey: 'onboarding.subSteps.editorBasics.suggestions.description',
       },
@@ -177,7 +214,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
       {
         id: 'open-mode',
         target: '[data-onboarding="mode-dropdown"]',
-        position: 'left',
+        position: 'top',
         titleKey: 'onboarding.subSteps.editorBasics.suggestionsModes.title',
         descriptionKey: 'onboarding.subSteps.editorBasics.suggestionsModes.description',
         tipKey: 'onboarding.subSteps.editorBasics.suggestionsModes.tip',
