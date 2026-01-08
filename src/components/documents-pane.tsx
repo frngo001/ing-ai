@@ -255,9 +255,11 @@ export function DocumentsPane({
       })
 
       documentCountCache.incrementDocumentCount(userId, currentProjectId ?? undefined)
-      
+
       router.push(`/editor?doc=${encodeURIComponent(newDoc.id)}`)
       loadFromSupabase()
+      // Focus the editor on the first block after creating a new document
+      window.dispatchEvent(new Event("editor:focus-start"))
     } catch (error) {
       devError("Fehler beim Erstellen des Dokuments:", error)
     }

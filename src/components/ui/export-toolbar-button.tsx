@@ -12,6 +12,7 @@ import { serializeHtml } from 'platejs/static';
 import { exportToDocxAndDownload } from '@/lib/export/docx-exporter';
 import { useCitationStore } from '@/lib/stores/citation-store';
 import { extractTextFromNode, extractTitleFromContent } from '@/lib/supabase/utils/document-title';
+import { useOnboardingStore } from '@/lib/stores/onboarding-store';
 
 import {
   DropdownMenu,
@@ -51,6 +52,26 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
   const [open, setOpen] = React.useState(false);
   const [isExporting, setIsExporting] = React.useState(false);
   const { t, language } = useLanguage();
+
+  // Check if onboarding is showing export step
+  const { isOpen: isOnboardingOpen, getCurrentSubStep } = useOnboardingStore();
+  const currentSubStep = getCurrentSubStep();
+  const shouldForceOpen = isOnboardingOpen && currentSubStep?.id === 'open-export';
+
+  // Effect to open dropdown when onboarding reaches export step
+  React.useEffect(() => {
+    if (shouldForceOpen && !open) {
+      setOpen(true);
+    }
+  }, [shouldForceOpen, open]);
+
+  // Handle open change - prevent closing during onboarding
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (shouldForceOpen && !newOpen) {
+      return; // Prevent closing during onboarding
+    }
+    setOpen(newOpen);
+  }, [shouldForceOpen]);
 
   const tooltipText = React.useMemo(() => t('toolbar.export'), [t, language]);
   const exportingText = React.useMemo(() => t('toolbar.exporting'), [t, language]);
@@ -407,14 +428,14 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown data-onboarding="export-btn">
         <ArrowDownToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="start" data-onboarding="export-dropdown">
         <DropdownMenuGroup>
           <DropdownMenuItem onSelect={exportToDocx} disabled={isExporting}>
             {isExporting ? exportingText : exportAsDocxText}

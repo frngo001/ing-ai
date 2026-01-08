@@ -9,6 +9,7 @@ import {
 } from '@radix-ui/react-dropdown-menu';
 import { CheckIcon, EyeIcon, PencilLineIcon, PenIcon } from 'lucide-react';
 import { useEditorRef, usePlateState, usePluginOption } from 'platejs/react';
+import { useOnboardingStore } from '@/lib/stores/onboarding-store';
 
 import {
   DropdownMenu,
@@ -26,6 +27,26 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
   const [readOnly, setReadOnly] = usePlateState('readOnly');
   const [open, setOpen] = React.useState(false);
   const { t, language } = useLanguage();
+
+  // Check if onboarding is showing suggestions step
+  const { isOpen: isOnboardingOpen, getCurrentSubStep } = useOnboardingStore();
+  const currentSubStep = getCurrentSubStep();
+  const shouldForceOpen = isOnboardingOpen && currentSubStep?.id === 'open-mode';
+
+  // Effect to open dropdown when onboarding reaches mode step
+  React.useEffect(() => {
+    if (shouldForceOpen && !open) {
+      setOpen(true);
+    }
+  }, [shouldForceOpen, open]);
+
+  // Handle open change - prevent closing during onboarding
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (shouldForceOpen && !newOpen) {
+      return; // Prevent closing during onboarding
+    }
+    setOpen(newOpen);
+  }, [shouldForceOpen]);
 
   const isSuggesting = usePluginOption(SuggestionPlugin, 'isSuggesting');
 
@@ -53,15 +74,15 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
   const tooltipText = React.useMemo(() => t('toolbar.mode'), [t, language]);
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown data-onboarding="mode-btn">
           {item[value].icon}
           <span className="hidden lg:inline">{item[value].label}</span>
         </ToolbarButton>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="min-w-[180px]" align="start">
+      <DropdownMenuContent className="min-w-[180px]" align="start" data-onboarding="mode-dropdown">
         <DropdownMenuRadioGroup
           value={value}
           onValueChange={(newValue) => {

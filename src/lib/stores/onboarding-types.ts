@@ -33,6 +33,18 @@ export interface OnboardingActions {
   createNewDocument: () => void
   openSettings: (nav?: string) => void
   closeSettings: () => void
+  // Editor simulation actions for interactive onboarding
+  typeInEditor: (text: string, delay?: number) => Promise<void>
+  showSlashMenu: () => Promise<void>
+  closeSlashMenu: () => Promise<void>
+  insertHeading: (level: 1 | 2 | 3, text: string) => Promise<void>
+  insertCitation: () => Promise<void>
+  openAskAiWithQuestion: (question: string) => Promise<void>
+  selectTextRange: (start: number, end: number) => Promise<void>
+  clearEditorSelection: () => void
+  moveBlockUp: () => Promise<void>
+  moveBlockDown: () => Promise<void>
+  focusEditor: () => void
 }
 
 export interface TargetRect {

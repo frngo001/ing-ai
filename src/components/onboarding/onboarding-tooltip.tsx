@@ -14,8 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  CheckCircle2,
-  GraduationCap,
+  CheckCircle2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -105,7 +104,10 @@ export function OnboardingTooltip({
           break
         case 'top':
           x = targetRect.x + targetRect.width / 2 - TOOLTIP_WIDTH / 2
-          y = targetRect.y - tooltipHeight - TOOLTIP_GAP
+          const topGap = subStep?.id === 'export-formats' || subStep?.id === 'import-formats' 
+            ? TOOLTIP_GAP + 120 
+            : TOOLTIP_GAP
+          y = targetRect.y - tooltipHeight - topGap
           break
       }
 
@@ -131,6 +133,14 @@ export function OnboardingTooltip({
     for (const pos of positions) {
       const result = tryPosition(pos)
       if (result.fits) {
+        // For top position with export/import formats, ensure larger gap is maintained
+        if (pos === 'top' && (subStep?.id === 'export-formats' || subStep?.id === 'import-formats')) {
+          const topGap = TOOLTIP_GAP + 120
+          const idealY = targetRect.y - tooltipHeight - topGap
+          if (idealY >= VIEWPORT_PADDING) {
+            return { x: result.x, y: idealY, actualPosition: pos }
+          }
+        }
         return { x: result.x, y: result.y, actualPosition: pos }
       }
     }
@@ -139,15 +149,34 @@ export function OnboardingTooltip({
     const result = tryPosition(
       preferredPosition as Exclude<TooltipPosition, 'center'>
     )
+    
+    // For top position with export/import formats, maintain larger gap
+    let finalY = result.y
+    if (preferredPosition === 'top' && (subStep?.id === 'export-formats' || subStep?.id === 'import-formats')) {
+      const topGap = TOOLTIP_GAP + 120
+      const idealY = targetRect.y - tooltipHeight - topGap
+      // Use ideal position if it fits, otherwise clamp but try to maintain gap
+      if (idealY >= VIEWPORT_PADDING) {
+        finalY = idealY
+      } else {
+        // Clamp but try to maintain as much gap as possible
+        finalY = Math.max(VIEWPORT_PADDING, idealY)
+      }
+      // Ensure tooltip doesn't go below viewport
+      finalY = Math.min(finalY, viewportHeight - tooltipHeight - VIEWPORT_PADDING)
+    } else {
+      finalY = Math.max(
+        VIEWPORT_PADDING,
+        Math.min(result.y, viewportHeight - tooltipHeight - VIEWPORT_PADDING)
+      )
+    }
+    
     return {
       x: Math.max(
         VIEWPORT_PADDING,
         Math.min(result.x, viewportWidth - TOOLTIP_WIDTH - VIEWPORT_PADDING)
       ),
-      y: Math.max(
-        VIEWPORT_PADDING,
-        Math.min(result.y, viewportHeight - tooltipHeight - VIEWPORT_PADDING)
-      ),
+      y: finalY,
       actualPosition: preferredPosition,
     }
   }, [targetRect, subStep, tooltipHeight])

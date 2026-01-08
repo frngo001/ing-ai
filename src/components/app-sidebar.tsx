@@ -189,7 +189,7 @@ export function AppSidebar({
           <Button
             size="sm"
             variant="default"
-            className="w-full justify-center gap-2 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+            className="w-full justify-center gap-2"
             onClick={handleCreateDocument}
             aria-label={t('sidebar.newDocument')}
             data-onboarding="new-document-btn"

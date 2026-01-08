@@ -192,6 +192,34 @@ export function PlateEditor({
     };
   }, [editor]);
 
+  // Focus editor at start when creating a new document
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !editor) return;
+
+    const handleFocusStart = () => {
+      // Small delay to ensure the editor is fully mounted and ready
+      setTimeout(() => {
+        try {
+          // Select the start of the first block
+          editor.tf.select({
+            anchor: { path: [0, 0], offset: 0 },
+            focus: { path: [0, 0], offset: 0 },
+          });
+          // Focus the editor
+          editor.tf.focus();
+        } catch (error) {
+          devWarn('[PLATE EDITOR] Could not focus editor:', error);
+        }
+      }, 100);
+    };
+
+    window.addEventListener('editor:focus-start', handleFocusStart);
+
+    return () => {
+      window.removeEventListener('editor:focus-start', handleFocusStart);
+    };
+  }, [editor]);
+
   React.useEffect(() => {
     if (typeof window === 'undefined' || !editor) return;
 
@@ -421,8 +449,9 @@ export function PlateEditor({
               <EditorContainer
                 className="overflow-y-auto h-full"
                 style={toolbarVars}
+                data-onboarding="editor-container"
               >
-                <Editor variant="demo" className="overflow-y-auto"/>
+                <Editor variant="demo" className="overflow-y-auto" data-onboarding="editor-content"/>
                 <EditorBibliography />
               </EditorContainer>
             </div>

@@ -335,11 +335,11 @@ function PageContent({
 
     setStorageId(newId)
     setHasDocuments(true)
-    
+
     if (userId) {
       documentCountCache.incrementDocumentCount(userId, currentProjectId ?? undefined)
     }
-    
+
     router.push(`/editor?doc=${encodeURIComponent(newId)}`)
 
     try {
@@ -354,6 +354,8 @@ function PageContent({
           project_id: currentProjectId ?? undefined,
         })
         window.dispatchEvent(new Event("documents:reload"))
+        // Focus the editor on the first block after creating a new document
+        window.dispatchEvent(new Event("editor:focus-start"))
       }
     } catch (error) {
       devError("Fehler beim Erstellen des Dokuments:", error)
@@ -432,6 +434,24 @@ function PageContent({
     }
   }, [currentProjectId])
 
+  // Helper function to get editor instance
+  const getEditorInstance = useCallback((): Promise<any> => {
+    return new Promise((resolve) => {
+      const event = new CustomEvent('get-editor-instance', {
+        detail: { callback: (editor: any) => resolve(editor) }
+      })
+      window.dispatchEvent(event)
+    })
+  }, [])
+
+  // Helper function to simulate typing with delay
+  const simulateTyping = useCallback(async (editor: any, text: string, delay = 30) => {
+    for (const char of text) {
+      editor.tf.insertText(char)
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }, [])
+
   // Onboarding actions für den OnboardingController
   const onboardingActions: OnboardingActions = useMemo(() => ({
     openSidebar: () => setSidebarOpen(true),
@@ -445,7 +465,167 @@ function PageContent({
       setSettingsOpen(true)
     },
     closeSettings: () => setSettingsOpen(false),
-  }), [setSidebarOpen, setSettingsInitialNav, setSettingsOpen])
+
+    // Editor simulation actions for interactive onboarding
+    typeInEditor: async (text: string, delay = 30) => {
+      const editor = await getEditorInstance()
+      if (!editor) return
+
+      // Focus editor first
+      window.dispatchEvent(new Event('editor:focus-start'))
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Type character by character for visual effect
+      await simulateTyping(editor, text, delay)
+    },
+
+    showSlashMenu: async () => {
+      const editor = await getEditorInstance()
+      if (!editor) return
+
+      // Focus editor first
+      window.dispatchEvent(new Event('editor:focus-start'))
+      await new Promise(resolve => setTimeout(resolve, 150))
+
+      // Insert a new empty paragraph at the end
+      const lastPath = [editor.children.length]
+      editor.tf.insertNodes(
+        { type: 'p', children: [{ text: '' }] },
+        { at: lastPath }
+      )
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Move cursor to the new paragraph
+      editor.tf.select({ path: [editor.children.length - 1, 0], offset: 0 })
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Type "/" to trigger slash menu
+      editor.tf.insertText('/')
+      await new Promise(resolve => setTimeout(resolve, 200))
+    },
+
+    closeSlashMenu: async () => {
+      const editor = await getEditorInstance()
+      if (!editor) return
+
+      // Press Escape to close slash menu
+      const escEvent = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        code: 'Escape',
+        keyCode: 27,
+        bubbles: true,
+        cancelable: true
+      })
+      const editorEl = document.querySelector('[data-slate-editor="true"]')
+      if (editorEl) {
+        editorEl.dispatchEvent(escEvent)
+      }
+      await new Promise(resolve => setTimeout(resolve, 150))
+
+      // Delete the "/" character and the empty paragraph
+      if (editor.children.length > 0) {
+        editor.tf.deleteBackward('character')
+        // Check if the current block is empty, if so delete it
+        const currentNode = editor.children[editor.children.length - 1] as any
+        if (currentNode?.children?.[0]?.text === '') {
+          editor.tf.removeNodes({ at: [editor.children.length - 1] })
+        }
+      }
+    },
+
+    insertHeading: async (level: 1 | 2 | 3, text: string) => {
+      const editor = await getEditorInstance()
+      if (!editor) return
+
+      // Use markdown plugin to insert heading
+      const markdown = `${'#'.repeat(level)} ${text}`
+      window.dispatchEvent(new CustomEvent('insert-text-in-editor', {
+        detail: { markdown, position: 'end' }
+      }))
+      await new Promise(resolve => setTimeout(resolve, 300))
+    },
+
+    insertCitation: async () => {
+      // Open citation dialog by clicking the citation button
+      const citationBtn = document.querySelector('[data-onboarding="citation-btn"]') as HTMLButtonElement
+      if (citationBtn) {
+        citationBtn.click()
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    },
+
+    openAskAiWithQuestion: async (question: string) => {
+      // Open AI pane first
+      openPane('askAi')
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Find the input field and type the question
+      const inputField = document.querySelector('[data-onboarding="ask-ai-input"]') as HTMLTextAreaElement
+      if (inputField) {
+        inputField.focus()
+        inputField.value = question
+        // Trigger input event for React state update
+        inputField.dispatchEvent(new Event('input', { bubbles: true }))
+      }
+    },
+
+    selectTextRange: async (startOffset: number, endOffset: number) => {
+      const editor = await getEditorInstance()
+      if (!editor || !editor.children?.length) return
+
+      // Select text in the first block
+      try {
+        const firstBlock = editor.children[0]
+        if (firstBlock?.children?.[0]) {
+          editor.tf.select({
+            anchor: { path: [0, 0], offset: startOffset },
+            focus: { path: [0, 0], offset: endOffset }
+          })
+        }
+      } catch {
+        // Ignore selection errors
+      }
+    },
+
+    clearEditorSelection: () => {
+      const selection = window.getSelection()
+      if (selection) {
+        selection.removeAllRanges()
+      }
+    },
+
+    moveBlockUp: async () => {
+      const editor = await getEditorInstance()
+      if (!editor || !editor.selection) return
+
+      // Get current block path and move it up
+      const currentPath = editor.selection.anchor.path[0]
+      if (currentPath > 0) {
+        editor.tf.moveNodes({
+          at: [currentPath],
+          to: [currentPath - 1]
+        })
+      }
+    },
+
+    moveBlockDown: async () => {
+      const editor = await getEditorInstance()
+      if (!editor || !editor.selection) return
+
+      // Get current block path and move it down
+      const currentPath = editor.selection.anchor.path[0]
+      if (currentPath < editor.children.length - 1) {
+        editor.tf.moveNodes({
+          at: [currentPath],
+          to: [currentPath + 2]
+        })
+      }
+    },
+
+    focusEditor: () => {
+      window.dispatchEvent(new Event('editor:focus-start'))
+    },
+  }), [setSidebarOpen, setSettingsInitialNav, setSettingsOpen, getEditorInstance, simulateTyping, openPane])
 
   return (
     <>

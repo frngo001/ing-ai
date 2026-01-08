@@ -6,6 +6,7 @@ import { OnboardingOverlay } from './onboarding-overlay'
 import { OnboardingTooltip } from './onboarding-tooltip'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
 import type { OnboardingActions, TargetRect } from '@/lib/stores/onboarding-types'
+import { useLanguage } from '@/lib/i18n/use-language'
 
 interface OnboardingControllerProps {
   actions: OnboardingActions
@@ -67,16 +68,23 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
     skipOnboarding,
     completeOnboarding,
   } = useOnboardingStore()
+  const { t } = useLanguage()
 
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const currentTargetRef = useRef<Element | null>(null)
+  // Track executed actions to prevent re-execution on re-renders
+  const executedActionsRef = useRef<Set<string>>(new Set())
 
   // Action handler based on actionId
   const executeAction = useCallback(
     async (actionId: string | undefined) => {
       if (!actionId) return
 
-      switch (actionId) {
+      // Parse action and params (format: "actionName:param1,param2")
+      const [action, paramsStr] = actionId.split(':')
+      const params = paramsStr ? paramsStr.split(',') : []
+
+      switch (action) {
         case 'openSidebar':
           actions.openSidebar()
           break
@@ -110,12 +118,90 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
         case 'closeSettings':
           actions.closeSettings()
           break
+        case 'openExportDropdown':
+          {
+            const exportButton = document.querySelector('[data-onboarding="export-btn"]')
+            if (exportButton) {
+              const button = exportButton as HTMLElement
+              button.click()
+              await new Promise((resolve) => setTimeout(resolve, 200))
+            }
+          }
+          break
+        case 'openImportDropdown':
+          {
+            const importButton = document.querySelector('[data-onboarding="import-btn"]')
+            if (importButton) {
+              const button = importButton as HTMLElement
+              button.click()
+              await new Promise((resolve) => setTimeout(resolve, 200))
+            }
+          }
+          break
+        // Editor simulation actions
+        case 'focusEditor':
+          actions.focusEditor()
+          break
+        case 'typeInEditor':
+          if (params[0]) {
+            let text = decodeURIComponent(params[0])
+            if (text.startsWith('onboarding.')) {
+              text = t(text)
+            }
+            const delay = params[1] ? parseInt(params[1]) : 30
+            await actions.typeInEditor(text, delay)
+          }
+          break
+        case 'showSlashMenu':
+          await actions.showSlashMenu()
+          break
+        case 'closeSlashMenu':
+          await actions.closeSlashMenu()
+          break
+        case 'insertHeading':
+          if (params[0] && params[1]) {
+            const level = parseInt(params[0]) as 1 | 2 | 3
+            let text = decodeURIComponent(params[1])
+            if (text.startsWith('onboarding.')) {
+              text = t(text)
+            }
+            await actions.insertHeading(level, text)
+          }
+          break
+        case 'insertCitation':
+          await actions.insertCitation()
+          break
+        case 'openAskAiWithQuestion':
+          if (params[0]) {
+            let question = decodeURIComponent(params[0])
+            if (question.startsWith('onboarding.')) {
+              question = t(question)
+            }
+            await actions.openAskAiWithQuestion(question)
+          }
+          break
+        case 'selectTextRange':
+          if (params[0] && params[1]) {
+            const start = parseInt(params[0])
+            const end = parseInt(params[1])
+            await actions.selectTextRange(start, end)
+          }
+          break
+        case 'clearEditorSelection':
+          actions.clearEditorSelection()
+          break
+        case 'moveBlockUp':
+          await actions.moveBlockUp()
+          break
+        case 'moveBlockDown':
+          await actions.moveBlockDown()
+          break
       }
 
       // Wait a bit for UI to update
       await new Promise((resolve) => setTimeout(resolve, 300))
     },
-    [actions]
+    [actions, t]
   )
 
   // Update target element position
@@ -123,7 +209,11 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
     const subStep = getCurrentSubStep()
     if (!subStep) return
 
-    const element = document.querySelector(subStep.target)
+    let element = document.querySelector(subStep.target)
+    
+    // For export/import formats, keep using button but position will be adjusted in tooltip
+    // The tooltip will use a larger gap to position above the dropdown
+
     if (!element) {
       // If target is body or element not found, use full viewport
       if (subStep.target === 'body' || subStep.position === 'center') {
@@ -142,6 +232,27 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
     currentTargetRef.current = element
   }, [getCurrentSubStep, setTargetRect])
 
+  // Scroll element into view if needed
+  const scrollElementIntoView = useCallback((element: Element) => {
+    const rect = element.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    const isVisible =
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= viewportHeight &&
+      rect.right <= viewportWidth
+
+    if (!isVisible) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center',
+      })
+    }
+  }, [])
+
   // Handle step changes
   useEffect(() => {
     if (!isOpen || isLoading) return
@@ -149,19 +260,39 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
     const subStep = getCurrentSubStep()
     if (!subStep) return
 
+    // Create a unique key for the current step+action combination
+    const stepKey = `${currentMainStep}-${currentSubStep}-${subStep.actionId || 'none'}`
+
     const setupStep = async () => {
-      // Execute action first
-      await executeAction(subStep.actionId)
+      // Only execute action if it hasn't been executed for this step yet
+      if (subStep.actionId && !executedActionsRef.current.has(stepKey)) {
+        executedActionsRef.current.add(stepKey)
+        await executeAction(subStep.actionId)
+        // Give more time after action execution for DOM to settle
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
 
       // Wait for element if needed
       if (subStep.waitForElement !== false && subStep.target !== 'body') {
         await waitForElement(subStep.target)
       }
 
-      // Small delay to let animations settle
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      // Scroll element into view if it's not body/center
+      if (subStep.target !== 'body' && subStep.position !== 'center') {
+        const element = document.querySelector(subStep.target)
+        if (element) {
+          scrollElementIntoView(element)
+          // Wait for scroll animation to complete
+          await new Promise((resolve) => setTimeout(resolve, 300))
+        }
+      }
 
-      // Update position
+      // Small delay to let animations settle
+      await new Promise((resolve) => setTimeout(resolve, 150))
+
+      // Update position multiple times to ensure accuracy
+      updateTargetPosition()
+      await new Promise((resolve) => setTimeout(resolve, 100))
       updateTargetPosition()
     }
 
@@ -183,6 +314,7 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
     executeAction,
     getCurrentSubStep,
     updateTargetPosition,
+    scrollElementIntoView,
   ])
 
   // Handle window resize
@@ -201,14 +333,23 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
   }, [nextSubStep])
 
   const handlePrev = useCallback(() => {
+    // Clear executed actions for current and previous steps to allow re-execution
+    const keysToRemove = Array.from(executedActionsRef.current).filter(
+      (key) => key.startsWith(`${currentMainStep}-`) || key.startsWith(`${currentMainStep - 1}-`)
+    )
+    keysToRemove.forEach((key) => executedActionsRef.current.delete(key))
     prevSubStep()
-  }, [prevSubStep])
+  }, [prevSubStep, currentMainStep])
 
   const handleSkip = useCallback(async () => {
+    // Clear all executed actions
+    executedActionsRef.current.clear()
     await skipOnboarding()
   }, [skipOnboarding])
 
   const handleComplete = useCallback(async () => {
+    // Clear all executed actions
+    executedActionsRef.current.clear()
     await completeOnboarding()
   }, [completeOnboarding])
 

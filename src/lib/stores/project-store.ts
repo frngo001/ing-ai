@@ -21,6 +21,7 @@ interface ProjectState {
   currentProjectId: string | null
   isLoading: boolean
   isHydrated: boolean
+  isStorageHydrated: boolean // Indicates localStorage has been restored
   error: string | null
 
   // Actions
@@ -32,6 +33,7 @@ interface ProjectState {
   getCurrentProject: () => Project | null
   reset: () => void
   setHydrated: (hydrated: boolean) => void
+  setStorageHydrated: (hydrated: boolean) => void
 }
 
 export const useProjectStore = create<ProjectState>()(
@@ -42,10 +44,15 @@ export const useProjectStore = create<ProjectState>()(
       currentProjectId: null,
       isLoading: false,
       isHydrated: false,
+      isStorageHydrated: false,
       error: null,
 
       setHydrated: (hydrated: boolean) => {
         set({ isHydrated: hydrated })
+      },
+
+      setStorageHydrated: (hydrated: boolean) => {
+        set({ isStorageHydrated: hydrated })
       },
 
       // Get current project (computed)
@@ -62,6 +69,19 @@ export const useProjectStore = create<ProjectState>()(
           set({ error: 'User not authenticated', isLoading: false })
           return
         }
+
+        // Wait for localStorage hydration to complete (max 100ms)
+        // This ensures currentProjectId is properly restored before we validate it
+        const waitForHydration = async () => {
+          const maxWait = 100
+          const interval = 10
+          let waited = 0
+          while (!get().isStorageHydrated && waited < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, interval))
+            waited += interval
+          }
+        }
+        await waitForHydration()
 
         set({ isLoading: true, error: null })
 
@@ -90,15 +110,20 @@ export const useProjectStore = create<ProjectState>()(
             updatedAt: new Date(p.updated_at),
           }))
 
-          const currentId = get().currentProjectId
+          // Get the persisted currentProjectId (now guaranteed to be hydrated)
+          const persistedProjectId = get().currentProjectId
+          devLog('[PROJECT STORE] Persisted currentProjectId from localStorage:', persistedProjectId)
+
           // Validate currentProjectId or select default/first project
-          const validCurrentId = mappedProjects.some(p => p.id === currentId)
-            ? currentId
+          const validCurrentId = mappedProjects.some(p => p.id === persistedProjectId)
+            ? persistedProjectId
             : mappedProjects.find(p => p.isDefault)?.id || mappedProjects[0]?.id || null
 
           devLog('[PROJECT STORE] Loaded projects:', {
             count: mappedProjects.length,
-            currentProjectId: validCurrentId,
+            persistedProjectId,
+            validCurrentId,
+            usingPersistedId: persistedProjectId === validCurrentId,
           })
 
           set({
@@ -208,6 +233,7 @@ export const useProjectStore = create<ProjectState>()(
           currentProjectId: null,
           isLoading: false,
           isHydrated: false,
+          isStorageHydrated: false,
           error: null,
         })
       },
@@ -218,12 +244,19 @@ export const useProjectStore = create<ProjectState>()(
       partialize: (state) => ({
         currentProjectId: state.currentProjectId,
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          devError('[PROJECT STORE] Error rehydrating from localStorage:', error)
+        } else {
           devLog('[PROJECT STORE] Rehydrated from localStorage:', {
-            currentProjectId: state.currentProjectId,
+            currentProjectId: state?.currentProjectId,
           })
         }
+
+        // Use setTimeout to defer the state update until after store initialization
+        setTimeout(() => {
+          useProjectStore.getState().setStorageHydrated(true)
+        }, 0)
       },
     }
   )

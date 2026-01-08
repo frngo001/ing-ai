@@ -7,6 +7,7 @@ import {
   Library,
   Search,
   Download,
+  Upload,
   Settings,
   CheckCircle2,
 } from 'lucide-react'
@@ -76,7 +77,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
     ],
   },
 
-  // Step 3: Editor Basics
+  // Step 3: Editor Basics (Interactive Demo)
   {
     id: 'editor-basics',
     titleKey: 'onboarding.steps.editorBasics.title',
@@ -86,7 +87,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
     subSteps: [
       {
         id: 'editor-area',
-        target: '[data-slate-editor="true"]',
+        target: '[data-onboarding="editor-container"]',
         position: 'left',
         titleKey: 'onboarding.subSteps.editorBasics.editor.title',
         descriptionKey: 'onboarding.subSteps.editorBasics.editor.description',
@@ -100,22 +101,62 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         descriptionKey: 'onboarding.subSteps.editorBasics.toolbar.description',
         tipKey: 'onboarding.subSteps.editorBasics.toolbar.tip',
       },
+      // Interactive Demo: Write a heading about Ing AI
+      {
+        id: 'demo-write-heading',
+        target: '[data-onboarding="editor-container"]',
+        position: 'left',
+        titleKey: 'onboarding.subSteps.editorBasics.demoHeading.title',
+        descriptionKey: 'onboarding.subSteps.editorBasics.demoHeading.description',
+        actionId: 'insertHeading:1,onboarding.demo.heading',
+      },
+      // Interactive Demo: Type intro text
+      {
+        id: 'demo-write-intro',
+        target: '[data-onboarding="editor-container"]',
+        position: 'left',
+        titleKey: 'onboarding.subSteps.editorBasics.demoIntro.title',
+        descriptionKey: 'onboarding.subSteps.editorBasics.demoIntro.description',
+        actionId: 'typeInEditor:onboarding.demo.intro,20',
+      },
+      // Show slash commands menu
+      {
+        id: 'slash-commands-demo',
+        target: '[data-onboarding="editor-container"]',
+        position: 'left',
+        titleKey: 'onboarding.subSteps.editorBasics.slashDemo.title',
+        descriptionKey: 'onboarding.subSteps.editorBasics.slashDemo.description',
+        tipKey: 'onboarding.subSteps.editorBasics.slashCommands.tip',
+        actionId: 'showSlashMenu',
+      },
+      // Close slash menu and explain
       {
         id: 'slash-commands',
-        target: '[data-slate-editor="true"]',
+        target: '[data-onboarding="editor-container"]',
         position: 'left',
         titleKey: 'onboarding.subSteps.editorBasics.slashCommands.title',
         descriptionKey: 'onboarding.subSteps.editorBasics.slashCommands.description',
-        tipKey: 'onboarding.subSteps.editorBasics.slashCommands.tip',
+        actionId: 'closeSlashMenu',
       },
+      // Add subheading for features
+      {
+        id: 'demo-write-features',
+        target: '[data-onboarding="editor-container"]',
+        position: 'left',
+        titleKey: 'onboarding.subSteps.editorBasics.demoFeatures.title',
+        descriptionKey: 'onboarding.subSteps.editorBasics.demoFeatures.description',
+        actionId: 'insertHeading:2,onboarding.demo.features',
+      },
+      // Inline AI explanation
       {
         id: 'inline-ai',
-        target: '[data-slate-editor="true"]',
+        target: '[data-onboarding="editor-container"]',
         position: 'left',
         titleKey: 'onboarding.subSteps.editorBasics.inlineAi.title',
         descriptionKey: 'onboarding.subSteps.editorBasics.inlineAi.description',
         tipKey: 'onboarding.subSteps.editorBasics.inlineAi.tip',
       },
+      // Comments
       {
         id: 'comments',
         target: '[data-onboarding="comment-btn"]',
@@ -124,17 +165,28 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         descriptionKey: 'onboarding.subSteps.editorBasics.comments.description',
         tipKey: 'onboarding.subSteps.editorBasics.comments.tip',
       },
+      // Suggestions
       {
         id: 'suggestions',
-        target: '[data-onboarding="suggestion-btn"]',
-        position: 'bottom',
+        target: '[data-onboarding="mode-btn"]',
+        position: 'left',
         titleKey: 'onboarding.subSteps.editorBasics.suggestions.title',
         descriptionKey: 'onboarding.subSteps.editorBasics.suggestions.description',
+      },
+      // Suggestions modes (with dropdown open)
+      {
+        id: 'open-mode',
+        target: '[data-onboarding="mode-dropdown"]',
+        position: 'left',
+        titleKey: 'onboarding.subSteps.editorBasics.suggestionsModes.title',
+        descriptionKey: 'onboarding.subSteps.editorBasics.suggestionsModes.description',
+        tipKey: 'onboarding.subSteps.editorBasics.suggestionsModes.tip',
+        waitForElement: true,
       },
     ],
   },
 
-  // Step 4: AI Assistant
+  // Step 4: AI Assistant (Interactive Demo)
   {
     id: 'ai-assistant',
     titleKey: 'onboarding.steps.aiAssistant.title',
@@ -167,10 +219,19 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         actionId: 'openAiPane',
         waitForElement: true,
       },
+      // Demo: Show example question
+      {
+        id: 'ai-demo-question',
+        target: '[data-onboarding="ask-ai-pane"]',
+        position: 'right',
+        titleKey: 'onboarding.subSteps.aiAssistant.demoQuestion.title',
+        descriptionKey: 'onboarding.subSteps.aiAssistant.demoQuestion.description',
+        actionId: 'openAskAiWithQuestion:Help%20me%20improve%20this%20paragraph%20for%20academic%20writing',
+      },
     ],
   },
 
-  // Step 5: Citations
+  // Step 5: Citations (Interactive Demo)
   {
     id: 'citations',
     titleKey: 'onboarding.steps.citations.title',
@@ -185,6 +246,15 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         titleKey: 'onboarding.subSteps.citations.button.title',
         descriptionKey: 'onboarding.subSteps.citations.button.description',
         actionId: 'closeAiPane',
+      },
+      // Demo: Open citation dialog
+      {
+        id: 'citation-demo',
+        target: '[data-onboarding="citation-btn"]',
+        position: 'bottom',
+        titleKey: 'onboarding.subSteps.citations.demo.title',
+        descriptionKey: 'onboarding.subSteps.citations.demo.description',
+        actionId: 'insertCitation',
       },
       {
         id: 'citation-explain',
@@ -272,23 +342,52 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
       {
         id: 'export-btn',
         target: '[data-onboarding="export-btn"]',
-        position: 'bottom',
+        position: 'top',
         titleKey: 'onboarding.subSteps.export.button.title',
         descriptionKey: 'onboarding.subSteps.export.button.description',
         actionId: 'closeLibraryPane',
       },
       {
-        id: 'export-formats',
-        target: '[data-onboarding="export-btn"]',
-        position: 'bottom',
+        id: 'open-export',
+        target: '[data-onboarding="export-dropdown"]',
+        position: 'top',
         titleKey: 'onboarding.subSteps.export.formats.title',
         descriptionKey: 'onboarding.subSteps.export.formats.description',
         tipKey: 'onboarding.subSteps.export.formats.tip',
+        waitForElement: true,
       },
     ],
   },
 
-  // Step 9: Settings
+  // Step 9: Import
+  {
+    id: 'import',
+    titleKey: 'onboarding.steps.import.title',
+    icon: Upload,
+    color: 'from-teal-500/20 to-cyan-500/20',
+    accentColor: 'text-teal-600 dark:text-teal-400',
+    subSteps: [
+      {
+        id: 'import-btn',
+        target: '[data-onboarding="import-btn"]',
+        position: 'top',
+        titleKey: 'onboarding.subSteps.import.button.title',
+        descriptionKey: 'onboarding.subSteps.import.button.description',
+        actionId: 'closeLibraryPane',
+      },
+      {
+        id: 'open-import',
+        target: '[data-onboarding="import-dropdown"]',
+        position: 'top',
+        titleKey: 'onboarding.subSteps.import.formats.title',
+        descriptionKey: 'onboarding.subSteps.import.formats.description',
+        tipKey: 'onboarding.subSteps.import.formats.tip',
+        waitForElement: true,
+      },
+    ],
+  },
+
+  // Step 10: Settings
   {
     id: 'settings',
     titleKey: 'onboarding.steps.settings.title',

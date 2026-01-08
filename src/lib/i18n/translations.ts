@@ -85,6 +85,11 @@ export const translations = {
             stepProgress: '{completed} of {total} completed',
             startOnboarding: 'Quick Start Guide',
             continueOnboarding: 'Continue Guide',
+            demo: {
+                heading: 'Welcome to Ing AI',
+                intro: 'Ing AI is your intelligent writing assistant that helps you create professional academic documents. With AI-powered features like automatic text completion, citation management, and research support, you can write faster and better. Whether it\'s a term paper, thesis, or scientific article – Ing AI supports you every step of the way.',
+                features: 'Key Features',
+            },
             steps: {
                 welcome: {
                     title: 'Welcome to Ing AI!',
@@ -117,6 +122,10 @@ export const translations = {
                 export: {
                     title: 'Export Your Work',
                     description: 'Export your finished documents in multiple formats including DOCX, PDF, HTML, and Markdown. Perfect for submission or sharing.',
+                },
+                import: {
+                    title: 'Import Your Work',
+                    description: 'Import existing documents from HTML or Markdown files directly into the editor. Perfect for continuing work from other tools.',
                 },
                 settings: {
                     title: 'Personalize Your Experience',
@@ -175,10 +184,26 @@ export const translations = {
                         description: 'Use the toolbar to format your text. You can make text bold, italic, add headings, lists, and much more.',
                         tip: 'Keyboard shortcuts are faster|Try Cmd/Ctrl + B for bold|Explore all formatting options',
                     },
+                    demoHeading: {
+                        title: 'Watch: Creating a Heading',
+                        description: 'We\'re adding a heading to your document. Headings help structure your content and make it easier to navigate.',
+                    },
+                    demoIntro: {
+                        title: 'Watch: Writing Text',
+                        description: 'Now we\'re typing an introductory paragraph. Notice how smoothly the editor handles your text.',
+                    },
+                    slashDemo: {
+                        title: 'Try: Slash Commands',
+                        description: 'This is the slash command menu! Type "/" anywhere to see all available blocks and formatting options.',
+                    },
                     slashCommands: {
                         title: 'Slash Commands',
                         description: 'Type "/" anywhere in the editor to open the command menu. Quickly insert headings, lists, code blocks, equations, and more.',
                         tip: 'Type /h1 for heading|/list for bullet points|/code for code blocks',
+                    },
+                    demoFeatures: {
+                        title: 'Watch: Adding a Subheading',
+                        description: 'We\'re adding another heading. You can organize your document with multiple heading levels (H1, H2, H3, etc.).',
                     },
                     inlineAi: {
                         title: 'AI Writing Assistant',
@@ -193,6 +218,11 @@ export const translations = {
                     suggestions: {
                         title: 'Suggestion Mode',
                         description: 'Enable suggestion mode to track your changes. Others can review and accept or reject your edits - perfect for collaborative writing.',
+                    },
+                    suggestionsModes: {
+                        title: 'Writing Modes',
+                        description: 'Choose between Editing (direct changes), Viewing (read-only), or Suggestion mode. Each mode is designed for different stages of the writing process.',
+                        tip: 'Editing for drafting|Viewing for review|Suggestions for collaboration',
                     },
                 },
                 aiAssistant: {
@@ -209,11 +239,19 @@ export const translations = {
                         description: 'Chat with the AI to get help with your writing. Ask questions, request improvements, or get explanations.',
                         tip: 'Be specific in your requests|Try asking for explanations|Use it for research help',
                     },
+                    demoQuestion: {
+                        title: 'Try: Ask the AI',
+                        description: 'We\'ve prepared a sample question for you. You can ask the AI to help improve your writing, explain concepts, or assist with research.',
+                    },
                 },
                 citations: {
                     button: {
                         title: 'Citation Button',
                         description: 'Click this button to add citations to your document. Search for sources and insert them with proper formatting.',
+                    },
+                    demo: {
+                        title: 'Try: Add a Citation',
+                        description: 'Search for academic sources and add them to your document. Try searching for a topic like "machine learning" or "climate change".',
                     },
                     explain: {
                         title: 'Smart Citations',
@@ -255,6 +293,17 @@ export const translations = {
                         title: 'Export Formats',
                         description: 'Choose from multiple export formats. DOCX for Word, PDF for printing, HTML for web, and more.',
                         tip: 'Citations included automatically|Preview before exporting|Multiple format options',
+                    },
+                },
+                import: {
+                    button: {
+                        title: 'Import Your Work',
+                        description: 'Import existing documents from HTML or Markdown files directly into the editor to continue your work.',
+                    },
+                    formats: {
+                        title: 'Import Formats',
+                        description: 'Import from HTML or Markdown files. Perfect for bringing in content from other editors or tools.',
+                        tip: 'HTML and Markdown supported|Preserves formatting|Import anytime',
                     },
                 },
                 settings: {
@@ -1873,6 +1922,11 @@ export const translations = {
             stepProgress: '{completed} de {total} completados',
             startOnboarding: 'Guía de Inicio Rápido',
             continueOnboarding: 'Continuar Guía',
+            demo: {
+                heading: 'Bienvenido a Ing AI',
+                intro: 'Ing AI es tu asistente de escritura inteligente que te ayuda a crear documentos académicos profesionales. Con funciones impulsadas por IA como completado automático de texto, gestión de citas y apoyo en investigación, puedes escribir más rápido y mejor. Ya sea un trabajo de curso, tesis o artículo científico: Ing AI te apoya en cada paso.',
+                features: 'Funciones Principales',
+            },
             steps: {
                 welcome: {
                     title: '¡Bienvenido a Ing AI!',
@@ -1905,6 +1959,10 @@ export const translations = {
                 export: {
                     title: 'Exporta tu Trabajo',
                     description: 'Exporta documentos terminados en múltiples formatos incluyendo DOCX, PDF, HTML y Markdown. Perfecto para entregar o compartir.',
+                },
+                import: {
+                    title: 'Importa tu Trabajo',
+                    description: 'Importa documentos existentes desde archivos HTML o Markdown directamente al editor. Perfecto para continuar trabajando desde otras herramientas.',
                 },
                 settings: {
                     title: 'Personaliza tu Experiencia',
@@ -1963,10 +2021,26 @@ export const translations = {
                         description: 'Usa la barra de herramientas para dar formato a tu texto. Puedes poner texto en negrita, cursiva, añadir encabezados, listas y mucho más.',
                         tip: 'Los atajos de teclado son más rápidos|Prueba Cmd/Ctrl + B para negrita|Explora todas las opciones de formato',
                     },
+                    demoHeading: {
+                        title: 'Mira: Creando un Encabezado',
+                        description: 'Estamos añadiendo un encabezado a tu documento. Los encabezados ayudan a estructurar tu contenido y facilitan la navegación.',
+                    },
+                    demoIntro: {
+                        title: 'Mira: Escribiendo Texto',
+                        description: 'Ahora estamos escribiendo un párrafo introductorio. Observa cómo el editor maneja tu texto de manera fluida.',
+                    },
+                    slashDemo: {
+                        title: 'Prueba: Comandos Slash',
+                        description: '¡Este es el menú de comandos slash! Escribe "/" en cualquier lugar para ver todos los bloques y opciones de formato disponibles.',
+                    },
                     slashCommands: {
                         title: 'Comandos Slash',
                         description: 'Escribe "/" en cualquier lugar del editor para abrir el menú de comandos. Inserta rápidamente encabezados, listas, bloques de código, ecuaciones y más.',
                         tip: 'Escribe /h1 para encabezado|/list para viñetas|/code para bloques de código',
+                    },
+                    demoFeatures: {
+                        title: 'Mira: Añadiendo un Subencabezado',
+                        description: 'Estamos añadiendo otro encabezado. Puedes organizar tu documento con múltiples niveles de encabezado (H1, H2, H3, etc.).',
                     },
                     inlineAi: {
                         title: 'Asistente de Escritura IA',
@@ -1981,6 +2055,11 @@ export const translations = {
                     suggestions: {
                         title: 'Modo Sugerencias',
                         description: 'Activa el modo sugerencias para rastrear tus cambios. Otros pueden revisar y aceptar o rechazar tus ediciones - perfecto para escritura colaborativa.',
+                    },
+                    suggestionsModes: {
+                        title: 'Modos de escritura',
+                        description: 'Elige entre Edición (cambios directos), Visualización (solo lectura) o Modo Sugerencias. Cada modo está diseñado para diferentes etapas del proceso de escritura.',
+                        tip: 'Edición para redactar|Visualización para revisar|Sugerencias para colaborar',
                     },
                 },
                 aiAssistant: {
@@ -1997,11 +2076,19 @@ export const translations = {
                         description: 'Chatea con la IA para obtener ayuda con tu escritura. Haz preguntas, pide mejoras u obtén explicaciones.',
                         tip: 'Sé específico en tus solicitudes|Intenta pedir explicaciones|Úsalo para ayuda en investigación',
                     },
+                    demoQuestion: {
+                        title: 'Prueba: Pregunta a la IA',
+                        description: 'Hemos preparado una pregunta de ejemplo para ti. Puedes pedir a la IA que mejore tu escritura, explique conceptos o ayude con la investigación.',
+                    },
                 },
                 citations: {
                     button: {
                         title: 'Botón de Citas',
                         description: 'Haz clic en este botón para añadir citas a tu documento. Busca fuentes e insértalas con el formato correcto.',
+                    },
+                    demo: {
+                        title: 'Prueba: Añadir una Cita',
+                        description: 'Busca fuentes académicas y añádelas a tu documento. Intenta buscar un tema como "machine learning" o "cambio climático".',
                     },
                     explain: {
                         title: 'Citas Inteligentes',
@@ -2043,6 +2130,17 @@ export const translations = {
                         title: 'Formatos de Exportación',
                         description: 'Elige entre múltiples formatos de exportación. DOCX para Word, PDF para imprimir, HTML para web y más.',
                         tip: 'Citas incluidas automáticamente|Vista previa antes de exportar|Múltiples opciones de formato',
+                    },
+                },
+                import: {
+                    button: {
+                        title: 'Importar tu Trabajo',
+                        description: 'Importa documentos existentes desde archivos HTML o Markdown directamente al editor para continuar tu trabajo.',
+                    },
+                    formats: {
+                        title: 'Formatos de Importación',
+                        description: 'Importa desde archivos HTML o Markdown. Perfecto para traer contenido de otros editores o herramientas.',
+                        tip: 'HTML y Markdown soportados|Preserva el formato|Importa en cualquier momento',
                     },
                 },
                 settings: {
@@ -3661,6 +3759,11 @@ export const translations = {
             stepProgress: '{completed} sur {total} terminées',
             startOnboarding: 'Guide de démarrage rapide',
             continueOnboarding: 'Continuer le guide',
+            demo: {
+                heading: 'Bienvenue sur Ing AI',
+                intro: 'Ing AI est votre assistant d\'écriture intelligent qui vous aide à créer des documents académiques professionnels. Avec des fonctionnalités alimentées par l\'IA comme la complétion automatique de texte, la gestion des citations et le soutien à la recherche, vous pouvez écrire plus vite et mieux. Qu\'il s\'agisse d\'un travail de semestre, d\'une thèse ou d\'un article scientifique - Ing AI vous accompagne à chaque étape.',
+                features: 'Fonctionnalités Principales',
+            },
             steps: {
                 welcome: {
                     title: 'Bienvenue sur Ing AI !',
@@ -3693,6 +3796,10 @@ export const translations = {
                 export: {
                     title: 'Exportez votre travail',
                     description: 'Exportez vos documents terminés dans plusieurs formats dont DOCX, PDF, HTML et Markdown. Parfait pour la soumission ou le partage.',
+                },
+                import: {
+                    title: 'Importez votre travail',
+                    description: 'Importez des documents existants depuis des fichiers HTML ou Markdown directement dans l\'éditeur. Parfait pour continuer votre travail depuis d\'autres outils.',
                 },
                 settings: {
                     title: 'Personnalisez votre expérience',
@@ -3751,10 +3858,26 @@ export const translations = {
                         description: 'Utilisez la barre d\'outils pour formater votre texte. Vous pouvez mettre le texte en gras, en italique, ajouter des titres, des listes et bien plus encore.',
                         tip: 'Les raccourcis clavier sont plus rapides|Essayez Cmd/Ctrl + B pour le gras|Explorez toutes les options de formatage',
                     },
+                    demoHeading: {
+                        title: 'Regardez : Création d\'un Titre',
+                        description: 'Nous ajoutons un titre à votre document. Les titres aident à structurer votre contenu et facilitent la navigation.',
+                    },
+                    demoIntro: {
+                        title: 'Regardez : Écriture de Texte',
+                        description: 'Nous tapons maintenant un paragraphe d\'introduction. Remarquez comment l\'éditeur gère votre texte en douceur.',
+                    },
+                    slashDemo: {
+                        title: 'Essayez : Commandes Slash',
+                        description: 'Voici le menu des commandes slash ! Tapez "/" n\'importe où pour voir tous les blocs et options de formatage disponibles.',
+                    },
                     slashCommands: {
                         title: 'Commandes Slash',
                         description: 'Tapez "/" n\'importe où dans l\'éditeur pour ouvrir le menu de commandes. Insérez rapidement des titres, listes, blocs de code, équations et plus.',
                         tip: 'Tapez /h1 pour un titre|/list pour les puces|/code pour les blocs de code',
+                    },
+                    demoFeatures: {
+                        title: 'Regardez : Ajout d\'un Sous-titre',
+                        description: 'Nous ajoutons un autre titre. Vous pouvez organiser votre document avec plusieurs niveaux de titre (H1, H2, H3, etc.).',
                     },
                     inlineAi: {
                         title: 'Assistant d\'Écriture IA',
@@ -3769,6 +3892,11 @@ export const translations = {
                     suggestions: {
                         title: 'Mode Suggestions',
                         description: 'Activez le mode suggestions pour suivre vos modifications. Les autres peuvent examiner et accepter ou rejeter vos modifications - parfait pour l\'écriture collaborative.',
+                    },
+                    suggestionsModes: {
+                        title: 'Modes d\'écriture',
+                        description: 'Choisissez entre Édition (modifications directes), Lecture (lecture seule) ou Mode Suggestions. Chaque mode est conçu pour différentes étapes du processus d\'écriture.',
+                        tip: 'Édition pour rédiger|Lecture pour réviser|Suggestions pour collaborer',
                     },
                 },
                 aiAssistant: {
@@ -3785,11 +3913,19 @@ export const translations = {
                         description: 'Discutez avec l\'IA pour obtenir de l\'aide avec votre écriture. Posez des questions, demandez des améliorations ou obtenez des explications.',
                         tip: 'Soyez précis dans vos demandes|Essayez de demander des explications|Utilisez-le pour l\'aide à la recherche',
                     },
+                    demoQuestion: {
+                        title: 'Essayez : Demandez à l\'IA',
+                        description: 'Nous avons préparé une question exemple pour vous. Vous pouvez demander à l\'IA d\'améliorer votre écriture, d\'expliquer des concepts ou d\'aider à la recherche.',
+                    },
                 },
                 citations: {
                     button: {
                         title: 'Bouton de Citation',
                         description: 'Cliquez sur ce bouton pour ajouter des citations à votre document. Recherchez des sources et insérez-les avec le formatage approprié.',
+                    },
+                    demo: {
+                        title: 'Essayez : Ajouter une Citation',
+                        description: 'Recherchez des sources académiques et ajoutez-les à votre document. Essayez de rechercher un sujet comme "machine learning" ou "changement climatique".',
                     },
                     explain: {
                         title: 'Citations Intelligentes',
@@ -3831,6 +3967,17 @@ export const translations = {
                         title: 'Formats d\'Export',
                         description: 'Choisissez parmi plusieurs formats d\'export. DOCX pour Word, PDF pour l\'impression, HTML pour le web et plus encore.',
                         tip: 'Citations incluses automatiquement|Aperçu avant exportation|Plusieurs options de format',
+                    },
+                },
+                import: {
+                    button: {
+                        title: 'Importer Votre Travail',
+                        description: 'Importez des documents existants depuis des fichiers HTML ou Markdown directement dans l\'éditeur pour continuer votre travail.',
+                    },
+                    formats: {
+                        title: 'Formats d\'Import',
+                        description: 'Importez depuis des fichiers HTML ou Markdown. Parfait pour importer du contenu depuis d\'autres éditeurs ou outils.',
+                        tip: 'HTML et Markdown supportés|Préserve le formatage|Importez à tout moment',
                     },
                 },
                 settings: {
@@ -5449,6 +5596,11 @@ export const translations = {
             stepProgress: '{completed} von {total} abgeschlossen',
             startOnboarding: 'Schnellstart-Guide',
             continueOnboarding: 'Guide fortsetzen',
+            demo: {
+                heading: 'Willkommen bei Ing AI',
+                intro: 'Ing AI ist dein intelligenter Schreibassistent, der dir hilft, professionelle akademische Dokumente zu erstellen. Mit KI-gestützten Funktionen wie automatischer Textvervollständigung, Zitationsverwaltung und Recherche-Unterstützung kannst du schneller und besser schreiben. Ob Hausarbeit, Thesis oder wissenschaftlicher Artikel – Ing AI unterstützt dich bei jedem Schritt.',
+                features: 'Hauptfunktionen',
+            },
             steps: {
                 welcome: {
                     title: 'Willkommen bei Ing AI!',
@@ -5481,6 +5633,10 @@ export const translations = {
                 export: {
                     title: 'Exportiere deine Arbeit',
                     description: 'Exportiere fertige Dokumente in verschiedenen Formaten wie DOCX, PDF, HTML und Markdown. Perfekt zum Einreichen oder Teilen.',
+                },
+                import: {
+                    title: 'Importiere deine Arbeit',
+                    description: 'Importiere bestehende Dokumente aus HTML- oder Markdown-Dateien direkt in den Editor. Perfekt, um von anderen Tools weiterzuarbeiten.',
                 },
                 settings: {
                     title: 'Personalisiere deine Erfahrung',
@@ -5539,10 +5695,26 @@ export const translations = {
                         description: 'Nutze die Symbolleiste, um deinen Text zu formatieren. Du kannst Text fett, kursiv machen, Überschriften, Listen und vieles mehr hinzufügen.',
                         tip: 'Tastenkombinationen sind schneller|Probiere Cmd/Ctrl + B für fett|Erkunde alle Formatierungsoptionen',
                     },
+                    demoHeading: {
+                        title: 'Schau zu: Überschrift erstellen',
+                        description: 'Wir fügen eine Überschrift zu deinem Dokument hinzu. Überschriften helfen, deinen Inhalt zu strukturieren und die Navigation zu erleichtern.',
+                    },
+                    demoIntro: {
+                        title: 'Schau zu: Text schreiben',
+                        description: 'Jetzt tippen wir einen einführenden Absatz. Beachte, wie flüssig der Editor deinen Text verarbeitet.',
+                    },
+                    slashDemo: {
+                        title: 'Probiere: Slash-Befehle',
+                        description: 'Das ist das Slash-Befehlsmenü! Tippe "/" irgendwo, um alle verfügbaren Blöcke und Formatierungsoptionen zu sehen.',
+                    },
                     slashCommands: {
                         title: 'Slash-Befehle',
                         description: 'Tippe "/" irgendwo im Editor, um das Befehlsmenü zu öffnen. Füge schnell Überschriften, Listen, Code-Blöcke, Gleichungen und mehr ein.',
                         tip: 'Tippe /h1 für Überschrift|/list für Aufzählung|/code für Code-Blöcke',
+                    },
+                    demoFeatures: {
+                        title: 'Schau zu: Unterüberschrift hinzufügen',
+                        description: 'Wir fügen eine weitere Überschrift hinzu. Du kannst dein Dokument mit mehreren Überschriftsebenen (H1, H2, H3, usw.) organisieren.',
                     },
                     inlineAi: {
                         title: 'KI-Schreibassistent',
@@ -5557,6 +5729,11 @@ export const translations = {
                     suggestions: {
                         title: 'Vorschlags-Modus',
                         description: 'Aktiviere den Vorschlags-Modus, um deine Änderungen zu verfolgen. Andere können deine Bearbeitungen überprüfen und annehmen oder ablehnen - perfekt für kollaboratives Schreiben.',
+                    },
+                    suggestionsModes: {
+                        title: 'Schreibmodi',
+                        description: 'Wähle zwischen Bearbeiten (direkte Änderungen), Ansehen (nur lesen) oder Vorschlags-Modus. Jeder Modus ist für verschiedene Phasen des Schreibprozesses konzipiert.',
+                        tip: 'Bearbeiten zum Entwerfen|Ansehen zur Überprüfung|Vorschläge für Zusammenarbeit',
                     },
                 },
                 aiAssistant: {
@@ -5573,11 +5750,19 @@ export const translations = {
                         description: 'Chatte mit der KI, um Hilfe beim Schreiben zu erhalten. Stelle Fragen, bitte um Verbesserungen oder erhalte Erklärungen.',
                         tip: 'Sei spezifisch in deinen Anfragen|Versuche um Erklärungen zu bitten|Nutze es für Recherche-Hilfe',
                     },
+                    demoQuestion: {
+                        title: 'Probiere: Frag die KI',
+                        description: 'Wir haben eine Beispielfrage für dich vorbereitet. Du kannst die KI bitten, dein Schreiben zu verbessern, Konzepte zu erklären oder bei der Recherche zu helfen.',
+                    },
                 },
                 citations: {
                     button: {
                         title: 'Zitations-Schaltfläche',
                         description: 'Klicke auf diese Schaltfläche, um Zitationen zu deinem Dokument hinzuzufügen. Suche nach Quellen und füge sie mit korrekter Formatierung ein.',
+                    },
+                    demo: {
+                        title: 'Probiere: Zitation hinzufügen',
+                        description: 'Suche nach akademischen Quellen und füge sie deinem Dokument hinzu. Probiere eine Suche nach einem Thema wie "Machine Learning" oder "Klimawandel".',
                     },
                     explain: {
                         title: 'Intelligente Zitationen',
@@ -5619,6 +5804,17 @@ export const translations = {
                         title: 'Export-Formate',
                         description: 'Wähle aus mehreren Export-Formaten. DOCX für Word, PDF zum Drucken, HTML für Web und mehr.',
                         tip: 'Zitationen automatisch enthalten|Vorschau vor dem Exportieren|Mehrere Formatoptionen',
+                    },
+                },
+                import: {
+                    button: {
+                        title: 'Deine Arbeit Importieren',
+                        description: 'Importiere bestehende Dokumente aus HTML- oder Markdown-Dateien direkt in den Editor, um deine Arbeit fortzusetzen.',
+                    },
+                    formats: {
+                        title: 'Import-Formate',
+                        description: 'Importiere aus HTML- oder Markdown-Dateien. Perfekt, um Inhalte von anderen Editoren oder Tools zu importieren.',
+                        tip: 'HTML und Markdown unterstützt|Behält Formatierung bei|Jederzeit importierbar',
                     },
                 },
                 settings: {

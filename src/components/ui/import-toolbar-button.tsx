@@ -9,6 +9,7 @@ import { ArrowUpToLineIcon } from 'lucide-react';
 import { useEditorRef } from 'platejs/react';
 import { getEditorDOMFromHtmlString } from 'platejs/static';
 import { useFilePicker } from 'use-file-picker';
+import { useOnboardingStore } from '@/lib/stores/onboarding-store';
 
 import {
   DropdownMenu,
@@ -27,6 +28,26 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
   const { t, language } = useLanguage();
+
+  // Check if onboarding is showing import step
+  const { isOpen: isOnboardingOpen, getCurrentSubStep } = useOnboardingStore();
+  const currentSubStep = getCurrentSubStep();
+  const shouldForceOpen = isOnboardingOpen && currentSubStep?.id === 'open-import';
+
+  // Effect to open dropdown when onboarding reaches import step
+  React.useEffect(() => {
+    if (shouldForceOpen && !open) {
+      setOpen(true);
+    }
+  }, [shouldForceOpen, open]);
+
+  // Handle open change - prevent closing during onboarding
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (shouldForceOpen && !newOpen) {
+      return; // Prevent closing during onboarding
+    }
+    setOpen(newOpen);
+  }, [shouldForceOpen]);
 
   const tooltipText = React.useMemo(() => t('toolbar.import'), [t, language]);
   const importFromHtmlText = React.useMemo(() => t('toolbar.importFromHtml'), [t, language]);
@@ -74,14 +95,14 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
   });
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown>
+        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown data-onboarding="import-btn">
          <ArrowUpToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
  
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="start" data-onboarding="import-dropdown">
         <DropdownMenuGroup>
           <DropdownMenuItem
             onSelect={() => {
