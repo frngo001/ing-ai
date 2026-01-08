@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { FilePenLine, PanelLeftClose, Plus, Search, Trash } from "lucide-react"
+import { FilePenLine, PanelLeftClose, Plus, Search, Trash, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -74,6 +74,7 @@ export function DocumentsPane({
   const [documents, setDocuments] = React.useState<DocumentItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
   const [docToDelete, setDocToDelete] = React.useState<DocumentItem | null>(null)
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = React.useState(false)
 
   const untitledDocText = React.useMemo(() => t('documents.untitledDocument'), [t, language])
   const savedText = React.useMemo(() => t('documents.saved'), [t, language])
@@ -313,6 +314,21 @@ export function DocumentsPane({
     setDocToDelete(null)
   }, [docToDelete, loadFromSupabase, loadFromLocalStorage])
 
+  const handleDeleteAllDocuments = React.useCallback(async () => {
+    if (!currentProjectId) return
+
+    const userId = await getCurrentUserId()
+    if (!userId) return
+
+    try {
+      await documentsUtils.deleteAllDocumentsByProject(currentProjectId, userId)
+      loadFromSupabase()
+      setShowDeleteAllDialog(false)
+    } catch (error) {
+      console.error("Fehler beim Löschen aller Dokumente:", error)
+    }
+  }, [currentProjectId, loadFromSupabase])
+
   React.useEffect(() => {
     // Initialer Load beim Mount oder wenn Projekt wechselt
     loadFromSupabase()
@@ -399,6 +415,22 @@ export function DocumentsPane({
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('documents.newDocument')}</TooltipContent>
           </Tooltip>
+          {currentProjectId && documents.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 bg-transparent hover:text-destructive"
+                  aria-label={t('documents.deleteAllDocuments')}
+                  onClick={() => setShowDeleteAllDialog(true)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t('documents.deleteAllDocuments')}</TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
           <Button
@@ -529,6 +561,26 @@ export function DocumentsPane({
             <AlertDialogCancel onClick={() => setDocToDelete(null)}>{t('documents.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('documents.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showDeleteAllDialog}
+        onOpenChange={setShowDeleteAllDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('documents.deleteAllDocumentsTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('documents.deleteAllDocumentsDescription').replace('{count}', String(documents.length))}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeleteAllDialog(false)}>{t('documents.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAllDocuments} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('documents.deleteAll')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

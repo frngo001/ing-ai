@@ -240,6 +240,19 @@ export async function deleteDocument(id: string, userId: string): Promise<void> 
   invalidateDocumentsCache(userId)
 }
 
+export async function deleteAllDocumentsByProject(projectId: string, userId: string): Promise<void> {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('documents')
+    .delete()
+    .eq('project_id', projectId)
+    .eq('user_id', userId)
+
+  if (error) throw error
+  
+  invalidateDocumentsCache(userId)
+}
+
 export async function upsertDocument(document: DocumentInsert & { id?: string }): Promise<Document> {
   const supabase = createClient()
 

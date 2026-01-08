@@ -562,6 +562,10 @@ export const translations = {
             delete: 'Delete',
             deleteDocumentTitle: 'Delete document?',
             deleteDocumentDescription: 'will be permanently removed from local storage.',
+            deleteAllDocuments: 'Delete all documents',
+            deleteAll: 'Delete all',
+            deleteAllDocumentsTitle: 'Delete all documents?',
+            deleteAllDocumentsDescription: 'All {count} documents in this project will be permanently deleted. This action cannot be undone.',
             cancel: 'Cancel',
         },
         library: {
@@ -2344,6 +2348,10 @@ export const translations = {
             delete: 'Eliminar',
             deleteDocumentTitle: '¿Eliminar documento?',
             deleteDocumentDescription: 'se eliminará permanentemente del almacenamiento local.',
+            deleteAllDocuments: 'Eliminar todos los documentos',
+            deleteAll: 'Eliminar todos',
+            deleteAllDocumentsTitle: '¿Eliminar todos los documentos?',
+            deleteAllDocumentsDescription: 'Todos los {count} documentos de este proyecto se eliminarán permanentemente. Esta acción no se puede deshacer.',
             cancel: 'Cancelar',
         },
         library: {
@@ -4126,6 +4134,10 @@ export const translations = {
             delete: 'Supprimer',
             deleteDocumentTitle: 'Supprimer le document ?',
             deleteDocumentDescription: 'sera définitivement supprimé du stockage local.',
+            deleteAllDocuments: 'Supprimer tous les documents',
+            deleteAll: 'Tout supprimer',
+            deleteAllDocumentsTitle: 'Supprimer tous les documents ?',
+            deleteAllDocumentsDescription: 'Tous les {count} documents de ce projet seront définitivement supprimés. Cette action ne peut pas être annulée.',
             cancel: 'Annuler',
         },
         library: {
@@ -5908,6 +5920,10 @@ export const translations = {
             delete: 'Löschen',
             deleteDocumentTitle: 'Dokument löschen?',
             deleteDocumentDescription: 'wird dauerhaft aus dem lokalen Speicher entfernt.',
+            deleteAllDocuments: 'Alle Dokumente löschen',
+            deleteAll: 'Alle löschen',
+            deleteAllDocumentsTitle: 'Alle Dokumente löschen?',
+            deleteAllDocumentsDescription: 'Alle {count} Dokumente dieses Projekts werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.',
             cancel: 'Abbrechen',
         },
         library: {
