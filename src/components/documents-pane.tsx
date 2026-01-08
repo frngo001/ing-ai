@@ -142,8 +142,9 @@ export function DocumentsPane({
     const userId = await getCurrentUserId()
 
     if (!userId) {
-      // Fallback auf localStorage wenn kein User eingeloggt
-      loadFromLocalStorage()
+      // Kein User eingeloggt - zeige leere Liste
+      setDocuments([])
+      hasInitialLoadRef.current = true
       return
     }
 
@@ -194,39 +195,20 @@ export function DocumentsPane({
       hasInitialLoadRef.current = true
     } catch (error) {
       console.error("Fehler beim Laden der Dokumente:", error)
-      // Fallback auf localStorage
-      loadFromLocalStorage()
+      // Bei Fehler leere Liste anzeigen
+      setDocuments([])
+      hasInitialLoadRef.current = true
     } finally {
       isLoadingRef.current = false
     }
-  }, [untitledDocText, savedText, meText, language, loadFromLocalStorage, currentProjectId])
+  }, [untitledDocText, savedText, meText, language, currentProjectId])
 
   const createNewDocument = React.useCallback(async () => {
     const userId = await getCurrentUserId()
     
     if (!userId) {
-      // Fallback auf localStorage wenn kein User eingeloggt
-      if (typeof window === "undefined") return
-
-      const newId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `doc-${Date.now()}`
-
-      const payload = {
-        content: [{ type: "p", children: [{ text: "" }] }],
-        discussions: [],
-        updatedAt: new Date().toISOString(),
-      }
-
-      try {
-        window.localStorage.setItem(`${LOCAL_STATE_PREFIX}${newId}`, JSON.stringify(payload))
-        window.dispatchEvent(new Event("documents:reload"))
-      } catch {
-        // ignore
-      }
-
-      router.push(`/editor?doc=${encodeURIComponent(newId)}`)
+      // Kein User eingeloggt - kann kein Dokument erstellen
+      console.warn("Kein User eingeloggt - Dokument kann nicht erstellt werden")
       return
     }
 
@@ -246,28 +228,6 @@ export function DocumentsPane({
       loadFromSupabase()
     } catch (error) {
       console.error("Fehler beim Erstellen des Dokuments:", error)
-      // Fallback auf localStorage
-      if (typeof window === "undefined") return
-
-      const newId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `doc-${Date.now()}`
-
-      const payload = {
-        content: [{ type: "p", children: [{ text: "" }] }],
-        discussions: [],
-        updatedAt: new Date().toISOString(),
-      }
-
-      try {
-        window.localStorage.setItem(`${LOCAL_STATE_PREFIX}${newId}`, JSON.stringify(payload))
-        window.dispatchEvent(new Event("documents:reload"))
-      } catch {
-        // ignore
-      }
-
-      router.push(`/editor?doc=${encodeURIComponent(newId)}`)
     }
   }, [router, untitledDocText, loadFromSupabase, currentProjectId])
 
@@ -299,20 +259,17 @@ export function DocumentsPane({
         loadFromSupabase()
       } catch (error) {
         console.error("Fehler beim Löschen des Dokuments aus Supabase:", error)
-        // Auch wenn Supabase-Löschen fehlschlägt, localStorage wurde bereits bereinigt
-        // Lade Dokumente neu (zeigt dann nur noch Supabase-Dokumente)
+        // Lade Dokumente neu
         loadFromSupabase()
       }
     } else {
-      // Für lokale Dokumente oder wenn kein User eingeloggt
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("documents:reload"))
-      }
-      loadFromLocalStorage()
+      // Nur Supabase-Dokumente werden angezeigt, lokale Dokumente werden ignoriert
+      // localStorage wurde bereits bereinigt
+      loadFromSupabase()
     }
 
     setDocToDelete(null)
-  }, [docToDelete, loadFromSupabase, loadFromLocalStorage])
+  }, [docToDelete, loadFromSupabase])
 
   const handleDeleteAllDocuments = React.useCallback(async () => {
     if (!currentProjectId) return
@@ -321,19 +278,38 @@ export function DocumentsPane({
     if (!userId) return
 
     try {
+      // Lösche alle Dokumente aus localStorage
+      if (typeof window !== "undefined") {
+        documents.forEach((doc) => {
+          try {
+            window.localStorage.removeItem(`${LOCAL_STATE_PREFIX}${doc.id}`)
+            window.localStorage.removeItem(`${LOCAL_CONTENT_PREFIX}${doc.id}`)
+            window.localStorage.removeItem(`${LOCAL_DISCUSS_PREFIX}${doc.id}`)
+          } catch {
+            // ignore removal failures
+          }
+        })
+      }
+
+      // Lösche alle Dokumente aus Supabase
       await documentsUtils.deleteAllDocumentsByProject(currentProjectId, userId)
+      
+      // Lade Dokumente neu
       loadFromSupabase()
       setShowDeleteAllDialog(false)
+      
+      // Dispatch Event für andere Komponenten
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("documents:reload"))
+      }
     } catch (error) {
       console.error("Fehler beim Löschen aller Dokumente:", error)
     }
-  }, [currentProjectId, loadFromSupabase])
+  }, [currentProjectId, documents, loadFromSupabase])
 
   React.useEffect(() => {
     // Initialer Load beim Mount oder wenn Projekt wechselt
     loadFromSupabase()
-
-    const handleStorage = () => loadFromLocalStorage()
 
     // Debounced Event-Handler für documents:reload
     // Verhindert mehrfache Requests bei schnellen Event-Auslösungen
@@ -361,12 +337,8 @@ export function DocumentsPane({
     }
 
     if (typeof window !== "undefined") {
-      window.addEventListener("storage", handleStorage)
-      window.addEventListener("focus", handleStorage)
       window.addEventListener("documents:reload", handleReloadEvent)
       return () => {
-        window.removeEventListener("storage", handleStorage)
-        window.removeEventListener("focus", handleStorage)
         window.removeEventListener("documents:reload", handleReloadEvent)
         // Cleanup: Lösche Timeout beim Unmount
         if (reloadDebounceTimeoutRef.current) {
@@ -374,7 +346,7 @@ export function DocumentsPane({
         }
       }
     }
-  }, [loadFromSupabase, loadFromLocalStorage, currentProjectId])
+  }, [loadFromSupabase, currentProjectId])
 
   const filteredDocs = React.useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
