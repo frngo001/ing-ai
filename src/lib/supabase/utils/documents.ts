@@ -163,7 +163,7 @@ export async function updateDocument(
     const newDocument: DocumentInsert = {
       id,
       user_id: userId,
-      title: (updates.title as string) || 'Unbenanntes Dokument',
+      title: (updates.title as string) || '',
       content: (updates.content as any) || {},
       document_type: (updates.document_type as string) || 'essay',
       word_count: (updates.word_count as number) || 0,

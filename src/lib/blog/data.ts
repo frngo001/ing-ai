@@ -13,6 +13,8 @@ export interface BlogPost {
   author: BlogAuthor
   excerpt: string
   content: string
+  tags?: string[]
+  image?: string
 }
 
 /**

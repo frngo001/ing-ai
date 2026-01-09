@@ -30,12 +30,15 @@ export function extractTextFromNode(node: any): string {
  * Extrahiert den Dokumenttitel aus dem ersten Text, der im Dokument eingegeben wurde.
  * Berücksichtigt alle Node-Typen (nicht nur Überschriften), um die ersten Zeichen zu finden.
  */
-export function extractTitleFromContent(content: Value | any[] | null | undefined): string {
-  if (!content) return "Unbenanntes Dokument"
+export function extractTitleFromContent(
+  content: Value | any[] | null | undefined,
+  defaultTitle: string = "Unbenanntes Dokument"
+): string {
+  if (!content) return defaultTitle
   
   const contentArray = Array.isArray(content) ? content : (content as any)?.content
   
-  if (!Array.isArray(contentArray)) return "Unbenanntes Dokument"
+  if (!Array.isArray(contentArray)) return defaultTitle
 
   // Durchlaufe alle Blöcke und finde den ersten mit Text-Inhalt
   // Dies kann eine Überschrift, ein Paragraph, eine Liste oder jeder andere Block-Typ sein
@@ -52,6 +55,6 @@ export function extractTitleFromContent(content: Value | any[] | null | undefine
     }
   }
 
-  return "Unbenanntes Dokument"
+  return defaultTitle
 }
 

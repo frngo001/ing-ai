@@ -129,7 +129,7 @@ export function DocumentsPane({
         if (!hydrated) continue
         if (!hasContentText(hydrated)) continue
 
-        const title = extractTitleFromContent(hydrated?.content)
+        const title = extractTitleFromContent(hydrated?.content, untitledDocText)
         const updatedAt = hydrated?.updatedAt ? new Date(hydrated.updatedAt) : undefined
 
         nextDocs.push({
@@ -177,7 +177,7 @@ export function DocumentsPane({
       const nextDocs: DocumentItem[] = await Promise.all(
         docs.map(async (doc) => {
           const content = doc.content as any
-          const extractedTitle = extractTitleFromContent(content)
+          const extractedTitle = extractTitleFromContent(content, untitledDocText)
           const updatedAt = doc.updated_at ? new Date(doc.updated_at) : undefined
 
           const currentTitle = doc.title || extractedTitle

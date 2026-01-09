@@ -327,7 +327,7 @@ export function PlateEditor({
 
       try {
         contentSaveTimeout.current = window.setTimeout(() => {
-          persistState(storageKeys, latestContentRef.current, null, storageId);
+          persistState(storageKeys, latestContentRef.current, null, storageId, t('documents.untitledDocument'));
         }, SAVE_DEBOUNCE_MS);
       } catch (error) {
         devError('Editorinhalt konnte nicht gespeichert werden.', error);
@@ -341,7 +341,7 @@ export function PlateEditor({
       if (contentSaveTimeout.current && hasHydrated.current) {
         window.clearTimeout(contentSaveTimeout.current);
         try {
-          persistState(storageKeys, latestContentRef.current, null, storageId);
+          persistState(storageKeys, latestContentRef.current, null, storageId, t('documents.untitledDocument'));
         } catch {
           // ignore on unmount
         }
@@ -1522,7 +1522,8 @@ async function persistState(
   },
   content: Value | null,
   discussions: TDiscussion[] | null,
-  documentId?: string
+  documentId?: string,
+  defaultTitle: string = "Unbenanntes Dokument"
 ) {
   if (typeof window === 'undefined') return;
 
@@ -1555,17 +1556,16 @@ async function persistState(
         try {
           const userId = await getCurrentUserId();
           if (userId) {
-            const extractedTitle = extractTitleFromContent(nextContent);
+            const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
             await documentsUtils.updateDocument(
               documentId,
               {
-                title: extractedTitle || "Unbenanntes Dokument",
+                title: extractedTitle,
                 content: nextContent as any,
                 updated_at: updatedAt,
               },
               userId
             );
-            // Cache wurde bereits in updateDocument invalidiert
           }
         } catch (error: any) {
           // Spezifische Fehlerbehandlung für verschiedene Fehlertypen
@@ -1578,11 +1578,11 @@ async function persistState(
             try {
               const userId = await getCurrentUserId();
               if (userId) {
-                const extractedTitle = extractTitleFromContent(nextContent);
+                const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
                 await documentsUtils.updateDocument(
                   documentId,
                   {
-                    title: extractedTitle || "Unbenanntes Dokument",
+                    title: extractedTitle,
                     content: nextContent as any,
                     updated_at: updatedAt,
                   },

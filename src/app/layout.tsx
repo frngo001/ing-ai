@@ -37,6 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = translations[language]?.metadata || translations.de.metadata
 
   return {
+    metadataBase: new URL(siteConfig.url),
     title: t.title,
     description: t.description,
     keywords: [
