@@ -175,7 +175,7 @@ function PageContent({
           }
           seen.add(id)
         } catch {
-          // ignore malformed entries
+          continue
         }
       }
     }
@@ -194,13 +194,10 @@ function PageContent({
   const { state: sidebarState } = useSidebar()
   const { tocEnabled, commentTocEnabled, suggestionTocEnabled } = useVisibilityStore()
   const initializeOnboarding = useOnboardingStore((state) => state.initialize)
-
-  // Project store für Projektwechsel
   const currentProjectId = useProjectStore((state) => state.currentProjectId)
   const isProjectHydrated = useProjectStore((state) => state.isHydrated)
   const previousProjectIdRef = useRef<string | null>(null)
 
-  // Initialize onboarding when user is authenticated
   useEffect(() => {
     const initOnboarding = async () => {
       const userId = await getCurrentUserId()
@@ -225,7 +222,8 @@ function PageContent({
     }
   }, [showAskAi])
 
-  // Initialer Dokument-Load (wartet auf Project-Hydration)
+  const docParam = useMemo(() => searchParams.get("doc"), [searchParams])
+
   useEffect(() => {
     if (hasDecidedInitialDoc.current) return
     if (!isProjectHydrated) return
@@ -233,9 +231,8 @@ function PageContent({
     hasDecidedInitialDoc.current = true
     previousProjectIdRef.current = currentProjectId
 
-    const paramId = searchParams.get("doc")
-    if (paramId) {
-      setStorageId(paramId)
+    if (docParam) {
+      setStorageId(docParam)
       checkDocumentsExist(currentProjectId).then((exists) => setHasDocuments(exists))
       return
     }
@@ -252,9 +249,8 @@ function PageContent({
         setStorageId(null)
       }
     })
-  }, [findLatestDocId, checkDocumentsExist, router, searchParams, currentProjectId, isProjectHydrated])
+  }, [findLatestDocId, checkDocumentsExist, router, docParam, currentProjectId, isProjectHydrated])
 
-  // Projektwechsel: Lade letztes Dokument des neuen Projekts
   useEffect(() => {
     if (!hasDecidedInitialDoc.current) return
     if (!isProjectHydrated) return
@@ -275,7 +271,7 @@ function PageContent({
         findLatestDocId(currentProjectId),
         checkDocumentsExist(currentProjectId)
       ])
-      
+
       setHasDocuments(exists)
       if (latestDocId) {
         setStorageId(latestDocId)
@@ -292,11 +288,10 @@ function PageContent({
   }, [currentProjectId, isProjectHydrated, findLatestDocId, checkDocumentsExist, router])
 
   useEffect(() => {
-    const paramId = searchParams.get("doc")
-    if (paramId && paramId !== storageId) {
-      setStorageId(paramId)
+    if (docParam && docParam !== storageId) {
+      setStorageId(docParam)
       window.dispatchEvent(new Event("documents:reload"))
-    } else if (!paramId && storageId) {
+    } else if (!docParam && storageId && hasDocuments === false) {
       setStorageId(null)
       const updateHasDocuments = async () => {
         const userId = await getCurrentUserId()
@@ -307,7 +302,7 @@ function PageContent({
       }
       updateHasDocuments()
     }
-  }, [searchParams, storageId, currentProjectId])
+  }, [docParam, storageId, currentProjectId, hasDocuments])
 
   const togglePane = (pane: Pane) =>
     setPanes((prev) => {
@@ -354,7 +349,6 @@ function PageContent({
           project_id: currentProjectId ?? undefined,
         })
         window.dispatchEvent(new Event("documents:reload"))
-        // Focus the editor on the first block after creating a new document
         window.dispatchEvent(new Event("editor:focus-start"))
       }
     } catch (error) {
@@ -381,7 +375,6 @@ function PageContent({
   const { setOpen: setSidebarOpen } = useSidebar()
   const { t } = useLanguage()
 
-  // Event-Handler für das Öffnen des Dokumentpanes
   useEffect(() => {
     const handleOpenDocumentsPane = () => {
       setPanes({
@@ -399,7 +392,6 @@ function PageContent({
     }
   }, [setPanes])
 
-  // Event-Handler für das Erstellen eines neuen Dokuments
   useEffect(() => {
     const handleCreateNewDocument = () => {
       createNewDocument()
@@ -413,13 +405,12 @@ function PageContent({
     }
   }, [createNewDocument])
 
-  // Event-Handler für Dokument-Reload - aktualisiere hasDocuments
   useEffect(() => {
     const handleDocumentsLoaded = async (event: Event) => {
       const customEvent = event as CustomEvent<{ count: number }>
       const count = customEvent.detail.count
       setHasDocuments(count > 0)
-      
+
       const userId = await getCurrentUserId()
       if (userId) {
         documentCountCache.setDocumentCount(userId, count, currentProjectId ?? undefined)
@@ -434,7 +425,6 @@ function PageContent({
     }
   }, [currentProjectId])
 
-  // Helper function to get editor instance
   const getEditorInstance = useCallback((): Promise<any> => {
     return new Promise((resolve) => {
       const event = new CustomEvent('get-editor-instance', {
@@ -444,7 +434,6 @@ function PageContent({
     })
   }, [])
 
-  // Helper function to simulate typing with delay
   const simulateTyping = useCallback(async (editor: any, text: string, delay = 30) => {
     for (const char of text) {
       editor.tf.insertText(char)
@@ -452,7 +441,6 @@ function PageContent({
     }
   }, [])
 
-  // Onboarding actions für den OnboardingController
   const onboardingActions: OnboardingActions = useMemo(() => ({
     openSidebar: () => setSidebarOpen(true),
     closeSidebar: () => setSidebarOpen(false),
@@ -466,16 +454,12 @@ function PageContent({
     },
     closeSettings: () => setSettingsOpen(false),
 
-    // Editor simulation actions for interactive onboarding
     typeInEditor: async (text: string, delay = 30) => {
       const editor = await getEditorInstance()
       if (!editor) return
 
-      // Focus editor first
       window.dispatchEvent(new Event('editor:focus-start'))
       await new Promise(resolve => setTimeout(resolve, 100))
-
-      // Type character by character for visual effect
       await simulateTyping(editor, text, delay)
     },
 
@@ -483,11 +467,9 @@ function PageContent({
       const editor = await getEditorInstance()
       if (!editor) return
 
-      // Focus editor first
       window.dispatchEvent(new Event('editor:focus-start'))
       await new Promise(resolve => setTimeout(resolve, 150))
 
-      // Insert a new empty paragraph at the end
       const lastPath = [editor.children.length]
       editor.tf.insertNodes(
         { type: 'p', children: [{ text: '' }] },
@@ -495,11 +477,8 @@ function PageContent({
       )
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      // Move cursor to the new paragraph
       editor.tf.select({ path: [editor.children.length - 1, 0], offset: 0 })
       await new Promise(resolve => setTimeout(resolve, 100))
-
-      // Type "/" to trigger slash menu
       editor.tf.insertText('/')
       await new Promise(resolve => setTimeout(resolve, 200))
     },
@@ -508,7 +487,6 @@ function PageContent({
       const editor = await getEditorInstance()
       if (!editor) return
 
-      // Press Escape to close slash menu
       const escEvent = new KeyboardEvent('keydown', {
         key: 'Escape',
         code: 'Escape',
@@ -522,10 +500,8 @@ function PageContent({
       }
       await new Promise(resolve => setTimeout(resolve, 150))
 
-      // Delete the "/" character and the empty paragraph
       if (editor.children.length > 0) {
         editor.tf.deleteBackward('character')
-        // Check if the current block is empty, if so delete it
         const currentNode = editor.children[editor.children.length - 1] as any
         if (currentNode?.children?.[0]?.text === '') {
           editor.tf.removeNodes({ at: [editor.children.length - 1] })
@@ -537,7 +513,6 @@ function PageContent({
       const editor = await getEditorInstance()
       if (!editor) return
 
-      // Use markdown plugin to insert heading
       const markdown = `${'#'.repeat(level)} ${text}`
       window.dispatchEvent(new CustomEvent('insert-text-in-editor', {
         detail: { markdown, position: 'end' }
@@ -546,7 +521,6 @@ function PageContent({
     },
 
     insertCitation: async () => {
-      // Open citation dialog by clicking the citation button
       const citationBtn = document.querySelector('[data-onboarding="citation-btn"]') as HTMLButtonElement
       if (citationBtn) {
         citationBtn.click()
@@ -555,16 +529,13 @@ function PageContent({
     },
 
     openAskAiWithQuestion: async (question: string) => {
-      // Open AI pane first
       openPane('askAi')
       await new Promise(resolve => setTimeout(resolve, 500))
 
-      // Find the input field and type the question
       const inputField = document.querySelector('[data-onboarding="ask-ai-input"]') as HTMLTextAreaElement
       if (inputField) {
         inputField.focus()
         inputField.value = question
-        // Trigger input event for React state update
         inputField.dispatchEvent(new Event('input', { bubbles: true }))
       }
     },
@@ -573,7 +544,6 @@ function PageContent({
       const editor = await getEditorInstance()
       if (!editor || !editor.children?.length) return
 
-      // Select text in the first block
       try {
         const firstBlock = editor.children[0]
         if (firstBlock?.children?.[0]) {
@@ -598,7 +568,6 @@ function PageContent({
       const editor = await getEditorInstance()
       if (!editor || !editor.selection) return
 
-      // Get current block path and move it up
       const currentPath = editor.selection.anchor.path[0]
       if (currentPath > 0) {
         editor.tf.moveNodes({
@@ -612,7 +581,6 @@ function PageContent({
       const editor = await getEditorInstance()
       if (!editor || !editor.selection) return
 
-      // Get current block path and move it down
       const currentPath = editor.selection.anchor.path[0]
       if (currentPath < editor.children.length - 1) {
         editor.tf.moveNodes({
@@ -683,26 +651,27 @@ function PageContent({
               </ResizablePanel>
               <ResizableHandle
                 withHandle
-                className={`w-1 data-[panel-group-direction=horizontal]:cursor-col-resize ${showAskAi ? "hidden sm:flex" : "hidden"
-                  }`}
+                className={`w-1 data-[panel-group-direction=horizontal]:cursor-col-resize ${
+                  showAskAi ? "hidden sm:flex" : "hidden"
+                }`}
               />
               <ResizablePanel minSize={40} defaultSize={100}>
                 <div
                   className={`h-screen overflow-hidden bg-background ${sidePaneOpen ? "border-l border-border/70" : ""
                     }`}
                 >
-                    <div className="flex h-full flex-col overflow-hidden">
-                      <div className="flex-1 overflow-auto">
-                        <PlateEditor
-                          key={storageId || 'empty'}
-                          storageId={storageId || 'empty'}
-                          showToc={tocVisible}
-                          showCommentToc={commentTocVisible}
-                          showSuggestionToc={suggestionTocVisible}
-                          hasDocuments={hasDocuments ?? false}
-                        />
-                      </div>
+                  <div className="flex h-full flex-col overflow-hidden">
+                    <div className="flex-1 overflow-auto">
+                      <PlateEditor
+                        key={storageId || 'empty'}
+                        storageId={storageId || 'empty'}
+                        showToc={tocVisible}
+                        showCommentToc={commentTocVisible}
+                        showSuggestionToc={suggestionTocVisible}
+                        hasDocuments={hasDocuments ?? false}
+                      />
                     </div>
+                  </div>
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
