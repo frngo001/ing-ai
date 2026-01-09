@@ -56,6 +56,9 @@ interface BachelorarbeitAgentState {
   arbeitType: ArbeitType
   thema?: string
 
+  // Projekt-Verknüpfung
+  projectId: string | null
+
   // Schritt-Management
   currentStep: AgentStep | null
   stepData: StepData
@@ -70,7 +73,7 @@ interface BachelorarbeitAgentState {
   lastUpdated: Date | null
 
   // Actions
-  startAgent: (arbeitType: ArbeitType, thema?: string) => Promise<void>
+  startAgent: (arbeitType: ArbeitType, thema?: string, projectId?: string) => Promise<void>
   stopAgent: () => Promise<void>
   setThema: (thema: string) => Promise<void>
   setCurrentStep: (step: AgentStep) => Promise<void>
@@ -87,7 +90,7 @@ interface BachelorarbeitAgentState {
   // Progress
   calculateProgress: () => number
   reset: () => Promise<void>
-  loadAgentStateFromSupabase: () => Promise<void>
+  loadAgentStateFromSupabase: (projectId?: string) => Promise<void>
   agentStateId: string | null
 }
 
@@ -100,6 +103,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
       isActive: false,
       arbeitType: null,
       thema: undefined,
+      projectId: null,
       currentStep: null,
       stepData: {},
       progress: 0,
@@ -110,14 +114,15 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
       agentStateId: null,
 
       // Actions
-      startAgent: async (arbeitType, thema) => {
+      startAgent: async (arbeitType, thema, projectId) => {
         const userId = await getCurrentUserId()
         const now = new Date()
-        
+
         const newState = {
           isActive: true,
           arbeitType,
           thema,
+          projectId: projectId || null,
           currentStep: 4 as AgentStep, // Start mit Literaturrecherche
           startedAt: now,
           lastUpdated: now,
@@ -130,7 +135,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           try {
             // Deaktiviere alle anderen Agent States
             await agentStatesUtils.deactivateAllAgentStates(userId)
-            
+
             // Erstelle neuen Agent State
             const agentState = await agentStatesUtils.createAgentState({
               user_id: userId,
@@ -144,8 +149,9 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
               pending_sources: [] as unknown as Json,
               started_at: now.toISOString(),
               last_updated: now.toISOString(),
+              project_id: projectId || null,
             })
-            
+
             set({ agentStateId: agentState.id })
           } catch (error) {
             console.error('❌ [AGENT STORE] Fehler beim Speichern des Agent States:', error)
@@ -387,6 +393,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           isActive: false,
           arbeitType: null,
           thema: undefined,
+          projectId: null,
           currentStep: null,
           stepData: {},
           progress: 0,
@@ -405,7 +412,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
           }
         }
       },
-      loadAgentStateFromSupabase: async () => {
+      loadAgentStateFromSupabase: async (projectId) => {
         const userId = await getCurrentUserId()
         if (!userId) {
           console.warn('⚠️ [AGENT STORE] Kein User eingeloggt, kann keinen Agent State laden')
@@ -413,12 +420,13 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
         }
 
         try {
-          const agentState = await agentStatesUtils.getAgentState(userId)
+          const agentState = await agentStatesUtils.getAgentState(userId, projectId)
           if (agentState && agentState.is_active) {
             set({
               isActive: agentState.is_active,
               arbeitType: agentState.arbeit_type,
               thema: agentState.thema || undefined,
+              projectId: agentState.project_id || null,
               currentStep: agentState.current_step as AgentStep | null,
               stepData: (agentState.step_data as unknown as StepData) || {},
               progress: agentState.progress,
@@ -427,6 +435,22 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
               startedAt: agentState.started_at ? new Date(agentState.started_at) : null,
               lastUpdated: agentState.last_updated ? new Date(agentState.last_updated) : null,
               agentStateId: agentState.id,
+            })
+          } else {
+            // Kein aktiver Agent State für dieses Projekt - Reset
+            set({
+              isActive: false,
+              arbeitType: null,
+              thema: undefined,
+              projectId: projectId || null,
+              currentStep: null,
+              stepData: {},
+              progress: 0,
+              selectedSources: [],
+              pendingSources: [],
+              startedAt: null,
+              lastUpdated: null,
+              agentStateId: null,
             })
           }
         } catch (error) {
@@ -440,6 +464,7 @@ export const useBachelorarbeitAgentStore = create<BachelorarbeitAgentState>()(
         isActive: state.isActive,
         arbeitType: state.arbeitType,
         thema: state.thema,
+        projectId: state.projectId,
         currentStep: state.currentStep,
         stepData: state.stepData,
         selectedSources: state.selectedSources,

@@ -102,6 +102,7 @@ import {
   createHandlers,
   createRenderers,
 } from "@/lib/ask-ai-pane"
+import { devLog, devWarn, devError } from "@/lib/utils/logger"
 
 // Re-export MessagePart for external use
 export type { MessagePart }
@@ -234,14 +235,14 @@ export function AskAiPane({
       // Lade Agent State aus Supabase (Thema, Schritt, etc.)
       try {
         await agentStore.loadAgentStateFromSupabase()
-        console.log('📝 [ASK-AI-PANE] Agent State aus Supabase geladen:', {
+        devLog('📝 [ASK-AI-PANE] Agent State aus Supabase geladen:', {
           isActive: agentStore.isActive,
           thema: agentStore.thema,
           currentStep: agentStore.currentStep,
           arbeitType: agentStore.arbeitType,
         })
       } catch (error) {
-        console.warn('⚠️ [ASK-AI-PANE] Fehler beim Laden des Agent States:', error)
+        devWarn('⚠️ [ASK-AI-PANE] Fehler beim Laden des Agent States:', error)
       }
 
       const loadedHistory = await loadChatHistory()
@@ -339,7 +340,7 @@ export function AskAiPane({
       const { thema } = event.detail
       if (thema && agentStore.setThema) {
         agentStore.setThema(thema)
-        console.log('📝 [ASK-AI-PANE] Thema gesetzt:', thema)
+        devLog('📝 [ASK-AI-PANE] Thema gesetzt:', thema)
       }
     }
 
@@ -508,7 +509,7 @@ export function AskAiPane({
 
       setChatToDelete(null)
     } catch (error) {
-      console.error('Fehler beim Löschen des Chats:', error)
+      devError('Fehler beim Löschen des Chats:', error)
       toast.error(translations.chatDeleteError)
     }
   }
