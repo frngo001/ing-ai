@@ -12,7 +12,6 @@ import {
   Trash2,
   Upload,
   Search,
-  RefreshCw,
   Trash,
 } from "lucide-react"
 
@@ -74,7 +73,6 @@ export function LibraryPane({
   const [libraryToDelete, setLibraryToDelete] = React.useState<{ id: string; name: string } | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [expandedAbstracts, setExpandedAbstracts] = React.useState<Record<string, boolean>>({})
-  const [isSyncing, setIsSyncing] = React.useState(false)
 
   // Memoized translations that update on language change
   const translations = React.useMemo(() => ({
@@ -260,32 +258,6 @@ export function LibraryPane({
               }
             }}
           />
-          <Tooltip>
-            <TooltipContent>{translations.refreshLibraries}</TooltipContent>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 bg-transparent"
-                onClick={async () => {
-                  setIsSyncing(true)
-                  try {
-                    await syncLibrariesFromBackend()
-                  } finally {
-                    // Kurze Verzögerung für bessere UX
-                    setTimeout(() => setIsSyncing(false), 500)
-                  }
-                }}
-                disabled={isSyncing}
-              >
-                <RefreshCw
-                  className={`size-4 transition-transform duration-500 ${
-                    isSyncing ? 'animate-spin' : ''
-                  }`}
-                />
-              </Button>
-            </TooltipTrigger>
-          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
           <Button
