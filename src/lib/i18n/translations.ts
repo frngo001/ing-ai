@@ -18,6 +18,8 @@ export const translations = {
             logout: 'Log out',
             copy: 'Copy',
             copied: 'Copied',
+            deleteRow: 'Delete Row',
+            deleteColumn: 'Delete Column',
         },
         cookieConsent: {
             title: 'Cookie Settings',
@@ -1875,6 +1877,8 @@ export const translations = {
             logout: 'Cerrar sesión',
             copy: 'Copiar',
             copied: 'Copiado',
+            deleteRow: 'Eliminar Fila',
+            deleteColumn: 'Eliminar Columna',
         },
         cookieConsent: {
             title: 'Configuración de Cookies',
@@ -3732,6 +3736,8 @@ export const translations = {
             logout: 'Déconnexion',
             copy: 'Copier',
             copied: 'Copié',
+            deleteRow: 'Supprimer la Ligne',
+            deleteColumn: 'Supprimer la Colonne',
         },
         cookieConsent: {
             title: 'Paramètres des Cookies',
@@ -5589,6 +5595,8 @@ export const translations = {
             logout: 'Abmelden',
             copy: 'Kopieren',
             copied: 'Kopiert',
+            deleteRow: 'Zeile löschen',
+            deleteColumn: 'Spalte löschen',
         },
         cookieConsent: {
             title: 'Cookie-Einstellungen',
