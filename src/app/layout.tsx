@@ -8,6 +8,7 @@ import { CookieConsent } from '@/components/cookie-consent'
 import { AnalyticsProvider } from '@/components/analytics-provider'
 import { translations, type Language } from '@/lib/i18n/translations'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
+import { siteConfig } from '@/config/site'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -37,6 +38,53 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t.title,
     description: t.description,
+    keywords: [
+      'AI Editor',
+      'Text Editor',
+      'KI Schreiben',
+      'Ing AI',
+      'Academic Writing',
+      'Citation Management',
+      'AI Writing Assistant',
+      'Research Tool',
+      'Document Editor',
+    ],
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    openGraph: {
+      type: 'website',
+      locale: language,
+      url: siteConfig.url,
+      title: t.title,
+      description: t.description,
+      siteName: siteConfig.name,
+      images: [
+        {
+          url: siteConfig.ogImage,
+          width: 1200,
+          height: 630,
+          alt: t.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t.title,
+      description: t.description,
+      images: [siteConfig.ogImage],
+    },
+    alternates: {
+      canonical: siteConfig.url,
+    },
     icons: {
       icon: '/logos/logosApp/ing_AI.png',
       apple: '/logos/logosApp/ing_AI.png',

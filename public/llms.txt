@@ -1,0 +1,6 @@
+# InGAI Editor
+Description: AI-powered text and document editor for academic writing and research.
+URL: https://ingai-editor.vercel.app
+Category: AI Tool, Text Editor, Academic Writing Assistant
+Features: AI autocomplete, citation management, research support, document editing
+Target Audience: Students, researchers, academic writers

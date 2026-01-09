@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ingai-editor.vercel.app/sitemap.xml
