@@ -41,6 +41,9 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: '/logos/logosApp/ing_AI.png',
       apple: '/logos/logosApp/ing_AI.png',
     },
+    verification: {
+      google: 'google7ef0e05ab4e094e1',
+    },
   }
 }
 

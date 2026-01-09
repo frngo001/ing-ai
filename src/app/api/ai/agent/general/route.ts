@@ -14,10 +14,21 @@ import * as citationsUtils from '@/lib/supabase/utils/citations'
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
 import { devLog, devError } from '@/lib/utils/logger'
 import { tavilySearch, tavilyCrawl, tavilyExtract } from '@tavily/ai-sdk'
+import { translations, type Language } from '@/lib/i18n/translations'
+import { getLanguageForServer } from '@/lib/i18n/server-language'
 
 // Edge Runtime hat Probleme mit Tool-Ergebnis-Serialisierung
 // Wechsel zu Node.js Runtime für bessere Tool-Call-Verarbeitung
 export const runtime = 'nodejs'
+
+const queryLanguage = async () => {
+  try {
+    const language = await getLanguageForServer()
+    return language
+  } catch (error) {
+    return 'de'
+  }
+}
 
 // Helper: Generiere Tool-Step-Marker fuer die Stream-Visualisierung
 function createToolStepMarker(
@@ -57,6 +68,7 @@ const searchSourcesTool = tool({
         type = 'keyword',
         limit = 50,
     }) => {
+        const language = await queryLanguage()
         const stepId = generateToolStepId()
         const toolName = 'searchSources'
         
@@ -70,13 +82,16 @@ const searchSourcesTool = tool({
             const results = await fetcher.search({ query, type, limit })
             const validApis = results.apis?.filter((api): api is string => typeof api === 'string' && api.length > 0) || []
 
+            const messageTemplate = translations[language as Language]?.askAi?.toolSearchSourcesFound || 'Ich habe {count} Quellen gefunden. Verwende jetzt das Tool "analyzeSources" um die besten Quellen auszuwählen.'
+            const message = messageTemplate.replace('{count}', results.sources.length.toString())
+
             return {
                 success: true,
                 totalResults: results.totalResults,
                 sources: results.sources.slice(0, limit),
                 apis: validApis,
                 searchTime: results.searchTime,
-                message: `Ich habe ${results.sources.length} Quellen gefunden. Verwende jetzt das Tool "analyzeSources" um die besten Quellen auszuwählen.`,
+                message,
                 _toolStep: createToolStepMarker('end', {
                     id: stepId,
                     toolName,
@@ -112,8 +127,10 @@ const analyzeSourcesTool = tool({
         maxResults: z.number().min(10).max(50).optional(),
     }),
     execute: async ({ sources, thema, keywords = [], minRelevanceScore = 50, preferHighImpact = false, preferHighCitations = true, maxResults = 30 }) => {
+        const language = await queryLanguage()
         try {
             const model = deepseek(DEEPSEEK_CHAT_MODEL)
+            const noAbstractText = translations[language as Language]?.askAi?.toolNoAbstractAvailable || 'Kein Abstract verfügbar'
             
             // Bereite Quellen für LLM-Bewertung vor
             const sourcesForEvaluation = (sources as unknown as NormalizedSource[]).map((source) => ({
@@ -158,7 +175,7 @@ Quellen:
 ${JSON.stringify(sourcesForEvaluation.map(s => ({
     id: s.id,
     title: s.title,
-    abstract: s.abstract || 'Kein Abstract verfügbar',
+    abstract: s.abstract || noAbstractText,
     authors: s.authors,
     year: s.year,
     keywords: s.keywords,
@@ -189,13 +206,15 @@ Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel un
             const analyzed = sourcesForEvaluation.map((source) => {
                 const evaluation = object.evaluations.find((e) => e.id === source.id)
                 
+                const noEvaluationText = translations[language as Language]?.askAi?.toolNoEvaluationAvailable || 'Keine Bewertung verfügbar'
+                
                 if (!evaluation) {
                     return {
                         ...source,
                         relevanceScore: 0,
                         rankingScore: 0,
                         isRelevant: false,
-                        reason: 'Keine Bewertung verfügbar',
+                        reason: noEvaluationText,
                     }
                 }
 
@@ -263,12 +282,15 @@ Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel un
                 reason: source.reason,
             }))
 
+            const messageTemplate = translations[language as Language]?.askAi?.toolAnalyzeSourcesMessage || 'Analyse abgeschlossen. {totalSelected} Quellen aus {totalAnalyzed} analysierten Quellen ausgewählt.'
+            const message = messageTemplate.replace('{totalSelected}', selectedWithReason.length.toString()).replace('{totalAnalyzed}', analyzed.length.toString())
+            
             return {
                 success: true,
                 selected: selectedWithReason,
                 totalAnalyzed: analyzed.length,
                 totalSelected: selectedWithReason.length,
-                message: `Ich habe ${selectedWithReason.length} relevante Quellen aus ${analyzed.length} gefundenen Quellen ausgewählt (bewertet mit LLM).`,
+                message,
             }
         } catch (error) {
             return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
@@ -290,8 +312,10 @@ const evaluateSourcesTool = tool({
         thema: z.string().describe('Das Thema der Arbeit'),
     }),
     execute: async ({ sources, thema }) => {
+        const language = await queryLanguage()
         try {
             const model = deepseek(DEEPSEEK_CHAT_MODEL)
+            const noAbstractText = translations[language as Language]?.askAi?.toolNoAbstractAvailable || 'Kein Abstract verfügbar'
             const prompt = `
         Bewerte die folgenden wissenschaftlichen Quellen hinsichtlich ihrer Relevanz für das Thema: "${thema}".
         
@@ -315,7 +339,7 @@ const evaluateSourcesTool = tool({
         ${JSON.stringify(sources.map(s => ({ 
           id: s.id, 
           title: s.title, 
-          abstract: s.abstract || 'Kein Abstract verfügbar',
+          abstract: s.abstract || noAbstractText,
           year: s.year
         })), null, 2)}
         
@@ -334,13 +358,14 @@ const evaluateSourcesTool = tool({
                 prompt,
             })
 
+            const noEvaluationText = translations[language as Language]?.askAi?.toolNoEvaluationAvailable || 'Keine Bewertung verfügbar'
             const results = sources.map(source => {
                 const evaluation = object.evaluations.find(e => e.id === source.id)
                 return {
                     ...source,
                     relevanceScore: evaluation?.relevanceScore || 0,
                     isRelevant: evaluation?.isRelevant || false,
-                    evaluationReason: evaluation?.reason || 'Keine Bewertung verfügbar'
+                    evaluationReason: evaluation?.reason || noEvaluationText
                 }
             })
 
@@ -432,6 +457,7 @@ function addSourcesToLibraryToolWithUser(userId: string) {
         description: 'Fügt Quellen zu einer Bibliothek hinzu.',
         inputSchema: z.object({ libraryId: z.string(), sources: z.array(z.object({}).passthrough()) }),
         execute: async ({ libraryId, sources }) => {
+            const language = await queryLanguage()
             const stepId = generateToolStepId()
             const toolName = 'addSourcesToLibrary'
             
@@ -476,10 +502,13 @@ function addSourcesToLibraryToolWithUser(userId: string) {
                     })
                 }
 
+                const messageTemplate = translations[language as Language]?.askAi?.toolAddSourcesToLibraryMessage || 'hinzugefügt'
+                const message = `${uniqueCitations.length} Quelle(n) zur Bibliothek "${library.name}" ${messageTemplate}`
+                
                 return {
                     success: true,
                     added: uniqueCitations.length,
-                    message: `${uniqueCitations.length} Quelle(n) zur Bibliothek "${library.name}" hinzugefügt`,
+                    message,
                     _toolStep: createToolStepMarker('end', {
                         id: stepId,
                         toolName,
@@ -511,6 +540,7 @@ function listAllLibrariesToolWithUser(userId: string, projectId?: string) {
             _placeholder: z.string().optional().describe('Placeholder parameter'),
         }),
         execute: async () => {
+            const language = await queryLanguage()
             const stepId = generateToolStepId()
             const toolName = 'listAllLibraries'
 
@@ -532,13 +562,15 @@ function listAllLibrariesToolWithUser(userId: string, projectId?: string) {
                     })
                 )
 
+                const message = librariesWithCounts.length === 0
+                    ? (translations[language as Language]?.askAi?.toolListAllLibrariesNoLibraries || 'Keine Bibliotheken gefunden. Erstelle zuerst eine Bibliothek mit createLibrary.')
+                    : (translations[language as Language]?.askAi?.toolListAllLibrariesFound || '{count} Bibliothek(en) gefunden. Verwende getLibrarySources mit der libraryId, um die Quellen einer Bibliothek abzurufen.').replace('{count}', librariesWithCounts.length.toString())
+                
                 return {
                     success: true,
                     libraries: librariesWithCounts,
                     count: librariesWithCounts.length,
-                    message: librariesWithCounts.length === 0
-                        ? 'Keine Bibliotheken gefunden. Erstelle zuerst eine Bibliothek mit createLibrary.'
-                        : `${librariesWithCounts.length} Bibliothek(en) gefunden. Verwende getLibrarySources mit der libraryId, um die Quellen einer Bibliothek abzurufen.`,
+                    message,
                     _toolStep: createToolStepMarker('end', {
                         id: stepId,
                         toolName,
@@ -569,20 +601,22 @@ function getLibrarySourcesToolWithUser(userId: string) {
         description: 'Ruft Quellen aus einer Bibliothek ab. Nutze zuerst listAllLibraries, um die verfügbaren Bibliotheken zu sehen.',
         inputSchema: z.object({ libraryId: z.string().describe('ID der Bibliothek (von listAllLibraries)') }),
         execute: async ({ libraryId }) => {
+            const language = await queryLanguage()
             const stepId = generateToolStepId()
             const toolName = 'getLibrarySources'
+            const libraryNotFoundText = translations[language as Language]?.askAi?.toolGetLibrarySourcesNotFound || 'Bibliothek nicht gefunden'
             
             try {
                 const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId)
                 if (!library) {
                     return {
                         success: false,
-                        error: 'Bibliothek nicht gefunden',
+                        error: libraryNotFoundText,
                         _toolStep: createToolStepMarker('end', {
                             id: stepId,
                             toolName,
                             status: 'error',
-                            error: 'Bibliothek nicht gefunden',
+                            error: libraryNotFoundText,
                         }),
                     }
                 }
@@ -601,13 +635,16 @@ function getLibrarySourcesToolWithUser(userId: string) {
                     abstract: c.abstract || undefined,
                 }))
 
+                const messageTemplate = translations[language as Language]?.askAi?.toolGetLibrarySourcesContains || 'Bibliothek "{name}" enthält {count} Quelle(n)'
+                const message = messageTemplate.replace('{name}', library.name).replace('{count}', savedCitations.length.toString())
+                
                 return {
                     success: true,
                     libraryId: library.id,
                     libraryName: library.name,
                     sources: savedCitations,
                     count: savedCitations.length,
-                    message: `Bibliothek "${library.name}" enthält ${savedCitations.length} Quelle(n)`,
+                    message,
                     _toolStep: createToolStepMarker('end', {
                         id: stepId,
                         toolName,
@@ -666,6 +703,7 @@ const deleteTextFromEditorTool = tool({
         endText: z.string().optional().describe('Bei mode "range": Text am Ende des zu löschenden Bereichs.'),
     }),
     execute: async ({ targetText, targetHeading, mode = 'block', startText, endText }) => {
+        const language = await queryLanguage()
         const payload = JSON.stringify({ type: 'tool-result', toolName: 'deleteTextFromEditor', targetText, targetHeading, mode, startText, endText })
         const base64Payload = Buffer.from(payload).toString('base64')
         return {
@@ -673,7 +711,7 @@ const deleteTextFromEditorTool = tool({
             targetText: targetText?.substring(0, 100),
             targetHeading,
             mode,
-            message: 'Text bereit für Löschung im Editor',
+            message: translations[language as Language]?.askAi?.toolDeleteTextFromEditorMessage || 'Text bereit für Löschung im Editor',
             eventType: 'delete-text-from-editor',
             _streamMarker: `[TOOL_RESULT_B64:${base64Payload}]`,
         }
@@ -712,6 +750,7 @@ const addThemaTool = tool({
         thema: z.string().describe('Das Thema der Arbeit (z.B. "Künstliche Intelligenz im Gesundheitswesen")'),
     }),
     execute: async ({ thema }) => {
+        const language = await queryLanguage()
         const toolResult = {
             type: 'tool-result',
             toolName: 'addThema',
@@ -720,9 +759,12 @@ const addThemaTool = tool({
         const jsonString = JSON.stringify(toolResult)
         const base64Payload = Buffer.from(jsonString).toString('base64')
         
+        const messageTemplate = translations[language as Language]?.askAi?.toolAddThemaMessage || 'Thema "{thema}" wurde gesetzt'
+        const message = messageTemplate.replace('{thema}', thema)
+        
         const response = {
             success: true,
-            message: `Thema "${thema}" wurde gesetzt`,
+            message,
             thema,
             // Base64-kodiertes Result für Client-Verarbeitung
             encodedResult: `[TOOL_RESULT_B64:${base64Payload}]`,
@@ -734,7 +776,11 @@ const addThemaTool = tool({
 const getCurrentStepTool = tool({
     description: 'Ruft den aktuellen Schritt ab',
     inputSchema: z.object({ _placeholder: z.string().optional() }),
-    execute: async () => ({ message: 'Verwende den Agent State Store' }),
+    execute: async () => {
+        const language = await queryLanguage()
+        const message = translations[language as Language]?.askAi?.toolGetCurrentStepMessage || 'Verwende den Agent State Store'
+        return { message }
+    },
 })
 
 // Tool: Editor-Inhalt abrufen (Factory-Funktion mit editorContent)
@@ -746,6 +792,7 @@ function createGetEditorContentTool(editorContent: string) {
       maxLength: z.number().optional().describe('Maximale Länge des zurückgegebenen Textes in Zeichen (Standard: unbegrenzt)'),
     }),
     execute: async ({ includeFullText = true, maxLength }) => {
+      const language = await queryLanguage()
       const stepId = generateToolStepId()
       const toolName = 'getEditorContent'
       
@@ -761,7 +808,7 @@ function createGetEditorContentTool(editorContent: string) {
           success: true,
           isEmpty: true,
           content: '',
-          message: 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
+          message: translations[language as Language]?.askAi?.toolGetEditorContentEmpty || 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
           characterCount: 0,
           wordCount: 0,
           _toolStep: createToolStepMarker('end', {
@@ -788,12 +835,15 @@ function createGetEditorContentTool(editorContent: string) {
       // Extrahiere Überschriften
       const headings = editorContent.match(/^#{1,6}\s.+$/gm) || []
       
+      const messageTemplate = translations[language as Language]?.askAi?.toolGetEditorContentMessage || 'Editor-Inhalt abgerufen: {wordCount} Wörter, {characterCount} Zeichen.'
+      const message = messageTemplate.replace('{wordCount}', wordCount.toString()).replace('{characterCount}', characterCount.toString())
+      
       const response = {
         success: true,
         isEmpty: false,
         content: includeFullText ? content : undefined,
         summary: !includeFullText ? `${wordCount} Wörter, ${paragraphCount} Absätze, ${headings.length} Überschriften` : undefined,
-        message: `Editor-Inhalt abgerufen: ${wordCount} Wörter, ${characterCount} Zeichen.`,
+        message,
         characterCount,
         wordCount,
         paragraphCount,
@@ -845,6 +895,7 @@ export async function POST(req: NextRequest) {
 
         const currentEditorContent: string = editorContent || ''
         const currentProjectId: string | undefined = projectId
+        const language = await queryLanguage()
 
         let thema = agentState.thema
         if (!thema && messages && messages.length > 0) {
@@ -900,7 +951,7 @@ ${fileSections.join('\n\n---\n\n')}`
           const headings = currentEditorContent.match(/^#{1,6}\s.+$/gm) || []
           
           const truncatedContent = currentEditorContent.length > 8000 
-            ? currentEditorContent.substring(0, 8000) + '\n\n[... Text gekürzt ...]'
+            ? currentEditorContent.substring(0, 8000) + '\n\n' + (translations[language as Language]?.askAi?.toolTextTruncated || '[... Text gekürzt ...]')
             : currentEditorContent
           
           const editorContextSection = `

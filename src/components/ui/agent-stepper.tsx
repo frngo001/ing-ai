@@ -90,6 +90,119 @@ function translateToolDetailKey(key: string, t: (key: string) => string): string
   return key.replace(/([A-Z])/g, ' $1').trim()
 }
 
+function translateToolMessage(message: string | undefined, toolName: string, t: (key: string) => string): string {
+  if (!message) return ''
+  
+  const germanPatterns: Array<{
+    pattern: RegExp | string
+    translationKey: string
+    extractParams?: (match: RegExpMatchArray) => Record<string, string> | string
+  }> = [
+    {
+      pattern: 'Text bereit für Löschung im Editor',
+      translationKey: 'askAi.toolDeleteTextFromEditorMessage'
+    },
+    {
+      pattern: /Editor-Inhalt abgerufen:\s*(\d+)\s+Wörter,\s+(\d+)\s+Zeichen/,
+      translationKey: 'askAi.toolGetEditorContentMessage',
+      extractParams: (match) => ({ wordCount: match[1], characterCount: match[2] })
+    },
+    {
+      pattern: 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
+      translationKey: 'askAi.toolGetEditorContentEmpty'
+    },
+    {
+      pattern: 'Text bereit für Einfügung im Editor',
+      translationKey: 'askAi.toolInsertTextInEditorMessage'
+    },
+    {
+      pattern: 'Zitat bereit für Einfügung',
+      translationKey: 'askAi.toolAddCitationMessage'
+    },
+    {
+      pattern: /Thema\s+"([^"]+)"\s+wurde gesetzt/,
+      translationKey: 'askAi.toolAddThemaMessage',
+      extractParams: (match) => ({ thema: match[1] })
+    },
+    {
+      pattern: 'Daten sollten im Client-State gespeichert werden',
+      translationKey: 'askAi.toolSaveStepDataMessage'
+    },
+    {
+      pattern: 'Verwende den Agent State Store',
+      translationKey: 'askAi.toolGetCurrentStepMessage'
+    },
+    {
+      pattern: /Ich habe\s+(\d+)\s+Quellen gefunden\.\s+Verwende jetzt das Tool "analyzeSources"/,
+      translationKey: 'askAi.toolSearchSourcesFound',
+      extractParams: (match) => ({ count: match[1] })
+    },
+    {
+      pattern: /Analyse abgeschlossen\.\s+(\d+)\s+Quellen aus\s+(\d+)\s+analysierten Quellen ausgewählt/,
+      translationKey: 'askAi.toolAnalyzeSourcesMessage',
+      extractParams: (match) => ({ totalSelected: match[1], totalAnalyzed: match[2] })
+    },
+    {
+      pattern: 'erfolgreich erstellt',
+      translationKey: 'askAi.toolCreateLibraryMessage'
+    },
+    {
+      pattern: /(\d+)\s+Quelle\(n\) zur Bibliothek\s+"([^"]+)"\s+(hinzugefügt|added|añadidas|ajoutées)/,
+      translationKey: 'askAi.toolAddSourcesToLibraryMessage',
+      extractParams: (match): string => {
+        const count = match[1]
+        const libraryName = match[2]
+        const addedText = t('askAi.toolAddSourcesToLibraryMessage')
+        return `${count} ${t('askAi.sources')} ${t('askAi.toolAddSourcesToLibrary')} "${libraryName}" ${addedText}`
+      }
+    },
+    {
+      pattern: 'Keine Bibliotheken gefunden. Erstelle zuerst eine Bibliothek mit createLibrary.',
+      translationKey: 'askAi.toolListAllLibrariesNoLibraries'
+    },
+    {
+      pattern: /(\d+)\s+Bibliothek\(en\) gefunden\.\s+Verwende getLibrarySources/,
+      translationKey: 'askAi.toolListAllLibrariesFound',
+      extractParams: (match) => ({ count: match[1] })
+    },
+    {
+      pattern: 'Bibliothek nicht gefunden',
+      translationKey: 'askAi.toolGetLibrarySourcesNotFound'
+    },
+    {
+      pattern: /Bibliothek\s+"([^"]+)"\s+enthält\s+(\d+)\s+Quelle\(n\)/,
+      translationKey: 'askAi.toolGetLibrarySourcesContains',
+      extractParams: (match) => ({ name: match[1], count: match[2] })
+    }
+  ]
+  
+  for (const { pattern, translationKey, extractParams } of germanPatterns) {
+    if (typeof pattern === 'string') {
+      if (message.includes(pattern)) {
+        return t(translationKey)
+      }
+    } else {
+      const match = message.match(pattern)
+      if (match) {
+        if (extractParams) {
+          const result = extractParams(match)
+          if (typeof result === 'string') {
+            return result
+          }
+          const template = t(translationKey)
+          return Object.entries(result).reduce(
+            (res, [key, value]) => res.replace(`{${key}}`, value),
+            template
+          )
+        }
+        return t(translationKey)
+      }
+    }
+  }
+  
+  return message
+}
+
 export function AgentStepperView({ steps, className, minimal = false }: AgentStepperViewProps) {
   const { t } = useLanguage()
   const [isOpen, setIsOpen] = React.useState(true)
@@ -137,7 +250,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 
                 {step.status === 'completed' && step.output?.message && !isExpanded && (
                   <span className="hidden sm:inline text-[10px] text-muted-foreground/60 truncate font-normal border-l border-border/40 pl-2">
-                    {step.output.message}
+                    {translateToolMessage(step.output.message, step.toolName, t)}
                   </span>
                 )}
               </div>
@@ -315,7 +428,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                             animate={{ opacity: 1, y: 0 }}
                             className="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-0.5 truncate leading-tight"
                           >
-                            {step.output.message}
+                            {translateToolMessage(step.output.message, step.toolName, t)}
                           </motion.p>
                         )}
                       </AnimatePresence>
