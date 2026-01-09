@@ -41,9 +41,6 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: '/logos/logosApp/ing_AI.png',
       apple: '/logos/logosApp/ing_AI.png',
     },
-    verification: {
-      google: 'google7ef0e05ab4e094e1',
-    },
   }
 }
 
@@ -56,6 +53,9 @@ export default async function RootLayout({
   
   return (
     <html lang={language} suppressHydrationWarning>
+      <head>
+        <meta name="google-site-verification" content="C2lA7r1tRdBBpcRarmOfJ4ZXwwfGr1x0oXFSgQcYKeQ" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
