@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, FolderOpen, Check, Loader2, Pencil } from "lucide-react"
+import { ChevronsUpDown, Plus, FolderOpen, Check, Loader2, Pencil, Share2 } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -32,6 +32,7 @@ import { useProjectStore } from "@/lib/stores/project-store"
 import { useOnboardingStore } from "@/lib/stores/onboarding-store"
 import { useLanguage } from "@/lib/i18n/use-language"
 import { devError } from "@/lib/utils/logger"
+import { ProjectShareDialog } from "@/components/project-share-dialog"
 
 export function ProjectSwitcher() {
   const { t } = useLanguage()
@@ -53,6 +54,9 @@ export function ProjectSwitcher() {
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = React.useState(false)
+  
+  // Share dialog state
+  const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
   const [editingProject, setEditingProject] = React.useState<{ id: string; name: string; description: string | null } | null>(null)
   const [editProjectName, setEditProjectName] = React.useState("")
   const [editProjectDescription, setEditProjectDescription] = React.useState("")
@@ -285,7 +289,7 @@ export function ProjectSwitcher() {
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+              className="w-(--radix-dropdown-menu-trigger-width) min-w-72 rounded-lg"
               align="start"
               side={isMobile ? "bottom" : "right"}
               sideOffset={4}
@@ -305,6 +309,17 @@ export function ProjectSwitcher() {
                   </div>
                   <span className="flex-1 truncate">{project.name}</span>
                   <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDropdownOpen(false)
+                      setShareDialogOpen(true)
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-opacity"
+                    title={t('projectSharing.share')}
+                  >
+                    <Share2 className="size-3.5 text-muted-foreground" />
+                  </button>
+                  <button
                     onClick={(e) => handleOpenRenameDialog({ id: project.id, name: project.name, description: project.description }, e)}
                     className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-opacity"
                     title={t('projects.renameProject')}
@@ -313,11 +328,6 @@ export function ProjectSwitcher() {
                   </button>
                   {project.id === currentProjectId && (
                     <Check className="size-4 text-primary" />
-                  )}
-                  {project.isDefault && (
-                    <span className="text-xs text-muted-foreground">
-                      {t('projects.default')}
-                    </span>
                   )}
                 </DropdownMenuItem>
               ))}
@@ -455,6 +465,15 @@ export function ProjectSwitcher() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {currentProject && (
+        <ProjectShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          projectId={currentProject.id}
+          projectName={currentProject.name}
+        />
+      )}
     </>
   )
 }

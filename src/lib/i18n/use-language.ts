@@ -87,7 +87,7 @@ interface LanguageState {
     isInitialized: boolean
     setLanguage: (lang: Language) => void
     initializeFromSupabase: () => Promise<void>
-    t: (key: string) => string
+    t: (key: string, params?: Record<string, string>) => string
 }
 
 export const useLanguage = create<LanguageState>()(
@@ -176,7 +176,7 @@ export const useLanguage = create<LanguageState>()(
                 }
             },
 
-            t: (path: string) => {
+            t: (path: string, params?: Record<string, string>) => {
                 const lang = get().language
                 const keys = path.split('.')
                 let current: any = translations[lang]
@@ -189,7 +189,15 @@ export const useLanguage = create<LanguageState>()(
                     current = current[key]
                 }
 
-                return current as string
+                let result = current as string
+                
+                if (params) {
+                    Object.entries(params).forEach(([paramKey, value]) => {
+                        result = result.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), value)
+                    })
+                }
+
+                return result
             },
         }),
         {
