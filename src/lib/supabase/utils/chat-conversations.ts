@@ -5,13 +5,19 @@ type ChatConversation = Database['public']['Tables']['chat_conversations']['Row'
 type ChatConversationInsert = Database['public']['Tables']['chat_conversations']['Insert']
 type ChatConversationUpdate = Database['public']['Tables']['chat_conversations']['Update']
 
-export async function getChatConversations(userId: string): Promise<ChatConversation[]> {
+export async function getChatConversations(userId: string, projectId?: string): Promise<ChatConversation[]> {
   const supabase = createClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from('chat_conversations')
     .select('*')
     .eq('user_id', userId)
-    .order('updated_at', { ascending: false })
+
+  // Filter by project if projectId is provided
+  if (projectId) {
+    query = query.eq('project_id', projectId)
+  }
+
+  const { data, error } = await query.order('updated_at', { ascending: false })
 
   if (error) throw error
   return data || []

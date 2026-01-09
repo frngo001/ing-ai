@@ -11,6 +11,7 @@ export * from './agent-utils'
 export * from './storage-utils'
 export { saveMessage, removeSavedMessage, loadSavedMessages, isMessageSaved } from './storage-utils'
 export * from './context-utils'
+export * from './editor-helpers'
 
 // Export hooks
 export * from './hooks'

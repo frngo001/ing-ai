@@ -27,7 +27,7 @@ export const Message = ({
     <div
       className={cn(
         "flex w-full max-w-full items-start gap-3",
-        from === "user" ? "flex-row-reverse text-right" : "flex-row"
+        from === "user" ? "flex-row-reverse" : "flex-row"
       )}
     >
       {children}

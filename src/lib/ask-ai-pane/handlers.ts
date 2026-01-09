@@ -1,6 +1,7 @@
 import type { ChatMessage, Mentionable, SlashCommand, ContextSelection, MessageContext, StoredConversation, AgentMode } from './types'
 import { detectArbeitType, extractThema } from './agent-utils'
 import { buildContextSummary } from './context-utils'
+import { getEditorContentAsMarkdown } from './editor-helpers'
 import { parseAgentStream } from '@/lib/stream-parsers/agent-stream-parser'
 import { parseStandardStream } from '@/lib/stream-parsers/standard-stream-parser'
 import { extractFileContent, extractMultipleFilesContent, type FileContentResult } from '@/lib/file-extraction/extract-file-content'
@@ -8,92 +9,6 @@ import { canExtractClientSide } from '@/lib/file-extraction/file-types'
 import { useProjectStore } from '@/lib/stores/project-store'
 import { uploadChatFile, getChatFilesForMessage, createFileFromChatFile } from '@/lib/supabase/utils/chat-files'
 import { getCurrentUserId } from '@/lib/supabase/utils/auth'
-
-// Helper: Hole Editor-Inhalt als Markdown ueber Event-System
-function getEditorContentAsMarkdown(): Promise<string> {
-  return new Promise((resolve) => {
-    if (typeof window === 'undefined') {
-      resolve('')
-      return
-    }
-    
-    let resolved = false
-    
-    const editorEvent = new CustomEvent('get-editor-instance', {
-      detail: {
-        callback: (editor: any) => {
-          if (resolved) return
-          
-          if (!editor) {
-            console.warn('[EDITOR] Kein Editor-Instance verfügbar für getEditorContent')
-            resolved = true
-            resolve('')
-            return
-          }
-          
-          try {
-            // Extrahiere Text aus allen Nodes
-            const extractText = (node: any): string => {
-              if (!node) return ''
-              if (typeof node.text === 'string') return node.text
-              if (Array.isArray(node.children)) {
-                return node.children.map(extractText).join(' ')
-              }
-              if (Array.isArray(node)) {
-                return node.map(extractText).join('\n\n')
-              }
-              return ''
-            }
-            
-            // Hole Editor-Inhalt
-            const content = editor.children || []
-            const text = extractText(content).trim()
-            
-            // Versuche Markdown-Serialisierung wenn verfuegbar
-            try {
-              const markdownApi = editor.getApi?.({ key: 'markdown' })
-              if (markdownApi?.markdown?.serialize) {
-                const markdown = markdownApi.markdown.serialize({ value: content })
-                if (markdown && markdown.trim().length > 0) {
-                  console.log(`[EDITOR] Editor-Inhalt als Markdown extrahiert: ${markdown.length} Zeichen`)
-                  resolved = true
-                  resolve(markdown)
-                  return
-                }
-              }
-            } catch (error) {
-              console.warn('[EDITOR] Fehler bei Markdown-Serialisierung, verwende Plain Text:', error)
-            }
-            
-            if (text.length > 0) {
-              console.log(`[EDITOR] Editor-Inhalt als Plain Text extrahiert: ${text.length} Zeichen`)
-            } else {
-              console.warn('[EDITOR] Editor-Inhalt ist leer')
-            }
-            
-            resolved = true
-            resolve(text)
-          } catch (error) {
-            console.error('[EDITOR] Fehler beim Extrahieren des Editor-Inhalts:', error)
-            resolved = true
-            resolve('')
-          }
-        }
-      }
-    })
-    
-    window.dispatchEvent(editorEvent)
-    
-    // Timeout erhöht auf 1000ms, damit der Event-Handler Zeit hat zu antworten
-    setTimeout(() => {
-      if (!resolved) {
-        console.warn('[EDITOR] Timeout beim Abrufen des Editor-Inhalts (1000ms)')
-        resolved = true
-        resolve('')
-      }
-    }, 1000)
-  })
-}
 
 export interface AgentStore {
   isActive: boolean

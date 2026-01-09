@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, FolderOpen, Check, Loader2 } from "lucide-react"
+import { ChevronsUpDown, Plus, FolderOpen, Check, Loader2, Pencil } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -31,6 +31,7 @@ import {
 import { useProjectStore } from "@/lib/stores/project-store"
 import { useOnboardingStore } from "@/lib/stores/onboarding-store"
 import { useLanguage } from "@/lib/i18n/use-language"
+import { devError } from "@/lib/utils/logger"
 
 export function ProjectSwitcher() {
   const { t } = useLanguage()
@@ -41,6 +42,7 @@ export function ProjectSwitcher() {
   const isLoading = useProjectStore((state) => state.isLoading)
   const setCurrentProject = useProjectStore((state) => state.setCurrentProject)
   const createProject = useProjectStore((state) => state.createProject)
+  const updateProject = useProjectStore((state) => state.updateProject)
   const loadProjects = useProjectStore((state) => state.loadProjects)
 
   const [dropdownOpen, setDropdownOpen] = React.useState(false)
@@ -48,6 +50,13 @@ export function ProjectSwitcher() {
   const [newProjectName, setNewProjectName] = React.useState("")
   const [newProjectDescription, setNewProjectDescription] = React.useState("")
   const [isCreating, setIsCreating] = React.useState(false)
+
+  // Rename dialog state
+  const [renameDialogOpen, setRenameDialogOpen] = React.useState(false)
+  const [editingProject, setEditingProject] = React.useState<{ id: string; name: string; description: string | null } | null>(null)
+  const [editProjectName, setEditProjectName] = React.useState("")
+  const [editProjectDescription, setEditProjectDescription] = React.useState("")
+  const [isRenaming, setIsRenaming] = React.useState(false)
 
   // Onboarding integration
   const { isOpen: isOnboardingOpen, getCurrentSubStep } = useOnboardingStore()
@@ -108,7 +117,7 @@ export function ProjectSwitcher() {
       setNewProjectDescription("")
       setCreateDialogOpen(false)
     } catch (error) {
-      console.error("Error creating project:", error)
+      devError("Error creating project:", error)
     } finally {
       setIsCreating(false)
     }
@@ -117,6 +126,35 @@ export function ProjectSwitcher() {
   const handleSelectProject = (projectId: string) => {
     setCurrentProject(projectId)
     setDropdownOpen(false)
+  }
+
+  const handleOpenRenameDialog = (project: { id: string; name: string; description: string | null }, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingProject(project)
+    setEditProjectName(project.name)
+    setEditProjectDescription(project.description || "")
+    setDropdownOpen(false)
+    setRenameDialogOpen(true)
+  }
+
+  const handleRenameProject = async () => {
+    if (!editingProject || !editProjectName.trim()) return
+
+    setIsRenaming(true)
+    try {
+      await updateProject(editingProject.id, {
+        name: editProjectName.trim(),
+        description: editProjectDescription.trim() || null,
+      })
+      setRenameDialogOpen(false)
+      setEditingProject(null)
+      setEditProjectName("")
+      setEditProjectDescription("")
+    } catch (error) {
+      devError("Error renaming project:", error)
+    } finally {
+      setIsRenaming(false)
+    }
   }
 
   // Show loading state
@@ -260,12 +298,19 @@ export function ProjectSwitcher() {
                 <DropdownMenuItem
                   key={project.id}
                   onClick={() => handleSelectProject(project.id)}
-                  className="gap-2 p-2"
+                  className="gap-2 p-2 group"
                 >
                   <div className="flex size-6 items-center justify-center rounded-md border">
                     <FolderOpen className="size-3.5 shrink-0" />
                   </div>
                   <span className="flex-1 truncate">{project.name}</span>
+                  <button
+                    onClick={(e) => handleOpenRenameDialog({ id: project.id, name: project.name, description: project.description }, e)}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-opacity"
+                    title={t('projects.renameProject')}
+                  >
+                    <Pencil className="size-3.5 text-muted-foreground" />
+                  </button>
                   {project.id === currentProjectId && (
                     <Check className="size-4 text-primary" />
                   )}
@@ -348,6 +393,63 @@ export function ProjectSwitcher() {
                 </>
               ) : (
                 t('projects.create')
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t('projects.renameProject')}</DialogTitle>
+            <DialogDescription>
+              {t('projects.renameProjectDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-project-name">{t('projects.projectName')}</Label>
+              <Input
+                id="edit-project-name"
+                value={editProjectName}
+                onChange={(e) => setEditProjectName(e.target.value)}
+                placeholder={t('projects.projectNamePlaceholder')}
+                onKeyDown={(e) => e.key === 'Enter' && !isRenaming && handleRenameProject()}
+                autoFocus
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-project-description">{t('projects.projectDescription')}</Label>
+              <Input
+                id="edit-project-description"
+                value={editProjectDescription}
+                onChange={(e) => setEditProjectDescription(e.target.value)}
+                placeholder={t('projects.projectDescriptionPlaceholder')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setRenameDialogOpen(false)}
+              disabled={isRenaming}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={handleRenameProject}
+              disabled={!editProjectName.trim() || isRenaming}
+              variant="secondary"
+              className="bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+            >
+              {isRenaming ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  {t('common.loading')}
+                </>
+              ) : (
+                t('projects.save')
               )}
             </Button>
           </DialogFooter>

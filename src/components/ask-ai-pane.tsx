@@ -20,6 +20,7 @@ import {
   X,
   Bookmark,
   Trash2,
+  MoreHorizontal,
 } from "lucide-react"
 import { PlateMarkdown } from "@/components/ui/plate-markdown"
 import { ChatSelectionToolbar } from "./ask-ai-pane/chat-selection-toolbar"
@@ -67,6 +68,7 @@ import {
 import { AgentStepperView } from "@/components/ui/agent-stepper"
 import { useCitationStore } from "@/lib/stores/citation-store"
 import { useBachelorarbeitAgentStore, type SelectedSource } from "@/lib/stores/bachelorarbeit-agent-store"
+import { useProjectStore } from "@/lib/stores/project-store"
 import { cn } from "@/lib/utils"
 import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as chatConversationsUtils from "@/lib/supabase/utils/chat-conversations"
@@ -102,13 +104,39 @@ import {
   createHandlers,
   createRenderers,
 } from "@/lib/ask-ai-pane"
+import { detectArbeitType, extractThema } from "@/lib/ask-ai-pane/agent-utils"
+import { buildContextSummary } from "@/lib/ask-ai-pane/context-utils"
+import { getEditorContentAsMarkdown } from "@/lib/ask-ai-pane/editor-helpers"
+import { parseAgentStream } from "@/lib/stream-parsers/agent-stream-parser"
+import { parseStandardStream } from "@/lib/stream-parsers/standard-stream-parser"
 import { devLog, devWarn, devError } from "@/lib/utils/logger"
 
-// Re-export MessagePart for external use
 export type { MessagePart }
 
-// All markdown utilities, components, and streaming shimmer are now imported from @/lib/ask-ai-pane
-
+/**
+ * Hauptkomponente für den Ask AI Chat-Panel.
+ * 
+ * Diese Komponente stellt eine vollständige Chat-Interface bereit mit folgenden Features:
+ * - Chat-Historie und Konversationsverwaltung
+ * - Verschiedene Agent-Modi (Bachelor/Master, Essay, Standard)
+ * - Inline-Bearbeitung von Nachrichten
+ * - Favoriten-System für Nachrichten
+ * - Slash-Commands
+ * - Context-Selection (Dokumente, Web-Suche)
+ * - Streaming-Antworten mit Reasoning-Anzeige
+ * - Datei-Uploads
+ * 
+ * @param className - Optionale CSS-Klassen für das Wrapper-Element
+ * @param onClose - Callback-Funktion, die aufgerufen wird, wenn der Panel geschlossen wird
+ * 
+ * @example
+ * ```tsx
+ * <AskAiPane 
+ *   className="custom-class"
+ *   onClose={() => console.log('Panel closed')}
+ * />
+ * ```
+ */
 export function AskAiPane({
   className,
   onClose,
@@ -134,6 +162,7 @@ export function AskAiPane({
   const citations = useCitationStore((state) => state.savedCitations)
   const addCitation = useCitationStore((state) => state.addCitation)
   const agentStore = useBachelorarbeitAgentStore()
+  const currentProjectId = useProjectStore((state) => state.currentProjectId)
   const [slashCommands, setSlashCommands] = useState<SlashCommand[]>([])
   const [slashDialogOpen, setSlashDialogOpen] = useState(false)
   const [newSlashLabel, setNewSlashLabel] = useState("")
@@ -147,16 +176,17 @@ export function AskAiPane({
   const [savedMessagesList, setSavedMessagesList] = useState<SavedMessage[]>([])
   const [favoritesDialogOpen, setFavoritesDialogOpen] = useState(false)
   const [pendingContext, setPendingContext] = useState<MessageContext[]>([])
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState("")
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set())
   const autoClosedReasoning = useRef<Set<string>>(new Set())
   const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isPersistingRef = useRef(false)
-  // Stabile Referenzen für persistConversation und setHistory
   const persistConversationRef = useRef(persistConversation)
   persistConversationRef.current = persistConversation
   const setHistoryRef = useRef(setHistory)
   setHistoryRef.current = setHistory
 
-  // Memoized translations that update on language change
   const translations = useMemo(() => ({
     title: t('askAi.title'),
     favorites: t('askAi.favorites'),
@@ -205,7 +235,7 @@ export function AskAiPane({
     save: t('askAi.save'),
     contextAdded: t('askAi.contextAdded'),
   }), [t, language])
-  
+
   const lastAssistantId = useMemo(
     () => [...messages].reverse().find((m) => m.role === "assistant")?.id ?? null,
     [messages]
@@ -232,7 +262,6 @@ export function AskAiPane({
 
   useEffect(() => {
     const loadData = async () => {
-      // Lade Agent State aus Supabase (Thema, Schritt, etc.)
       try {
         await agentStore.loadAgentStateFromSupabase()
         devLog('📝 [ASK-AI-PANE] Agent State aus Supabase geladen:', {
@@ -245,18 +274,19 @@ export function AskAiPane({
         devWarn('⚠️ [ASK-AI-PANE] Fehler beim Laden des Agent States:', error)
       }
 
-      const loadedHistory = await loadChatHistory()
+      const loadedHistory = await loadChatHistory(currentProjectId || undefined)
       setHistory(loadedHistory)
       if (loadedHistory[0]) {
         setConversationId(loadedHistory[0].id)
         setMessages(loadedHistory[0].messages)
-        // Restore agent mode from the loaded conversation
         if (loadedHistory[0].agentMode) {
           setContext((prev) => ({ ...prev, agentMode: loadedHistory[0].agentMode! }))
         }
+      } else {
+        setConversationId(crypto.randomUUID())
+        setMessages([])
       }
 
-      // Lade gespeicherte Nachrichten
       const saved = await loadSavedMessages()
       setSavedMessages(new Set(saved.map((m: { messageId: string }) => m.messageId)))
       setSavedMessagesList(saved)
@@ -264,20 +294,18 @@ export function AskAiPane({
       setIsHydrated(true)
     }
     loadData()
-  }, [])
+  }, [currentProjectId])
 
   const filteredMentionables = useMemo(() => {
     return filterMentionables(mentionables, mentionQuery)
   }, [mentionQuery, mentionables])
 
-  // Schließe Reasoning automatisch, sobald finale Antwort beginnt (nur einmal pro Nachricht)
   useEffect(() => {
     messages.forEach((message) => {
       if (message.role === 'assistant' && message.parts) {
         const reasoningPart = message.parts.find((p) => p.type === 'reasoning')
         const textPart = message.parts.find((p) => p.type === 'text')
-        
-        // Wenn finale Antwort vorhanden ist und Reasoning noch nicht automatisch geschlossen wurde
+
         if (reasoningPart && textPart && textPart.text && textPart.text.length > 0) {
           if (!autoClosedReasoning.current.has(message.id)) {
             const isCurrentlyOpen = reasoningOpen[message.id] ?? true
@@ -294,47 +322,39 @@ export function AskAiPane({
   useEffect(() => {
     if (!isHydrated) return
     if (!messages.length) return
-    
-    // Verhindere parallele Aufrufe
+
     if (isPersistingRef.current) {
-      // Wenn bereits ein Persist-Vorgang läuft, warte bis er fertig ist
       return
     }
-    
-    // Lösche vorherigen Timeout
+
     if (persistTimeoutRef.current) {
       clearTimeout(persistTimeoutRef.current)
     }
-    
-    // Debounce: Warte 500ms nach der letzten Änderung
+
     persistTimeoutRef.current = setTimeout(async () => {
-      // Prüfe erneut, ob bereits ein Persist-Vorgang läuft
       if (isPersistingRef.current) return
-      
+
       isPersistingRef.current = true
       try {
-        await persistConversationRef.current(messages, conversationId, setHistoryRef.current, context.agentMode)
+        await persistConversationRef.current(messages, conversationId, setHistoryRef.current, context.agentMode, currentProjectId || undefined)
       } finally {
         isPersistingRef.current = false
       }
     }, 500)
-    
-    // Cleanup
+
     return () => {
       if (persistTimeoutRef.current) {
         clearTimeout(persistTimeoutRef.current)
       }
     }
-  }, [conversationId, isHydrated, messages])
+  }, [conversationId, isHydrated, messages, currentProjectId])
 
-  // Stoppe Agent wenn Modus auf 'standard' geändert wird
   useEffect(() => {
     if (context.agentMode === 'standard' && agentStore.isActive) {
       agentStore.stopAgent()
     }
   }, [context.agentMode, agentStore])
 
-  // Event-Listener für set-agent-thema
   useEffect(() => {
     const handleSetThema = (event: CustomEvent<{ thema: string }>) => {
       const { thema } = event.detail
@@ -350,7 +370,6 @@ export function AskAiPane({
     }
   }, [agentStore])
 
-  // Create handlers
   const handlers = createHandlers({
     input,
     messages,
@@ -388,7 +407,7 @@ export function AskAiPane({
     resetChat,
     handleSend,
     handleRegenerate,
-    handleEditLastMessage,
+    handleEditLastMessage: _originalHandleEditLastMessage,
     handleStop,
     handleMentionSelect,
     handleSlashInsert,
@@ -401,14 +420,224 @@ export function AskAiPane({
     handleFeedback,
     toggleContext,
   } = handlers
+  void _originalHandleEditLastMessage
 
-  // Handler für gespeicherte Nachrichten
+  /**
+   * Aktiviert den Bearbeitungsmodus für die letzte User-Nachricht.
+   * Setzt die Nachricht-ID und den Inhalt für die Inline-Bearbeitung.
+   */
+  const handleEditLastMessage = () => {
+    if (isSending) return
+
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === "user")
+
+    if (!lastUserMessage) {
+      toast.error("Keine Nachricht zum Bearbeiten gefunden.")
+      return
+    }
+
+    setEditingMessageId(lastUserMessage.id)
+    setEditingContent(lastUserMessage.content)
+  }
+
+  /**
+   * Speichert eine bearbeitete Nachricht und generiert eine neue Antwort.
+   * Ersetzt die alte Nachricht, entfernt alle nachfolgenden Nachrichten und ruft die API auf.
+   * 
+   * @param messageId - Die ID der zu bearbeitenden Nachricht
+   */
+  const handleSaveEditedMessage = async (messageId: string) => {
+    if (isSending || !editingContent.trim()) return
+
+    const trimmed = editingContent.trim()
+    const messageIndex = messages.findIndex((m) => m.id === messageId)
+
+    if (messageIndex < 0) return
+
+    const originalMessage = messages[messageIndex]
+
+    const updatedMessages = messages.slice(0, messageIndex)
+    const editedMessage: ChatMessage = {
+      ...originalMessage,
+      content: trimmed,
+    }
+
+    const assistantId = crypto.randomUUID()
+    setMessages([...updatedMessages, editedMessage, { id: assistantId, role: "assistant", content: "" }])
+    setEditingMessageId(null)
+    setEditingContent("")
+
+    const arbeitType = detectArbeitType(trimmed)
+    const thema = extractThema(trimmed)
+
+    const historyPayload = [...updatedMessages, editedMessage].slice(-20)
+
+    setIsSending(true)
+    setStreamingId(assistantId)
+
+    const controller = new AbortController()
+    setAbortController(controller)
+
+    try {
+      let apiEndpoint = "/api/ai/ask"
+      const currentArbeitType = agentStore.arbeitType || (context.agentMode === 'bachelor' ? 'bachelor' : (context.agentMode === 'general' ? 'general' : 'bachelor'))
+
+      if (context.agentMode === 'standard') {
+        if (context.web) {
+          apiEndpoint = "/api/ai/agent/websearch"
+        } else {
+          apiEndpoint = "/api/ai/ask"
+        }
+      } else if (agentStore.isActive && currentArbeitType) {
+        apiEndpoint = currentArbeitType === 'general' ? "/api/ai/agent/general" : "/api/ai/agent/bachelorarbeit"
+      } else if (context.agentMode === 'bachelor') {
+        apiEndpoint = "/api/ai/agent/bachelorarbeit"
+      } else if (context.agentMode === 'general') {
+        apiEndpoint = "/api/ai/agent/general"
+      }
+
+      const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
+
+      const isAgentModeForEditor = context.agentMode === 'bachelor' || context.agentMode === 'general' ||
+        (agentStore.isActive && (currentArbeitType === 'bachelor' || currentArbeitType === 'master' || currentArbeitType === 'general'))
+      const shouldFetchEditorContent = isAgentModeForEditor || context.document
+      const editorContent = shouldFetchEditorContent ? await getEditorContentAsMarkdown() : ''
+
+      const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
+
+      let messageContextText = ''
+      if (editedMessage.context && editedMessage.context.length > 0) {
+        const contextTexts = editedMessage.context.map((ctx) => ctx.text).join('\n\n')
+        messageContextText = `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
+      }
+
+      const contextSummary = buildContextSummary(trimmed, files, context, selectedMentions)
+
+      const requestBody = (context.agentMode !== 'standard' || isWebSearchAgent)
+        ? {
+          messages: historyPayload.map((m) => {
+            if (m.role === 'user' && m.id === editedMessage.id && messageContextText) {
+              return {
+                role: m.role,
+                content: m.content + messageContextText,
+              }
+            }
+            return {
+              role: m.role,
+              content: m.content,
+            }
+          }),
+          useWeb: context.web,
+          editorContent,
+          documentContextEnabled: context.document,
+          projectId: currentProjectId || undefined,
+          agentState: isWebSearchAgent ? {
+            isActive: false,
+            arbeitType: null,
+            thema: null,
+            currentStep: null,
+          } : {
+            isActive: agentStore.isActive,
+            arbeitType: currentArbeitType,
+            thema: resolvedThema,
+            currentStep: agentStore.currentStep,
+          },
+        }
+        : {
+          question: trimmed,
+          context: contextSummary + (messageContextText ? messageContextText : ''),
+          useWeb: context.web,
+          editorContent: context.document ? editorContent : undefined,
+          documentContextEnabled: context.document,
+          messages: historyPayload,
+          attachments: [],
+        }
+
+      const res = await fetch(apiEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify(requestBody),
+      })
+
+      if (!res.ok) {
+        let errorMessage = "Antwort fehlgeschlagen"
+        try {
+          const errorData = await res.json().catch(() => null)
+          if (errorData?.error) {
+            errorMessage = errorData.error
+          } else if (typeof errorData === "string") {
+            errorMessage = errorData
+          } else {
+            errorMessage = `Fehler ${res.status}: ${res.statusText}`
+          }
+        } catch {
+          errorMessage = `Fehler ${res.status}: ${res.statusText || "Unbekannter Fehler"}`
+        }
+        throw new Error(errorMessage)
+      }
+
+      if (!res.body) {
+        throw new Error("Keine Antwortdaten erhalten")
+      }
+
+      const reader = res.body.getReader()
+
+      const isAgentMode = context.agentMode !== 'standard' || apiEndpoint === "/api/ai/agent/websearch"
+
+      if (isAgentMode) {
+        await parseAgentStream(reader, {
+          assistantId,
+          setMessages,
+          agentStore,
+        })
+      } else {
+        await parseStandardStream(reader, {
+          assistantId,
+          setMessages,
+        })
+      }
+    } catch (error) {
+      if ((error as any)?.name !== "AbortError") {
+        const errorMessage =
+          error instanceof Error && error.message !== "Antwort fehlgeschlagen"
+            ? error.message
+            : "Entschuldigung, die Antwort konnte nicht geladen werden. Bitte versuche es erneut."
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? {
+                ...m,
+                content: errorMessage,
+              }
+              : m
+          )
+        )
+        devError("Fehler in handleSaveEditedMessage:", error)
+      }
+    } finally {
+      setIsSending(false)
+      setStreamingId(null)
+      setAbortController(null)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null)
+    setEditingContent("")
+  }
+
+  /**
+   * Speichert oder entfernt eine Nachricht aus den Favoriten.
+   * 
+   * @param messageId - Die ID der Nachricht, die gespeichert/entfernt werden soll
+   */
   const handleSaveMessage = async (messageId: string) => {
     const message = messages.find(m => m.id === messageId)
     if (!message) return
-    
+
     if (savedMessages.has(messageId)) {
-      // Entferne aus Favoriten
       await removeSavedMessage(messageId)
       setSavedMessages(prev => {
         const next = new Set(prev)
@@ -417,28 +646,29 @@ export function AskAiPane({
       })
       setSavedMessagesList(prev => prev.filter(m => m.messageId !== messageId))
     } else {
-      // Füge zu Favoriten hinzu
       const saved = await saveMessage(message, conversationId)
       setSavedMessages(prev => new Set(prev).add(messageId))
       setSavedMessagesList(prev => [saved, ...prev.filter(m => m.messageId !== message.id)])
     }
   }
 
-  // Handler für Navigation zu einer Nachricht
+  /**
+   * Navigiert zu einer gespeicherten Nachricht in der Chat-Historie.
+   * Lädt die entsprechende Konversation und scrollt zur Nachricht.
+   * 
+   * @param savedMessage - Objekt mit messageId und conversationId
+   */
   const handleNavigateToMessage = (savedMessage: { messageId: string; conversationId: string }) => {
-    // Lade die Konversation
     const conversation = history.find(c => c.id === savedMessage.conversationId)
     if (conversation) {
       setConversationId(savedMessage.conversationId)
       setMessages(conversation.messages)
       setFavoritesDialogOpen(false)
-      
-      // Scroll zur Nachricht nach kurzer Verzögerung
+
       setTimeout(() => {
         const messageElement = document.querySelector(`[data-message-id="${savedMessage.messageId}"]`)
         if (messageElement) {
           messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          // Highlight kurz
           messageElement.classList.add('ring-2', 'ring-primary', 'ring-offset-2')
           setTimeout(() => {
             messageElement.classList.remove('ring-2', 'ring-primary', 'ring-offset-2')
@@ -448,21 +678,21 @@ export function AskAiPane({
     }
   }
 
-  // Handler zum Löschen eines Chats
+  /**
+   * Löscht einen Chat aus der Historie (Supabase und localStorage).
+   * Startet einen neuen Chat, falls der gelöschte Chat aktuell geladen war.
+   */
   const handleConfirmDeleteChat = async () => {
     if (!chatToDelete) return
 
     try {
       const userId = await getCurrentUserId()
-      
+
       if (userId) {
-        // Lösche Messages zuerst (wegen Foreign Key Constraint)
         await chatMessagesUtils.deleteChatMessagesByConversation(chatToDelete.id)
-        // Lösche Conversation
         await chatConversationsUtils.deleteChatConversation(chatToDelete.id, userId)
       }
 
-      // Lösche auch aus localStorage falls vorhanden
       if (typeof window !== 'undefined' && localStorage) {
         const stored = localStorage.getItem('ask-ai-chat-history')
         if (stored) {
@@ -478,17 +708,13 @@ export function AskAiPane({
         }
       }
 
-      // Lade History neu
-      const loadedHistory = await loadChatHistory()
+      const loadedHistory = await loadChatHistory(currentProjectId || undefined)
       setHistory(loadedHistory)
 
-      // Wenn der gelöschte Chat aktuell geladen war, starte einen neuen Chat
       if (conversationId === chatToDelete.id) {
-        // Stoppe laufende Requests
         if (abortController) {
           abortController.abort()
         }
-        // Starte neuen Chat
         setConversationId(crypto.randomUUID())
         setMessages([])
         setStreamingId(null)
@@ -497,9 +723,7 @@ export function AskAiPane({
         setInput("")
         setFiles(null)
         setAbortController(null)
-        // Schließe History-Dialog falls offen
         setHistoryOpen(false)
-        // Fokussiere Input
         setTimeout(() => {
           messageInputRef.current?.focus()
         }, 100)
@@ -514,7 +738,6 @@ export function AskAiPane({
     }
   }
 
-  // Create renderers
   const renderers = createRenderers({
     lastAssistantId,
     lastUserId,
@@ -527,14 +750,18 @@ export function AskAiPane({
     handleEditLastMessage,
     handleSaveMessage,
     savedMessages,
+    editingMessageId,
+    editingContent,
+    handleCancelEdit,
+    handleSaveEditedMessage,
   })
 
   const { renderAssistantActions, renderUserActions } = renderers
 
   useEffect(() => {
     if (isHydrated && messages.length === 0) {
-    focusMessageInput()
-  }
+      focusMessageInput()
+    }
   }, [isHydrated, messages.length, focusMessageInput])
 
   const hasMessages = messages.some((m) => m.role === "assistant" || m.role === "user")
@@ -552,23 +779,23 @@ export function AskAiPane({
           <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold">
             <span>{translations.title}</span>
             <MessageSquareQuote className="size-4" />
-              <Badge
-                variant="outline"
-                className={cn(
-                  "ml-2 h-5 px-1.5 text-[10px] font-medium border-transparent",
-                  context.agentMode === 'bachelor'
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+            <Badge
+              variant="outline"
+              className={cn(
+                "ml-2 h-5 px-1.5 text-[10px] font-medium border-transparent",
+                context.agentMode === 'bachelor'
+                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                   : context.agentMode === 'general'
-                  ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                  : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                    ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                    : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
               )}
             >
-              {context.agentMode === 'bachelor' 
+              {context.agentMode === 'bachelor'
                 ? translations.bachelorMasterAgent
                 : context.agentMode === 'general'
-                ? translations.essayAgent
-                : translations.standardChat}
-              </Badge>
+                  ? translations.essayAgent
+                  : translations.standardChat}
+            </Badge>
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-1.5">
@@ -625,7 +852,7 @@ export function AskAiPane({
 
       <Card className="relative flex h-full min-h-0 flex-1 flex-col overflow-visible py-0 border-0 shadow-none bg-transparent">
         <div className="flex-1 min-h-0 overflow-hidden pb-2 sm:pb-0 relative">
-          <ChatSelectionToolbar 
+          <ChatSelectionToolbar
             messages={messages}
             setMessages={setMessages}
             conversationId={conversationId}
@@ -634,27 +861,28 @@ export function AskAiPane({
             pendingContext={pendingContext}
             setPendingContext={setPendingContext}
           />
-          <Conversation className="h-full">
+          <Conversation className="h-full [&::-webkit-scrollbar]:!hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <ConversationContent className="pb-4">
               {hasMessages &&
                 messages.map((message) => (
-                   <Message from={message.role} key={message.id} data-message-id={message.id}>
-                    <MessageContent className={message.role === "assistant" ? "w-full" : undefined}>
+                  <Message from={message.role} key={message.id} data-message-id={message.id}>
+                    <MessageContent className={message.role === "assistant" ? "w-full" : "w-full items-end"}>
                       <Response
                         className={
                           message.role === "assistant"
                             ? "w-full border-0 bg-transparent shadow-none px-0 py-0"
-                            : "max-h-[15vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                            : editingMessageId === message.id
+                              ? "w-[95%] border-0 bg-muted/50 rounded-xl rounded-tr-sm px-4 py-3 ml-auto"
+                              : `max-w-[85%] border-0 bg-muted/50 rounded-xl rounded-tr-sm px-4 py-3 ml-auto ${expandedMessages.has(message.id) ? "" : "max-h-[70vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"}`
                         }
                       >
                         {message.role === "assistant" ? (
                           <div className="space-y-4">
-                            {/* Render Parts in Reihenfolge (fuer Cursor-Feeling) */}
                             {message.parts && message.parts.length > 0 ? (
                               message.parts.map((part, idx) => {
                                 if (part.type === 'reasoning') {
                                   return (
-                                    <Collapsible 
+                                    <Collapsible
                                       key={`reasoning-${idx}`}
                                       open={reasoningOpen[message.id] ?? true}
                                       onOpenChange={(open) => setReasoningOpen((prev) => ({ ...prev, [message.id]: open }))}
@@ -675,7 +903,7 @@ export function AskAiPane({
                                     </Collapsible>
                                   )
                                 }
-                                
+
                                 if (part.type === 'text') {
                                   return part.text ? (
                                     <PlateMarkdown key={`text-${idx}`} id={`${message.id}-text-${idx}`}>
@@ -686,9 +914,9 @@ export function AskAiPane({
 
                                 if (part.type === 'tool-step') {
                                   return (
-                                    <AgentStepperView 
-                                      key={`step-${part.toolStep.id}`} 
-                                      steps={[part.toolStep]} 
+                                    <AgentStepperView
+                                      key={`step-${part.toolStep.id}`}
+                                      steps={[part.toolStep]}
                                       minimal={true}
                                     />
                                   )
@@ -698,11 +926,10 @@ export function AskAiPane({
                               })
                             ) : (
                               <>
-                                {/* Fallback fuer alte Nachrichten oder Nachrichten ohne Parts */}
                                 {message.toolSteps && message.toolSteps.length > 0 && (
                                   <AgentStepperView steps={message.toolSteps} />
                                 )}
-                                
+
                                 {message.reasoning && (
                                   <Collapsible defaultOpen={false}>
                                     <CollapsibleTrigger asChild>
@@ -721,7 +948,7 @@ export function AskAiPane({
                                     </CollapsibleContent>
                                   </Collapsible>
                                 )}
-                                
+
                                 {message.content ? (
                                   <PlateMarkdown id={`${message.id}-content-fallback`}>
                                     {message.content}
@@ -735,51 +962,74 @@ export function AskAiPane({
                             )}
                           </div>
                         ) : (
-                          <div className="space-y-2">
-                            {/* Kontext-Anzeige für User-Nachrichten */}
+                          <div className="space-y-3">
                             {message.context && message.context.length > 0 && (
-                              <div className="mb-3 space-y-2">
+                              <div className="space-y-1.5">
                                 {message.context.map((ctx, ctxIdx) => (
                                   <div
                                     key={`context-${ctxIdx}`}
-                                    className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs"
+                                    className="flex items-start gap-2 text-xs text-muted-foreground/80 italic"
                                   >
-                                    <div className="flex items-start gap-2">
-                                      <MessageSquareQuote className="h-3.5 w-3.5 mt-0.5 text-primary/70 flex-shrink-0" />
-                                      <div className="flex-1 min-w-0">
-                                      <div className="text-muted-foreground/80 mb-1">
-                                        {translations.contextAdded}
-                                      </div>
-                                        <div className="text-foreground/90 whitespace-pre-wrap break-words">
-                                          {ctx.text.length > 60 ? `${ctx.text.slice(0, 60)}...` : ctx.text}
-                                        </div>
-                                      </div>
-                                    </div>
+                                    <MessageSquareQuote className="h-3 w-3 mt-0.5 flex-shrink-0 opacity-60" />
+                                    <span className="line-clamp-2">
+                                      {ctx.text.length > 80 ? `${ctx.text.slice(0, 80)}...` : ctx.text}
+                                    </span>
                                   </div>
                                 ))}
                               </div>
                             )}
-                            {/* Zeige Dateien vor der Nachricht */}
+
                             {message.files && message.files.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mb-2">
+                              <div className="flex flex-wrap gap-1.5">
                                 {message.files.map((file, idx) => (
                                   <div
                                     key={`${file.name}-${idx}`}
-                                    className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/40 px-2 py-1.5 text-xs"
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] text-primary"
                                   >
-                                    <FileText className="h-4 w-4 text-muted-foreground" />
-                                    <span className="truncate max-w-[200px] text-muted-foreground">
+                                    <FileText className="h-3 w-3" />
+                                    <span className="truncate max-w-[120px] font-medium">
                                       {file.name}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground/70">
-                                      ({(file.size / 1024).toFixed(1)} KB)
                                     </span>
                                   </div>
                                 ))}
                               </div>
                             )}
-                            {message.content ||
-                              (streamingId === message.id ? <StreamingShimmer /> : translations.noAnswerAvailable)}
+
+                            {editingMessageId === message.id ? (
+                              <div className="relative w-full ml-auto">
+                                <textarea
+                                  value={editingContent}
+                                  onChange={(e) => setEditingContent(e.target.value)}
+                                  className="w-full min-h-[2em] max-h-[70vh] p-0 text-sm bg-transparent border-none focus:outline-none resize-none field-sizing-content"
+                                  style={{ fieldSizing: 'content' } as React.CSSProperties}
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Escape') {
+                                      handleCancelEdit()
+                                    } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                      handleSaveEditedMessage(message.id)
+                                    }
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <div className="whitespace-pre-wrap break-words">
+                                  {message.content || (streamingId === message.id ? <StreamingShimmer /> : translations.noAnswerAvailable)}
+                                </div>
+                                {!expandedMessages.has(message.id) && message.content && message.content.length > 500 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedMessages(prev => new Set(prev).add(message.id))}
+                                    className="absolute bottom-0 left-0 right-0 flex items-center justify-center pt-8 pb-1 bg-gradient-to-t from-muted/50 to-transparent"
+                                  >
+                                    <span className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </Response>
@@ -961,8 +1211,8 @@ export function AskAiPane({
           </form>
         </div>
 
-        <Dialog 
-          open={historyOpen} 
+        <Dialog
+          open={historyOpen}
           onOpenChange={(open) => {
             setHistoryOpen(open)
             if (!open) {
@@ -1079,7 +1329,6 @@ export function AskAiPane({
           </DialogContent>
         </Dialog>
 
-        {/* Bestätigungsdialog zum Löschen eines Chats */}
         <AlertDialog
           open={!!chatToDelete}
           onOpenChange={(open) => {
@@ -1105,9 +1354,8 @@ export function AskAiPane({
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Favoriten Dialog */}
-        <Dialog 
-          open={favoritesDialogOpen} 
+        <Dialog
+          open={favoritesDialogOpen}
           onOpenChange={(open) => {
             setFavoritesDialogOpen(open)
             if (!open) {
@@ -1127,7 +1375,7 @@ export function AskAiPane({
                 savedMessagesList.map((saved) => {
                   const conversation = history.find(c => c.id === saved.conversationId)
                   const conversationTitle = conversation?.title || translations.unknownChat
-                  
+
                   return (
                     <button
                       key={saved.id}
@@ -1166,8 +1414,8 @@ export function AskAiPane({
           </DialogContent>
         </Dialog>
 
-        <Dialog 
-          open={slashDialogOpen} 
+        <Dialog
+          open={slashDialogOpen}
           onOpenChange={(open) => {
             setSlashDialogOpen(open)
             if (!open) {
@@ -1214,30 +1462,25 @@ export function AskAiPane({
                   if (!content) return
                   const label = newSlashLabel.trim()
                   if (!label) return
-                  
+
                   const newCommand: SlashCommand = {
                     id: crypto.randomUUID(),
                     label,
                     content,
                   }
-                  
+
                   try {
-                    // Speichere den Command in der Datenbank
                     const savedCommand = await saveSingleSlashCommand(newCommand)
-                    
-                    // Lade Commands neu aus der Datenbank
                     const reloadedCommands = await loadSlashCommands()
                     setSlashCommands(reloadedCommands)
-                    
                     toast.success(t('askAi.commandSaved'))
                   } catch (error) {
                     console.error('Fehler beim Speichern des Commands:', error)
                     toast.error(t('askAi.commandSaveError'))
-                    // Fallback: Füge lokal hinzu
                     const next = [...slashCommands, newCommand]
                     setSlashCommands(next)
                   }
-                  
+
                   setSlashDialogOpen(false)
                   setNewSlashContent("")
                   setNewSlashLabel("")

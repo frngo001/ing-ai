@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from "react"
-import { ExternalLink, RefreshCcw, ThumbsDown, ThumbsUp, Bookmark, Pencil } from "lucide-react"
+import { ExternalLink, RefreshCcw, ThumbsDown, ThumbsUp, Bookmark, Pencil, X, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CopyButton } from "@/components/ui/copy-button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -19,6 +19,8 @@ export interface RendererDependencies {
   isSending: boolean
   sourcesDialogOpen: Record<string, boolean>
   savedMessages: Set<string>
+  editingMessageId: string | null
+  editingContent: string
 
   // Setters
   setSourcesDialogOpen: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
@@ -28,6 +30,8 @@ export interface RendererDependencies {
   handleRegenerate: () => void
   handleEditLastMessage: () => void
   handleSaveMessage: (messageId: string) => void
+  handleCancelEdit: () => void
+  handleSaveEditedMessage: (messageId: string) => void
 }
 
 export const createRenderers = (deps: RendererDependencies) => {
@@ -43,6 +47,10 @@ export const createRenderers = (deps: RendererDependencies) => {
     handleEditLastMessage,
     handleSaveMessage,
     savedMessages,
+    editingMessageId,
+    editingContent,
+    handleCancelEdit,
+    handleSaveEditedMessage,
   } = deps
 
   const AssistantActions = React.memo(({ message }: { message: ChatMessage }) => {
@@ -289,13 +297,64 @@ export const createRenderers = (deps: RendererDependencies) => {
   const UserActions = React.memo(({ message }: { message: ChatMessage }) => {
     const { t, language } = useLanguage()
     const isLastUser = lastUserId === message.id
+    const isEditing = editingMessageId === message.id
 
     // Memoize translations to update when language changes
     const translations = useMemo(() => ({
       copied: t('askAi.copied'),
       editMessage: t('askAi.editMessage'),
+      cancel: t('askAi.cancel'),
+      save: t('askAi.save'),
     }), [t, language])
 
+    // Im Bearbeitungsmodus: Abbrechen und Bestätigen Buttons
+    if (isEditing) {
+      const originalContent = message.content
+      const hasChanges = editingContent.trim() !== originalContent && editingContent.trim().length > 0
+
+      return (
+        <div className="mt-2 flex w-full flex-wrap items-center justify-end gap-1 text-muted-foreground">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 hover:bg-muted"
+                onClick={handleCancelEdit}
+                aria-label={translations.cancel}
+              >
+                <X className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {translations.cancel}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className={cn(
+                  "h-8 w-8",
+                  hasChanges ? "text-primary hover:bg-primary/10" : "hover:bg-muted"
+                )}
+                onClick={() => handleSaveEditedMessage(message.id)}
+                aria-label={translations.save}
+                disabled={!hasChanges}
+              >
+                <Check className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {translations.save}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      )
+    }
+
+    // Normaler Zustand: Bearbeiten und Kopieren Buttons
     return (
       <div className="mt-2 flex w-full flex-wrap items-center justify-end gap-0.5 text-muted-foreground">
         {isLastUser && (

@@ -144,21 +144,23 @@ export const persistConversation = async (
   msgs: ChatMessage[],
   id: string,
   setHistory: (updater: (prev: StoredConversation[]) => StoredConversation[]) => void,
-  agentMode?: 'bachelor' | 'general' | 'standard'
+  agentMode?: 'bachelor' | 'general' | 'standard',
+  projectId?: string
 ) => {
   const userId = await getCurrentUserId()
   const title = deriveConversationTitle(msgs)
-  
+
   if (userId) {
     try {
       // Erstelle oder aktualisiere Conversation
       let conversation = await chatConversationsUtils.getChatConversationById(id, userId)
-      
+
       if (!conversation) {
         conversation = await chatConversationsUtils.createChatConversation({
           id,
           user_id: userId,
           title,
+          project_id: projectId || null,
         })
       } else {
         conversation = await chatConversationsUtils.updateChatConversation(id, {
@@ -253,12 +255,12 @@ export const persistConversation = async (
   })
 }
 
-export const loadChatHistory = async (): Promise<StoredConversation[]> => {
+export const loadChatHistory = async (projectId?: string): Promise<StoredConversation[]> => {
   const userId = await getCurrentUserId()
-  
+
   if (userId) {
     try {
-      const conversations = await chatConversationsUtils.getChatConversations(userId)
+      const conversations = await chatConversationsUtils.getChatConversations(userId, projectId)
       
       // Lade Messages für jede Conversation
       const conversationsWithMessages: StoredConversation[] = await Promise.all(
