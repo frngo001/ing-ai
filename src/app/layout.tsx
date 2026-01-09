@@ -9,6 +9,7 @@ import { AnalyticsProvider } from '@/components/analytics-provider'
 import { translations, type Language } from '@/lib/i18n/translations'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
 import { siteConfig } from '@/config/site'
+import { StructuredData } from '@/components/seo/structured-data'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -103,6 +104,7 @@ export default async function RootLayout({
     <html lang={language} suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="C2lA7r1tRdBBpcRarmOfJ4ZXwwfGr1x0oXFSgQcYKeQ" />
+        <StructuredData />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <ThemeProvider
