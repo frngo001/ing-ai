@@ -45,6 +45,7 @@ function getToolConfig(toolName: string, t: (key: string) => string) {
     listAllLibraries: { label: t('askAi.toolListAllLibraries'), icon: List },
     getEditorContent: { label: t('askAi.toolGetEditorContent'), icon: FileText },
     insertTextInEditor: { label: t('askAi.toolInsertTextInEditor'), icon: FileText },
+    deleteTextFromEditor: { label: t('askAi.toolDeleteTextFromEditor'), icon: X },
     addCitation: { label: t('askAi.toolAddCitation'), icon: Quote },
     addThema: { label: t('askAi.toolAddThema'), icon: Settings },
     saveStepData: { label: t('askAi.toolSaveStepData'), icon: Check },
