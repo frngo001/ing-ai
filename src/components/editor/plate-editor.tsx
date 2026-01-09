@@ -59,7 +59,7 @@ export function PlateEditor({
   const { t, language } = useLanguage();
   const hasHydrated = React.useRef(false);
   const discussionsApplied = React.useRef(false);
-  
+
   // Lade initialen Wert synchron aus localStorage für Hot Reload-Kompatibilität
   const initialValue = React.useMemo(() => getInitialValue(storageId), [storageId]);
   const latestContentRef = React.useRef<Value>(initialValue);
@@ -78,9 +78,7 @@ export function PlateEditor({
     }),
     [storageId]
   );
-  
-  // Erstelle editorKit nur einmal beim ersten Mount
-  // Verwende useRef um HMR-bedingtes Neuladen zu verhindern
+
   const editorKitRef = React.useRef<ReturnType<typeof createEditorKit> | null>(null);
   if (!editorKitRef.current) {
     editorKitRef.current = createEditorKit(t('toolbar.placeholderWrite'));
@@ -116,10 +114,7 @@ export function PlateEditor({
             user.user_metadata?.avatar_url ||
             `https://api.dicebear.com/9.x/glass/svg?seed=${userId}`;
 
-          // Hole aktuelle Users-Daten aus dem Plugin
           const currentUsers = editor.getOption(discussionPlugin, 'users') || {};
-          
-          // Aktualisiere Users-Daten mit dem aktuellen User
           const updatedUsers = {
             ...currentUsers,
             [userId]: {
@@ -128,8 +123,6 @@ export function PlateEditor({
               name: userName,
             },
           };
-
-          // Aktualisiere Plugin-Optionen
           editor.setOption(discussionPlugin, 'currentUserId', userId);
           editor.setOption(discussionPlugin, 'users', updatedUsers);
         }
@@ -139,8 +132,6 @@ export function PlateEditor({
     };
 
     loadCurrentUser();
-
-    // Höre auf Auth-Status-Änderungen
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -197,15 +188,12 @@ export function PlateEditor({
     if (typeof window === 'undefined' || !editor) return;
 
     const handleFocusStart = () => {
-      // Small delay to ensure the editor is fully mounted and ready
       setTimeout(() => {
         try {
-          // Select the start of the first block
           editor.tf.select({
             anchor: { path: [0, 0], offset: 0 },
             focus: { path: [0, 0], offset: 0 },
           });
-          // Focus the editor
           editor.tf.focus();
         } catch (error) {
           devWarn('[PLATE EDITOR] Could not focus editor:', error);
@@ -223,17 +211,13 @@ export function PlateEditor({
   React.useEffect(() => {
     if (typeof window === 'undefined' || !editor) return;
 
-    // Reset hasHydrated beim Remount (Hot Reload)
-    // Prüfe ob der Editor-Inhalt bereits geladen wurde, indem wir den aktuellen Wert mit initialValue vergleichen
     const currentContent = JSON.stringify(editor.children);
     const initialContentStr = JSON.stringify(initialValue);
     const needsReload = currentContent !== initialContentStr || !hasHydrated.current;
 
     if (!needsReload && hasHydrated.current) {
-      return; // Bereits geladen und synchronisiert
+      return;
     }
-
-    // Setze hasHydrated zurück beim Remount
     hasHydrated.current = false;
 
     const loadContent = async () => {
@@ -258,7 +242,6 @@ export function PlateEditor({
             const doc = await documentsUtils.getDocumentById(storageId, userId);
             if (doc && doc.content) {
               const normalizedContent = normalizeNodeId(doc.content as Value);
-              // Prüfe ob Content tatsächlich Text enthält
               const hasContent = extractTextFromNode(normalizedContent).trim().length > 0;
               if (hasContent) {
                 content = normalizedContent;
@@ -270,33 +253,28 @@ export function PlateEditor({
           }
         } catch (error) {
           devError('Fehler beim Laden des Dokuments aus Supabase:', error);
-          // Fallback auf localStorage
           const localData = loadPersistedState(storageKeys);
           content = localData.content;
           discussions = localData.discussions;
         }
       } else {
-        // Für non-UUID storageIds wurde der Content bereits synchron geladen (initialValue)
-        // Lade nur Discussions aus localStorage
         const localData = loadPersistedState(storageKeys);
         discussions = localData.discussions;
-        // Verwende den bereits geladenen initialValue als Content
         content = initialValue !== DEFAULT_VALUE ? initialValue : null;
       }
 
       // Wenn kein Content vorhanden ist, verwende den initialValue
       const finalContent = content || initialValue;
-      
+
       // Setze nur wenn sich der Content geändert hat
       const currentContentStr = JSON.stringify(editor.children);
       const newContentStr = JSON.stringify(finalContent);
       if (currentContentStr !== newContentStr) {
         (editor as any).tf.setValue?.(finalContent);
       }
-      
+
       latestContentRef.current = finalContent;
       (editor as any).tf.redecorate?.();
-      // stelle Anker für Kommentare/Vorschläge sofort wieder her
       syncCommentPathMap(editor);
       syncSuggestionPathMap(editor);
 
@@ -406,7 +384,7 @@ export function PlateEditor({
         storageId={storageId}
       />
       <div className="flex h-full items-start gap-6">
-        <CommentTocSidebar visible={showCommentToc}  className="overflow-auto max-h-[40vh]" />
+        <CommentTocSidebar visible={showCommentToc} className="overflow-auto max-h-[40vh]" />
         <SuggestionTocSidebar
           visible={showSuggestionToc}
           className="top-[45vh]"
@@ -451,7 +429,7 @@ export function PlateEditor({
                 style={toolbarVars}
                 data-onboarding="editor-container"
               >
-                <Editor variant="demo" className="overflow-y-auto" data-onboarding="editor-content"/>
+                <Editor variant="demo" className="overflow-y-auto" data-onboarding="editor-content" />
                 <EditorBibliography />
               </EditorContainer>
             </div>
@@ -477,9 +455,6 @@ export function PlateEditor({
             (typeof source.publisher === 'string' && source.publisher) ||
             source.sourceApi ||
             'Quelle'
-
-          // Verwende die gemeinsame Utility-Funktion für Link-Generierung
-          // Priorität: direkter URL-Link > PDF-URL > DOI-Link
           const externalUrl = getCitationLink({
             url: source.url,
             doi: source.doi,
@@ -543,14 +518,10 @@ function getInitialValue(storageId: string): Value {
     legacyDiscussions: LOCAL_STORAGE_DISCUSSIONS_KEY_LEGACY,
   };
 
-  // Prüfe ob storageId eine UUID ist (Supabase-Dokument) - diese werden asynchron geladen
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storageId);
   if (isUUID) {
-    // Für Supabase-Dokumente verwenden wir DEFAULT_VALUE, da diese asynchron geladen werden
     return DEFAULT_VALUE;
   }
-
-  // Lade synchron aus localStorage
   try {
     const tryParse = <T,>(raw: string | null, revive: (data: any) => T): T | null => {
       if (!raw) return null;
@@ -579,8 +550,6 @@ function getInitialValue(storageId: string): Value {
       );
 
     const loadedContent = contentFromState ?? contentFallback;
-
-    // Prüfe ob Content tatsächlich Text enthält
     if (loadedContent) {
       const hasContent = extractTextFromNode(loadedContent).trim().length > 0;
       if (hasContent) {
@@ -588,7 +557,6 @@ function getInitialValue(storageId: string): Value {
       }
     }
   } catch (error) {
-    // Bei Fehlern verwende DEFAULT_VALUE
     devWarn('[PLATE EDITOR] Fehler beim synchronen Laden des initialen Contents:', error);
   }
 
@@ -710,20 +678,16 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
       const [node, path] = entries[i];
 
       if (node.type === codeBlockType) continue;
-      if (node.type === equationType) continue; // Bereits eine Formel, überspringen
-      if (node.type === inlineEquationType) continue; // Bereits eine Inline-Formel, überspringen
+      if (node.type === equationType) continue;
+      if (node.type === inlineEquationType) continue;
 
       const inlineEquationTex = extractBlockTexFromInlineEquation(
         node as TElement,
         inlineEquationType
       );
       const text = editor.api.string(path as any);
-      
-      // Prüfe zuerst, ob der gesamte Block eine Block-Formel ist ($$...$$ am Anfang und Ende)
       const blockFormulaTex = extractBlockFormulaFromDelimiters(text.trim());
-      
       if (blockFormulaTex) {
-        // Gesamter Block ist eine Block-Formel
         editor.tf.removeNodes({ at: path as any } as any);
         editor.tf.insertNodes(
           { type: equationType, texExpression: blockFormulaTex, children: [{ text: '' }] } as any,
@@ -734,7 +698,6 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
       }
 
       if (inlineEquationTex) {
-        // Alte Logik für Inline-Formeln die zu Block-Formeln konvertiert werden sollen
         editor.tf.removeNodes({ at: path as any } as any);
         editor.tf.insertNodes(
           { type: equationType, texExpression: inlineEquationTex, children: [{ text: '' }] } as any,
@@ -746,34 +709,32 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
 
       // Teile den Text in Segmente auf (Text, Inline-Formeln, Block-Formeln)
       const segments = splitBlockIntoSegments(text);
-      
+
       // Prüfe ob überhaupt Formeln gefunden wurden
       const hasFormulas = segments.some(
         (seg) => seg.type === 'inlineFormula' || seg.type === 'blockFormula'
       );
 
       if (!hasFormulas) {
-        // Keine Formeln mit Delimitern oder eckigen Klammern gefunden
-        // Prüfe auf mathematische Muster ohne Delimiter, aber nur wenn eindeutige mathematische Symbole vorhanden sind
         const trimmedText = text.trim();
         const hasLatexMarkers = containsLatexMarkers(trimmedText);
         const hasUnicodeMathSymbols = /[Σ∑Π∏∫√∞±≤≥≠≈∈∉⊂⊃∪∩∀∃∂∇αβγδελμπσφψω]/.test(trimmedText);
         const hasLatexCommands = /\\[a-zA-Z]+/.test(trimmedText);
         const hasSubSuperscripts = /[^_]\^|_[^_]/.test(trimmedText);
-        
+
         // Nur konvertieren wenn eindeutige mathematische Indikatoren vorhanden sind
         // (LaTeX-Befehle, Unicode-Mathematik-Symbole, oder Sub/Superscripts)
         // UND keine deutschen Wörter enthalten sind
         const hasGermanWords = /\b(und|oder|sowie|aber|jedoch|denn|weil|da|wenn|falls|obwohl|trotz|für|gegen|mit|ohne|von|zu|auf|in|an|über|unter|vor|nach|bei|durch|seit|bis|während|innerhalb|außerhalb|vor|nachteile|vorteile|nachteil|vorteil)\b/i.test(trimmedText);
-        
+
         if ((hasLatexMarkers || hasUnicodeMathSymbols || hasLatexCommands || hasSubSuperscripts) && !hasGermanWords) {
           // Zusätzliche Prüfung: Sollte wirklich wie eine Formel aussehen
           const looksLikeMath = looksLikeMathFormula(trimmedText);
-          
+
           if (looksLikeMath) {
             let tex = stripOuterSquareBrackets(trimmedText);
             if (!tex) tex = trimmedText;
-            
+
             const normalizedTex = normalizeMathFormula(tex);
             editor.tf.removeNodes({ at: path as any } as any);
             editor.tf.insertNodes(
@@ -785,8 +746,6 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
         }
         continue;
       }
-
-      // Formeln gefunden - erstelle Nodes basierend auf Segmenten
       const nodesToInsert: any[] = [];
       let currentParagraphChildren: any[] = [];
       let hasCurrentParagraph = false;
@@ -802,8 +761,6 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
             currentParagraphChildren = [];
             hasCurrentParagraph = false;
           }
-          
-          // Normalisiere die Formel
           const normalizedTex = normalizeMathFormula(segment.content);
           nodesToInsert.push({
             type: equationType,
@@ -815,8 +772,6 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
           if (!hasCurrentParagraph) {
             hasCurrentParagraph = true;
           }
-          
-          // Die Inline-Formel selbst
           const normalizedTex = normalizeMathFormula(segment.content);
           currentParagraphChildren.push({
             type: inlineEquationType,
@@ -824,12 +779,9 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
             children: [{ text: '' }],
           });
         } else {
-          // Text-Segment: Füge zu aktuellen Paragraph-Children hinzu
           if (!hasCurrentParagraph) {
             hasCurrentParagraph = true;
           }
-          
-          // Füge Text hinzu (auch wenn leer, um Struktur zu erhalten)
           if (segment.content.length > 0) {
             currentParagraphChildren.push({ text: segment.content });
           }
@@ -843,30 +795,24 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
           children: currentParagraphChildren,
         });
       }
-
-      // Ersetze den alten Block durch die neuen Nodes
       if (nodesToInsert.length > 0) {
         editor.tf.removeNodes({ at: path as any } as any);
-        
-        // Füge alle Nodes in der richtigen Reihenfolge ein
-        // Plate passt die Paths automatisch an
         for (let j = 0; j < nodesToInsert.length; j++) {
-          const insertPath = j === 0 
-            ? path 
+          const insertPath = j === 0
+            ? path
             : (() => {
-                // Berechne Path für nachfolgende Nodes
-                const basePath = [...path];
-                const baseIndex = basePath[basePath.length - 1] as number;
-                basePath[basePath.length - 1] = baseIndex + j;
-                return basePath;
-              })();
-          
-          editor.tf.insertNodes(nodesToInsert[j] as any, { 
-            at: insertPath as any, 
-            select: false 
+              const basePath = [...path];
+              const baseIndex = basePath[basePath.length - 1] as number;
+              basePath[basePath.length - 1] = baseIndex + j;
+              return basePath;
+            })();
+
+          editor.tf.insertNodes(nodesToInsert[j] as any, {
+            at: insertPath as any,
+            select: false
           } as any);
         }
-        
+
         changed = true;
       }
     }
@@ -910,46 +856,29 @@ function looksLikeMathFormula(text: string): boolean {
   if (exclusionPatterns.some((pattern) => pattern.test(text))) {
     return false;
   }
-
-  // Prüfe auf echte mathematische Muster (präziser als vorher)
-  // WICHTIG: Diese Muster werden nur verwendet, wenn der Text bereits als potenzielle Formel markiert ist
-  // (z.B. in eckigen Klammern). Für normale Texte ohne Delimiter werden sie NICHT verwendet.
   const mathPatterns = [
-    /\^[0-9a-zA-Z()+\-]/, // Exponenten wie x^2, (x+y)^n
-    /_[0-9a-zA-Z()+\-]/, // Indizes wie x_1, a_n
-    // Verbesserte Variablen-Operator-Erkennung: Ignoriere deutsche Wörter
-    /(?:^|[^a-zäöü])([a-z])\s*[+\-×÷=<>≤≥≠≈]\s*([a-z0-9])(?![a-zäöü])/i, // Variablen mit Operatoren, aber nicht deutsche Wörter
-    /\([^)]+\^[^)]+\)/, // Klammern mit Exponenten
-    /Σ|∑|∫|√|∞|±|≤|≥|≠|≈|∈|∉|⊂|⊃|∪|∩|∀|∃/, // Unicode mathematische Symbole
-    // Präzisere Zahl-Operator-Muster: nur wenn es wirklich wie eine Formel aussieht
-    /[0-9]+\s*[+\-×÷]\s*[0-9]+/, // Zahlen mit Operatoren dazwischen (z.B. "2 + 3", nicht "9. Anhang")
-    /[0-9]+\s*=\s*[0-9]+/, // Gleichungen wie "x = 5"
-    /[0-9]+\s*[<>≤≥≠≈]\s*[0-9]+/, // Ungleichungen
+    /\^[0-9a-zA-Z()+\-]/,
+    /_[0-9a-zA-Z()+\-]/,
+    /(?:^|[^a-zäöü])([a-z])\s*[+\-×÷=<>≤≥≠≈]\s*([a-z0-9])(?![a-zäöü])/i,
+    /\([^)]+\^[^)]+\)/,
+    /Σ|∑|∫|√|∞|±|≤|≥|≠|≈|∈|∉|⊂|⊃|∪|∩|∀|∃/,
+    /[0-9]+\s*[+\-×÷]\s*[0-9]+/,
+    /[0-9]+\s*=\s*[0-9]+/,
+    /[0-9]+\s*[<>≤≥≠≈]\s*[0-9]+/,
   ];
-  
-  // Zusätzliche Prüfung: Wenn der Text deutsche Wörter enthält, ist es wahrscheinlich kein mathematischer Ausdruck
   const germanWordPattern = /\b(und|oder|sowie|aber|jedoch|denn|weil|da|wenn|falls|obwohl|trotz|für|gegen|mit|ohne|von|zu|auf|in|an|über|unter|vor|nach|bei|durch|seit|bis|während|innerhalb|außerhalb|vor|nachteile|vorteile|nachteil|vorteil)\b/i;
   if (germanWordPattern.test(text)) {
-    return false; // Enthält deutsche Wörter = wahrscheinlich kein mathematischer Ausdruck
+    return false;
   }
-
-  // Zähle mathematische Muster
   const mathPatternCount = mathPatterns.filter((pattern) => pattern.test(text)).length;
-  
-  // Wenn mindestens 2 mathematische Muster gefunden wurden, ist es wahrscheinlich eine Formel
   if (mathPatternCount >= 2) return true;
-  
-  // Wenn ein mathematisches Muster gefunden wurde UND der Text relativ kurz ist
-  // UND keine typischen Textstrukturen enthält, ist es wahrscheinlich eine Formel
   if (mathPatternCount >= 1 && text.length < 200) {
-    // Zusätzliche Prüfung: Wenn der Text viele Leerzeichen oder Zeilenumbrüche hat,
-    // ist es wahrscheinlich strukturierter Text, keine Formel
     const whitespaceRatio = (text.match(/\s/g) || []).length / text.length;
-    if (whitespaceRatio > 0.3) return false; // Zu viele Leerzeichen = wahrscheinlich Text
-    
+    if (whitespaceRatio > 0.3) return false;
+
     return true;
   }
-  
+
   return false;
 }
 
@@ -963,11 +892,11 @@ function looksLikeMathFormula(text: string): boolean {
  */
 function normalizeMathFormula(text: string): string {
   let normalized = text;
-  
+
   // Entferne deutschen Text am Ende (z.B. "für k = 0 bis n")
   normalized = normalized.replace(/\s+für\s+[^.]*\.?$/i, '');
   normalized = normalized.replace(/\s+where\s+[^.]*\.?$/i, '');
-  
+
   // Konvertiere Unicode-Symbole zu LaTeX
   const unicodeToLatex: Record<string, string> = {
     'Σ': '\\sum',
@@ -993,16 +922,14 @@ function normalizeMathFormula(text: string): string {
     '∂': '\\partial',
     '∇': '\\nabla',
   };
-  
-  // Ersetze Unicode-Symbole
   for (const [unicode, latex] of Object.entries(unicodeToLatex)) {
     normalized = normalized.replace(new RegExp(unicode, 'g'), latex);
   }
-  
+
   // Konvertiere "(n über k)" zu "\binom{n}{k}"
   normalized = normalized.replace(/\((\w+)\s+über\s+(\w+)\)/gi, '\\binom{$1}{$2}');
   normalized = normalized.replace(/\((\w+)\s+choose\s+(\w+)\)/gi, '\\binom{$1}{$2}');
-  
+
   // Konvertiere "für k = 0 bis n" zu Summationsgrenzen
   // Suche nach "für k = 0 bis n" im Originaltext
   const rangeMatch = text.match(/für\s+(\w+)\s*=\s*(\d+)\s+bis\s+(\w+)/i);
@@ -1026,7 +953,7 @@ function normalizeMathFormula(text: string): string {
       }
     }
   }
-  
+
   // Verbessere Exponenten- und Index-Formatierung
   // Ersetze Leerzeichen in Exponenten/Indizes und füge geschweifte Klammern hinzu
   normalized = normalized.replace(/\^(\s*)([^\s^{}]+)(\s*)/g, (match, before, content, after) => {
@@ -1039,34 +966,21 @@ function normalizeMathFormula(text: string): string {
     if (content.includes('{') && content.includes('}')) return match;
     return `_{${content.trim()}}`;
   });
-  
-  // Entferne überflüssige Leerzeichen um Operatoren
   normalized = normalized.replace(/\s*=\s*/g, ' = ');
   normalized = normalized.replace(/\s*\+\s*/g, ' + ');
   normalized = normalized.replace(/\s*-\s*/g, ' - ');
-  
-  // Korrigiere komplexe Summationsbedingungen für Multinomial-Formeln
-  // KaTeX hat Probleme mit Summationsbedingungen wie k_1+k_2+\cdots+k_m=n
-  // Lösung: Verwende \underset für die Bedingung oder entferne sie und verwende eine kompaktere Notation
-  // Für Multinomial-Formeln: Ersetze durch eine funktionierende Alternative
+
   if (normalized.includes('\\sum_{k_1+k_2+\\cdots+k_m=n}')) {
-    // Verwende \underset um die Bedingung unter die Summe zu setzen
-    // Format: \sum\underset{k_1+k_2+\cdots+k_m=n}{\sum}
-    // Oder einfacher: Entferne die komplexe Bedingung und verwende \sum\limits
     normalized = normalized.replace(
       /\\sum_\{k_1\+k_2\+\\cdots\+k_m=n\}/g,
       '\\sum\\limits'
     );
-    // Füge die Bedingung als Text unter der Summe hinzu (optional)
-    // normalized = normalized.replace(/\\sum\\limits/g, '\\sum\\limits_{\\text{über alle }k_1+\\cdots+k_m=n}');
   }
-  
-  // Allgemeinere Korrektur: Ersetze komplexe Summationsbedingungen durch \sum\limits
   normalized = normalized.replace(
     /\\sum_\{[a-z_]\d+\+[a-z_]\d+\+\\cdots\+[a-z_]\d+=[a-z0-9]+\}/g,
     '\\sum\\limits'
   );
-  
+
   return normalized.trim();
 }
 
@@ -1088,39 +1002,32 @@ function extractBlockTexFromInlineEquation(node: TElement, inlineEquationType: s
  * Die Funktion sucht nach einzelnen Dollar-Zeichen, die nicht Teil von `$$` sind.
  */
 function extractInlineFormulaFromDelimiters(text: string): string | null {
-  // Suche nach $...$ Pattern, aber nicht $$...$$
-  // Verwende einen einfacheren Ansatz ohne Lookbehinds für bessere Kompatibilität
   let searchPos = 0;
-  
   while (searchPos < text.length) {
     const dollarIndex = text.indexOf('$', searchPos);
     if (dollarIndex === -1) break;
-    
-    // Prüfe ob es Teil von $$ ist
     if (dollarIndex < text.length - 1 && text[dollarIndex + 1] === '$') {
       searchPos = dollarIndex + 2;
       continue;
     }
-    
+
     // Finde das schließende $
     const closingDollarIndex = text.indexOf('$', dollarIndex + 1);
     if (closingDollarIndex === -1) break;
-    
+
     // Prüfe ob das schließende $ nicht Teil von $$ ist
     if (closingDollarIndex < text.length - 1 && text[closingDollarIndex + 1] === '$') {
       searchPos = closingDollarIndex + 1;
       continue;
     }
-    
-    // Wir haben eine gültige $...$ Inline-Formel gefunden
     const inner = text.slice(dollarIndex + 1, closingDollarIndex).trim();
     if (inner.length > 0) {
       return inner;
     }
-    
+
     searchPos = closingDollarIndex + 1;
   }
-  
+
   return null;
 }
 
@@ -1129,13 +1036,10 @@ function extractInlineFormulaFromDelimiters(text: string): string | null {
  * Ersetzt die alte `extractBlockTexFromDelimiters` Funktion.
  */
 function extractBlockFormulaFromDelimiters(text: string): string | null {
-  // Prüfe ob der gesamte Text mit $$ beginnt und endet
   const trimmed = text.trim();
   if (!trimmed.startsWith('$$') || !trimmed.endsWith('$$')) return null;
-  
-  // Stelle sicher, dass es nicht nur $$ ist
   if (trimmed.length <= 4) return null;
-  
+
   const inner = trimmed.slice(2, -2).trim();
   return inner.length > 0 ? inner : null;
 }
@@ -1161,17 +1065,15 @@ type FormulaSegment = {
 function isMathInSquareBrackets(content: string): boolean {
   const trimmed = content.trim();
   if (trimmed.length === 0) return false;
-  
+
   // Prüfe auf LaTeX-Marker oder mathematische Symbole
   const hasLatexMarkers = containsLatexMarkers(trimmed);
   const hasMathSymbols = /[Σ∑Π∏∫√∞±≤≥≠≈∈∉⊂⊃∪∩∀∃∂∇αβγδελμπσφψω]/.test(trimmed);
   const hasLatexCommands = /\\[a-zA-Z]+/.test(trimmed);
   const hasMathOperators = /[+\-×÷=<>≤≥≠≈]/.test(trimmed);
   const hasSubSuperscripts = /[^_]\^|_[^_]/.test(trimmed);
-  
-  // Wenn mindestens 2 mathematische Indikatoren vorhanden sind, ist es wahrscheinlich eine Formel
   const indicators = [hasLatexMarkers, hasMathSymbols, hasLatexCommands, hasMathOperators, hasSubSuperscripts].filter(Boolean).length;
-  
+
   return indicators >= 2 || (hasLatexCommands && hasMathOperators);
 }
 
@@ -1182,12 +1084,10 @@ function isMathInSquareBrackets(content: string): boolean {
 function extractFormulaSegments(text: string): FormulaSegment[] {
   const segments: FormulaSegment[] = [];
   let currentPos = 0;
-  
-  // Suche nach allen $$...$$ Block-Formeln zuerst (müssen vor $...$ behandelt werden)
   const blockPattern = /\$\$([^$]+?)\$\$/g;
   let blockMatch: RegExpExecArray | null;
   const blockMatches: Array<{ start: number; end: number; content: string }> = [];
-  
+
   while ((blockMatch = blockPattern.exec(text)) !== null) {
     blockMatches.push({
       start: blockMatch.index,
@@ -1195,21 +1095,19 @@ function extractFormulaSegments(text: string): FormulaSegment[] {
       content: blockMatch[1].trim(),
     });
   }
-  
+
   // Suche nach eckigen Klammern [...] mit mathematischen Inhalten
   const squareBracketMatches: Array<{ start: number; end: number; content: string }> = [];
   const squareBracketPattern = /\[([^\]]+?)\]/g;
   let squareMatch: RegExpExecArray | null;
-  
+
   while ((squareMatch = squareBracketPattern.exec(text)) !== null) {
     const content = squareMatch[1].trim();
-    // Prüfe ob der Inhalt mathematisch ist
     if (isMathInSquareBrackets(content)) {
-      // Prüfe ob es nicht innerhalb einer bereits gefundenen Formel liegt
       const isInsideOtherFormula = blockMatches.some(
         (bm) => squareMatch!.index >= bm.start && squareMatch!.index < bm.end
       );
-      
+
       if (!isInsideOtherFormula) {
         squareBracketMatches.push({
           start: squareMatch.index,
@@ -1219,62 +1117,46 @@ function extractFormulaSegments(text: string): FormulaSegment[] {
       }
     }
   }
-  
-  // Suche nach allen $...$ Inline-Formeln
-  // Wichtig: Ignoriere $ die Teil von $$ sind
-  // Verwende einen einfacheren Ansatz ohne Lookbehinds für bessere Kompatibilität
+
   const inlineMatches: Array<{ start: number; end: number; content: string }> = [];
   let searchPos = 0;
-  
+
   while (searchPos < text.length) {
-    // Finde das nächste $ Zeichen
     const dollarIndex = text.indexOf('$', searchPos);
     if (dollarIndex === -1) break;
-    
-    // Prüfe ob es Teil von $$ ist
     if (dollarIndex < text.length - 1 && text[dollarIndex + 1] === '$') {
-      // Es ist $$, überspringe beide Zeichen
       searchPos = dollarIndex + 2;
       continue;
     }
-    
-    // Prüfe ob es innerhalb einer Block-Formel oder eckigen Klammern liegt
     const isInsideBlock = blockMatches.some(
       (bm) => dollarIndex >= bm.start && dollarIndex < bm.end
     );
     const isInsideSquareBracket = squareBracketMatches.some(
       (sb) => dollarIndex >= sb.start && dollarIndex < sb.end
     );
-    
+
     if (isInsideBlock || isInsideSquareBracket) {
       searchPos = dollarIndex + 1;
       continue;
     }
-    
-    // Finde das schließende $
     const closingDollarIndex = text.indexOf('$', dollarIndex + 1);
     if (closingDollarIndex === -1) break;
-    
-    // Prüfe ob das schließende $ nicht Teil von $$ ist
     if (closingDollarIndex < text.length - 1 && text[closingDollarIndex + 1] === '$') {
-      // Das schließende $ ist Teil von $$, überspringe
       searchPos = closingDollarIndex + 1;
       continue;
     }
-    
-    // Prüfe ob das schließende $ innerhalb einer Block-Formel oder eckigen Klammern liegt
     const closingIsInsideBlock = blockMatches.some(
       (bm) => closingDollarIndex >= bm.start && closingDollarIndex < bm.end
     );
     const closingIsInsideSquareBracket = squareBracketMatches.some(
       (sb) => closingDollarIndex >= sb.start && closingDollarIndex < sb.end
     );
-    
+
     if (closingIsInsideBlock || closingIsInsideSquareBracket) {
       searchPos = closingDollarIndex + 1;
       continue;
     }
-    
+
     // Wir haben eine gültige $...$ Inline-Formel gefunden
     const content = text.slice(dollarIndex + 1, closingDollarIndex).trim();
     if (content.length > 0) {
@@ -1284,33 +1166,29 @@ function extractFormulaSegments(text: string): FormulaSegment[] {
         content: content,
       });
     }
-    
+
     searchPos = closingDollarIndex + 1;
   }
-  
-  // Kombiniere alle Matches und sortiere nach Position
   const allMatches = [
     ...blockMatches.map((m) => ({ ...m, type: 'blockFormula' as const })),
     ...squareBracketMatches.map((m) => ({ ...m, type: 'blockFormula' as const })),
     ...inlineMatches.map((m) => ({ ...m, type: 'inlineFormula' as const })),
   ].sort((a, b) => a.start - b.start);
-  
-  // Entferne überlappende Matches (eckige Klammern haben niedrigere Priorität als Dollar-Delimiter)
   const filteredMatches: Array<{ start: number; end: number; content: string; type: 'blockFormula' | 'inlineFormula' }> = [];
   for (const match of allMatches) {
     const overlaps = filteredMatches.some(
-      (fm) => (match.start >= fm.start && match.start < fm.end) || 
-              (match.end > fm.start && match.end <= fm.end) ||
-              (match.start <= fm.start && match.end >= fm.end)
+      (fm) => (match.start >= fm.start && match.start < fm.end) ||
+        (match.end > fm.start && match.end <= fm.end) ||
+        (match.start <= fm.start && match.end >= fm.end)
     );
-    
+
     if (!overlaps) {
       filteredMatches.push(match);
     }
   }
-  
+
   const finalMatches = filteredMatches.sort((a, b) => a.start - b.start);
-  
+
   // Erstelle Segmente
   for (const match of finalMatches) {
     // Text-Segment vor der Formel
@@ -1325,8 +1203,6 @@ function extractFormulaSegments(text: string): FormulaSegment[] {
         });
       }
     }
-    
-    // Formel-Segment
     if (match.content.length > 0) {
       segments.push({
         type: match.type,
@@ -1335,10 +1211,9 @@ function extractFormulaSegments(text: string): FormulaSegment[] {
         end: match.end,
       });
     }
-    
     currentPos = match.end;
   }
-  
+
   // Text-Segment nach der letzten Formel
   if (currentPos < text.length) {
     const textContent = text.slice(currentPos);
@@ -1351,8 +1226,6 @@ function extractFormulaSegments(text: string): FormulaSegment[] {
       });
     }
   }
-  
-  // Wenn keine Formeln gefunden wurden, gibt es nur ein Text-Segment
   if (segments.length === 0) {
     segments.push({
       type: 'text',
@@ -1361,7 +1234,7 @@ function extractFormulaSegments(text: string): FormulaSegment[] {
       end: text.length,
     });
   }
-  
+
   return segments;
 }
 
@@ -1390,7 +1263,7 @@ function isValidUUID(id: string): boolean {
 function reviveDiscussions(data: TDiscussion[]): TDiscussion[] {
   // Filtere Mock-Discussions heraus (IDs wie "discussion1", "discussion2" sind keine UUIDs)
   const validDiscussions = data.filter((discussion) => isValidUUID(discussion.id));
-  
+
   return validDiscussions.map((discussion) => ({
     ...discussion,
     createdAt: new Date(discussion.createdAt),
@@ -1548,7 +1421,7 @@ async function persistState(
   try {
     // Speichere nur in keys.state (enthält bereits content und discussions)
     window.localStorage.setItem(keys.state, JSON.stringify(payload));
-    
+
     // Speichere in Supabase, wenn documentId vorhanden ist (UUID-Format) und User eingeloggt
     if (documentId && nextContent) {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId);
@@ -1572,8 +1445,6 @@ async function persistState(
           if (error?.code === 'PGRST116') {
             devWarn('[PLATE EDITOR] Dokument existiert nicht in der Datenbank. Wird beim nächsten Speichern erstellt.');
           } else if (error?.code === '23505') {
-            // Unique Constraint Violation - Dokument existiert bereits
-            // Versuche erneut mit Update (kann bei Race Conditions auftreten)
             devWarn('[PLATE EDITOR] Dokument existiert bereits. Versuche Update erneut...');
             try {
               const userId = await getCurrentUserId();
@@ -1602,7 +1473,7 @@ async function persistState(
         }
       }
     }
-    
+
     window.dispatchEvent(new Event('documents:reload'));
   } catch (error) {
     devError('Persistierte Editor-Daten konnten nicht gespeichert werden.', error);

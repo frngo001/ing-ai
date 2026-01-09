@@ -118,18 +118,32 @@ export function NavMain({
                           ? 'nav-ai-chat'
                           : undefined
 
+                      const isPaneItem = subItem.isDocuments || subItem.isLibrary || subItem.isAskAi
+
+                        if (isPaneItem) {
+                          const handlePaneClick = () => {
+                            if (subItem.isDocuments) onSelectDocument?.()
+                            if (subItem.isLibrary) onSelectLibrary?.()
+                            if (subItem.isAskAi) onSelectAskAi?.()
+                          }
+                          return (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                onClick={handlePaneClick}
+                                data-onboarding={onboardingId}
+                                role="button"
+                                className="cursor-pointer"
+                              >
+                                <span>{subItem.title}</span>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          )
+                        }
+
                         return (
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton asChild>
-                              <Link
-                                href={subItem.url}
-                                onClick={() => {
-                                  if (subItem.isDocuments) onSelectDocument?.()
-                                  if (subItem.isLibrary) onSelectLibrary?.()
-                                  if (subItem.isAskAi) onSelectAskAi?.()
-                                }}
-                                data-onboarding={onboardingId}
-                              >
+                              <Link href={subItem.url} data-onboarding={onboardingId}>
                                 <span>{subItem.title}</span>
                               </Link>
                             </SidebarMenuSubButton>

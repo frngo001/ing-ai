@@ -32,6 +32,10 @@ type Pane = "documents" | "library" | "askAi"
 export default function Page() {
   const router = useRouter()
   const isAuthenticated = useIsAuthenticated()
+  const loadProjects = useProjectStore((state) => state.loadProjects)
+  const isProjectHydrated = useProjectStore((state) => state.isHydrated)
+  const initializeFromSupabase = useLanguage((state) => state.initializeFromSupabase)
+  const isLanguageInitialized = useLanguage((state) => state.isInitialized)
   const [panes, setPanes] = useState<Record<Pane, boolean>>({
     documents: false,
     library: false,
@@ -53,7 +57,22 @@ export default function Page() {
     setupEditorStreaming()
   }, [])
 
-  if (isAuthenticated === null || isAuthenticated === false) {
+  // Alle initialen Requests parallel starten: Sprache und Projekte (läuft während EditorLoading)
+  // LanguageProvider startet initializeFromSupabase ebenfalls - useLanguage hat Guard gegen Doppelaufruf
+  useEffect(() => {
+    initializeFromSupabase()
+  }, [initializeFromSupabase])
+
+  useEffect(() => {
+    if (isAuthenticated === true) {
+      loadProjects()
+    }
+  }, [isAuthenticated, loadProjects])
+
+  // EditorLoading bis ALLE initialen Daten geladen: Auth + Sprache + Projekte
+  // Dokumente werden in PageContent geladen (isInitialDocReady)
+  const isInitialDataReady = isLanguageInitialized && isProjectHydrated
+  if (isAuthenticated === null || isAuthenticated === false || !isInitialDataReady) {
     return <EditorLoading />
   }
 
@@ -184,6 +203,7 @@ function PageContent({
   }, [])
   const [storageId, setStorageId] = useState<string | null>(null)
   const [hasDocuments, setHasDocuments] = useState<boolean | null>(null)
+  const [isInitialDocReady, setIsInitialDocReady] = useState(false)
   const hasDecidedInitialDoc = useRef(false)
 
   const showDocuments = panes.documents
@@ -233,22 +253,31 @@ function PageContent({
 
     if (docParam) {
       setStorageId(docParam)
-      checkDocumentsExist(currentProjectId).then((exists) => setHasDocuments(exists))
+      // Auch bei docParam: Auf Dokumenten-Check warten bevor Loading endet (konsistent mit User-Anforderung "alle geladen")
+      checkDocumentsExist(currentProjectId)
+        .then((exists) => {
+          setHasDocuments(exists)
+          setIsInitialDocReady(true)
+        })
+        .catch(() => setIsInitialDocReady(true)) // Bei Fehler: Loading beenden um UI-Zugang zu ermöglichen
       return
     }
 
     Promise.all([
       findLatestDocId(currentProjectId),
       checkDocumentsExist(currentProjectId)
-    ]).then(([latestExisting, exists]) => {
-      setHasDocuments(exists)
-      if (latestExisting) {
-        setStorageId(latestExisting)
-        router.replace(`/editor?doc=${encodeURIComponent(latestExisting)}`)
-      } else {
-        setStorageId(null)
-      }
-    })
+    ])
+      .then(([latestExisting, exists]) => {
+        setHasDocuments(exists)
+        if (latestExisting) {
+          setStorageId(latestExisting)
+          router.replace(`/editor?doc=${encodeURIComponent(latestExisting)}`)
+        } else {
+          setStorageId(null)
+        }
+        setIsInitialDocReady(true)
+      })
+      .catch(() => setIsInitialDocReady(true)) // Bei Fehler: Loading beenden
   }, [findLatestDocId, checkDocumentsExist, router, docParam, currentProjectId, isProjectHydrated])
 
   useEffect(() => {
@@ -594,6 +623,11 @@ function PageContent({
       window.dispatchEvent(new Event('editor:focus-start'))
     },
   }), [setSidebarOpen, setSettingsInitialNav, setSettingsOpen, getEditorInstance, simulateTyping, openPane])
+
+  // EditorLoading anzeigen bis initiale Dokumenten-Entscheidung getroffen ist
+  if (!isInitialDocReady) {
+    return <EditorLoading />
+  }
 
   return (
     <>
