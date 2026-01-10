@@ -53,8 +53,6 @@
 
 <br />
 
-<div align="center">
-
 ---
 
 ## 🔮 Vision
@@ -198,6 +196,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ---
 
-<small>Built with ❤️ by Francloic & Community.</small>
-
+<div align="center">
+  <small>Built with ❤️ by Francloic & Community.</small>
 </div>
