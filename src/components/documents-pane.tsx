@@ -448,21 +448,22 @@ export function DocumentsPane({
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 bg-transparent"
-                aria-label={t('documents.newDocument')}
-                onClick={createNewDocument}
-                disabled={isViewOnly}
-              >
-                <Plus className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{t('documents.newDocument')}</TooltipContent>
-          </Tooltip>
+          {!isViewOnly && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 bg-transparent"
+                  aria-label={t('documents.newDocument')}
+                  onClick={createNewDocument}
+                >
+                  <Plus className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t('documents.newDocument')}</TooltipContent>
+            </Tooltip>
+          )}
           {currentProjectId && documents.length > 0 && !isViewOnly && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -561,27 +562,26 @@ export function DocumentsPane({
                     </div>
                     <div className="text-muted-foreground text-xs">{doc.lastEdited}</div>
                   </Link>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        className="size-4 p-0 opacity-70 hover:opacity-100 hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                        aria-label={`${t('documents.deleteDocument')} ${doc.title}`}
-                        onClick={(event) => {
-                          event.preventDefault()
-                          event.stopPropagation()
-                          if (!isViewOnly) {
+                  {!isViewOnly && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          className="size-4 p-0 opacity-70 hover:opacity-100 hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                          aria-label={`${t('documents.deleteDocument')} ${doc.title}`}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
                             setDocToDelete(doc)
-                          }
-                        }}
-                        disabled={isViewOnly}
-                      >
-                        <Trash className="size-3" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">{t('documents.delete')}</TooltipContent>
-                  </Tooltip>
+                          }}
+                        >
+                          <Trash className="size-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">{t('documents.delete')}</TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
               )
             })

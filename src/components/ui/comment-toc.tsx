@@ -104,9 +104,9 @@ export function CommentTocSidebar({
       const firstComment = discussion.comments.find((c) => c.contentRich?.length);
       const raw = firstComment
         ? NodeApi.string({
-            children: firstComment.contentRich,
-            type: 'p',
-          })
+          children: firstComment.contentRich,
+          type: 'p',
+        })
         : '';
 
       const preview = (raw ?? '').toString().trim();

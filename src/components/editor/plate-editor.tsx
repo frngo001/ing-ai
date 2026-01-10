@@ -36,6 +36,7 @@ import { extractTitleFromContent, extractTextFromNode } from '@/lib/supabase/uti
 import { getCurrentUserId } from '@/lib/supabase/utils/auth';
 import { createClient } from '@/lib/supabase/client';
 import * as documentsUtils from '@/lib/supabase/utils/documents';
+import * as discussionsUtils from '@/lib/supabase/utils/discussions';
 import {
   type TDiscussion,
   discussionPlugin,
@@ -45,6 +46,8 @@ import { suggestionPlugin } from '@/components/editor/plugins/suggestion-kit';
 import { useProjectStore } from '@/lib/stores/project-store';
 import { useDocumentRealtime } from '../../hooks/use-document-realtime';
 import { RemoteCursors } from '@/components/editor/remote-cursors';
+import { useComments } from '@/hooks/use-comments';
+import { CommentsContext } from '@/components/providers/comments-provider';
 
 export function PlateEditor({
   showToc = true,
@@ -73,11 +76,14 @@ export function PlateEditor({
     avatarUrl: string;
   } | null>(null);
 
+
+
+  const comments = useComments(storageId);
+
   // Lade initialen Wert synchron aus localStorage für Hot Reload-Kompatibilität
   const initialValue = React.useMemo(() => getInitialValue(storageId), [storageId]);
   const latestContentRef = React.useRef<Value>(initialValue);
   const contentSaveTimeout = React.useRef<number | ReturnType<typeof setTimeout> | null>(null);
-  const discussionsSaveTimeout = React.useRef<number | ReturnType<typeof setTimeout> | null>(null);
   const topToolbarRef = React.useRef<HTMLDivElement | null>(null);
   const bottomToolbarRef = React.useRef<HTMLDivElement | null>(null);
   const [toolbarHeights, setToolbarHeights] = React.useState({ top: 0, bottom: 0 });
@@ -122,11 +128,22 @@ export function PlateEditor({
     }
   }, [editor]);
 
+  const handleDiscussionsUpdate = React.useCallback((newDiscussions: TDiscussion[]) => {
+    if (!editor || isUpdatingFromRealtimeRef.current) return;
+
+    devLog('[PLATE EDITOR] Received realtime discussions update');
+    editor.setOption(discussionPlugin, 'discussions', newDiscussions);
+    syncCommentPathMap(editor);
+    syncSuggestionPathMap(editor);
+    (editor as any).tf.redecorate?.();
+  }, [editor]);
+
   const isUUIDDocument = storageId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storageId);
 
-  const { broadcastContent, updatePresence, presence, sessionId } = useDocumentRealtime({
+  const { broadcastContent, broadcastDiscussions, updatePresence, presence, sessionId } = useDocumentRealtime({
     documentId: isUUIDDocument ? storageId : null,
     onContentUpdate: handleRealtimeUpdate,
+    onDiscussionsUpdate: handleDiscussionsUpdate,
     enabled: !!isUUIDDocument, // Enable for all DB-backed documents
   });
 
@@ -166,6 +183,8 @@ export function PlateEditor({
           };
           editor.setOption(discussionPlugin, 'currentUserId', userId);
           editor.setOption(discussionPlugin, 'users', updatedUsers);
+          // Also update suggestionPlugin
+          editor.setOption(suggestionPlugin, 'currentUserId', userId);
         }
       } catch (error) {
         devError('Fehler beim Laden des aktuellen Users:', error);
@@ -202,6 +221,8 @@ export function PlateEditor({
 
         editor.setOption(discussionPlugin, 'currentUserId', userId);
         editor.setOption(discussionPlugin, 'users', updatedUsers);
+        // Also update suggestionPlugin
+        editor.setOption(suggestionPlugin, 'currentUserId', userId);
       }
     });
 
@@ -209,6 +230,30 @@ export function PlateEditor({
       subscription.unsubscribe();
     };
   }, [editor, supabase]);
+
+  // Discussions Sync
+  React.useEffect(() => {
+    if (editor && comments.discussions) {
+      editor.setOption(discussionPlugin, 'discussions', comments.discussions);
+
+      // Collect users from comments to populate valid profiles for suggestions/comments
+      const usersFromComments: Record<string, { id: string; name: string; avatarUrl: string }> = {};
+      comments.discussions.forEach((d) => {
+        d.comments.forEach((c) => {
+          if (c.userId) {
+            usersFromComments[c.userId] = {
+              id: c.userId,
+              name: c.userName || 'Unknown',
+              avatarUrl: c.avatarUrl || `https://api.dicebear.com/9.x/glass/svg?seed=${c.userId}`,
+            };
+          }
+        });
+      });
+
+      const currentUsers = editor.getOption(discussionPlugin, 'users') || {};
+      editor.setOption(discussionPlugin, 'users', { ...currentUsers, ...usersFromComments });
+    }
+  }, [editor, comments.discussions]);
 
   // Editor-Instance für Text-Einfügung verfügbar machen
   React.useEffect(() => {
@@ -284,13 +329,11 @@ export function PlateEditor({
         try {
           const userId = await getCurrentUserId();
           if (userId) {
-            const doc = await documentsUtils.getDocumentById(storageId, userId);
+            // For shared projects, skip user check to allow access to shared documents
+            const doc = await documentsUtils.getDocumentById(storageId, userId, isSharedProject);
             if (doc && doc.content) {
               const normalizedContent = normalizeNodeId(doc.content as Value);
               content = normalizedContent;
-              // Discussions werden aktuell nicht in Supabase gespeichert, daher aus localStorage laden
-              const localData = loadPersistedState(storageKeys);
-              discussions = localData.discussions;
             }
           }
         } catch (error) {
@@ -464,119 +507,116 @@ export function PlateEditor({
   );
 
   return (
-    <Plate editor={editor} onChange={handleChange} readOnly={isReadOnlyMode}>
-      <DiscussionPersistence
-        discussionsSaveTimeout={discussionsSaveTimeout}
-        storageKeys={storageKeys}
-        storageId={storageId}
-        isSharedProject={isSharedProject}
-      />
-      <div className="flex h-full items-start gap-6">
-        <CommentTocSidebar visible={showCommentToc} className="overflow-auto max-h-[40vh]" />
-        <SuggestionTocSidebar
-          visible={showSuggestionToc}
-          className="top-[45vh]"
-        />
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-          <div className="flex h-full flex-col min-h-0">
-            <ConditionalFixedToolbar toolbarRef={topToolbarRef} />
-            <div className="flex-1 min-h-0 overflow-hidden relative">
-              {/* Overlay wenn kein Dokument erstellt wurde und keine Dokumente existieren */}
-              {storageId === 'empty' && hasDocuments === false && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                  <div className="flex flex-col items-center text-center space-y-4 p-8 max-w-md">
-                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted border-2 border-border">
-                      <FilePenLine className="size-8 text-muted-foreground" />
+    <CommentsContext.Provider value={comments}>
+      <Plate editor={editor} onChange={handleChange} readOnly={isReadOnlyMode}>
+
+        <div className="flex h-full items-start gap-6">
+          <CommentTocSidebar visible={showCommentToc} className="overflow-auto max-h-[40vh]" />
+          <SuggestionTocSidebar
+            visible={showSuggestionToc}
+            className="top-[45vh]"
+          />
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
+            <div className="flex h-full flex-col min-h-0">
+              <ConditionalFixedToolbar toolbarRef={topToolbarRef} />
+              <div className="flex-1 min-h-0 overflow-hidden relative">
+                {/* Overlay wenn kein Dokument erstellt wurde und keine Dokumente existieren */}
+                {storageId === 'empty' && hasDocuments === false && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <div className="flex flex-col items-center text-center space-y-4 p-8 max-w-md">
+                      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted border-2 border-border">
+                        <FilePenLine className="size-8 text-muted-foreground" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {t('documents.welcomeDialogTitle')}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {t('documents.welcomeDialogDescription')}
+                        </p>
+                      </div>
+                      <Button
+                        variant="default"
+                        size="default"
+                        className="mt-2"
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new Event('documents:create-new'));
+                          }
+                        }}
+                      >
+                        <Plus className="size-4 mr-2" />
+                        {t('documents.newDocument')}
+                      </Button>
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {t('documents.welcomeDialogTitle')}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t('documents.welcomeDialogDescription')}
-                      </p>
-                    </div>
-                    <Button
-                      variant="default"
-                      size="default"
-                      className="mt-2"
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          window.dispatchEvent(new Event('documents:create-new'));
-                        }
-                      }}
-                    >
-                      <Plus className="size-4 mr-2" />
-                      {t('documents.newDocument')}
-                    </Button>
                   </div>
-                </div>
-              )}
-              <EditorContainer
-                className="overflow-y-auto h-full"
-                style={toolbarVars}
-                data-onboarding="editor-container"
-              >
-                <RemoteCursors presence={presence} currentUserId={currentUser?.id} sessionId={sessionId} />
-                <Editor variant="demo" className="overflow-y-auto" data-onboarding="editor-content" />
-                <EditorBibliography />
-              </EditorContainer>
-            </div>
-            <div ref={bottomToolbarRef}>
-              <EditorStatusBar />
+                )}
+                <EditorContainer
+                  className="overflow-y-auto h-full"
+                  style={toolbarVars}
+                  data-onboarding="editor-container"
+                >
+                  <RemoteCursors presence={presence} currentUserId={currentUser?.id} sessionId={sessionId} />
+                  <Editor variant="demo" className="overflow-y-auto" data-onboarding="editor-content" />
+                  <EditorBibliography />
+                </EditorContainer>
+              </div>
+              <div ref={bottomToolbarRef}>
+                <EditorStatusBar />
+              </div>
             </div>
           </div>
+
+          <EditorTocSidebar visible={showToc} />
         </div>
 
-        <EditorTocSidebar visible={showToc} />
-      </div>
+        <SourceSearchDialog
+          showTrigger={false}
+          onImport={(source: Source) => {
+            const title =
+              typeof source.title === 'string'
+                ? source.title
+                : source.title?.title || 'Unbenanntes Zitat'
 
-      <SourceSearchDialog
-        showTrigger={false}
-        onImport={(source: Source) => {
-          const title =
-            typeof source.title === 'string'
-              ? source.title
-              : source.title?.title || 'Unbenanntes Zitat'
+            const sourceLabel =
+              (typeof source.journal === 'string' && source.journal) ||
+              (typeof source.publisher === 'string' && source.publisher) ||
+              source.sourceApi ||
+              'Quelle'
+            const externalUrl = getCitationLink({
+              url: source.url,
+              doi: source.doi,
+              pdfUrl: source.pdfUrl,
+            });
+            const validDoi = getNormalizedDoi(source.doi);
 
-          const sourceLabel =
-            (typeof source.journal === 'string' && source.journal) ||
-            (typeof source.publisher === 'string' && source.publisher) ||
-            source.sourceApi ||
-            'Quelle'
-          const externalUrl = getCitationLink({
-            url: source.url,
-            doi: source.doi,
-            pdfUrl: source.pdfUrl,
-          });
-          const validDoi = getNormalizedDoi(source.doi);
+            const authors =
+              source.authors?.map((a) => a.fullName || [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean) ?? []
 
-          const authors =
-            source.authors?.map((a) => a.fullName || [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean) ?? []
+            const timestamp =
+              typeof window !== 'undefined'
+                ? `hinzugefügt am ${new Date().toLocaleDateString('de-DE', { dateStyle: 'short' })}`
+                : 'soeben'
 
-          const timestamp =
-            typeof window !== 'undefined'
-              ? `hinzugefügt am ${new Date().toLocaleDateString('de-DE', { dateStyle: 'short' })}`
-              : 'soeben'
-
-          addCitation({
-            id: source.id || `${Date.now()}`,
-            title,
-            source: sourceLabel,
-            year: source.publicationYear,
-            lastEdited: timestamp,
-            href: externalUrl || '/editor',
-            externalUrl,
-            doi: validDoi || undefined,
-            authors,
-            abstract:
-              (typeof (source as any).abstract === 'string' && (source as any).abstract) ||
-              (typeof (source as any).description === 'string' && (source as any).description) ||
-              undefined,
-          })
-        }}
-      />
-    </Plate>
+            addCitation({
+              id: source.id || `${Date.now()}`,
+              title,
+              source: sourceLabel,
+              year: source.publicationYear,
+              lastEdited: timestamp,
+              href: externalUrl || '/editor',
+              externalUrl,
+              doi: validDoi || undefined,
+              authors,
+              abstract:
+                (typeof (source as any).abstract === 'string' && (source as any).abstract) ||
+                (typeof (source as any).description === 'string' && (source as any).description) ||
+                undefined,
+            })
+          }}
+        />
+      </Plate>
+    </CommentsContext.Provider>
   );
 }
 
@@ -1365,59 +1405,7 @@ function reviveDiscussions(data: TDiscussion[]): TDiscussion[] {
   }));
 }
 
-function DiscussionPersistence({
-  storageKeys,
-  discussionsSaveTimeout,
-  storageId,
-  isSharedProject = false,
-}: {
-  storageKeys: {
-    content: string;
-    discussions: string;
-    state: string;
-    legacyContent: string;
-    legacyDiscussions: string;
-  };
-  discussionsSaveTimeout: React.MutableRefObject<number | ReturnType<typeof setTimeout> | null>;
-  storageId: string;
-  isSharedProject?: boolean;
-}) {
-  const discussions = usePluginOption(discussionPlugin, 'discussions');
-  const latestDiscussions = React.useRef<TDiscussion[] | null>(null);
 
-  React.useEffect(() => {
-    if (typeof window === 'undefined' || !discussions) return;
-
-    latestDiscussions.current = discussions;
-    if (discussionsSaveTimeout.current) {
-      window.clearTimeout(discussionsSaveTimeout.current);
-    }
-
-    try {
-      discussionsSaveTimeout.current = window.setTimeout(() => {
-        if (!latestDiscussions.current) return;
-        persistState(storageKeys, null, latestDiscussions.current, storageId, "Unbenanntes Dokument", isSharedProject);
-      }, SAVE_DEBOUNCE_MS);
-    } catch (error) {
-      devError('Diskussionen konnten nicht gespeichert werden.', error);
-    }
-  }, [discussions, storageKeys, discussionsSaveTimeout, storageId, isSharedProject]);
-
-  React.useEffect(() => {
-    return () => {
-      if (discussionsSaveTimeout.current && latestDiscussions.current) {
-        window.clearTimeout(discussionsSaveTimeout.current);
-        try {
-          persistState(storageKeys, null, latestDiscussions.current, storageId, "Unbenanntes Dokument", isSharedProject);
-        } catch {
-          // ignore on unmount
-        }
-      }
-    };
-  }, [storageKeys, storageId, isSharedProject]);
-
-  return null;
-}
 
 function loadPersistedState(keys: {
   content: string;
@@ -1513,23 +1501,19 @@ async function persistState(
   try {
     window.localStorage.setItem(keys.state, JSON.stringify(payload));
 
-    if (documentId && nextContent) {
+    if (documentId && (nextContent || nextDiscussions)) {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId);
       if (isUUID) {
         try {
-          const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
-          if (isSharedProject) {
-            await documentsUtils.updateDocument(
-              documentId,
-              {
-                title: extractedTitle,
-                content: nextContent as any,
-                updated_at: updatedAt,
-              }
-            );
-          } else {
-            const userId = await getCurrentUserId();
-            if (userId) {
+          // Sync discussions if present
+          if (nextDiscussions) {
+            await discussionsUtils.syncDiscussions(documentId, nextDiscussions);
+          }
+
+          if (nextContent) {
+            const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
+            if (isSharedProject) {
+              devLog('[PERSIST] Saving shared document with skipUserCheck');
               await documentsUtils.updateDocument(
                 documentId,
                 {
@@ -1537,8 +1521,22 @@ async function persistState(
                   content: nextContent as any,
                   updated_at: updatedAt,
                 },
-                userId
+                undefined,
+                true // skipUserCheck for shared projects
               );
+            } else {
+              const userId = await getCurrentUserId();
+              if (userId) {
+                await documentsUtils.updateDocument(
+                  documentId,
+                  {
+                    title: extractedTitle,
+                    content: nextContent as any,
+                    updated_at: updatedAt,
+                  },
+                  userId
+                );
+              }
             }
           }
         } catch (error: any) {
@@ -1555,7 +1553,9 @@ async function persistState(
                     title: extractedTitle,
                     content: nextContent as any,
                     updated_at: updatedAt,
-                  }
+                  },
+                  undefined,
+                  true // skipUserCheck for shared projects
                 );
               } else {
                 const userId = await getCurrentUserId();

@@ -12,6 +12,7 @@ import {
   differenceInMinutes,
   format,
 } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 import {
   ArrowUpIcon,
   CheckIcon,
@@ -47,6 +48,7 @@ import {
 } from '@/components/editor/plugins/discussion-kit';
 import { useLanguage } from '@/lib/i18n/use-language';
 
+import { useCommentsContext } from '@/components/providers/comments-provider';
 import { Editor, EditorContainer } from './editor';
 
 export type TComment = {
@@ -56,6 +58,8 @@ export type TComment = {
   discussionId: string;
   isEdited: boolean;
   userId: string;
+  userName?: string;
+  avatarUrl?: string;
   updatedAt?: Date;
 };
 
@@ -81,32 +85,31 @@ export function Comment(props: {
   } = props;
 
   const editor = useEditorRef();
-  const userInfo = usePluginOption(discussionPlugin, 'user', comment.userId);
+  const userInfoFromPlugin = usePluginOption(discussionPlugin, 'user', comment.userId);
   const currentUserId = usePluginOption(discussionPlugin, 'currentUserId');
   const { t, language } = useLanguage();
+
+  // Use user info from comment if available, otherwise fall back to plugin
+  const userInfo = comment.userName || comment.avatarUrl
+    ? {
+      name: comment.userName || 'User',
+      avatarUrl: comment.avatarUrl || `https://api.dicebear.com/9.x/glass/sv g?seed=${comment.userId}`
+    }
+    : userInfoFromPlugin;
+
+  const { resolveDiscussion, deleteDiscussion, updateComment: updateCommentContext } = useCommentsContext();
 
   const resolveDiscussionText = React.useMemo(() => t('toolbar.commentResolveDiscussion'), [t, language]);
   const cancelText = React.useMemo(() => t('toolbar.commentCancel'), [t, language]);
   const saveText = React.useMemo(() => t('toolbar.commentSave'), [t, language]);
   const editedText = React.useMemo(() => t('toolbar.commentEdited'), [t, language]);
 
-  const resolveDiscussion = async (id: string) => {
-    const updatedDiscussions = editor
-      .getOption(discussionPlugin, 'discussions')
-      .map((discussion) => {
-        if (discussion.id === id) {
-          return { ...discussion, isResolved: true };
-        }
-        return discussion;
-      });
-    editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
+  const resolveDiscussionHandler = async (id: string) => {
+    await resolveDiscussion(id);
   };
 
   const removeDiscussion = async (id: string) => {
-    const updatedDiscussions = editor
-      .getOption(discussionPlugin, 'discussions')
-      .filter((discussion) => discussion.id !== id);
-    editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
+    await deleteDiscussion(id);
   };
 
   const updateComment = async (input: {
@@ -115,26 +118,7 @@ export function Comment(props: {
     discussionId: string;
     isEdited: boolean;
   }) => {
-    const updatedDiscussions = editor
-      .getOption(discussionPlugin, 'discussions')
-      .map((discussion) => {
-        if (discussion.id === input.discussionId) {
-          const updatedComments = discussion.comments.map((comment) => {
-            if (comment.id === input.id) {
-              return {
-                ...comment,
-                contentRich: input.contentRich,
-                isEdited: true,
-                updatedAt: new Date(),
-              };
-            }
-            return comment;
-          });
-          return { ...discussion, comments: updatedComments };
-        }
-        return discussion;
-      });
-    editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
+    await updateCommentContext(input.id, input.contentRich);
   };
 
   const { tf } = useEditorPlugin(CommentPlugin);
@@ -171,7 +155,7 @@ export function Comment(props: {
   };
 
   const onResolveComment = () => {
-    void resolveDiscussion(comment.discussionId);
+    void resolveDiscussionHandler(comment.discussionId);
     tf.comment.unsetMark({ id: comment.discussionId });
   };
 
@@ -204,25 +188,25 @@ export function Comment(props: {
           {comment.isEdited && <span>({editedText})</span>}
         </div>
 
-        {isMyComment && (
-          <div className="absolute top-0 right-0 flex space-x-1">
-            {index === 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="h-6 p-1 text-muted-foreground"
-                    onClick={onResolveComment}
-                    type="button"
-                    aria-label={resolveDiscussionText}
-                  >
-                    <CheckIcon className="size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{resolveDiscussionText}</TooltipContent>
-              </Tooltip>
-            )}
+        <div className="absolute top-0 right-0 flex space-x-1">
+          {index === 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-6 p-1 text-muted-foreground"
+                  onClick={onResolveComment}
+                  type="button"
+                  aria-label={resolveDiscussionText}
+                >
+                  <CheckIcon className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{resolveDiscussionText}</TooltipContent>
+            </Tooltip>
+          )}
 
+          {isMyComment && (
             <CommentMoreDropdown
               onCloseAutoFocus={() => {
                 setTimeout(() => {
@@ -240,8 +224,8 @@ export function Comment(props: {
               setDropdownOpen={setDropdownOpen}
               setEditingId={setEditingId}
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {isFirst && showDocumentContent && (
@@ -328,38 +312,15 @@ function CommentMoreDropdown(props: {
 
   const selectedEditCommentRef = React.useRef<boolean>(false);
 
-  const onDeleteComment = React.useCallback(() => {
+  const { deleteComment } = useCommentsContext();
+
+  const onDeleteComment = React.useCallback(async () => {
     if (!comment.id)
       return alert('You are operating too quickly, please try again later.');
 
-    // Find and update the discussion
-    const updatedDiscussions = editor
-      .getOption(discussionPlugin, 'discussions')
-      .map((discussion) => {
-        if (discussion.id !== comment.discussionId) {
-          return discussion;
-        }
-
-        const commentIndex = discussion.comments.findIndex(
-          (c) => c.id === comment.id
-        );
-        if (commentIndex === -1) {
-          return discussion;
-        }
-
-        return {
-          ...discussion,
-          comments: [
-            ...discussion.comments.slice(0, commentIndex),
-            ...discussion.comments.slice(commentIndex + 1),
-          ],
-        };
-      });
-
-    // Save back to session storage
-    editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
+    await deleteComment(comment.id);
     onRemoveComment?.();
-  }, [comment.discussionId, comment.id, editor, onRemoveComment]);
+  }, [comment.id, deleteComment, onRemoveComment]);
 
   const onEditComment = React.useCallback(() => {
     selectedEditCommentRef.current = true;
@@ -453,6 +414,7 @@ export function CommentCreateForm({
   discussionId?: string;
   focusOnMount?: boolean;
 }) {
+  const { addDiscussion, addComment } = useCommentsContext();
   const discussions = usePluginOption(discussionPlugin, 'discussions');
 
   const editor = useEditorRef();
@@ -488,17 +450,20 @@ export function CommentCreateForm({
       // Get existing discussion
       const discussion = discussions.find((d) => d.id === discussionId);
       if (!discussion) {
-        // Mock creating suggestion
+        // Create new discussion if not found (should be rare or if suggested)
+        const currentUserInfo = editor.getOption(discussionPlugin, 'currentUser');
         const newDiscussion: TDiscussion = {
           id: discussionId,
           comments: [
             {
-              id: nanoid(),
+              id: uuidv4(),
               contentRich: commentValue,
               createdAt: new Date(),
               discussionId,
               isEdited: false,
               userId: editor.getOption(discussionPlugin, 'currentUserId'),
+              userName: currentUserInfo?.name,
+              avatarUrl: currentUserInfo?.avatarUrl,
             },
           ],
           createdAt: new Date(),
@@ -506,36 +471,24 @@ export function CommentCreateForm({
           userId: editor.getOption(discussionPlugin, 'currentUserId'),
         };
 
-        editor.setOption(discussionPlugin, 'discussions', [
-          ...discussions,
-          newDiscussion,
-        ]);
+        await addDiscussion(newDiscussion);
         return;
       }
 
       // Create reply comment
+      const currentUserInfo = editor.getOption(discussionPlugin, 'currentUser');
       const comment: TComment = {
-        id: nanoid(),
+        id: uuidv4(),
         contentRich: commentValue,
         createdAt: new Date(),
         discussionId,
         isEdited: false,
         userId: editor.getOption(discussionPlugin, 'currentUserId'),
+        userName: currentUserInfo?.name,
+        avatarUrl: currentUserInfo?.avatarUrl,
       };
 
-      // Add reply to discussion comments
-      const updatedDiscussion = {
-        ...discussion,
-        comments: [...discussion.comments, comment],
-      };
-
-      // Filter out old discussion and add updated one
-      const updatedDiscussions = discussions
-        .filter((d) => d.id !== discussionId)
-        .concat(updatedDiscussion);
-
-      editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
-
+      await addComment(comment, discussionId);
       return;
     }
 
@@ -549,18 +502,20 @@ export function CommentCreateForm({
       .map(([node]) => node.text)
       .join('');
 
-    const _discussionId = nanoid();
-    // Mock creating new discussion
+    const _discussionId = uuidv4();
+    const currentUserInfo = editor.getOption(discussionPlugin, 'currentUser');
     const newDiscussion: TDiscussion = {
       id: _discussionId,
       comments: [
         {
-          id: nanoid(),
+          id: uuidv4(),
           contentRich: commentValue,
           createdAt: new Date(),
           discussionId: _discussionId,
           isEdited: false,
           userId: editor.getOption(discussionPlugin, 'currentUserId'),
+          userName: currentUserInfo?.name,
+          avatarUrl: currentUserInfo?.avatarUrl,
         },
       ],
       createdAt: new Date(),
@@ -569,10 +524,7 @@ export function CommentCreateForm({
       userId: editor.getOption(discussionPlugin, 'currentUserId'),
     };
 
-    editor.setOption(discussionPlugin, 'discussions', [
-      ...discussions,
-      newDiscussion,
-    ]);
+    await addDiscussion(newDiscussion);
 
     const id = newDiscussion.id;
 
@@ -585,7 +537,7 @@ export function CommentCreateForm({
       );
       editor.tf.unsetNodes([getDraftCommentKey()], { at: path });
     });
-  }, [commentValue, commentEditor.tf, discussionId, editor, discussions]);
+  }, [commentValue, commentEditor.tf, discussionId, editor, discussions, addDiscussion, addComment]);
 
   return (
     <div className={cn('flex w-full', className)}>

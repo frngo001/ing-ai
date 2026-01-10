@@ -58,6 +58,9 @@ export function LibraryPane({
   const currentProject = useProjectStore((state) => state.getCurrentProject())
   const openSearch = useCitationStore((state) => state.openSearch)
   const setPendingCitation = useCitationStore((state) => state.setPendingCitation)
+
+  const isSharedProject = currentProject?.isShared === true;
+  const isViewOnly = isSharedProject && currentProject?.shareMode === 'view';
   const addCitation = useCitationStore((state) => state.addCitation)
   const removeCitation = useCitationStore((state) => state.removeCitation)
   const citations = useCitationStore((state) => state.savedCitations)
@@ -269,20 +272,22 @@ export function LibraryPane({
               }
             }}
           />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 bg-transparent"
-                onClick={handleImportClick}
-                aria-label={translations.importBib}
-              >
-                <Upload className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{translations.importBib}</TooltipContent>
-          </Tooltip>
+          {!isViewOnly && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 bg-transparent"
+                  onClick={handleImportClick}
+                  aria-label={translations.importBib}
+                >
+                  <Upload className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{translations.importBib}</TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -297,21 +302,23 @@ export function LibraryPane({
             </TooltipTrigger>
             <TooltipContent side="bottom">{translations.exportBib}</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 bg-transparent"
-                onClick={openSearch}
-                aria-label={translations.addCitations}
-                data-onboarding="add-source-btn"
-              >
-                <Plus className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{translations.addCitations}</TooltipContent>
-          </Tooltip>
+          {!isViewOnly && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 bg-transparent"
+                  onClick={openSearch}
+                  aria-label={translations.addCitations}
+                  data-onboarding="add-source-btn"
+                >
+                  <Plus className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{translations.addCitations}</TooltipContent>
+            </Tooltip>
+          )}
           <Button
             size="icon"
             variant="ghost"
@@ -348,43 +355,46 @@ export function LibraryPane({
 
             </SelectContent>
           </Select>
-          <Popover open={isCreateLibraryOpen} onOpenChange={setIsCreateLibraryOpen}>
-            <Tooltip>
-              <PopoverTrigger asChild>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-9 whitespace-nowrap shrink-0"
-                    onClick={() => setIsCreateLibraryOpen((prev) => !prev)}
-                  >
-                    <CirclePlus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-              </PopoverTrigger>
-              <TooltipContent side="bottom">{translations.newLibrary}</TooltipContent>
-            </Tooltip>
-            <PopoverContent align="start" className="w-[260px]">
-              <div className="flex flex-col gap-3">
-                <Input
-                  value={newLibraryName}
-                  onChange={(e) => setNewLibraryName(e.target.value)}
-                  placeholder={translations.libraryName}
-                  aria-label={translations.libraryName}
-                  className="focus-within:ring-0 focus-within:ring-offset-0 group rounded-md border px-2 py-2"
-                />
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setIsCreateLibraryOpen(false)}>
-                    {translations.cancel}
-                  </Button>
-                  <Button size="sm" onClick={handleCreateLibrary}>
-                    {translations.createLibrary}
-                  </Button>
+          {!isViewOnly && (
+            <Popover open={isCreateLibraryOpen} onOpenChange={setIsCreateLibraryOpen}>
+              <Tooltip>
+                <PopoverTrigger asChild>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 whitespace-nowrap shrink-0"
+                      onClick={() => setIsCreateLibraryOpen((prev) => !prev)}
+                    >
+                      <CirclePlus className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                </PopoverTrigger>
+                <TooltipContent side="bottom">{translations.newLibrary}</TooltipContent>
+              </Tooltip>
+              <PopoverContent align="start" className="w-[260px]">
+                <div className="flex flex-col gap-3">
+                  <Input
+                    value={newLibraryName}
+                    onChange={(e) => setNewLibraryName(e.target.value)}
+                    placeholder={translations.libraryName}
+                    aria-label={translations.libraryName}
+                    className="focus-within:ring-0 focus-within:ring-offset-0 group rounded-md border px-2 py-2"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setIsCreateLibraryOpen(false)}>
+                      {translations.cancel}
+                    </Button>
+                    <Button size="sm" onClick={handleCreateLibrary}>
+                      {translations.createLibrary}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          )}
           {activeLibraryId &&
+            !isViewOnly &&
             activeLibraryId !== 'library_default' &&
             libraries.filter((lib) => lib.id !== 'library_default').length > 1 && (
               <Tooltip>
@@ -541,20 +551,22 @@ export function LibraryPane({
                         </TooltipTrigger>
                         <TooltipContent side="bottom">{translations.openSource}</TooltipContent>
                       </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
-                            aria-label={translations.deleteSource}
-                            onClick={() => setConfirmDeleteId(item.id)}
-                          >
-                            <Trash2 className="size-3 text-destructive hover:text-destructive" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">{translations.deleteSource}</TooltipContent>
-                      </Tooltip>
+                      {!isViewOnly && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
+                              aria-label={translations.deleteSource}
+                              onClick={() => setConfirmDeleteId(item.id)}
+                            >
+                              <Trash2 className="size-3 text-destructive hover:text-destructive" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom">{translations.deleteSource}</TooltipContent>
+                        </Tooltip>
+                      )}
 
                     </div>
                     <span className="text-[11px] text-muted-foreground whitespace-nowrap">
@@ -634,7 +646,7 @@ export function LibraryPane({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   )
 }
 

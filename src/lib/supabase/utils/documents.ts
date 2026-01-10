@@ -104,15 +104,15 @@ export async function getDocumentsByProject(projectId: string): Promise<Document
   return requestPromise
 }
 
-export async function getDocumentById(id: string, userId?: string): Promise<Document | null> {
+export async function getDocumentById(id: string, userId?: string, skipUserCheck: boolean = false): Promise<Document | null> {
   const supabase = createClient()
-  
+
   let query = supabase
     .from('documents')
     .select('*')
     .eq('id', id)
 
-  if (userId) {
+  if (userId && !skipUserCheck) {
     query = query.eq('user_id', userId)
   }
 
@@ -166,7 +166,8 @@ export async function createDocument(document: DocumentInsert): Promise<Document
 export async function updateDocument(
   id: string,
   updates: DocumentUpdate,
-  userId?: string
+  userId?: string,
+  skipUserCheck: boolean = false
 ): Promise<Document> {
   const supabase = createClient()
 
@@ -184,7 +185,7 @@ export async function updateDocument(
     }
   }
 
-  const existingDoc = await getDocumentById(id, userId)
+  const existingDoc = await getDocumentById(id, userId, skipUserCheck)
   if (!existingDoc) {
     if (!userId) {
       throw new Error('userId is required to create a new document')
@@ -198,45 +199,45 @@ export async function updateDocument(
       word_count: (updates.word_count as number) || 0,
       ...updates,
     }
-    
+
     const { data, error } = await supabase
       .from('documents')
       .upsert(newDocument, { onConflict: 'id' })
       .select()
       .single()
-    
+
     if (error) {
       if (error.code === '23505') {
         let query = supabase
           .from('documents')
           .update(updates)
           .eq('id', id)
-        
-        if (userId) {
+
+        if (userId && !skipUserCheck) {
           query = query.eq('user_id', userId)
         }
-        
+
         const { data: updateData, error: updateError } = await query.select().single()
-        
+
         if (updateError) throw updateError
-        
-        if (userId) invalidateDocumentsCache(userId)
+
+        if (userId || updateData?.user_id) invalidateDocumentsCache(userId || updateData.user_id!)
         return updateData
       }
       throw error
     }
-    
+
     if (userId) invalidateDocumentsCache(userId)
-    
+
     return data
   }
-  
+
   let query = supabase
     .from('documents')
     .update(updates)
     .eq('id', id)
 
-  if (userId) {
+  if (userId && !skipUserCheck) {
     query = query.eq('user_id', userId)
   }
 
@@ -249,9 +250,9 @@ export async function updateDocument(
     }
     throw error
   }
-  
-  if (userId) invalidateDocumentsCache(userId)
-  
+
+  if (userId || existingDoc?.user_id) invalidateDocumentsCache(userId || existingDoc.user_id)
+
   return data
 }
 
@@ -264,7 +265,7 @@ export async function deleteDocument(id: string, userId: string): Promise<void> 
     .eq('user_id', userId)
 
   if (error) throw error
-  
+
   // Cache invalidieren für diesen User
   invalidateDocumentsCache(userId)
 }
@@ -278,7 +279,7 @@ export async function deleteAllDocumentsByProject(projectId: string, userId: str
     .eq('user_id', userId)
 
   if (error) throw error
-  
+
   invalidateDocumentsCache(userId)
 }
 

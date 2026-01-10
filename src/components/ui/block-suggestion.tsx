@@ -38,6 +38,7 @@ import {
   CommentCreateForm,
   formatCommentDate,
 } from './comment';
+import { useUserProfile } from '@/hooks/use-user-profile';
 
 export interface ResolvedSuggestion extends TResolvedSuggestion {
   comments: TComment[];
@@ -94,7 +95,17 @@ export function BlockSuggestionCard({
 }) {
   const { api, editor } = useEditorPlugin(SuggestionPlugin);
 
-  const userInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
+  // 1. Try local cache (e.g. current user)
+  const localUserInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
+
+  // 2. Try fetching profile
+  const { profile: fetchedProfile } = useUserProfile(suggestion.userId);
+
+  // 3. Fallback
+  const userInfo = localUserInfo || fetchedProfile || {
+    name: 'Unknown User',
+    avatarUrl: `https://api.dicebear.com/9.x/glass/svg?seed=${suggestion.userId || 'unknown'}`,
+  };
 
   const accept = (suggestion: ResolvedSuggestion) => {
     api.suggestion.withoutSuggestions(() => {

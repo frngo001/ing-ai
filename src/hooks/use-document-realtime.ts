@@ -26,10 +26,12 @@ export interface RealtimePresence {
 export function useDocumentRealtime({
     documentId,
     onContentUpdate,
+    onDiscussionsUpdate,
     enabled,
 }: {
     documentId: string | null;
     onContentUpdate: (content: Value) => void;
+    onDiscussionsUpdate?: (discussions: any[]) => void;
     enabled: boolean;
 }) {
     const supabase = React.useMemo(() => createClient(), []);
@@ -62,6 +64,12 @@ export function useDocumentRealtime({
                 devLog('[REALTIME] Received content-update');
                 if (payload.content) {
                     onContentUpdate(payload.content);
+                }
+            })
+            .on('broadcast' as any, { event: 'discussions-update' }, (payload: { discussions: any[] }) => {
+                devLog('[REALTIME] Received discussions-update');
+                if (payload.discussions && onDiscussionsUpdate) {
+                    onDiscussionsUpdate(payload.discussions);
                 }
             })
             .on('presence', { event: 'sync' }, () => {
@@ -107,6 +115,15 @@ export function useDocumentRealtime({
             content,
         });
     }, []);
+    const broadcastDiscussions = React.useCallback((discussions: any[]) => {
+        if (!channelRef.current) return;
+
+        channelRef.current.send({
+            type: 'broadcast',
+            event: 'discussions-update',
+            discussions,
+        });
+    }, []);
 
     const updatePresence = React.useCallback((data: Partial<RealtimePresence>) => {
         if (!channelRef.current) return;
@@ -121,6 +138,7 @@ export function useDocumentRealtime({
 
     return {
         broadcastContent,
+        broadcastDiscussions,
         updatePresence,
         presence,
         sessionId,

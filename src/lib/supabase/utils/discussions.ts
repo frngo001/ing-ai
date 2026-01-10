@@ -114,3 +114,76 @@ export async function deleteDiscussionsByDocument(documentId: string, userId: st
   if (error) throw error
 }
 
+export async function getDeepDiscussionsByDocument(documentId: string): Promise<any[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('discussions')
+    .select('*, comments(*)')
+    .eq('document_id', documentId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return (data || []).map(d => ({
+    id: d.id,
+    userId: d.user_id,
+    isResolved: d.is_resolved,
+    documentContent: d.document_content,
+    createdAt: new Date(d.created_at),
+    comments: (d.comments || []).map((c: any) => ({
+      id: c.id,
+      discussionId: c.discussion_id,
+      userId: c.user_id,
+      userName: c.user_name,
+      avatarUrl: c.avatar_url,
+      contentRich: c.content_rich,
+      isEdited: c.is_edited,
+      createdAt: new Date(c.created_at),
+      updatedAt: c.updated_at ? new Date(c.updated_at) : undefined
+    })).sort((a: any, b: any) => a.createdAt.getTime() - b.createdAt.getTime())
+  }))
+}
+
+export async function syncDiscussions(documentId: string, discussions: any[]) {
+  const supabase = createClient()
+
+  for (const discussion of discussions) {
+    if (!isValidUUID(discussion.id)) continue
+
+    // 1. Upsert discussion
+    const { error: dError } = await supabase
+      .from('discussions')
+      .upsert({
+        id: discussion.id,
+        document_id: documentId,
+        user_id: discussion.userId,
+        is_resolved: discussion.isResolved,
+        document_content: discussion.documentContent,
+        updated_at: new Date().toISOString()
+      })
+
+    if (dError) {
+      console.error(`[SYNC DISCUSSIONS] Error upserting discussion ${discussion.id}:`, dError)
+      continue
+    }
+
+    // 2. Upsert comments
+    for (const comment of discussion.comments) {
+      if (!isValidUUID(comment.id)) continue
+
+      await supabase
+        .from('comments')
+        .upsert({
+          id: comment.id,
+          discussion_id: discussion.id,
+          user_id: comment.userId,
+          user_name: comment.userName,
+          avatar_url: comment.avatarUrl,
+          content_rich: comment.contentRich,
+          is_edited: comment.isEdited,
+          updated_at: new Date().toISOString()
+        })
+    }
+  }
+}
+

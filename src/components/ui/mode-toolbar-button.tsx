@@ -35,7 +35,7 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
 
   React.useEffect(() => {
     if (!isSharedProject || !shareMode) return;
-    
+
     if (shareMode === 'view') {
       setReadOnly(true);
       editor.setOption(SuggestionPlugin, 'isSuggesting', false);
@@ -60,12 +60,13 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
   }, [shouldForceOpen, open]);
 
   const handleOpenChange = React.useCallback((newOpen: boolean) => {
-    if (isSharedProject) return;
+    // Only prevent opening if in view-only mode
+    if (isSharedProject && shareMode === 'view') return;
     if (shouldForceOpen && !newOpen) {
       return;
     }
     setOpen(newOpen);
-  }, [shouldForceOpen, isSharedProject]);
+  }, [shouldForceOpen, isSharedProject, shareMode]);
 
   const isSuggesting = usePluginOption(SuggestionPlugin, 'isSuggesting');
 
@@ -95,16 +96,18 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
 
   const tooltipText = React.useMemo(() => t('toolbar.mode'), [t, language]);
 
+  const isDisabled = isSharedProject && shareMode === 'view';
+
   return (
     <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false} {...props}>
-      <DropdownMenuTrigger asChild disabled={isSharedProject}>
-        <ToolbarButton 
-          pressed={open} 
-          tooltip={tooltipText} 
-          isDropdown 
+      <DropdownMenuTrigger asChild disabled={isDisabled}>
+        <ToolbarButton
+          pressed={open}
+          tooltip={tooltipText}
+          isDropdown
           data-onboarding="mode-btn"
-          disabled={isSharedProject}
-          className={isSharedProject ? 'opacity-50 cursor-not-allowed' : ''}
+          disabled={isDisabled}
+          className={isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
         >
           {item[value].icon}
           <span className="hidden lg:inline">{item[value].label}</span>
