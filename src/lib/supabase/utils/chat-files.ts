@@ -66,19 +66,30 @@ export async function uploadChatFile(
   // Generiere eindeutigen Dateinamen
   const uniqueFileName = generateUniqueFileName(file.name);
 
-  // Erstelle Pfad: chat-files/user_id/conversation_id/filename
-  const filePath = `chat-files/${userId}/${conversationId}/${uniqueFileName}`;
+  // Erstelle Pfad: user_id/chat-files/conversation_id/filename
+  // WICHTIG: user_id MUSS der erste Teil des Pfads sein, damit die RLS-Policies (storage.objects) greifen.
+  const filePath = `${userId}/chat-files/${conversationId}/${uniqueFileName}`;
 
   devLog('[Chat File Upload] Starting upload:', { filePath, size: file.size, type: file.type });
 
   try {
+    // MIME-Type für Storage-Upload optimieren (viele Buckets blockieren spezifische Office-Mime-Types)
+    const storageContentType = file.type.startsWith('image/') ||
+      file.type === 'application/pdf' ||
+      file.type.startsWith('text/')
+      ? file.type
+      : 'application/octet-stream';
+
+    // Erstelle einen Blob mit dem Ziel-MIME-Type, um sicherzustellen, dass Supabase nicht den Original-Typ liest
+    const uploadData = new Blob([file], { type: storageContentType });
+
     // Upload zu Supabase Storage
     const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
-      .upload(filePath, file, {
+      .upload(filePath, uploadData, {
         cacheControl: '3600',
         upsert: false,
-        contentType: file.type,
+        contentType: storageContentType,
       });
 
     if (error) {

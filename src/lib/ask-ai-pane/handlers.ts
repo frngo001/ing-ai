@@ -33,7 +33,7 @@ export interface HandlerDependencies {
   slashQuery: string | null
   agentStore: AgentStore
   pendingContext: MessageContext[]
-  
+
   // Setters
   setInput: (value: string | ((prev: string) => string)) => void
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
@@ -49,10 +49,10 @@ export interface HandlerDependencies {
   setNewSlashContent: (value: string) => void
   setSlashDialogOpen: (value: boolean) => void
   setPendingContext: React.Dispatch<React.SetStateAction<MessageContext[]>>
-  
+
   // Refs
   messageInputRef: React.RefObject<HTMLTextAreaElement | null>
-  
+
   // Other
   toast: { error: (message: string) => void; success?: (message: string) => void }
   onClose?: () => void
@@ -152,18 +152,23 @@ export const createHandlers = (deps: HandlerDependencies) => {
 
     // Erstelle User-Nachricht mit Dateien und Kontext (Context nur im context-Feld, NICHT im content)
     const userMsgId = crypto.randomUUID()
+
+    // Speichere die verwendeten Mentions für die spätere Anzeige im Chat
+    const userMentions = selectedMentions.length > 0 ? [...selectedMentions] : undefined
+
     const userMsg: ChatMessage = {
       id: userMsgId,
       role: "user",
       content: trimmed, // Nur der originale Text, ohne Context
       files: filesToUpload
         ? filesToUpload.map((file) => ({
-            name: file.name,
-            size: file.size,
-            type: file.type,
-          }))
+          name: file.name,
+          size: file.size,
+          type: file.type,
+        }))
         : undefined,
       context: contextToInclude, // Context nur für UI-Anzeige
+      mentions: userMentions, // Speichere Mentions im Nachrichten-Objekt
     }
     const assistantId = crypto.randomUUID()
 
@@ -173,6 +178,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
     setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", content: "" }])
     setInput("")
     setFiles(null) // Entferne Dateien aus dem Input-Feld nach dem Senden
+    setSelectedMentions([]) // Entferne Mentions aus dem Input-Feld nach dem Senden
     setSending(true)
     setStreamingId(assistantId)
 
@@ -180,11 +186,11 @@ export const createHandlers = (deps: HandlerDependencies) => {
     setAbortController(controller)
 
     try {
-      
+
       let apiEndpoint = "/api/ai/ask"
       // Default ist 'bachelor', nicht 'general'
       const currentArbeitType = agentStore.arbeitType || (context.agentMode === 'bachelor' ? 'bachelor' : (context.agentMode === 'general' ? 'general' : 'bachelor'))
-      
+
       if (context.agentMode === 'standard') {
         // Standard Chat Modus - wenn Websuche aktiviert, verwende WebSearch-Agent
         if (context.web) {
@@ -214,20 +220,21 @@ export const createHandlers = (deps: HandlerDependencies) => {
       // Default ist 'bachelor', daher verwenden wir die erste Nachricht nur für expliziten general-Modus
       const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
 
-      const isAgentModeForEditor = context.agentMode === 'bachelor' || context.agentMode === 'general' || 
-                                    (agentStore.isActive && (currentArbeitType === 'bachelor' || currentArbeitType === 'master' || currentArbeitType === 'general'))
-      const shouldFetchEditorContent = isAgentModeForEditor || context.document
+      const isAgentModeForEditor = context.agentMode === 'bachelor' || context.agentMode === 'general' ||
+        (agentStore.isActive && (currentArbeitType === 'bachelor' || currentArbeitType === 'master' || currentArbeitType === 'general'))
+
+      const isEditorMentioned = selectedMentions.some(m => m.type === 'document')
+      const shouldFetchEditorContent = isAgentModeForEditor || context.document || isEditorMentioned
       const editorContent = shouldFetchEditorContent ? await getEditorContentAsMarkdown() : ''
-      
-      if (isAgentModeForEditor) {
-        console.log(`[HANDLER] Editor-Inhalt für Agent-Modus geholt: ${editorContent.length} Zeichen`)
+
+      if (isAgentModeForEditor || isEditorMentioned) {
+        console.log(`[HANDLER] Editor-Inhalt für Agent-Modus/Mention geholt: ${editorContent.length} Zeichen`)
       }
 
       // Extrahiere Content aus hochgeladenen Dateien
       let fileContents: Array<{ name: string; content: string; type: string }> = []
       if (files && files.length > 0) {
         try {
-
           const clientFiles: File[] = []
           const serverFiles: File[] = []
 
@@ -291,11 +298,6 @@ export const createHandlers = (deps: HandlerDependencies) => {
                   const data = await response.json()
                   const extractedContent = data.content || ''
                   console.log(`[HANDLER] Datei "${file.name}" extrahiert: ${extractedContent.length} Zeichen`)
-                  if (extractedContent.length > 0) {
-                    console.log(`[HANDLER] Datei "${file.name}" Text-Vorschau: ${extractedContent.substring(0, 200)}...`)
-                  } else {
-                    console.warn(`[HANDLER] Warnung: Datei "${file.name}" hat keinen extrahierten Inhalt`)
-                  }
                   return {
                     name: file.name,
                     content: extractedContent,
@@ -319,16 +321,8 @@ export const createHandlers = (deps: HandlerDependencies) => {
             fileContents.push(...successful)
           }
 
-          // Zeige Erfolgsmeldung, wenn Dateien erfolgreich extrahiert wurden
           if (fileContents.length > 0) {
             console.log(`[HANDLER] ${fileContents.length} Datei(en) erfolgreich extrahiert`)
-            fileContents.forEach((file, index) => {
-              console.log(`[HANDLER] Datei ${index + 1}: "${file.name}" (${file.type}) - ${file.content.length} Zeichen`)
-            })
-            const totalChars = fileContents.reduce((sum, file) => sum + file.content.length, 0)
-            console.log(`[HANDLER] Gesamt extrahierter Text: ${totalChars} Zeichen`)
-          } else {
-            console.warn(`[HANDLER] Keine Dateien erfolgreich extrahiert`)
           }
         } catch (error) {
           console.error('Fehler beim Extrahieren von Datei-Content:', error)
@@ -338,25 +332,55 @@ export const createHandlers = (deps: HandlerDependencies) => {
         }
       }
 
+      // Füge auch Inhalte von @-erwähnten Dateien hinzu (aus früheren Uploads)
+      const mentionedFileContents = selectedMentions
+        .filter((m) => m.type === 'file' && m.content)
+        .map((m) => ({
+          name: m.label,
+          content: m.content || '',
+          type: m.metadata?.fileType || 'unknown',
+        }))
+
+      if (mentionedFileContents.length > 0) {
+        console.log(`[HANDLER] ${mentionedFileContents.length} @-erwähnte Datei(en) mit Inhalt hinzugefügt`)
+        const existingNames = new Set(fileContents.map((f) => f.name))
+        mentionedFileContents.forEach((mf) => {
+          if (!existingNames.has(mf.name)) {
+            fileContents.push(mf)
+          }
+        })
+      }
+
       const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
 
       // Hole aktuelle projectId aus dem Store
       const currentProjectId = useProjectStore.getState().currentProjectId
 
+      // Füge Inhalte von @-erwähnten Zitaten hinzu
+      const citationContexts = selectedMentions
+        .filter(m => m.type === 'citation')
+        .map(m => `ZITAT "${m.label}":\n${m.content || m.label}`)
+
       let messageContextText = ''
+
+      if (citationContexts.length > 0) {
+        messageContextText += `\n\n---\n\n**REFERENZIERTE ZITATE:**\n\n${citationContexts.join('\n\n')}\n`
+      }
+
       if (contextToInclude && contextToInclude.length > 0) {
         const contextTexts = contextToInclude.map((ctx) => ctx.text).join('\n\n')
-        messageContextText = `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
+        messageContextText += `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
       }
-      
+
+
       const requestBody = (context.agentMode !== 'standard' || isWebSearchAgent)
         ? {
           messages: historyPayload.map((m) => {
- 
+
             if (m.role === 'user' && m.id === userMsg.id && messageContextText) {
               return {
                 role: m.role,
-                content: m.content + messageContextText, 
+                content: m.content + messageContextText,
               }
             }
             return {
@@ -436,9 +460,9 @@ export const createHandlers = (deps: HandlerDependencies) => {
       }
 
       const reader = res.body.getReader()
-      
+
       const isAgentMode = context.agentMode !== 'standard' || apiEndpoint === "/api/ai/agent/websearch"
-      
+
       if (isAgentMode) {
         await parseAgentStream(reader, {
           assistantId,
@@ -500,6 +524,9 @@ export const createHandlers = (deps: HandlerDependencies) => {
               )
             )
             console.log('[HANDLER] Dateien erfolgreich in Supabase gespeichert:', uploadedFiles.length)
+
+            // Event auslösen, um useChatFiles zum Aktualisieren zu bringen
+            window.dispatchEvent(new CustomEvent('chat-file-uploaded'))
           }
         } catch (uploadError) {
           console.error('[HANDLER] Fehler beim Speichern der Dateien:', uploadError)
@@ -512,14 +539,14 @@ export const createHandlers = (deps: HandlerDependencies) => {
           error instanceof Error && error.message !== "Antwort fehlgeschlagen"
             ? error.message
             : "Entschuldigung, die Antwort konnte nicht geladen werden. Bitte versuche es erneut."
-        
+
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
               ? {
-                  ...m,
-                  content: errorMessage,
-                }
+                ...m,
+                content: errorMessage,
+              }
               : m
           )
         )
@@ -594,13 +621,17 @@ export const createHandlers = (deps: HandlerDependencies) => {
 
       const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
 
+      // Prüfe ob Editor in den ursprünglichen Mentions war
+      const originalMentions = lastUserMessage.mentions || []
+      const isEditorMentioned = originalMentions.some(m => m.type === 'document')
+
       const isAgentModeForEditor = context.agentMode === 'bachelor' || context.agentMode === 'general' ||
-                                    (agentStore.isActive && (currentArbeitType === 'bachelor' || currentArbeitType === 'master' || currentArbeitType === 'general'))
-      const shouldFetchEditorContent = isAgentModeForEditor || context.document
+        (agentStore.isActive && (currentArbeitType === 'bachelor' || currentArbeitType === 'master' || currentArbeitType === 'general'))
+      const shouldFetchEditorContent = isAgentModeForEditor || context.document || isEditorMentioned
       const editorContent = shouldFetchEditorContent ? await getEditorContentAsMarkdown() : ''
 
-      if (isAgentModeForEditor) {
-        console.log(`[HANDLER] Editor-Inhalt für Regenerate Agent-Modus geholt: ${editorContent.length} Zeichen`)
+      if (isAgentModeForEditor || isEditorMentioned) {
+        console.log(`[HANDLER] Editor-Inhalt für Regenerate Agent-Modus/Mention geholt: ${editorContent.length} Zeichen`)
       }
 
       const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
@@ -608,11 +639,38 @@ export const createHandlers = (deps: HandlerDependencies) => {
       // Hole aktuelle projectId aus dem Store
       const currentProjectId = useProjectStore.getState().currentProjectId
 
+      // Stelle fileContents aus gespeicherten Mentions wieder her
+      let fileContents: Array<{ name: string; content: string; type: string }> = []
+
+      // Füge Datei-Inhalte aus den gespeicherten Mentions wieder hinzu
+      const mentionedFileContents = originalMentions
+        .filter((m) => m.type === 'file' && m.content)
+        .map((m) => ({
+          name: m.label,
+          content: m.content || '',
+          type: m.metadata?.fileType || 'unknown',
+        }))
+
+      if (mentionedFileContents.length > 0) {
+        console.log(`[HANDLER REGENERATE] ${mentionedFileContents.length} gespeicherte Datei(en) wiederhergestellt`)
+        fileContents.push(...mentionedFileContents)
+      }
+
+      // Füge Zitat-Inhalte aus den gespeicherten Mentions wieder hinzu
+      const citationContexts = originalMentions
+        .filter(m => m.type === 'citation')
+        .map(m => `ZITAT "${m.label}":\n${m.content || m.label}`)
+
       // Kontext aus der letzten User-Nachricht (falls vorhanden)
       let messageContextText = ''
+
+      if (citationContexts.length > 0) {
+        messageContextText += `\n\n---\n\n**REFERENZIERTE ZITATE:**\n\n${citationContexts.join('\n\n')}\n`
+      }
+
       if (lastUserMessage.context && lastUserMessage.context.length > 0) {
         const contextTexts = lastUserMessage.context.map((ctx) => ctx.text).join('\n\n')
-        messageContextText = `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
+        messageContextText += `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
       }
 
       const contextSummary = buildContextSummary(trimmed, files, context, selectedMentions)
@@ -634,6 +692,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
           useWeb: context.web,
           editorContent,
           documentContextEnabled: context.document,
+          fileContents: fileContents.length > 0 ? fileContents : undefined,
           projectId: currentProjectId,
           agentState: isWebSearchAgent ? {
             isActive: false,
@@ -653,9 +712,11 @@ export const createHandlers = (deps: HandlerDependencies) => {
           useWeb: context.web,
           editorContent: context.document ? editorContent : undefined,
           documentContextEnabled: context.document,
+          fileContents: fileContents.length > 0 ? fileContents : undefined,
           messages: historyPayload,
           attachments: [],
         }
+
 
       const res = await fetch(apiEndpoint, {
         method: "POST",
@@ -718,9 +779,9 @@ export const createHandlers = (deps: HandlerDependencies) => {
           prev.map((m) =>
             m.id === assistantId
               ? {
-                  ...m,
-                  content: errorMessage,
-                }
+                ...m,
+                content: errorMessage,
+              }
               : m
           )
         )

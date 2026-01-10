@@ -1,4 +1,4 @@
-export type MessagePart = 
+export type MessagePart =
   | { type: 'text'; text: string }
   | { type: 'reasoning'; reasoning: string }
   | { type: 'tool-invocation'; toolInvocation: { toolName: string; toolCallId: string } }
@@ -53,6 +53,7 @@ export type ChatMessage = {
     extractedContent?: string
   }>
   context?: MessageContext[]
+  mentions?: Mentionable[]
 }
 
 export type StoredConversation = {
@@ -76,6 +77,7 @@ export type Mentionable = {
   label: string
   value: string
   hint?: string
+  icon?: any
   type?: "citation" | "prompt" | "document" | "file"
   // Actual content to send as context to the AI
   content?: string

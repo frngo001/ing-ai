@@ -157,8 +157,8 @@ body {
   --card: #171717;
   --card-foreground: #EDEDED;
 
-   --popover:  oklch(0.21 0.006 285.885);
-   --popover-foreground:  oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
 
   --primary: #3ECF8E;
   /* Supabase Green */
@@ -318,18 +318,58 @@ body {
     display: none;
   }
 
-  /* Hide scrollbars in AI chat messages */
-  [data-slot="conversation"] *,
-  [data-slot="conversation-content"] *,
-  [data-message-id] * {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  /* Fixed thin scrollbar behavior for AI chat pane to prevent "zooming" on hover/focus */
+  [data-onboarding="ask-ai-pane"],
+  [data-onboarding="ask-ai-pane"] * {
+    scrollbar-width: thin !important;
+    scrollbar-color: hsl(var(--border)) transparent !important;
+    -webkit-overflow-scrolling: touch;
   }
 
-  [data-slot="conversation"] *::-webkit-scrollbar,
-  [data-slot="conversation-content"] *::-webkit-scrollbar,
-  [data-message-id] *::-webkit-scrollbar {
-    display: none;
+  [data-onboarding="ask-ai-pane"]::-webkit-scrollbar,
+  [data-onboarding="ask-ai-pane"] *::-webkit-scrollbar {
+    display: block !important;
+    width: 4px !important;
+    height: 4px !important;
+  }
+
+  [data-onboarding="ask-ai-pane"]::-webkit-scrollbar-thumb,
+  [data-onboarding="ask-ai-pane"] *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border) / 0.5) !important;
+    border-radius: 10px !important;
+  }
+
+  [data-onboarding="ask-ai-pane"]::-webkit-scrollbar-thumb:hover,
+  [data-onboarding="ask-ai-pane"] *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--border) / 0.8) !important;
+  }
+
+  [data-onboarding="ask-ai-pane"]::-webkit-scrollbar:hover,
+  [data-onboarding="ask-ai-pane"] *::-webkit-scrollbar:hover {
+    width: 4px !important;
+    /* Prevent zooming/growing on hover */
+  }
+
+  /* Target Radix UI ScrollArea scrollbars specifically to keep them thin */
+  [data-onboarding="ask-ai-pane"] [data-slot="scroll-area-scrollbar"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 4px !important;
+    transition: none !important;
+    /* Remove transitions that might cause zooming */
+  }
+
+  [data-onboarding="ask-ai-pane"] [data-slot="scroll-area-scrollbar"]:hover,
+  [data-onboarding="ask-ai-pane"] [data-slot="scroll-area-scrollbar"]:focus,
+  [data-onboarding="ask-ai-pane"] [data-slot="scroll-area-scrollbar"]:focus-within {
+    width: 4px !important;
+    /* Keep it constant */
+  }
+
+  [data-onboarding="ask-ai-pane"] [data-slot="scroll-area-thumb"] {
+    width: 4px !important;
+    min-height: 20px !important;
   }
 
   .animate-appear {
@@ -359,6 +399,10 @@ body {
 
   .bg-gradient-primary {
     @apply bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/25;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s infinite;
   }
 }
 
@@ -653,10 +697,30 @@ body {
   }
 }
 
+@keyframes bounce-subtle {
+
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  40% {
+    transform: translateX(-50%) translateY(-10px);
+  }
+
+  60% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

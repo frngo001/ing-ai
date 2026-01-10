@@ -109,13 +109,23 @@ export async function uploadMediaToSupabase(
   }
 
   try {
+    // MIME-Type für Storage-Upload optimieren (viele Buckets blockieren spezifische Office-Mime-Types)
+    const storageContentType = file.type.startsWith('image/') ||
+      file.type === 'application/pdf' ||
+      file.type.startsWith('text/')
+      ? file.type
+      : 'application/octet-stream';
+
+    // Erstelle einen Blob mit dem Ziel-MIME-Type, um sicherzustellen, dass Supabase nicht den Original-Typ liest
+    const uploadData = new Blob([file], { type: storageContentType });
+
     // Upload zu Supabase Storage
     const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
-      .upload(filePath, file, {
+      .upload(filePath, uploadData, {
         cacheControl: '3600',
         upsert: false,
-        contentType: file.type,
+        contentType: storageContentType,
       });
 
     if (progressInterval) {

@@ -21,6 +21,8 @@ import {
   Bookmark,
   Trash2,
   MoreHorizontal,
+  BookOpen,
+  PenLine,
 } from "lucide-react"
 import { PlateMarkdown } from "@/components/ui/plate-markdown"
 import { ChatSelectionToolbar } from "./ask-ai-pane/chat-selection-toolbar"
@@ -498,17 +500,50 @@ export function AskAiPane({
 
       const resolvedThema = agentStore.thema || thema || (context.agentMode === 'general' ? trimmed.substring(0, 100) : null)
 
+      // Ursprüngliche Mentions wiederherstellen
+      const originalMentions = editedMessage.mentions || []
+      const isEditorMentioned = originalMentions.some(m => m.type === 'document')
+
       const isAgentModeForEditor = context.agentMode === 'bachelor' || context.agentMode === 'general' ||
         (agentStore.isActive && (currentArbeitType === 'bachelor' || currentArbeitType === 'master' || currentArbeitType === 'general'))
-      const shouldFetchEditorContent = isAgentModeForEditor || context.document
+      const shouldFetchEditorContent = isAgentModeForEditor || context.document || isEditorMentioned
       const editorContent = shouldFetchEditorContent ? await getEditorContentAsMarkdown() : ''
+
+      if (isAgentModeForEditor || isEditorMentioned) {
+        devLog(`[HANDLER] Editor-Inhalt für Edit Agent-Modus/Mention geholt: ${editorContent.length} Zeichen`)
+      }
 
       const isWebSearchAgent = context.agentMode === 'standard' && context.web && apiEndpoint === "/api/ai/agent/websearch"
 
+      // Stelle fileContents aus gespeicherten Mentions wieder her
+      let fileContents: Array<{ name: string; content: string; type: string }> = []
+      const mentionedFileContents = originalMentions
+        .filter((m) => m.type === 'file' && m.content)
+        .map((m) => ({
+          name: m.label,
+          content: m.content || '',
+          type: m.metadata?.fileType || 'unknown',
+        }))
+
+      if (mentionedFileContents.length > 0) {
+        devLog(`[HANDLER EDIT] ${mentionedFileContents.length} gespeicherte Datei(en) wiederhergestellt`)
+        fileContents.push(...mentionedFileContents)
+      }
+
+      // Füge Zitat-Inhalte aus den gespeicherten Mentions wieder hinzu
+      const citationContexts = originalMentions
+        .filter(m => m.type === 'citation')
+        .map(m => `ZITAT "${m.label}":\n${m.content || m.label}`)
+
       let messageContextText = ''
+
+      if (citationContexts.length > 0) {
+        messageContextText += `\n\n---\n\n**REFERENZIERTE ZITATE:**\n\n${citationContexts.join('\n\n')}\n`
+      }
+
       if (editedMessage.context && editedMessage.context.length > 0) {
         const contextTexts = editedMessage.context.map((ctx) => ctx.text).join('\n\n')
-        messageContextText = `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
+        messageContextText += `\n\n---\n\n**WICHTIG: Vom Nutzer markierter Text aus einer vorherigen Nachricht**\n\nDer Nutzer hat folgenden Text aus einer vorherigen Nachricht markiert und möchte mehr darüber erfahren:\n\n${contextTexts}\n\n**Bitte beziehe dich ausführlich auf diesen markierten Text und gib detaillierte Informationen dazu.**`
       }
 
       const contextSummary = buildContextSummary(trimmed, files, context, selectedMentions)
@@ -530,6 +565,7 @@ export function AskAiPane({
           useWeb: context.web,
           editorContent,
           documentContextEnabled: context.document,
+          fileContents: fileContents.length > 0 ? fileContents : undefined,
           projectId: currentProjectId || undefined,
           agentState: isWebSearchAgent ? {
             isActive: false,
@@ -549,9 +585,16 @@ export function AskAiPane({
           useWeb: context.web,
           editorContent: context.document ? editorContent : undefined,
           documentContextEnabled: context.document,
+          fileContents: fileContents.length > 0 ? fileContents : undefined,
           messages: historyPayload,
-          attachments: [],
+          attachments:
+            files?.map((file) => ({
+              name: file.name,
+              size: file.size,
+              type: file.type,
+            })) ?? originalMessage.files ?? [],
         }
+
 
       const res = await fetch(apiEndpoint, {
         method: "POST",
@@ -995,6 +1038,32 @@ export function AskAiPane({
                               </div>
                             )}
 
+                            {message.mentions && message.mentions.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {message.mentions.map((mention, idx) => {
+                                  // Bestimme Icon basierend auf Typ (Icons können nicht in DB serialisiert werden)
+                                  const MentionIcon = mention.type === 'citation' ? BookOpen
+                                    : mention.type === 'document' ? PenLine
+                                      : FileText
+                                  return (
+                                    <div
+                                      key={`${mention.id}-${idx}`}
+                                      className="inline-flex items-center gap-1.5 rounded bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground border border-border/50"
+                                    >
+                                      <MentionIcon className="h-3 w-3 opacity-70" />
+                                      <span className="truncate max-w-[140px] font-medium">
+                                        {mention.label}
+                                      </span>
+                                      <span className="text-[9px] uppercase tracking-wider font-semibold opacity-60 ml-0.5">
+                                        {mention.type === 'citation' ? 'Zitat' : mention.type === 'document' ? 'Editor' : 'Dokument'}
+                                      </span>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
+
+
                             {editingMessageId === message.id ? (
                               <div className="relative w-full ml-auto">
                                 <textarea
@@ -1081,10 +1150,15 @@ export function AskAiPane({
                         className="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
                         onClick={() => handleMentionSelect(item)}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-sm truncate">{item.label}</span>
-                          <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                            {item.type === 'citation' ? 'Zitat' : item.type === 'document' ? 'Dokument' : 'Prompt'}
+                        <div className="flex items-center justify-between gap-3 overflow-hidden">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {item.icon && (
+                              <item.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            )}
+                            <span className="font-medium text-sm truncate">{item.label}</span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground flex-shrink-0 bg-muted/80 px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold">
+                            {item.type === 'citation' ? 'Zitat' : item.type === 'document' ? 'Editor' : 'Dokument'}
                           </span>
                         </div>
                         {item.hint && (

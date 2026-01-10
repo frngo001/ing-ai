@@ -24,7 +24,7 @@ export const buildContextSummary = (
   // Add actual mention content as context
   if (selectedMentions.length > 0) {
     const mentionContents = selectedMentions
-      .filter((m) => m.content || m.type === 'citation')
+      .filter((m) => m.content || m.type === 'citation' || m.type === 'file')
       .map((m) => {
         if (m.type === 'citation') {
           // Format citation context
@@ -38,6 +38,16 @@ export const buildContextSummary = (
           return citationContext
         } else if (m.type === 'document') {
           return `\n--- Aktuelles Dokument wird als Kontext verwendet ---`
+        } else if (m.type === 'file') {
+          // Datei-Inhalt als Kontext (extrahierter Text aus hochgeladenem Dokument)
+          let fileContext = `\n--- Referenziertes Dokument: "${m.label}" ---\n`
+          if (m.content) {
+            fileContext += `\n${m.content}`
+          } else {
+            fileContext += `Dateiname: ${m.label}`
+            if (m.metadata?.fileType) fileContext += `\nTyp: ${m.metadata.fileType}`
+          }
+          return fileContext
         } else {
           return m.content ? `\n--- ${m.label} ---\n${m.content}` : ''
         }

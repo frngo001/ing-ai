@@ -402,6 +402,7 @@ export interface Database {
           tool_steps: Json
           files: Json
           context: Json
+          mentions: Json
           created_at: string
         }
         Insert: {
@@ -415,6 +416,7 @@ export interface Database {
           tool_steps?: Json
           files?: Json
           context?: Json
+          mentions?: Json
           created_at?: string
         }
         Update: {
@@ -428,10 +430,12 @@ export interface Database {
           tool_steps?: Json
           files?: Json
           context?: Json
+          mentions?: Json
           created_at?: string
         }
         Relationships: []
       }
+
       saved_messages: {
         Row: {
           id: string

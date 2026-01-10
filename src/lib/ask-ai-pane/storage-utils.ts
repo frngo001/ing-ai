@@ -17,12 +17,12 @@ const isLocalStorageAvailable = (): boolean => {
 
 export const saveSlashCommands = async (commands: SlashCommand[]) => {
   const userId = await getCurrentUserId()
-  
+
   if (userId) {
     try {
       // Lösche alle bestehenden Commands
       await slashCommandsUtils.deleteAllSlashCommands(userId)
-      
+
       // Erstelle neue Commands
       if (commands.length > 0) {
         await slashCommandsUtils.createSlashCommands(
@@ -50,7 +50,7 @@ export const saveSlashCommands = async (commands: SlashCommand[]) => {
 
 export const saveSingleSlashCommand = async (command: SlashCommand): Promise<SlashCommand> => {
   const userId = await getCurrentUserId()
-  
+
   if (userId) {
     try {
       // Erstelle neuen Command in der Datenbank
@@ -59,7 +59,7 @@ export const saveSingleSlashCommand = async (command: SlashCommand): Promise<Sla
         label: command.label,
         content: command.content,
       })
-      
+
       return {
         id: created.id,
         label: created.label,
@@ -90,7 +90,7 @@ export const saveSingleSlashCommand = async (command: SlashCommand): Promise<Sla
 
 export const loadSlashCommands = async (): Promise<SlashCommand[]> => {
   const userId = await getCurrentUserId()
-  
+
   if (userId) {
     try {
       const commands = await slashCommandsUtils.getSlashCommands(userId)
@@ -115,7 +115,7 @@ export const loadSlashCommands = async (): Promise<SlashCommand[]> => {
       return getDefaultSlashCommands()
     }
   }
-  
+
   // Fallback auf localStorage wenn kein User eingeloggt
   if (!isLocalStorageAvailable()) {
     return getDefaultSlashCommands()
@@ -174,7 +174,7 @@ export const persistConversation = async (
       if (msgs.length > 0) {
         // Hole bestehende Messages VOR dem Erstellen (als Backup)
         const existingMessagesBefore = await chatMessagesUtils.getChatMessages(id)
-        
+
         // Erstelle neue Messages zuerst (bekommen neue UUIDs)
         const createdMessages = await chatMessagesUtils.createChatMessages(
           msgs.map(msg => ({
@@ -187,9 +187,10 @@ export const persistConversation = async (
             tool_steps: msg.toolSteps || [],
             files: msg.files || [],
             context: msg.context || [],
+            mentions: msg.mentions || [],
           }))
         )
-        
+
         // Lösche nur Messages, die vor dem Erstellen existierten
         // Die neuen Messages haben neue UUIDs und sind daher nicht in existingMessageIds
         for (const oldMessage of existingMessagesBefore) {
@@ -261,7 +262,7 @@ export const loadChatHistory = async (projectId?: string): Promise<StoredConvers
   if (userId) {
     try {
       const conversations = await chatConversationsUtils.getChatConversations(userId, projectId)
-      
+
       // Lade Messages für jede Conversation
       const conversationsWithMessages: StoredConversation[] = await Promise.all(
         conversations.map(async (conv) => {
@@ -279,12 +280,13 @@ export const loadChatHistory = async (projectId?: string): Promise<StoredConvers
               toolSteps: msg.tool_steps as ChatMessage['toolSteps'],
               files: (msg.files as ChatMessage['files']) || undefined,
               context: (msg.context as ChatMessage['context']) || undefined,
+              mentions: (msg.mentions as ChatMessage['mentions']) || undefined,
             })),
             updatedAt: new Date(conv.updated_at).getTime(),
           }
         })
       )
-      
+
       return conversationsWithMessages.sort((a, b) => b.updatedAt - a.updatedAt)
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Laden der Chat History:', error)
@@ -305,7 +307,7 @@ export const loadChatHistory = async (projectId?: string): Promise<StoredConvers
       return []
     }
   }
-  
+
   // Fallback auf localStorage wenn kein User eingeloggt
   if (!isLocalStorageAvailable()) {
     return []
@@ -335,7 +337,7 @@ export const saveMessage = async (message: ChatMessage, conversationId: string):
     timestamp: Date.now(),
     preview: message.content.substring(0, 100) + (message.content.length > 100 ? '...' : ''),
   }
-  
+
   if (userId) {
     try {
       await savedMessagesUtils.createSavedMessage({
@@ -365,13 +367,13 @@ export const saveMessage = async (message: ChatMessage, conversationId: string):
       localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
     }
   }
-  
+
   return savedMessage
 }
 
 export const removeSavedMessage = async (messageId: string): Promise<void> => {
   const userId = await getCurrentUserId()
-  
+
   if (userId) {
     try {
       await savedMessagesUtils.deleteSavedMessageByMessageId(messageId, userId)
@@ -397,7 +399,7 @@ export const removeSavedMessage = async (messageId: string): Promise<void> => {
 
 export const loadSavedMessages = async (): Promise<SavedMessage[]> => {
   const userId = await getCurrentUserId()
-  
+
   if (userId) {
     try {
       const messages = await savedMessagesUtils.getSavedMessages(userId)
@@ -429,7 +431,7 @@ export const loadSavedMessages = async (): Promise<SavedMessage[]> => {
       return []
     }
   }
-  
+
   // Fallback auf localStorage wenn kein User eingeloggt
   if (!isLocalStorageAvailable()) {
     return []
@@ -450,7 +452,7 @@ export const loadSavedMessages = async (): Promise<SavedMessage[]> => {
 
 export const isMessageSaved = async (messageId: string): Promise<boolean> => {
   const userId = await getCurrentUserId()
-  
+
   if (userId) {
     try {
       const message = await savedMessagesUtils.getSavedMessageByMessageId(messageId, userId)
@@ -472,7 +474,7 @@ export const isMessageSaved = async (messageId: string): Promise<boolean> => {
       return false
     }
   }
-  
+
   // Fallback auf localStorage wenn kein User eingeloggt
   if (!isLocalStorageAvailable()) {
     return false

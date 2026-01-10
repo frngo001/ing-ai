@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useState } from "react"
+import { FileText, MessageSquareQuote, PenLine, BookOpen } from "lucide-react"
 import type { Mentionable, StoredConversation } from './types'
 import { getChatFilesForUser, type ChatFileUploadResult } from '@/lib/supabase/utils/chat-files'
 import { getCurrentUserId } from '@/lib/supabase/utils/auth'
@@ -51,8 +52,8 @@ export const useMentionables = (citations: CitationForMention[], files?: FileFor
           id: c.id,
           label: c.title,
           value: c.title, // Just the title, no @ prefix
-          hint: c.source || "Library",
           type: "citation" as const,
+          icon: BookOpen,
           content: contentParts.join('\n'),
           metadata: {
             authors: c.authors,
@@ -67,13 +68,12 @@ export const useMentionables = (citations: CitationForMention[], files?: FileFor
     // Dateien als Mentionables
     const fileItems: Mentionable[] =
       files?.map((f) => {
-        const fileSizeKB = (f.size / 1024).toFixed(1)
         return {
           id: `file-${f.id}`,
           label: f.name,
           value: f.name,
-          hint: `${fileSizeKB} KB`,
           type: "file" as const,
+          icon: FileText,
           content: f.extractedContent || `Datei: ${f.name} (${f.type})`,
           metadata: {
             fileId: f.id,
@@ -87,10 +87,10 @@ export const useMentionables = (citations: CitationForMention[], files?: FileFor
     return [
       {
         id: "doc",
-        label: "Aktuelles Dokument",
+        label: "Aktueller Editor",
         value: "current-document",
-        hint: "Nutze den aktuellen Editor-Kontext",
         type: "document",
+        icon: PenLine,
         content: "Der Nutzer möchte auf den aktuellen Editor-Inhalt Bezug nehmen.",
       },
       ...fileItems,
@@ -104,14 +104,33 @@ export const useMentionables = (citations: CitationForMention[], files?: FileFor
  */
 export const useChatFiles = (): FileForMention[] => {
   const [files, setFiles] = useState<FileForMention[]>([])
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // Listener für neue Datei-Uploads
+  useEffect(() => {
+    const handleFileUploaded = () => {
+      console.log('[useChatFiles] File upload event received, refreshing...')
+      setRefreshTrigger(prev => prev + 1)
+    }
+
+    window.addEventListener('chat-file-uploaded', handleFileUploaded)
+    return () => {
+      window.removeEventListener('chat-file-uploaded', handleFileUploaded)
+    }
+  }, [])
 
   useEffect(() => {
     const loadFiles = async () => {
       try {
         const userId = await getCurrentUserId()
-        if (!userId) return
+        console.log('[useChatFiles] Loading files for user:', userId)
+        if (!userId) {
+          console.log('[useChatFiles] No userId, skipping load')
+          return
+        }
 
         const chatFiles = await getChatFilesForUser(userId, 30)
+        console.log('[useChatFiles] Loaded chat files:', chatFiles.length, chatFiles)
         setFiles(chatFiles.map((f) => ({
           id: f.id,
           name: f.name,
@@ -126,7 +145,7 @@ export const useChatFiles = (): FileForMention[] => {
     }
 
     loadFiles()
-  }, [])
+  }, [refreshTrigger])
 
   return files
 }
@@ -156,4 +175,3 @@ export const useFilteredHistory = (history: StoredConversation[], historyQuery: 
     })
   }, [history, historyQuery])
 }
-
