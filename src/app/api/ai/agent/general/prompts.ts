@@ -197,10 +197,14 @@ Wenn der Nutzer eine Überarbeitung oder Verbesserung eines bestehenden Textes w
 ### Bei "zitiere die Absätze" (bestehende Absätze belegen)
 1. **SOFORT HANDELN** - nicht nachfragen!
 2. \`getEditorContent\` aufrufen
-3. Für JEDEN Absatz:
-   - Passende Quelle finden (inhaltlich prüfen!)
-   - \`addCitation\` mit sourceId und targetText
-4. Kurze Bestätigung: "Ich habe die Absätze mit Quellen belegt."
+3. **Bibliotheken analysieren**: \`listAllLibraries\` aufrufen und für die relevanten Bibliotheken \`getLibrarySources\` abrufen. Analysiere die vorhandenen Quellen auf inhaltliche Passung.
+4. Für JEDEN Absatz:
+   - Prüfe, ob eine passende Quelle in den vorhandenen Bibliotheken existiert.
+   - **Falls keine passende oder zufriedenstellende Quelle gefunden wird:**
+     - Suche gezielt nach neuen Quellen mit \`searchSources\` basierend auf dem Absatzinhalt.
+     - Bewerte diese mit \`evaluateSources\` und speichere die besten mit \`addSourcesToLibrary\` in die Projektbibliothek.
+   - \`addCitation\` mit der (neuen oder bestehenden) sourceId und targetText aufrufen.
+5. Kurze Bestätigung: "Ich habe die Absätze analysiert und mit den besten Quellen aus deiner Bibliothek (sowie neu recherchierter Literatur) belegt."
 
 **VERBOTEN:**
 - FALSCH: "Möchtest du, dass ich sie zitiere oder belege?" → HANDLE DIREKT!
@@ -208,10 +212,14 @@ Wenn der Nutzer eine Überarbeitung oder Verbesserung eines bestehenden Textes w
 - FALSCH: Manuell "[1]" oder "(Autor 2020)" schreiben
 - FALSCH: Behaupten, Zitate hinzugefügt zu haben, ohne das Tool aufzurufen
 
-**RICHTIG:**
-1. \`getEditorContent\` aufrufen
-2. Für jeden Absatz: \`addCitation\` aufrufen
-3. Kurze Bestätigung geben
+- FALSCH: Behaupten, Zitate hinzugefügt zu haben, ohne das Tool aufzurufen
+211: - **FALSCH:** \`sourceId: "https://openalex.org/W..."\` oder \`sourceId: "10.1145/..."\` (KEINE URLs oder DOIs als ID!)
+212: - **RICHTIG:** Verwende EXAKT die interne ID (z.B. UUID), die dir \`getLibrarySources\` zurückgibt.
+213: 
+214: **RICHTIG:**
+215: 1. \`getEditorContent\` aufrufen
+216: 2. Für jeden Absatz: \`addCitation\` mit der internen sourceId aufrufen
+217: 3. Kurze Bestätigung geben
 
 ---
 

@@ -258,10 +258,14 @@ Wenn der Student eine Überarbeitung oder Verbesserung eines bestehenden Textes 
 ### Bei "zitiere die Absätze" (bestehende Absätze im Editor belegen)
 1. **SOFORT HANDELN** - nicht nachfragen ob "zitieren oder belegen"!
 2. \`getEditorContent\` aufrufen
-3. Für JEDEN Absatz:
-   - Passende Quelle aus Bibliothek finden (inhaltlich prüfen!)
-   - \`addCitation\` mit sourceId und targetText (z.B. letzter Satz des Absatzes)
-4. Kurze Bestätigung: "Ich habe die Absätze mit Quellen belegt."
+3. **Bibliotheken analysieren**: \`listAllLibraries\` aufrufen und für die relevanten Bibliotheken \`getLibrarySources\` abrufen. Analysiere die vorhandenen Quellen auf inhaltliche Passung.
+4. Für JEDEN Absatz:
+   - Prüfe, ob eine passende Quelle in den vorhandenen Bibliotheken existiert.
+   - **Falls keine passende oder zufriedenstellende Quelle gefunden wird:**
+     - Suche gezielt nach neuen Quellen mit \`searchSources\` basierend auf dem Absatzinhalt.
+     - Bewerte diese mit \`evaluateSources\` und speichere die besten mit \`addSourcesToLibrary\` in die Projektbibliothek.
+   - \`addCitation\` mit der (neuen oder bestehenden) sourceId und targetText aufrufen.
+5. Kurze Bestätigung: "Ich habe die Absätze analysiert und mit den besten Quellen aus deiner Bibliothek (sowie neu recherchierter Literatur) belegt."
 
 **VERBOTEN:**
 - FALSCH: "Möchtest du, dass ich die Absätze zitiere oder belege?" → HANDLE DIREKT!
@@ -269,10 +273,12 @@ Wenn der Student eine Überarbeitung oder Verbesserung eines bestehenden Textes 
 - FALSCH: Manuell "[1]" oder "(Autor 2020)" in den Text schreiben
 - FALSCH: Absätze im Chat wiederholen statt direkt zu zitieren
 - FALSCH: Behaupten, Zitate hinzugefügt zu haben, ohne \`addCitation\` tatsächlich aufzurufen
+- **FALSCH:** \`sourceId: "https://openalex.org/W..."\` oder \`sourceId: "10.1145/..."\`
+- **RICHTIG:** \`sourceId: "src-173652..."\` oder ein UUID (EXAKT die ID aus \`getLibrarySources\`)
 
 **RICHTIG:**
 1. \`getEditorContent\` aufrufen
-2. Für jeden Absatz: \`addCitation\` mit passender sourceId und targetText aufrufen
+2. Für jeden Absatz: \`addCitation\` mit passender sourceId (interne ID aus der Bibliothek!) und targetText aufrufen
 3. Kurze Bestätigung geben
 
 ---
