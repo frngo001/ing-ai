@@ -144,7 +144,7 @@ const BlockCommentContent = ({
         ([node]) =>
           TextApi.isText(node) &&
           editor.getApi(SuggestionPlugin).suggestion.nodeId(node) ===
-            activeSuggestion.suggestionId
+          activeSuggestion.suggestionId
       );
     }
 
@@ -245,7 +245,8 @@ const BlockCommentContent = ({
           )}
         </PopoverContent>
 
-        {totalCount > 0 && (
+        {/* Hiding the totalCount indicator as requested by user */}
+        {/* totalCount > 0 && (
           <div className="relative -left-4 size-0 select-none">
             <PopoverTrigger asChild>
               <Button
@@ -270,7 +271,8 @@ const BlockCommentContent = ({
               </Button>
             </PopoverTrigger>
           </div>
-        )}
+        ) */}
+
       </Popover>
     </div>
   );
