@@ -104,8 +104,8 @@ export function OnboardingTooltip({
           break
         case 'top':
           x = targetRect.x + targetRect.width / 2 - TOOLTIP_WIDTH / 2
-          const topGap = subStep?.id === 'export-formats' || subStep?.id === 'import-formats' || subStep?.id === 'open-mode' || subStep?.id === 'suggestions'
-            ? TOOLTIP_GAP + 120 
+          const topGap = subStep?.id === 'open-export' || subStep?.id === 'open-import' || subStep?.id === 'open-mode' || subStep?.id === 'suggestions'
+            ? TOOLTIP_GAP + 120
             : TOOLTIP_GAP
           y = targetRect.y - tooltipHeight - topGap
           break
@@ -158,10 +158,10 @@ export function OnboardingTooltip({
     const result = tryPosition(
       preferredPosition as Exclude<TooltipPosition, 'center'>
     )
-    
+
     // For top position with export/import formats, maintain larger gap
     let finalY = result.y
-    if (preferredPosition === 'top' && (subStep?.id === 'export-formats' || subStep?.id === 'import-formats' || subStep?.id === 'open-mode' || subStep?.id === 'suggestions')) {
+    if (preferredPosition === 'top' && (subStep?.id === 'open-export' || subStep?.id === 'open-import' || subStep?.id === 'open-mode' || subStep?.id === 'suggestions')) {
       const topGap = TOOLTIP_GAP + 120
       const idealY = targetRect.y - tooltipHeight - topGap
       // Use ideal position if it fits, otherwise clamp but try to maintain gap
@@ -179,7 +179,7 @@ export function OnboardingTooltip({
         Math.min(result.y, viewportHeight - tooltipHeight - VIEWPORT_PADDING)
       )
     }
-    
+
     return {
       x: Math.max(
         VIEWPORT_PADDING,
@@ -312,8 +312,8 @@ export function OnboardingTooltip({
                         index === currentSubStepIndex
                           ? 'w-4 bg-primary'
                           : index < currentSubStepIndex
-                          ? 'w-1.5 bg-primary/50'
-                          : 'w-1.5 bg-muted-foreground/30'
+                            ? 'w-1.5 bg-primary/50'
+                            : 'w-1.5 bg-muted-foreground/30'
                       )}
                     />
                   ))}

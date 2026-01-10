@@ -44,6 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n/use-language"
+import { useOnboardingStore } from "@/lib/stores/onboarding-store"
 import { devError } from "@/lib/utils/logger"
 
 type ShareMode = "view" | "edit" | "suggest"
@@ -195,9 +196,19 @@ export function ProjectShareDialog({
 
   const activeShares = shares.filter((s) => s.is_active)
 
+  const { isOpen: isOnboardingOpen } = useOnboardingStore()
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent
+        className="sm:max-w-[500px]"
+        onInteractOutside={(e) => {
+          if (isOnboardingOpen) {
+            e.preventDefault()
+          }
+        }}
+        data-onboarding="share-dialog"
+      >
         <DialogHeader>
           <DialogTitle>{t("projectSharing.title")}</DialogTitle>
           <DialogDescription>
@@ -209,7 +220,7 @@ export function ProjectShareDialog({
           <div className="grid gap-2">
             <Label>{t("projectSharing.accessMode")}</Label>
             <Select value={mode} onValueChange={(v) => setMode(v as ShareMode)}>
-              <SelectTrigger>
+              <SelectTrigger data-onboarding="share-mode-select">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -281,7 +292,7 @@ export function ProjectShareDialog({
             </Popover>
           </div>
 
-          <Button onClick={handleCreateShare} disabled={isCreating}>
+          <Button onClick={handleCreateShare} disabled={isCreating} data-onboarding="share-generate-btn">
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -296,7 +307,7 @@ export function ProjectShareDialog({
           </Button>
 
           {generatedLink && (
-            <div className="rounded-lg border bg-muted/50 p-3">
+            <div className="rounded-lg border bg-muted/50 p-3" data-onboarding="share-link-area">
               <Label className="text-xs text-muted-foreground">
                 {t("projectSharing.generatedLink")}
               </Label>
@@ -348,12 +359,12 @@ export function ProjectShareDialog({
                             <p className="text-xs text-muted-foreground">
                               {share.expires_at
                                 ? t("projectSharing.expiresOn", {
-                                    date: format(
-                                      new Date(share.expires_at),
-                                      "PPP",
-                                      { locale: dateLocale }
-                                    ),
-                                  })
+                                  date: format(
+                                    new Date(share.expires_at),
+                                    "PPP",
+                                    { locale: dateLocale }
+                                  ),
+                                })
                                 : t("projectSharing.noExpirySet")}
                             </p>
                           </div>

@@ -196,6 +196,21 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
         case 'moveBlockDown':
           await actions.moveBlockDown()
           break
+        case 'openProjectShare':
+          actions.openProjectShare()
+          break
+        case 'closeSearch':
+          actions.closeSearch()
+          break
+        case 'prepareLibraryStep':
+          actions.prepareLibraryStep()
+          break
+        case 'prepareAiStep':
+          actions.prepareAiStep()
+          break
+        case 'prepareSettingsStep':
+          actions.prepareSettingsStep()
+          break
       }
 
       // Wait a bit for UI to update
@@ -210,7 +225,7 @@ export function OnboardingController({ actions }: OnboardingControllerProps) {
     if (!subStep) return
 
     let element = document.querySelector(subStep.target)
-    
+
     // For export/import formats, keep using button but position will be adjusted in tooltip
     // The tooltip will use a larger gap to position above the dropdown
 

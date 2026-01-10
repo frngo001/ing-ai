@@ -45,6 +45,16 @@ export interface OnboardingActions {
   moveBlockUp: () => Promise<void>
   moveBlockDown: () => Promise<void>
   focusEditor: () => void
+  openProjectShare: () => void
+  openAiPane: () => void
+  closeAiPane: () => void
+  openLibraryPane: () => void
+  closeLibraryPane: () => void
+  closeDocumentsPane: () => void
+  closeSearch: () => void
+  prepareLibraryStep: () => void
+  prepareAiStep: () => void
+  prepareSettingsStep: () => void
 }
 
 export interface TargetRect {

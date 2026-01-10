@@ -133,6 +133,10 @@ export const translations = {
                     title: 'Create a Project',
                     description: 'Organize your work into projects. Each project can contain multiple documents and keeps your research separate and organized.',
                 },
+                projectSharing: {
+                    title: 'Share Your Projects',
+                    description: 'Collaborate with others by sharing your projects. You can generate shareable links and choose between view, edit, or suggest modes.',
+                },
                 createDocument: {
                     title: 'Create Your First Document',
                     description: 'Start by creating a new document. Click the "New Document" button in the sidebar or use the keyboard shortcut to begin writing.',
@@ -177,6 +181,7 @@ export const translations = {
             tips: {
                 welcome: 'Click "Next" to learn about key features|You can skip this guide anytime|Access this guide later from the sidebar',
                 createProject: 'Projects keep your work organized|Switch between projects easily|Each project has its own library',
+                projectSharing: 'Share projects for collaboration|Choose from different access modes|Set expiry dates for security',
                 createDocument: 'Use Cmd/Ctrl + N for quick document creation|Documents auto-save as you type|Organize documents with titles',
                 editorBasics: 'Cmd/Ctrl + B for bold, I for italic|Use # for headings in markdown mode|Drag and drop to rearrange sections',
                 aiAssistant: 'Select text and press Cmd/Ctrl + J|Ask for writing improvements|Get explanations for complex topics',
@@ -212,6 +217,28 @@ export const translations = {
                     button: {
                         title: 'Create New Project',
                         description: 'Click "New Project" to create a new project for your thesis, research, or any other writing project.',
+                    },
+                },
+                projectSharing: {
+                    openShare: {
+                        title: 'Share Menu',
+                        description: 'Click the share icon on any project to open the sharing settings. This allows you to invite others to collaborate.',
+                    },
+                    dialogIntro: {
+                        title: 'Share Project',
+                        description: 'This is the sharing dialog. Here you can manage all access permissions and generate shareable links for your project.',
+                    },
+                    selectMode: {
+                        title: 'Choose Access Mode',
+                        description: 'Select the permissions for your share link. Choose \'View Only\' for reading, or \'Edit\' and \'Suggest\' for collaboration.',
+                    },
+                    generateLink: {
+                        title: 'Generate Link',
+                        description: 'Click \'Generate Share Link\' to create a unique URL that you can send to your collaborators.',
+                    },
+                    copyLink: {
+                        title: 'Copy and Send',
+                        description: 'Once generated, you can copy the link and share it with anyone. You can also set an expiry date for added security.',
                     },
                 },
                 createDocument: {
@@ -5823,6 +5850,10 @@ export const translations = {
                     title: 'Erstelle ein Projekt',
                     description: 'Organisiere deine Arbeit in Projekten. Jedes Projekt kann mehrere Dokumente enthalten und hält deine Recherchen getrennt und organisiert.',
                 },
+                projectSharing: {
+                    title: 'Projekte teilen',
+                    description: 'Arbeite mit anderen zusammen, indem du deine Projekte teilst. Du kannst Links generieren und zwischen Lese-, Bearbeitungs- oder Vorschlagsmodus wählen.',
+                },
                 createDocument: {
                     title: 'Erstelle dein erstes Dokument',
                     description: 'Beginne mit einem neuen Dokument. Klicke auf "Neues Dokument" in der Sidebar oder nutze die Tastenkombination zum Schreiben.',
@@ -5867,6 +5898,7 @@ export const translations = {
             tips: {
                 welcome: 'Klicke "Weiter" um die wichtigsten Funktionen kennenzulernen|Du kannst diesen Guide jederzeit überspringen|Greife später über die Sidebar auf diesen Guide zu',
                 createProject: 'Projekte halten deine Arbeit organisiert|Wechsle einfach zwischen Projekten|Jedes Projekt hat eine eigene Bibliothek',
+                projectSharing: 'Teile Projekte zur Zusammenarbeit|Wähle aus verschiedenen Zugriffsmodi|Setze Ablaufdaten für Sicherheit',
                 createDocument: 'Nutze Cmd/Ctrl + N für schnelle Dokumenterstellung|Dokumente speichern automatisch|Organisiere Dokumente mit Titeln',
                 editorBasics: 'Cmd/Ctrl + B für fett, I für kursiv|Nutze # für Überschriften im Markdown-Modus|Ziehe Abschnitte per Drag & Drop um',
                 aiAssistant: 'Markiere Text und drücke Cmd/Ctrl + J|Bitte um Schreibverbesserungen|Erhalte Erklärungen zu komplexen Themen',
@@ -5902,6 +5934,28 @@ export const translations = {
                     button: {
                         title: 'Neues Projekt Erstellen',
                         description: 'Klicke auf "Neues Projekt", um ein neues Projekt für deine Thesis, Recherche oder andere Schreibprojekte zu erstellen.',
+                    },
+                },
+                projectSharing: {
+                    openShare: {
+                        title: 'Teilen-Menü',
+                        description: 'Klicke auf das Teilen-Symbol eines Projekts, um die Freigabeeinstellungen zu öffnen. Hier kannst du andere zur Zusammenarbeit einladen.',
+                    },
+                    dialogIntro: {
+                        title: 'Projekt teilen',
+                        description: 'Dies ist der Freigabe-Dialog. Hier kannst du alle Zugriffsberechtigungen verwalten und Freigabe-Links für dein Projekt erstellen.',
+                    },
+                    selectMode: {
+                        title: 'Zugriffsmodus wählen',
+                        description: 'Wähle die Berechtigungen für deinen Freigabe-Link. Wähle \'Nur Lesen\', \'Bearbeiten\' oder \'Vorschlagen\' für die Zusammenarbeit.',
+                    },
+                    generateLink: {
+                        title: 'Link generieren',
+                        description: 'Klicke auf \'Freigabe-Link generieren\', um eine eindeutige URL zu erstellen, die du an deine Mitarbeiter senden kannst.',
+                    },
+                    copyLink: {
+                        title: 'Kopieren und Versenden',
+                        description: 'Sobald der Link generiert wurde, kannst du ihn kopieren und mit jedem teilen. Für zusätzliche Sicherheit kannst du ein Ablaufdatum festlegen.',
                     },
                 },
                 createDocument: {

@@ -30,6 +30,7 @@ import { fetchWebsiteInfo, searchBooks } from '@/lib/bibify'
 import { insertCitationWithMerge } from '@/components/editor/utils/insert-citation-with-merge'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/lib/i18n/use-language'
+import { useOnboardingStore } from '@/lib/stores/onboarding-store'
 
 export interface Source {
     id: string
@@ -86,6 +87,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
     const [activeTab, setActiveTab] = useState<'library' | 'search'>('library')
     const editor = useEditorRef()
     const { t, language } = useLanguage()
+    const isOnboardingOpen = useOnboardingStore((state) => state.isOpen)
 
     // Memoized translations that update on language change
     const translations = useMemo(() => ({
@@ -481,7 +483,15 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                     </Button>
                 </DialogTrigger>
             )}
-            <DialogContent className="max-w-4xl h-[80vh] overflow-hidden flex flex-col gap-4 border-0 shadow-none ring-0 outline-none focus-visible:outline-none">
+            <DialogContent
+                className="max-w-4xl h-[80vh] overflow-hidden flex flex-col gap-4 border-0 shadow-none ring-0 outline-none focus-visible:outline-none"
+                data-onboarding="citation-dialog"
+                onInteractOutside={(e) => {
+                    if (isOnboardingOpen) {
+                        e.preventDefault()
+                    }
+                }}
+            >
                 <DialogHeader className="shrink-0 space-y-2 p-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                         <div className="space-y-1 flex-1">
@@ -613,8 +623,8 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                         <SelectItem value="title">{translations.searchTypeTitle}</SelectItem>
                                         <SelectItem value="author">{translations.searchTypeAuthor}</SelectItem>
                                         <SelectItem value="doi">DOI</SelectItem>
-                                    <SelectItem value="url">URL</SelectItem>
-                                    <SelectItem value="book">{translations.searchTypeBook}</SelectItem>
+                                        <SelectItem value="url">URL</SelectItem>
+                                        <SelectItem value="book">{translations.searchTypeBook}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Button

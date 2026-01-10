@@ -32,6 +32,7 @@ import { useProjectStore } from "@/lib/stores/project-store"
 import { useOnboardingStore } from "@/lib/stores/onboarding-store"
 import { useLanguage } from "@/lib/i18n/use-language"
 import { devError } from "@/lib/utils/logger"
+import { cn } from "@/lib/utils"
 import { ProjectShareDialog } from "@/components/project-share-dialog"
 
 export function ProjectSwitcher() {
@@ -66,14 +67,34 @@ export function ProjectSwitcher() {
   // Onboarding integration
   const { isOpen: isOnboardingOpen, getCurrentSubStep } = useOnboardingStore()
   const currentSubStep = getCurrentSubStep()
-  const shouldForceOpen = isOnboardingOpen && currentSubStep?.id === 'open-projects'
+  const isProjectOnboarding = currentSubStep?.id === 'open-projects' ||
+    currentSubStep?.id === 'project-create-btn' ||
+    currentSubStep?.id === 'share-btn-point'
 
-  // Effect to open dropdown when onboarding reaches project step
+  const isSharingOnboarding =
+    currentSubStep?.id === 'share-dialog-intro' ||
+    currentSubStep?.id === 'share-mode' ||
+    currentSubStep?.id === 'share-generate' ||
+    currentSubStep?.id === 'share-link-area'
+
+  const shouldForceOpen = isOnboardingOpen && !shareDialogOpen && isProjectOnboarding
+
+  // Effect to manage dropdown state during onboarding
   React.useEffect(() => {
+    if (!isOnboardingOpen) return
+
     if (shouldForceOpen && !dropdownOpen) {
       setDropdownOpen(true)
+    } else if (!shouldForceOpen && dropdownOpen && !shareDialogOpen) {
+      // Close dropdown if we are in onboarding but not on a step that requires it
+      setDropdownOpen(false)
     }
-  }, [shouldForceOpen, dropdownOpen])
+
+    // Explicitly close share dialog if we move back from a sharing step
+    if (!isSharingOnboarding && shareDialogOpen) {
+      setShareDialogOpen(false)
+    }
+  }, [shouldForceOpen, dropdownOpen, isOnboardingOpen, shareDialogOpen, isSharingOnboarding])
 
   const currentProject = React.useMemo(
     () => projects.find((p) => p.id === currentProjectId),
@@ -102,7 +123,20 @@ export function ProjectSwitcher() {
   )
 
   React.useEffect(() => {
+    const handleOpenShare = () => {
+      if (currentProject) {
+        setProjectToShare({ id: currentProject.id, name: currentProject.name })
+        // Don't close dropdown if we are in onboarding, it might cause displacement
+        if (!isOnboardingOpen) {
+          setDropdownOpen(false)
+        }
+        setShareDialogOpen(true)
+      }
+    }
+
+    window.addEventListener("projects:open-share", handleOpenShare)
     return () => {
+      window.removeEventListener("projects:open-share", handleOpenShare)
       if (dropdownOpen) {
         removeInteractionLock()
         if (!isMobile) {
@@ -110,7 +144,7 @@ export function ProjectSwitcher() {
         }
       }
     }
-  }, [dropdownOpen, removeInteractionLock, isMobile, setOpen])
+  }, [dropdownOpen, removeInteractionLock, isMobile, setOpen, currentProject])
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return
@@ -333,11 +367,19 @@ export function ProjectSwitcher() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setProjectToShare({ id: project.id, name: project.name })
-                          setDropdownOpen(false)
+                          if (!isOnboardingOpen) {
+                            setDropdownOpen(false)
+                          }
                           setShareDialogOpen(true)
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-opacity"
+                        className={cn(
+                          "p-1 rounded hover:bg-muted transition-all",
+                          isOnboardingOpen && currentSubStep?.id === 'share-btn-point'
+                            ? "opacity-100 ring-2 ring-primary ring-offset-2 bg-primary/10"
+                            : "opacity-0 group-hover:opacity-100"
+                        )}
                         title={t('projectSharing.share')}
+                        data-onboarding="share-project-btn"
                       >
                         <Share2 className="size-3.5 text-muted-foreground" />
                       </button>

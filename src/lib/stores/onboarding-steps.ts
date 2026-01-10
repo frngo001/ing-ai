@@ -11,6 +11,7 @@ import {
   Upload,
   Settings,
   CheckCircle2,
+  Users,
 } from 'lucide-react'
 import type { OnboardingMainStep } from './onboarding-types'
 
@@ -30,6 +31,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         titleKey: 'onboarding.subSteps.welcome.intro.title',
         descriptionKey: 'onboarding.subSteps.welcome.intro.description',
         tipKey: 'onboarding.subSteps.welcome.intro.tip',
+        actionId: 'closeSidebar',
       },
       {
         id: 'welcome-sidebar',
@@ -57,6 +59,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         titleKey: 'onboarding.subSteps.createProject.intro.title',
         descriptionKey: 'onboarding.subSteps.createProject.intro.description',
         highlightPadding: 8,
+        actionId: 'openSidebar',
       },
       {
         id: 'open-projects',
@@ -65,6 +68,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         titleKey: 'onboarding.subSteps.createProject.dropdown.title',
         descriptionKey: 'onboarding.subSteps.createProject.dropdown.description',
         tipKey: 'onboarding.subSteps.createProject.dropdown.tip',
+        actionId: 'openSidebar',
         waitForElement: true,
       },
       {
@@ -74,6 +78,59 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         titleKey: 'onboarding.subSteps.createProject.button.title',
         descriptionKey: 'onboarding.subSteps.createProject.button.description',
         highlightPadding: 8,
+        actionId: 'openSidebar',
+      },
+    ],
+  },
+
+  // Step 3: Project Sharing
+  {
+    id: 'project-sharing',
+    titleKey: 'onboarding.steps.projectSharing.title',
+    icon: Users,
+    color: 'from-blue-500/20 to-indigo-500/20',
+    accentColor: 'text-blue-600 dark:text-blue-400',
+    subSteps: [
+      {
+        id: 'share-btn-point',
+        target: '[data-onboarding="share-project-btn"]',
+        position: 'right',
+        titleKey: 'onboarding.subSteps.projectSharing.openShare.title',
+        descriptionKey: 'onboarding.subSteps.projectSharing.openShare.description',
+        actionId: 'openSidebar',
+        waitForElement: true,
+      },
+      {
+        id: 'share-dialog-intro',
+        target: '[data-onboarding="share-dialog"]',
+        position: 'left',
+        titleKey: 'onboarding.subSteps.projectSharing.dialogIntro.title',
+        descriptionKey: 'onboarding.subSteps.projectSharing.dialogIntro.description',
+        actionId: 'openProjectShare',
+        waitForElement: true,
+      },
+      {
+        id: 'share-mode',
+        target: '[data-onboarding="share-mode-select"]',
+        position: 'right',
+        titleKey: 'onboarding.subSteps.projectSharing.selectMode.title',
+        descriptionKey: 'onboarding.subSteps.projectSharing.selectMode.description',
+        waitForElement: true,
+      },
+      {
+        id: 'share-generate',
+        target: '[data-onboarding="share-generate-btn"]',
+        position: 'right',
+        titleKey: 'onboarding.subSteps.projectSharing.generateLink.title',
+        descriptionKey: 'onboarding.subSteps.projectSharing.generateLink.description',
+      },
+      {
+        id: 'share-link-area',
+        target: '[data-onboarding="share-link-area"]',
+        position: 'right',
+        titleKey: 'onboarding.subSteps.projectSharing.copyLink.title',
+        descriptionKey: 'onboarding.subSteps.projectSharing.copyLink.description',
+        waitForElement: false,
       },
     ],
   },
@@ -93,6 +150,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         titleKey: 'onboarding.subSteps.createDocument.button.title',
         descriptionKey: 'onboarding.subSteps.createDocument.button.description',
         highlightPadding: 12,
+        actionId: 'openSidebar',
       },
       {
         id: 'create-action',
@@ -100,7 +158,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         position: 'right',
         titleKey: 'onboarding.subSteps.createDocument.action.title',
         descriptionKey: 'onboarding.subSteps.createDocument.action.description',
-        actionId: 'createNewDocument',
+        actionId: 'createNewDocument', // This one stays as is, but maybe we should ensure sidebar is open
       },
       {
         id: 'documents-pane',
@@ -237,6 +295,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         position: 'right',
         titleKey: 'onboarding.subSteps.aiAssistant.nav.title',
         descriptionKey: 'onboarding.subSteps.aiAssistant.nav.description',
+        actionId: 'prepareAiStep',
       },
       {
         id: 'open-ai-pane',
@@ -282,24 +341,27 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         position: 'bottom',
         titleKey: 'onboarding.subSteps.citations.button.title',
         descriptionKey: 'onboarding.subSteps.citations.button.description',
-        actionId: 'closeAiPane',
+        actionId: 'closeSearch',
       },
       // Demo: Open citation dialog
       {
         id: 'citation-demo',
-        target: '[data-onboarding="citation-btn"]',
-        position: 'bottom',
+        target: '[data-onboarding="citation-dialog"]',
+        position: 'right',
         titleKey: 'onboarding.subSteps.citations.demo.title',
         descriptionKey: 'onboarding.subSteps.citations.demo.description',
         actionId: 'insertCitation',
+        waitForElement: true,
       },
       {
         id: 'citation-explain',
-        target: '[data-onboarding="citation-btn"]',
-        position: 'bottom',
+        target: '[data-onboarding="citation-dialog"]',
+        position: 'right',
         titleKey: 'onboarding.subSteps.citations.explain.title',
         descriptionKey: 'onboarding.subSteps.citations.explain.description',
         tipKey: 'onboarding.subSteps.citations.explain.tip',
+        actionId: 'insertCitation',
+        waitForElement: true,
       },
     ],
   },
@@ -318,6 +380,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         position: 'right',
         titleKey: 'onboarding.subSteps.library.nav.title',
         descriptionKey: 'onboarding.subSteps.library.nav.description',
+        actionId: 'prepareLibraryStep',
       },
       {
         id: 'open-library',
@@ -438,6 +501,7 @@ export const ONBOARDING_MAIN_STEPS: OnboardingMainStep[] = [
         position: 'right',
         titleKey: 'onboarding.subSteps.settings.nav.title',
         descriptionKey: 'onboarding.subSteps.settings.nav.description',
+        actionId: 'prepareSettingsStep',
       },
       {
         id: 'open-settings',

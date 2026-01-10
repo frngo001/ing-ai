@@ -23,6 +23,7 @@ import { setupEditorStreaming } from "@/lib/editor/stream-text"
 import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as documentsUtils from "@/lib/supabase/utils/documents"
 import { extractTextFromNode } from "@/lib/supabase/utils/document-title"
+import { useCitationStore } from "@/lib/stores/citation-store"
 import { useIsAuthenticated } from "@/hooks/use-auth"
 import { devError } from "@/lib/utils/logger"
 import { useLanguage } from "@/lib/i18n/use-language"
@@ -550,6 +551,7 @@ function PageContent({
     },
 
     insertCitation: async () => {
+      setSidebarOpen(false)
       const citationBtn = document.querySelector('[data-onboarding="citation-btn"]') as HTMLButtonElement
       if (citationBtn) {
         citationBtn.click()
@@ -622,7 +624,43 @@ function PageContent({
     focusEditor: () => {
       window.dispatchEvent(new Event('editor:focus-start'))
     },
-  }), [setSidebarOpen, setSettingsInitialNav, setSettingsOpen, getEditorInstance, simulateTyping, openPane])
+    openProjectShare: () => {
+      window.dispatchEvent(new Event('projects:open-share'))
+    },
+    prepareLibraryStep: () => {
+      useCitationStore.getState().closeSearch()
+      closePane('askAi')
+      closePane('library')
+      setSidebarOpen(true)
+    },
+    prepareAiStep: () => {
+      useCitationStore.getState().closeSearch()
+      closePane('library')
+      closePane('askAi')
+      setSidebarOpen(true)
+    },
+    prepareSettingsStep: () => {
+      useCitationStore.getState().closeSearch()
+      closePane('library')
+      closePane('askAi')
+      setSettingsOpen(false)
+      setSidebarOpen(true)
+    },
+    openAiPane: () => {
+      useCitationStore.getState().closeSearch()
+      openPane('askAi')
+    },
+    closeAiPane: () => closePane('askAi'),
+    openLibraryPane: () => {
+      useCitationStore.getState().closeSearch()
+      openPane('library')
+    },
+    closeLibraryPane: () => closePane('library'),
+    closeDocumentsPane: () => closePane('documents'),
+    closeSearch: () => {
+      useCitationStore.getState().closeSearch()
+    }
+  }), [setSidebarOpen, setSettingsInitialNav, setSettingsOpen, getEditorInstance, simulateTyping, openPane, closePane])
 
   // EditorLoading anzeigen bis initiale Dokumenten-Entscheidung getroffen ist
   if (!isInitialDocReady) {
@@ -685,9 +723,8 @@ function PageContent({
               </ResizablePanel>
               <ResizableHandle
                 withHandle
-                className={`w-1 data-[panel-group-direction=horizontal]:cursor-col-resize ${
-                  showAskAi ? "hidden sm:flex" : "hidden"
-                }`}
+                className={`w-1 data-[panel-group-direction=horizontal]:cursor-col-resize ${showAskAi ? "hidden sm:flex" : "hidden"
+                  }`}
               />
               <ResizablePanel minSize={40} defaultSize={100}>
                 <div
