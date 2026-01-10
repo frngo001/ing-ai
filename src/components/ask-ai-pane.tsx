@@ -1113,11 +1113,11 @@ export function AskAiPane({
           </Conversation>
         </div>
 
-        <div className="bg-background px-2.5 sm:px-3 py-2 sm:py-2.5 sticky bottom-0 z-10 border border-r border-primary/60 rounded-md">
+        <div className="bg-background/95 backdrop-blur-sm px-1.5 pb-2 sticky bottom-0 z-10">
           <form onSubmit={handleSend} className="relative space-y-2 w-full max-w-full">
             <div className="relative w-full flex flex-col items-center">
               {selectedMentions.length > 0 && (
-                <div className="mb-2 flex flex-wrap items-center gap-1.5 w-full">
+                <div className="mb-1.5 flex flex-wrap items-center gap-1.5 w-full">
                   {selectedMentions.map((mention) => (
                     <Badge
                       key={mention.id}

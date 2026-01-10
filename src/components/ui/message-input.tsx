@@ -27,8 +27,8 @@ interface MessageInputBaseProps
   isGenerating: boolean
   enableInterrupt?: boolean
   textAreaRef?:
-    | React.RefObject<HTMLTextAreaElement | null>
-    | React.MutableRefObject<HTMLTextAreaElement | null>
+  | React.RefObject<HTMLTextAreaElement | null>
+  | React.MutableRefObject<HTMLTextAreaElement | null>
   onAudioError?: (error: Error) => void
   onAudioStart?: () => void
   contextActions?: React.ReactNode
@@ -220,15 +220,19 @@ export function MessageInput({
 
   useAutosizeTextArea({
     ref: innerTextAreaRef,
-    maxHeight: 240,
+    maxHeight: 320,
     borderWidth: 1,
     dependencies: [props.value, showFileList],
   })
 
   return (
     <div
-      className="relative flex w-full max-w-full flex-col gap-2 sm:gap-3 rounded-l bg-background p-0 mx-auto"
+      className="relative flex w-full max-w-full flex-col gap-1.5 rounded-lg border border-primary/60 bg-background/50 transition-all duration-200 focus-within:ring-1 focus-within:ring-primary/40 focus-within:bg-background/80 focus-within:border-primary focus-within:shadow-sm"
       onDragOver={onDragOver}
+
+
+
+
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
@@ -248,18 +252,18 @@ export function MessageInput({
       <div className="relative w-full space-y-2">
         {/* Zeige Kontext oben im Input-Feld */}
         {pendingContext && pendingContext.length > 0 && (
-          <div className="px-1 pb-1 space-y-1.5">
+          <div className="px-2.5 pt-2 whitespace-normal space-y-2">
             {pendingContext.map((ctx, index) => (
               <div
                 key={`context-${index}`}
-                className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 px-2 py-1.5 text-xs"
+                className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-xs shadow-sm transition-all animate-in fade-in slide-in-from-top-1"
               >
                 <ChevronsDown className="h-3.5 w-3.5 mt-0.5 text-primary/70 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-muted-foreground/80 mb-0.5 text-[10px]">
+                  <div className="text-muted-foreground/80 mb-0.5 text-[10px] font-medium uppercase tracking-wider">
                     {translations.contextAdded}
                   </div>
-                  <div className="text-foreground/90 whitespace-pre-wrap break-words line-clamp-2">
+                  <div className="text-foreground/90 whitespace-pre-wrap break-words line-clamp-2 leading-relaxed">
                     {ctx.text}
                   </div>
                 </div>
@@ -267,10 +271,10 @@ export function MessageInput({
                   <button
                     type="button"
                     onClick={() => onRemoveContext(index)}
-                    className="flex-shrink-0 h-5 w-5 rounded-sm hover:bg-muted flex items-center justify-center transition-colors"
+                    className="flex-shrink-0 h-5 w-5 rounded-md hover:bg-muted flex items-center justify-center transition-colors hover:text-destructive"
                     aria-label="Kontext entfernen"
                   >
-                    <X className="h-3 w-3 text-muted-foreground" />
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 )}
               </div>
@@ -278,8 +282,8 @@ export function MessageInput({
           </div>
         )}
         {props.allowAttachments && showFileList && (
-          <ScrollArea className="pb-1">
-            <div className="flex gap-2 sm:gap-3 px-1">
+          <ScrollArea className="pb-1 px-2.5">
+            <div className="flex gap-2 sm:gap-3">
               <AnimatePresence mode="popLayout">
                 {props.files?.map((file) => {
                   return (
@@ -310,13 +314,14 @@ export function MessageInput({
           onPaste={onPaste}
           onKeyDown={onKeyDown}
           className={cn(
-            "z-10 w-full grow resize-none rounded-s bg-background p-2 sm:p-2 md:p-2 text-sm ring-offset-background transition-[box-shadow] placeholder:text-muted-foreground focus-visible:outline-none border-0 shadow-none disabled:cursor-not-allowed disabled:opacity-50 overflow-y-auto pb-1 md:max-h-[60px] min-h-[28px]",
+            "z-10 w-full grow resize-none bg-transparent p-2.5 sm:p-3 text-sm ring-0 focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/60 focus-visible:outline-none border-0 shadow-none disabled:cursor-not-allowed disabled:opacity-50 overflow-y-auto scrollbar-none transition-all duration-200 min-h-[36px]",
             className
           )}
           {...(props.allowAttachments
             ? omit(props, ["allowAttachments", "files", "setFiles"])
             : omit(props, ["allowAttachments"]))}
         />
+
 
         {props.allowAttachments && <FileUploadOverlay isDragging={isDragging} dropFilesHere={translations.dropFilesHere} />}
 
@@ -330,8 +335,8 @@ export function MessageInput({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-1 sm:gap-1.5 pb-1 sm:pb-0">
-        <div className="flex items-center justify-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0">
+      <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-shrink-0">
           {contextActions}
           {props.allowAttachments && (
             <Tooltip>
