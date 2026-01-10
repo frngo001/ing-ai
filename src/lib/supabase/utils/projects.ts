@@ -5,10 +5,14 @@ import { devLog, devError } from '@/lib/utils/logger'
 type Project = Database['public']['Tables']['projects']['Row']
 type ProjectInsert = Database['public']['Tables']['projects']['Insert']
 type ProjectUpdate = Database['public']['Tables']['projects']['Update']
+type ProjectShare = Database['public']['Tables']['project_shares']['Row']
 
-/**
- * Get all projects for a user
- */
+export interface ProjectWithShareInfo extends Project {
+  isShared?: boolean
+  shareMode?: 'view' | 'edit' | 'suggest'
+  shareToken?: string
+}
+
 export async function getProjects(userId: string): Promise<Project[]> {
   const supabase = createClient()
 
@@ -28,6 +32,59 @@ export async function getProjects(userId: string): Promise<Project[]> {
 
   devLog('[PROJECTS] Found projects:', data?.length || 0)
   return data || []
+}
+
+export async function getProjectsWithShared(userId: string): Promise<ProjectWithShareInfo[]> {
+  const supabase = createClient()
+
+  devLog('[PROJECTS] Fetching projects with shared for user:', userId)
+
+  const [ownProjectsResult, sharedProjectsResult] = await Promise.all([
+    supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', userId)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('project_shares')
+      .select('*, projects(*)')
+      .eq('is_active', true)
+      .neq('owner_id', userId)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`),
+  ])
+
+  if (ownProjectsResult.error) {
+    devError('[PROJECTS] Error fetching own projects:', ownProjectsResult.error)
+    throw ownProjectsResult.error
+  }
+
+  const ownProjects: ProjectWithShareInfo[] = (ownProjectsResult.data || []).map(p => ({
+    ...p,
+    isShared: false,
+  }))
+
+  const sharedProjects: ProjectWithShareInfo[] = []
+  if (sharedProjectsResult.data) {
+    for (const share of sharedProjectsResult.data) {
+      const project = share.projects as unknown as Project
+      if (project && !ownProjects.some(p => p.id === project.id)) {
+        sharedProjects.push({
+          ...project,
+          isShared: true,
+          shareMode: share.mode as 'view' | 'edit' | 'suggest',
+          shareToken: share.share_token,
+        })
+      }
+    }
+  }
+
+  devLog('[PROJECTS] Found projects:', {
+    own: ownProjects.length,
+    shared: sharedProjects.length,
+  })
+
+  return [...ownProjects, ...sharedProjects]
 }
 
 /**

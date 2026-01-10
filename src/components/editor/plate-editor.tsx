@@ -42,6 +42,9 @@ import {
 } from '@/components/editor/plugins/discussion-kit';
 import { commentPlugin } from '@/components/editor/plugins/comment-kit';
 import { suggestionPlugin } from '@/components/editor/plugins/suggestion-kit';
+import { useProjectStore } from '@/lib/stores/project-store';
+import { useDocumentRealtime } from '../../hooks/use-document-realtime';
+import { RemoteCursors } from '@/components/editor/remote-cursors';
 
 export function PlateEditor({
   showToc = true,
@@ -57,8 +60,18 @@ export function PlateEditor({
   hasDocuments?: boolean;
 }) {
   const { t, language } = useLanguage();
+  const currentProject = useProjectStore((state) => state.getCurrentProject());
+  const isSharedProject = currentProject?.isShared === true;
+  const shareMode = currentProject?.shareMode;
+  const isReadOnlyMode = isSharedProject && shareMode === 'view';
+  const isSuggestingMode = isSharedProject && shareMode === 'suggest';
   const hasHydrated = React.useRef(false);
   const discussionsApplied = React.useRef(false);
+  const [currentUser, setCurrentUser] = React.useState<{
+    id: string;
+    name: string;
+    avatarUrl: string;
+  } | null>(null);
 
   // Lade initialen Wert synchron aus localStorage für Hot Reload-Kompatibilität
   const initialValue = React.useMemo(() => getInitialValue(storageId), [storageId]);
@@ -92,6 +105,30 @@ export function PlateEditor({
   const pendingCitation = useCitationStore((state) => state.pendingCitation);
   const setPendingCitation = useCitationStore((state) => state.setPendingCitation);
   const supabase = createClient();
+  const isUpdatingFromRealtimeRef = React.useRef(false);
+
+  const handleRealtimeUpdate = React.useCallback((newContent: Value) => {
+    if (!editor || isUpdatingFromRealtimeRef.current) return;
+
+    isUpdatingFromRealtimeRef.current = true;
+    try {
+      devLog('[PLATE EDITOR] Received realtime update, applying to editor');
+      editor.tf.setValue(newContent);
+      latestContentRef.current = newContent;
+    } finally {
+      setTimeout(() => {
+        isUpdatingFromRealtimeRef.current = false;
+      }, 100);
+    }
+  }, [editor]);
+
+  const isUUIDDocument = storageId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storageId);
+
+  const { broadcastContent, updatePresence, presence, sessionId } = useDocumentRealtime({
+    documentId: isUUIDDocument ? storageId : null,
+    onContentUpdate: handleRealtimeUpdate,
+    enabled: !!isUUIDDocument, // Enable for all DB-backed documents
+  });
 
   // Lade aktuellen User und aktualisiere Plugin-Optionen
   React.useEffect(() => {
@@ -114,14 +151,18 @@ export function PlateEditor({
             user.user_metadata?.avatar_url ||
             `https://api.dicebear.com/9.x/glass/svg?seed=${userId}`;
 
+          const userData = {
+            id: userId,
+            avatarUrl: avatarUrl,
+            name: userName,
+          };
+
+          setCurrentUser(userData);
+
           const currentUsers = editor.getOption(discussionPlugin, 'users') || {};
           const updatedUsers = {
             ...currentUsers,
-            [userId]: {
-              id: userId,
-              avatarUrl: avatarUrl,
-              name: userName,
-            },
+            [userId]: userData,
           };
           editor.setOption(discussionPlugin, 'currentUserId', userId);
           editor.setOption(discussionPlugin, 'users', updatedUsers);
@@ -145,14 +186,18 @@ export function PlateEditor({
           session.user.user_metadata?.avatar_url ||
           `https://api.dicebear.com/9.x/glass/svg?seed=${userId}`;
 
+        const userData = {
+          id: userId,
+          avatarUrl: avatarUrl,
+          name: userName,
+        };
+
+        setCurrentUser(userData);
+
         const currentUsers = editor.getOption(discussionPlugin, 'users') || {};
         const updatedUsers = {
           ...currentUsers,
-          [userId]: {
-            id: userId,
-            avatarUrl: avatarUrl,
-            name: userName,
-          },
+          [userId]: userData,
         };
 
         editor.setOption(discussionPlugin, 'currentUserId', userId);
@@ -242,13 +287,10 @@ export function PlateEditor({
             const doc = await documentsUtils.getDocumentById(storageId, userId);
             if (doc && doc.content) {
               const normalizedContent = normalizeNodeId(doc.content as Value);
-              const hasContent = extractTextFromNode(normalizedContent).trim().length > 0;
-              if (hasContent) {
-                content = normalizedContent;
-                // Discussions werden aktuell nicht in Supabase gespeichert, daher aus localStorage laden
-                const localData = loadPersistedState(storageKeys);
-                discussions = localData.discussions;
-              }
+              content = normalizedContent;
+              // Discussions werden aktuell nicht in Supabase gespeichert, daher aus localStorage laden
+              const localData = loadPersistedState(storageKeys);
+              discussions = localData.discussions;
             }
           }
         } catch (error) {
@@ -270,7 +312,13 @@ export function PlateEditor({
       const currentContentStr = JSON.stringify(editor.children);
       const newContentStr = JSON.stringify(finalContent);
       if (currentContentStr !== newContentStr) {
+        // Prevent broadcast during initial load
+        isUpdatingFromRealtimeRef.current = true;
         (editor as any).tf.setValue?.(finalContent);
+        // Reset broadcast block after a short delay
+        setTimeout(() => {
+          isUpdatingFromRealtimeRef.current = false;
+        }, 100);
       }
 
       latestContentRef.current = finalContent;
@@ -286,11 +334,26 @@ export function PlateEditor({
         discussionsApplied.current = true;
       }
 
+      // Mark hydration as complete immediately after setting value
       hasHydrated.current = true;
     };
 
     loadContent();
   }, [editor, storageKeys, storageId, initialValue]);
+
+  // Enforce editor mode for shared projects
+  React.useEffect(() => {
+    if (!editor || !isSharedProject || !shareMode) return;
+
+    if (shareMode === 'view') {
+      // isReadOnlyMode prop on Plate handles this, but syncing local state is good
+      editor.setOption(SuggestionPlugin, 'isSuggesting', false);
+    } else if (shareMode === 'suggest') {
+      editor.setOption(SuggestionPlugin, 'isSuggesting', true);
+    } else if (shareMode === 'edit') {
+      editor.setOption(SuggestionPlugin, 'isSuggesting', false);
+    }
+  }, [editor, isSharedProject, shareMode]);
 
   const handleChange = React.useCallback(
     ({ value: nextValue }: { value: Value }) => {
@@ -299,33 +362,57 @@ export function PlateEditor({
       autoConvertLatexBlocks(editor);
 
       latestContentRef.current = nextValue;
+
+      // Broadcast change to other users
+      if (isUUIDDocument && !isUpdatingFromRealtimeRef.current) {
+        broadcastContent(nextValue);
+      }
+
       if (contentSaveTimeout.current) {
         window.clearTimeout(contentSaveTimeout.current);
       }
 
       try {
         contentSaveTimeout.current = window.setTimeout(() => {
-          persistState(storageKeys, latestContentRef.current, null, storageId, t('documents.untitledDocument'));
+          persistState(storageKeys, latestContentRef.current, null, storageId, t('documents.untitledDocument'), isSharedProject);
         }, SAVE_DEBOUNCE_MS);
       } catch (error) {
         devError('Editorinhalt konnte nicht gespeichert werden.', error);
       }
     },
-    [editor, storageKeys, storageId]
+    [editor, storageKeys, storageId, isSharedProject, isUUIDDocument, broadcastContent]
   );
+
+  // Sync presence (cursor)
+  React.useEffect(() => {
+    if (!editor || !isUUIDDocument || !currentUser) return;
+
+    const interval = setInterval(() => {
+      if (!editor.selection) return;
+
+      updatePresence({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        avatarUrl: currentUser.avatarUrl,
+        selection: editor.selection || null,
+      });
+    }, 500); // Send cursor update Every 500ms
+
+    return () => clearInterval(interval);
+  }, [editor, isUUIDDocument, currentUser, updatePresence]);
 
   React.useEffect(() => {
     return () => {
       if (contentSaveTimeout.current && hasHydrated.current) {
         window.clearTimeout(contentSaveTimeout.current);
         try {
-          persistState(storageKeys, latestContentRef.current, null, storageId, t('documents.untitledDocument'));
+          persistState(storageKeys, latestContentRef.current, null, storageId, t('documents.untitledDocument'), isSharedProject);
         } catch {
           // ignore on unmount
         }
       }
     };
-  }, [storageKeys, storageId]);
+  }, [storageKeys, storageId, isSharedProject]);
 
   React.useEffect(() => {
     if (!pendingCitation || !editor) return;
@@ -377,11 +464,12 @@ export function PlateEditor({
   );
 
   return (
-    <Plate editor={editor} onChange={handleChange}>
+    <Plate editor={editor} onChange={handleChange} readOnly={isReadOnlyMode}>
       <DiscussionPersistence
         discussionsSaveTimeout={discussionsSaveTimeout}
         storageKeys={storageKeys}
         storageId={storageId}
+        isSharedProject={isSharedProject}
       />
       <div className="flex h-full items-start gap-6">
         <CommentTocSidebar visible={showCommentToc} className="overflow-auto max-h-[40vh]" />
@@ -429,6 +517,7 @@ export function PlateEditor({
                 style={toolbarVars}
                 data-onboarding="editor-container"
               >
+                <RemoteCursors presence={presence} currentUserId={currentUser?.id} sessionId={sessionId} />
                 <Editor variant="demo" className="overflow-y-auto" data-onboarding="editor-content" />
                 <EditorBibliography />
               </EditorContainer>
@@ -1280,6 +1369,7 @@ function DiscussionPersistence({
   storageKeys,
   discussionsSaveTimeout,
   storageId,
+  isSharedProject = false,
 }: {
   storageKeys: {
     content: string;
@@ -1290,6 +1380,7 @@ function DiscussionPersistence({
   };
   discussionsSaveTimeout: React.MutableRefObject<number | ReturnType<typeof setTimeout> | null>;
   storageId: string;
+  isSharedProject?: boolean;
 }) {
   const discussions = usePluginOption(discussionPlugin, 'discussions');
   const latestDiscussions = React.useRef<TDiscussion[] | null>(null);
@@ -1305,25 +1396,25 @@ function DiscussionPersistence({
     try {
       discussionsSaveTimeout.current = window.setTimeout(() => {
         if (!latestDiscussions.current) return;
-        persistState(storageKeys, null, latestDiscussions.current, storageId);
+        persistState(storageKeys, null, latestDiscussions.current, storageId, "Unbenanntes Dokument", isSharedProject);
       }, SAVE_DEBOUNCE_MS);
     } catch (error) {
       devError('Diskussionen konnten nicht gespeichert werden.', error);
     }
-  }, [discussions, storageKeys, discussionsSaveTimeout, storageId]);
+  }, [discussions, storageKeys, discussionsSaveTimeout, storageId, isSharedProject]);
 
   React.useEffect(() => {
     return () => {
       if (discussionsSaveTimeout.current && latestDiscussions.current) {
         window.clearTimeout(discussionsSaveTimeout.current);
         try {
-          persistState(storageKeys, null, latestDiscussions.current, storageId);
+          persistState(storageKeys, null, latestDiscussions.current, storageId, "Unbenanntes Dokument", isSharedProject);
         } catch {
           // ignore on unmount
         }
       }
     };
-  }, [storageKeys, storageId]);
+  }, [storageKeys, storageId, isSharedProject]);
 
   return null;
 }
@@ -1396,7 +1487,8 @@ async function persistState(
   content: Value | null,
   discussions: TDiscussion[] | null,
   documentId?: string,
-  defaultTitle: string = "Unbenanntes Dokument"
+  defaultTitle: string = "Unbenanntes Dokument",
+  isSharedProject: boolean = false
 ) {
   if (typeof window === 'undefined') return;
 
@@ -1419,57 +1511,75 @@ async function persistState(
   };
 
   try {
-    // Speichere nur in keys.state (enthält bereits content und discussions)
     window.localStorage.setItem(keys.state, JSON.stringify(payload));
 
-    // Speichere in Supabase, wenn documentId vorhanden ist (UUID-Format) und User eingeloggt
     if (documentId && nextContent) {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId);
       if (isUUID) {
         try {
-          const userId = await getCurrentUserId();
-          if (userId) {
-            const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
+          const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
+          if (isSharedProject) {
             await documentsUtils.updateDocument(
               documentId,
               {
                 title: extractedTitle,
                 content: nextContent as any,
                 updated_at: updatedAt,
-              },
-              userId
+              }
             );
+          } else {
+            const userId = await getCurrentUserId();
+            if (userId) {
+              await documentsUtils.updateDocument(
+                documentId,
+                {
+                  title: extractedTitle,
+                  content: nextContent as any,
+                  updated_at: updatedAt,
+                },
+                userId
+              );
+            }
           }
         } catch (error: any) {
-          // Spezifische Fehlerbehandlung für verschiedene Fehlertypen
           if (error?.code === 'PGRST116') {
-            devWarn('[PLATE EDITOR] Dokument existiert nicht in der Datenbank. Wird beim nächsten Speichern erstellt.');
+            devWarn('[PLATE EDITOR] Dokument existiert nicht in der Datenbank.');
           } else if (error?.code === '23505') {
             devWarn('[PLATE EDITOR] Dokument existiert bereits. Versuche Update erneut...');
             try {
-              const userId = await getCurrentUserId();
-              if (userId) {
-                const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
+              const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
+              if (isSharedProject) {
                 await documentsUtils.updateDocument(
                   documentId,
                   {
                     title: extractedTitle,
                     content: nextContent as any,
                     updated_at: updatedAt,
-                  },
-                  userId
+                  }
                 );
-                devLog('[PLATE EDITOR] Dokument erfolgreich aktualisiert nach Retry.');
+              } else {
+                const userId = await getCurrentUserId();
+                if (userId) {
+                  await documentsUtils.updateDocument(
+                    documentId,
+                    {
+                      title: extractedTitle,
+                      content: nextContent as any,
+                      updated_at: updatedAt,
+                    },
+                    userId
+                  );
+                }
               }
+              devLog('[PLATE EDITOR] Dokument erfolgreich aktualisiert nach Retry.');
             } catch (retryError) {
               devError('[PLATE EDITOR] Fehler beim Retry des Speicherns:', retryError);
             }
           } else if (error?.message?.includes('406')) {
-            devError('[PLATE EDITOR] 406 Not Acceptable - Möglicherweise RLS-Problem oder fehlerhafter Accept-Header:', error);
+            devError('[PLATE EDITOR] 406 Not Acceptable - Möglicherweise RLS-Problem:', error);
           } else {
             devError('[PLATE EDITOR] Fehler beim Speichern des Dokuments in Supabase:', error);
           }
-          // Weiterhin localStorage verwenden als Fallback
         }
       }
     }

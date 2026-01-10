@@ -4,6 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { useSharedProjectStore } from "@/lib/stores/shared-project-store"
+import { useProjectStore } from "@/lib/stores/project-store"
 import { useLanguage } from "@/lib/i18n/use-language"
 
 interface SharedProjectPageProps {
@@ -17,6 +18,9 @@ export default function SharedProjectPage({ params }: SharedProjectPageProps) {
   const isLoading = useSharedProjectStore((state) => state.isLoading)
   const error = useSharedProjectStore((state) => state.error)
   const sharedProject = useSharedProjectStore((state) => state.sharedProject)
+  
+  const addSharedProject = useProjectStore((state) => state.addSharedProject)
+  const setCurrentProject = useProjectStore((state) => state.setCurrentProject)
 
   const [token, setToken] = React.useState<string | null>(null)
 
@@ -32,13 +36,27 @@ export default function SharedProjectPage({ params }: SharedProjectPageProps) {
 
   React.useEffect(() => {
     if (sharedProject && !isLoading && !error) {
+      addSharedProject({
+        id: sharedProject.project.id,
+        name: sharedProject.project.name,
+        description: sharedProject.project.description,
+        isDefault: false,
+        createdAt: new Date(sharedProject.project.created_at),
+        updatedAt: new Date(sharedProject.project.updated_at),
+        isShared: true,
+        shareMode: sharedProject.mode,
+        shareToken: sharedProject.token,
+      })
+      
+      setCurrentProject(sharedProject.project.id)
+
       if (sharedProject.documents.length > 0) {
         router.push(`/editor?doc=${sharedProject.documents[0].id}&shared=${token}`)
       } else {
         router.push(`/editor?shared=${token}`)
       }
     }
-  }, [sharedProject, isLoading, error, router, token])
+  }, [sharedProject, isLoading, error, router, token, addSharedProject, setCurrentProject])
 
   if (isLoading) {
     return (

@@ -39,9 +39,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import { useCitationStore, type SavedCitation } from "@/lib/stores/citation-store"
-import { useProjectStore } from "@/lib/stores/project-store"
+import { useProjectStore, type Project } from "@/lib/stores/project-store"
 import * as React from "react"
 import { useLanguage } from "@/lib/i18n/use-language"
+import { useProjectLibraryRealtime } from "@/hooks/use-project-library-realtime"
 
 const fallbackCitations: SavedCitation[] = []
 
@@ -54,6 +55,7 @@ export function LibraryPane({
 }) {
   const { t, language } = useLanguage()
   const currentProjectId = useProjectStore((state) => state.currentProjectId)
+  const currentProject = useProjectStore((state) => state.getCurrentProject())
   const openSearch = useCitationStore((state) => state.openSearch)
   const setPendingCitation = useCitationStore((state) => state.setPendingCitation)
   const addCitation = useCitationStore((state) => state.addCitation)
@@ -107,13 +109,22 @@ export function LibraryPane({
     addedOn: t('library.addedOn'),
   }), [t, language])
 
-  // Synchronisiere Bibliotheken vom Backend beim Mount und bei Projektwechsel
   React.useEffect(() => {
-    // Update the citation store with the current project ID
     setCurrentProjectId(currentProjectId ?? null)
-    // Sync libraries for the current project
-    syncLibrariesFromBackend(currentProjectId)
-  }, [syncLibrariesFromBackend, setCurrentProjectId, currentProjectId])
+    syncLibrariesFromBackend(currentProjectId, currentProject?.isShared === true)
+  }, [syncLibrariesFromBackend, setCurrentProjectId, currentProjectId, currentProject?.isShared])
+
+  // Custom Realtime Hook for Library
+  useProjectLibraryRealtime({
+    projectId: currentProjectId,
+    onLibraryChange: () => {
+      // Add a small delay to ensure propagation
+      setTimeout(() => {
+        syncLibrariesFromBackend(currentProjectId, currentProject?.isShared === true)
+      }, 500);
+    },
+    enabled: !!currentProjectId
+  });
   const confirmCitation = React.useMemo(
     () => citations.find((c) => c.id === confirmDeleteId),
     [citations, confirmDeleteId]
@@ -260,44 +271,44 @@ export function LibraryPane({
           />
           <Tooltip>
             <TooltipTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 bg-transparent"
-            onClick={handleImportClick}
-            aria-label={translations.importBib}
-          >
-            <Upload className="size-4" />
-          </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 bg-transparent"
+                onClick={handleImportClick}
+                aria-label={translations.importBib}
+              >
+                <Upload className="size-4" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{translations.importBib}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 bg-transparent"
-            onClick={exportBib}
-            aria-label={translations.exportBib}
-          >
-            <Download className="size-4" />
-          </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 bg-transparent"
+                onClick={exportBib}
+                aria-label={translations.exportBib}
+              >
+                <Download className="size-4" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{translations.exportBib}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 bg-transparent"
-            onClick={openSearch}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 bg-transparent"
+                onClick={openSearch}
                 aria-label={translations.addCitations}
                 data-onboarding="add-source-btn"
-          >
-            <Plus className="size-4" />
-          </Button>
+              >
+                <Plus className="size-4" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{translations.addCitations}</TooltipContent>
           </Tooltip>
@@ -373,28 +384,28 @@ export function LibraryPane({
               </div>
             </PopoverContent>
           </Popover>
-          {activeLibraryId && 
-           activeLibraryId !== 'library_default' && 
-           libraries.filter((lib) => lib.id !== 'library_default').length > 1 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-9 whitespace-nowrap shrink-0"
-                  onClick={() => {
-                    const library = libraries.find((lib) => lib.id === activeLibraryId)
-                    if (library) {
-                      setLibraryToDelete({ id: library.id, name: library.name })
-                    }
-                  }}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{translations.deleteLibraryTitle}</TooltipContent>
-            </Tooltip>
-          )}
+          {activeLibraryId &&
+            activeLibraryId !== 'library_default' &&
+            libraries.filter((lib) => lib.id !== 'library_default').length > 1 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 whitespace-nowrap shrink-0"
+                    onClick={() => {
+                      const library = libraries.find((lib) => lib.id === activeLibraryId)
+                      if (library) {
+                        setLibraryToDelete({ id: library.id, name: library.name })
+                      }
+                    }}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{translations.deleteLibraryTitle}</TooltipContent>
+              </Tooltip>
+            )}
         </div>
       </div>
       <div className="pb-3">
@@ -544,7 +555,7 @@ export function LibraryPane({
                         </TooltipTrigger>
                         <TooltipContent side="bottom">{translations.deleteSource}</TooltipContent>
                       </Tooltip>
-                     
+
                     </div>
                     <span className="text-[11px] text-muted-foreground whitespace-nowrap">
                       {item.lastEdited}

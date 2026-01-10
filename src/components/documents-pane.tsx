@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { FilePenLine, PanelLeftClose, Plus, Search, Trash, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,8 +26,9 @@ import { useLanguage } from "@/lib/i18n/use-language"
 import { getCurrentUserId } from "@/lib/supabase/utils/auth"
 import * as documentsUtils from "@/lib/supabase/utils/documents"
 import { extractTextFromNode, extractTitleFromContent } from "@/lib/supabase/utils/document-title"
-import { useProjectStore } from "@/lib/stores/project-store"
+import { useProjectStore, type Project } from "@/lib/stores/project-store"
 import * as documentCountCache from "@/lib/supabase/utils/document-count-cache"
+import { useProjectDocumentsRealtime } from '@/hooks/use-project-documents-realtime';
 
 type DocumentItem = {
   id: string
@@ -84,10 +86,14 @@ export function DocumentsPane({
   const searchParams = useSearchParams()
   const { t, language } = useLanguage()
   const currentProjectId = useProjectStore((state) => state.currentProjectId)
+  const currentProject = useProjectStore((state) => state.getCurrentProject())
   const [documents, setDocuments] = React.useState<DocumentItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
   const [docToDelete, setDocToDelete] = React.useState<DocumentItem | null>(null)
   const [showDeleteAllDialog, setShowDeleteAllDialog] = React.useState(false)
+
+  const isSharedProject = currentProject?.isShared === true;
+  const isViewOnly = isSharedProject && currentProject?.shareMode === 'view';
 
   const untitledDocText = React.useMemo(() => t('documents.untitledDocument'), [t, language])
   const savedText = React.useMemo(() => t('documents.saved'), [t, language])
@@ -98,6 +104,11 @@ export function DocumentsPane({
   const isLoadingRef = React.useRef(false)
   const reloadDebounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasInitialLoadRef = React.useRef(false)
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    getCurrentUserId().then(id => setCurrentUser({ id }));
+  }, []);
 
   /**
    * Lädt lokal gespeicherte Dokumente aus localStorage
@@ -172,7 +183,9 @@ export function DocumentsPane({
 
     isLoadingRef.current = true
     try {
-      const docs = await documentsUtils.getDocuments(userId, currentProjectId ?? undefined)
+      const docs = currentProjectId
+        ? await documentsUtils.getDocumentsByProject(currentProjectId)
+        : await documentsUtils.getDocuments(userId, currentProjectId ?? undefined)
 
       const nextDocs: DocumentItem[] = await Promise.all(
         docs.map(async (doc) => {
@@ -206,32 +219,44 @@ export function DocumentsPane({
       nextDocs.sort((a, b) => a.title.localeCompare(b.title, language))
       setDocuments(nextDocs)
       hasInitialLoadRef.current = true
-      
+
       documentCountCache.setDocumentCount(userId, nextDocs.length, currentProjectId ?? undefined)
-      
+
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("documents:loaded", { 
-          detail: { count: nextDocs.length } 
+        window.dispatchEvent(new CustomEvent("documents:loaded", {
+          detail: { count: nextDocs.length }
         }))
       }
     } catch (error) {
       devError("Fehler beim Laden der Dokumente:", error)
       setDocuments([])
       hasInitialLoadRef.current = true
-      
+
       if (userId) {
         documentCountCache.setDocumentCount(userId, 0, currentProjectId ?? undefined)
       }
-      
+
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("documents:loaded", { 
-          detail: { count: 0 } 
+        window.dispatchEvent(new CustomEvent("documents:loaded", {
+          detail: { count: 0 }
         }))
       }
     } finally {
       isLoadingRef.current = false
     }
-  }, [untitledDocText, savedText, meText, language, currentProjectId])
+  }, [untitledDocText, savedText, meText, language, currentProjectId, currentProject?.isShared])
+
+  // Custom Realtime Hook Integration
+  useProjectDocumentsRealtime({
+    projectId: currentProjectId,
+    userId: currentUser?.id,
+    onDocumentsChange: () => {
+      // Reload documents when a change occurs in the database
+      // Add a small delay to ensure the database write has propagated
+      setTimeout(() => loadFromSupabase(true), 500);
+    },
+    enabled: !!currentProjectId
+  });
 
   /**
    * Erstellt ein neues Dokument im aktuellen Projekt und navigiert zum Editor
@@ -241,6 +266,11 @@ export function DocumentsPane({
 
     if (!userId) {
       devWarn("Kein User eingeloggt - Dokument kann nicht erstellt werden")
+      return
+    }
+
+    if (isViewOnly) {
+      devWarn("Dokument kann nicht in einem schreibgeschützten Projekt erstellt werden")
       return
     }
 
@@ -388,7 +418,7 @@ export function DocumentsPane({
     }
   }, [loadFromSupabase, currentProjectId])
 
-  
+
   /**
    * Filtert Dokumente basierend auf der Suchanfrage
    * Durchsucht Titel, Bearbeitungszeit, Autor und href
@@ -426,13 +456,14 @@ export function DocumentsPane({
                 className="h-7 w-7 bg-transparent"
                 aria-label={t('documents.newDocument')}
                 onClick={createNewDocument}
+                disabled={isViewOnly}
               >
                 <Plus className="size-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('documents.newDocument')}</TooltipContent>
           </Tooltip>
-          {currentProjectId && documents.length > 0 && (
+          {currentProjectId && documents.length > 0 && !isViewOnly && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -506,41 +537,54 @@ export function DocumentsPane({
               </div>
             </div>
           ) : (
-            filteredDocs.map((doc, index) => (
-              <div
-                key={doc.id}
-                className={cn(
-                  "group flex items-start gap-2 rounded-md border border-border/50 px-2 py-2 transition hover:bg-muted/70 focus-within:outline-none",
-                  index !== filteredDocs.length - 1 && "mb-2"
-                )}
-              >
-                <Link
-                  href={doc.href}
-                  className="flex-1 focus-visible:outline-none"
+            filteredDocs.map((doc, index) => {
+              const isActive = searchParams.get("doc") === doc.id
+              return (
+                <div
+                  key={doc.id}
+                  className={cn(
+                    "group flex items-start gap-2 rounded-md border border-border/50 px-2 py-2 transition hover:bg-muted/70 focus-within:outline-none",
+                    index !== filteredDocs.length - 1 && "mb-2"
+                  )}
                 >
-                  <p className="text-xs font-medium leading-tight line-clamp-2">{doc.title}</p>
-                  <div className="text-muted-foreground text-xs">{doc.lastEdited}</div>
-                </Link>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      className="size-4 p-0 opacity-70 hover:opacity-100 hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                      aria-label={`${t('documents.deleteDocument')} ${doc.title}`}
-                      onClick={(event) => {
-                        event.preventDefault()
-                        event.stopPropagation()
-                        setDocToDelete(doc)
-                      }}
-                    >
-                      <Trash className="size-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">{t('documents.delete')}</TooltipContent>
-                </Tooltip>
-              </div>
-            ))
+                  <Link
+                    href={doc.href}
+                    className="flex-1 focus-visible:outline-none"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-xs font-medium leading-tight line-clamp-2">{doc.title}</p>
+                      {isActive && (
+                        <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-primary/10 text-primary border-primary/20">
+                          {t('documents.active')}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-muted-foreground text-xs">{doc.lastEdited}</div>
+                  </Link>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        className="size-4 p-0 opacity-70 hover:opacity-100 hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                        aria-label={`${t('documents.deleteDocument')} ${doc.title}`}
+                        onClick={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          if (!isViewOnly) {
+                            setDocToDelete(doc)
+                          }
+                        }}
+                        disabled={isViewOnly}
+                      >
+                        <Trash className="size-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">{t('documents.delete')}</TooltipContent>
+                  </Tooltip>
+                </div>
+              )
+            })
           )}
         </div>
       </ScrollArea>
@@ -601,7 +645,7 @@ export function DocumentsPane({
         </AlertDialogContent>
       </AlertDialog>
 
-      </div>
+    </div>
   )
 }
 

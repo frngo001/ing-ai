@@ -2,7 +2,7 @@
 
 import { Eye, Pencil, MessageSquare, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useSharedAccess } from "@/hooks/use-shared-access"
+import { useProjectStore } from "@/lib/stores/project-store"
 import { useLanguage } from "@/lib/i18n/use-language"
 import { cn } from "@/lib/utils"
 import * as React from "react"
@@ -13,10 +13,12 @@ interface SharedAccessBannerProps {
 
 export function SharedAccessBanner({ className }: SharedAccessBannerProps) {
   const { t } = useLanguage()
-  const { isSharedAccess, shareMode, isOwner } = useSharedAccess()
+  const currentProject = useProjectStore((state) => state.getCurrentProject())
+  const isSharedAccess = currentProject?.isShared === true
+  const shareMode = currentProject?.shareMode
   const [dismissed, setDismissed] = React.useState(false)
 
-  if (!isSharedAccess || isOwner || dismissed) {
+  if (!isSharedAccess || dismissed) {
     return null
   }
 

@@ -13,24 +13,26 @@ export interface Project {
   isDefault: boolean
   createdAt: Date
   updatedAt: Date
+  isShared?: boolean
+  shareMode?: 'view' | 'edit' | 'suggest'
+  shareToken?: string
 }
 
 interface ProjectState {
-  // State
   projects: Project[]
   currentProjectId: string | null
   isLoading: boolean
   isHydrated: boolean
-  isStorageHydrated: boolean // Indicates localStorage has been restored
+  isStorageHydrated: boolean
   error: string | null
 
-  // Actions
   loadProjects: () => Promise<void>
   createProject: (name: string, description?: string) => Promise<Project>
   updateProject: (id: string, updates: Partial<Pick<Project, 'name' | 'description'>>) => Promise<void>
   deleteProject: (id: string) => Promise<void>
   setCurrentProject: (id: string) => void
   getCurrentProject: () => Project | null
+  addSharedProject: (project: Project) => void
   reset: () => void
   setHydrated: (hydrated: boolean) => void
   setStorageHydrated: (hydrated: boolean) => void
@@ -87,10 +89,11 @@ export const useProjectStore = create<ProjectState>()(
 
         try {
           devLog('[PROJECT STORE] Loading projects for user:', userId)
-          const projectsData = await projectsUtils.getProjects(userId)
+          const projectsData = await projectsUtils.getProjectsWithShared(userId)
 
-          // If no projects exist, create default
-          if (projectsData.length === 0) {
+          // If no own projects exist, create default
+          const ownProjects = projectsData.filter(p => !p.isShared)
+          if (ownProjects.length === 0) {
             devLog('[PROJECT STORE] No projects found, creating default')
             const defaultProject = await projectsUtils.createProject({
               user_id: userId,
@@ -98,7 +101,7 @@ export const useProjectStore = create<ProjectState>()(
               description: 'Automatisch erstelltes Standardprojekt',
               is_default: true,
             })
-            projectsData.push(defaultProject)
+            projectsData.unshift({ ...defaultProject, isShared: false })
           }
 
           const mappedProjects: Project[] = projectsData.map(p => ({
@@ -108,6 +111,9 @@ export const useProjectStore = create<ProjectState>()(
             isDefault: p.is_default,
             createdAt: new Date(p.created_at),
             updatedAt: new Date(p.updated_at),
+            isShared: p.isShared,
+            shareMode: p.shareMode,
+            shareToken: p.shareToken,
           }))
 
           // Get the persisted currentProjectId (now guaranteed to be hydrated)
@@ -224,6 +230,19 @@ export const useProjectStore = create<ProjectState>()(
       setCurrentProject: (id) => {
         devLog('[PROJECT STORE] Switching to project:', id)
         set({ currentProjectId: id })
+      },
+
+      addSharedProject: (project) => {
+        devLog('[PROJECT STORE] Adding shared project:', project.id)
+        set(state => {
+          if (state.projects.some(p => p.id === project.id)) {
+            return state
+          }
+          return {
+            projects: [...state.projects, project],
+            currentProjectId: project.id,
+          }
+        })
       },
 
       reset: () => {

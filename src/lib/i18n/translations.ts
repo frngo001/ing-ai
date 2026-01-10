@@ -647,6 +647,7 @@ export const translations = {
             inlineEquation: 'Inline Equation',
         },
         documents: {
+            active: 'Active',
             title: 'Documents',
             newDocument: 'New Document',
             closePanel: 'Close Panel',
@@ -2543,6 +2544,7 @@ export const translations = {
             inlineEquation: 'Ecuación en Línea',
         },
         documents: {
+            active: 'Activo',
             title: 'Documentos',
             newDocument: 'Nuevo documento',
             closePanel: 'Cerrar panel',
@@ -4439,6 +4441,7 @@ export const translations = {
             inlineEquation: 'Équation en Ligne',
         },
         documents: {
+            active: 'Actif',
             title: 'Documents',
             newDocument: 'Nouveau document',
             closePanel: 'Fermer le panneau',
@@ -6334,6 +6337,7 @@ export const translations = {
             inlineEquation: 'Inline-Gleichung',
         },
         documents: {
+            active: 'Offen',
             title: 'Dokumente',
             newDocument: 'Neues Dokument',
             closePanel: 'Panel schließen',

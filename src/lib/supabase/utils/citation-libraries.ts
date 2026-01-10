@@ -20,12 +20,26 @@ export async function getCitationLibraries(
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
-  // Filter nach project_id wenn angegeben
   if (projectId) {
     query = query.eq('project_id', projectId)
   }
 
   const { data, error } = await query
+
+  if (error) throw error
+  return data || []
+}
+
+export async function getCitationLibrariesByProject(
+  projectId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<CitationLibrary[]> {
+  const supabase = supabaseClient || createClient()
+  const { data, error } = await supabase
+    .from('citation_libraries')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
 
   if (error) throw error
   return data || []

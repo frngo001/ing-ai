@@ -192,9 +192,9 @@ interface CitationState {
   setPendingCitation: (citation?: SavedCitation) => void
   bumpCitationRenderVersion: () => void
   setCurrentProjectId: (projectId: string | null) => void
-  syncLibrariesFromBackend: (projectId?: string | null) => Promise<void>
+  syncLibrariesFromBackend: (projectId?: string | null, isSharedProject?: boolean) => Promise<void>
   setLibraries: (libraries: CitationLibrary[]) => void
-  loadLibrariesFromSupabase: (projectId?: string | null) => Promise<void>
+  loadLibrariesFromSupabase: (projectId?: string | null, isSharedProject?: boolean) => Promise<void>
 }
 
 const createDefaultLibrary = (): CitationLibrary => ({
@@ -211,7 +211,7 @@ function safeDateToISO(dateString: string | undefined | null): string {
   if (!dateString) {
     return new Date().toISOString()
   }
-  
+
   try {
     const date = new Date(dateString)
     // Prüfe, ob das Datum gültig ist
@@ -304,7 +304,7 @@ export const useCitationStore = create<CitationState>()(
 
         const state = get()
         let activeId: string | undefined = state.activeLibraryId || state.libraries[0]?.id
-        
+
         // Stelle sicher, dass eine gültige Library-ID vorhanden ist
         if (!activeId || activeId === 'library_default') {
           // Erstelle Standardbibliothek in Supabase falls nötig
@@ -349,11 +349,11 @@ export const useCitationStore = create<CitationState>()(
         try {
           // Stelle sicher, dass activeId korrekt gesetzt ist
           const finalActiveId = activeId !== 'library_default' ? activeId : undefined
-          
+
           // Konvertiere SavedCitation zu Supabase Citation Format
           // Stelle sicher, dass die ID eine gültige UUID ist
           const citationId = ensureValidCitationId(citation.id)
-          
+
           const citationData = {
             id: citationId,
             user_id: userId,
@@ -398,14 +398,14 @@ export const useCitationStore = create<CitationState>()(
           })
         } catch (error) {
           // Detaillierte Fehlerbehandlung für besseres Debugging
-          const errorDetails = error instanceof Error 
+          const errorDetails = error instanceof Error
             ? {
-                message: error.message,
-                name: error.name,
-                stack: error.stack,
-              }
+              message: error.message,
+              name: error.name,
+              stack: error.stack,
+            }
             : error
-          
+
           devError('❌ [CITATION STORE] Fehler beim Speichern der Citation:', {
             error: errorDetails,
             citationId: citation.id,
@@ -418,7 +418,7 @@ export const useCitationStore = create<CitationState>()(
               library_id: activeId !== 'library_default' ? activeId : undefined,
             },
           })
-          
+
           // Fallback: nur lokal speichern
           set((s) => {
             const libs = s.libraries.length ? [...s.libraries] : [createDefaultLibrary()]
@@ -442,7 +442,7 @@ export const useCitationStore = create<CitationState>()(
       },
       removeCitation: async (id) => {
         const userId = await getCurrentUserId()
-        
+
         // Lösche aus Supabase, wenn User eingeloggt ist
         if (userId) {
           try {
@@ -452,7 +452,7 @@ export const useCitationStore = create<CitationState>()(
             // Weiter mit lokalem Löschen auch wenn Supabase fehlschlägt
           }
         }
-        
+
         // Lösche aus allen Libraries im State (nicht nur der aktiven)
         // Der persist Middleware aktualisiert automatisch den localStorage
         set((state) => {
@@ -460,10 +460,10 @@ export const useCitationStore = create<CitationState>()(
             ...lib,
             citations: lib.citations.filter((c) => c.id !== id),
           }))
-          
+
           // Aktualisiere savedCitations basierend auf der aktiven Library
           const activeLib = updatedLibraries.find((lib) => lib.id === state.activeLibraryId) ?? updatedLibraries[0]
-          
+
           return {
             libraries: updatedLibraries,
             savedCitations: activeLib?.citations || [],
@@ -530,7 +530,7 @@ export const useCitationStore = create<CitationState>()(
       },
       deleteLibrary: async (id: string) => {
         const userId = await getCurrentUserId()
-        
+
         // Verhindere das Löschen der Standardbibliothek
         if (id === 'library_default') {
           devWarn('⚠️ [CITATION STORE] Standardbibliothek kann nicht gelöscht werden')
@@ -559,16 +559,16 @@ export const useCitationStore = create<CitationState>()(
         // Lösche aus lokalem State und localStorage (wird durch persist automatisch aktualisiert)
         set((state) => {
           const filteredLibraries = state.libraries.filter((lib) => lib.id !== id)
-          
+
           // Wenn die gelöschte Bibliothek aktiv war, wechsle zur ersten verfügbaren
           let newActiveId = state.activeLibraryId
           if (state.activeLibraryId === id) {
             // Bevorzuge die Standardbibliothek, falls vorhanden, sonst die erste verfügbare
             newActiveId = state.libraries.find((lib) => lib.id === 'library_default')?.id || filteredLibraries[0]?.id
           }
-          
+
           const activeLib = filteredLibraries.find((lib) => lib.id === newActiveId) ?? filteredLibraries[0]
-          
+
           return {
             libraries: filteredLibraries,
             activeLibraryId: newActiveId,
@@ -596,22 +596,22 @@ export const useCitationStore = create<CitationState>()(
           }
         })
       },
-      loadLibrariesFromSupabase: async (projectId?: string | null) => {
+      loadLibrariesFromSupabase: async (projectId?: string | null, isSharedProject?: boolean) => {
         const userId = await getCurrentUserId()
         if (!userId) {
           devWarn('⚠️ [CITATION STORE] Kein User eingeloggt, kann keine Libraries laden')
           return
         }
 
-        // Use provided projectId or fall back to stored currentProjectId
         const effectiveProjectId = projectId ?? get().currentProjectId
 
         try {
-          devLog('🔄 [CITATION STORE] Lade Bibliotheken aus Supabase...', { projectId: effectiveProjectId })
+          devLog('🔄 [CITATION STORE] Lade Bibliotheken aus Supabase...', { projectId: effectiveProjectId, isSharedProject })
 
-          // Filter libraries by project if projectId is provided
-          const libraries = await citationLibrariesUtils.getCitationLibraries(userId, undefined, effectiveProjectId ?? undefined)
-          
+          const libraries = effectiveProjectId
+            ? await citationLibrariesUtils.getCitationLibrariesByProject(effectiveProjectId)
+            : await citationLibrariesUtils.getCitationLibraries(userId, undefined, effectiveProjectId ?? undefined)
+
           if (!libraries.length) {
             // Prüfe zuerst, ob bereits eine Standardbibliothek existiert
             // Verwende getDefaultCitationLibrary, das jetzt .limit(1) statt .single() verwendet
@@ -638,7 +638,7 @@ export const useCitationStore = create<CitationState>()(
                       user_id: userId,
                       name: 'Standardbibliothek',
                       is_default: true,
-                      })
+                    })
                   } catch (retryError: any) {
                     devWarn('⚠️ [CITATION STORE] Retry fehlgeschlagen:', retryError)
                   }
@@ -648,7 +648,7 @@ export const useCitationStore = create<CitationState>()(
                   // Die Bibliothek wurde zwischenzeitlich erstellt (Race Condition)
                   // Lade sie
                   defaultLib = await citationLibrariesUtils.getDefaultCitationLibrary(userId)
-                  
+
                   // Falls immer noch null, versuche alle Bibliotheken zu laden
                   if (!defaultLib) {
                     const allLibs = await citationLibrariesUtils.getCitationLibraries(userId)
@@ -660,16 +660,15 @@ export const useCitationStore = create<CitationState>()(
                 }
               }
             }
-            
+
             if (defaultLib) {
               libraries.push(defaultLib)
             }
           }
 
-          // Lade Citations für jede Library
           const librariesWithCitations: CitationLibrary[] = await Promise.all(
             libraries.map(async (lib) => {
-              const citations = await citationsUtils.getCitationsByLibrary(lib.id, userId)
+              const citations = await citationsUtils.getCitationsByLibrary(lib.id, effectiveProjectId ? undefined : userId)
               // Konvertiere Supabase Citations zu SavedCitation Format
               const savedCitations: SavedCitation[] = citations.map((c) => ({
                 id: c.id,
@@ -716,9 +715,8 @@ export const useCitationStore = create<CitationState>()(
           }))
         }
       },
-      syncLibrariesFromBackend: async (projectId?: string | null) => {
-        // Verwende jetzt Supabase direkt
-        await get().loadLibrariesFromSupabase(projectId)
+      syncLibrariesFromBackend: async (projectId?: string | null, isSharedProject?: boolean) => {
+        await get().loadLibrariesFromSupabase(projectId, isSharedProject)
       },
     }),
     {

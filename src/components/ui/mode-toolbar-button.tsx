@@ -10,6 +10,7 @@ import {
 import { CheckIcon, EyeIcon, PencilLineIcon, PenIcon } from 'lucide-react';
 import { useEditorRef, usePlateState, usePluginOption } from 'platejs/react';
 import { useOnboardingStore } from '@/lib/stores/onboarding-store';
+import { useProjectStore } from '@/lib/stores/project-store';
 
 import {
   DropdownMenu,
@@ -28,7 +29,25 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
   const [open, setOpen] = React.useState(false);
   const { t, language } = useLanguage();
 
-  // Check if onboarding is showing suggestions step
+  const currentProject = useProjectStore((state) => state.getCurrentProject());
+  const isSharedProject = currentProject?.isShared === true;
+  const shareMode = currentProject?.shareMode;
+
+  React.useEffect(() => {
+    if (!isSharedProject || !shareMode) return;
+    
+    if (shareMode === 'view') {
+      setReadOnly(true);
+      editor.setOption(SuggestionPlugin, 'isSuggesting', false);
+    } else if (shareMode === 'suggest') {
+      setReadOnly(false);
+      editor.setOption(SuggestionPlugin, 'isSuggesting', true);
+    } else if (shareMode === 'edit') {
+      setReadOnly(false);
+      editor.setOption(SuggestionPlugin, 'isSuggesting', false);
+    }
+  }, [isSharedProject, shareMode, setReadOnly, editor]);
+
   const { isOpen: isOnboardingOpen, getCurrentSubStep } = useOnboardingStore();
   const currentSubStep = getCurrentSubStep();
   const shouldForceOpen = isOnboardingOpen && currentSubStep?.id === 'open-mode';
@@ -40,21 +59,24 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
     }
   }, [shouldForceOpen, open]);
 
-  // Handle open change - prevent closing during onboarding
   const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (isSharedProject) return;
     if (shouldForceOpen && !newOpen) {
-      return; // Prevent closing during onboarding
+      return;
     }
     setOpen(newOpen);
-  }, [shouldForceOpen]);
+  }, [shouldForceOpen, isSharedProject]);
 
   const isSuggesting = usePluginOption(SuggestionPlugin, 'isSuggesting');
 
   let value = 'editing';
 
-  if (readOnly) value = 'viewing';
-
-  if (isSuggesting) value = 'suggestion';
+  if (isSharedProject && shareMode) {
+    value = shareMode === 'view' ? 'viewing' : shareMode === 'suggest' ? 'suggestion' : 'editing';
+  } else {
+    if (readOnly) value = 'viewing';
+    if (isSuggesting) value = 'suggestion';
+  }
 
   const item: Record<string, { icon: React.ReactNode; label: string }> = React.useMemo(() => ({
     editing: {
@@ -75,8 +97,15 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
 
   return (
     <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false} {...props}>
-      <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown data-onboarding="mode-btn">
+      <DropdownMenuTrigger asChild disabled={isSharedProject}>
+        <ToolbarButton 
+          pressed={open} 
+          tooltip={tooltipText} 
+          isDropdown 
+          data-onboarding="mode-btn"
+          disabled={isSharedProject}
+          className={isSharedProject ? 'opacity-50 cursor-not-allowed' : ''}
+        >
           {item[value].icon}
           <span className="hidden lg:inline">{item[value].label}</span>
         </ToolbarButton>
