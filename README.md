@@ -18,7 +18,7 @@
   </p>
 
   <p align="center">
-    <a href="https://ingai-editor.vercel.app/"><strong>📱 Live App</strong></a> •
+    <a href="https://ingai-editor.vercel.app/"><strong>Live App</strong></a> •
     <a href="#features">Features</a> •
     <a href="#tech-stack">Stack</a> •
     <a href="#getting-started">Setup</a>
@@ -61,40 +61,66 @@
 ## ⚡ Features
 
 ### 🧠 Advanced AI & Agents
-
 <div align="center">
   <img src="public/chat_dark.gif" alt="AI Agent Workflow" width="100%" style="border-radius: 8px; border: 1px solid #333; margin-bottom: 20px;">
 </div>
 
-*   **Context-Aware Autocomplete**: Die AI versteht den Kontext deiner Arbeit und schreibt Sätze logisch weiter.
-*   **Specialized Agents**: 
-    *   **Bachelor- & Master-Agent**: Ein geführter Workflow, der dich proaktiv durch die Phasen deiner Abschlussarbeit leitet (Themenfindung, Gliederung, Literaturrecherche, Schreibphase).
-    *   **AskJenni**: Dein persönlicher Forschungsassistent. Chatte direkt mit deiner Bibliothek: "Fasse die Methodik von Quelle X zusammen" oder "Finde Gegenargumente in meinen PDFs".
-*   **Smart Commands**: Text markieren und über `/` Befehle umschreiben, kürzen oder den Stil anpassen (z.B. "Make it academic").
-*   **Grammar & Style**: Tiefgehende Analyse auf akademischen Sprachstil, Kohärenz und logische Struktur.
+- **🚀 Context-Aware Autocomplete**  
+  Die AI versteht den Kontext deiner Arbeit und schreibt Sätze logisch weiter.
+
+- **🤖 Specialized Agents**  
+  - **Bachelor- & Master-Agent:** Ein geführter Workflow, der dich proaktiv durch die Phasen deiner Abschlussarbeit leitet (Themenfindung → Gliederung → Schreibphase).
+  - **AskJenni:** Dein persönlicher Forschungsassistent. Chatte direkt mit deiner Bibliothek: *"Fasse die Methodik von Quelle X zusammen"*.
+
+- **🪄 Smart Commands**  
+  Text markieren und über `/` Befehle transformieren (z.B. *Umschreiben*, *Kürzen*, *Akademisch formulieren*).
+
+---
 
 ### 🔬 Scientific Engine
-*   **Massive Citation Database**: 
-    *   Zugriff auf **>20 Literaturdatenbanken** (CrossRef, OpenAlex, PubMed, arXiv, u.a.).
-    *   Suche in über **250 Millionen** wissenschaftlichen Artikeln.
-*   **Citation Management**:
-    *   Unterstützung von **>9000 Zitierstilen** (APA, MLA, Harvard, IEEE, Chicago, etc.) via CSL.
-    *   Automatische Bibliographie-Erstellung in Echtzeit.
-    *   **BibTeX** Import & Export für volle Kompatibilität (Zotero, Mendeley).
-*   **Research Library**: Verwalte PDFs, Notizen und Quellen zentral an einem Ort.
+
+<div align="center">
+
+| Metric | Details |
+| :--- | :--- |
+| **📚 Databases** | Zugriff auf **>20** Datenbanken (CrossRef, OpenAlex, PubMed, arXiv) |
+| **🔎 Coverage** | Suche in über **250 Millionen** wissenschaftlichen Artikeln |
+| **📖 Styles** | Unterstützung von **>9000** Zitierstilen (APA, Harvard, IEEE) via CSL |
+
+</div>
+
+- **Citation Management:** Automatische Bibliographie-Erstellung in Echtzeit.
+- **Reference Integrity:** BibTeX Import & Export für volle Kompatibilität mit Zotero/Mendeley.
+- **Research Library:** Zentrale Verwaltung von PDFs, Notizen und Quellen.
+
+---
 
 ### 📝 Pro Editor (Powered by Plate.js)
 Wir setzen auf [Plate.js](https://platejs.org/docs) für eine unschlagbare Editing-Experience.
-*   **Format Flexibility**:
-    *   **Import**: Markdown, HTML, BibTeX.
-    *   **Export**: **DOCX (Word)**, **HTML**, **Markdown**, **LaTeX**, **PDF**.
-*   **TextLive Math**: Schreibe mathematische Formeln so natürlich wie Text. Tippe einfach `/mat` oder LaTeX-Syntax wie `\sum`, `\frac` – der Editor wandelt es **sofort** in gerenderte Formeln um. Voller Support für `Inline` ($E=mc^2$) und `Block` Formeln.
-*   **User Experience**: Clean UI, Focus Mode, Dark/Light Support.
+
+- **🔄 Format Flexibility**
+  - **Import:** Markdown, HTML, BibTeX
+  - **Export:** DOCX (Word), HTML, Markdown, LaTeX, PDF
+
+- **➗ TextLive Math**  
+  Tippe einfach `/mat` oder LaTeX-Syntax wie `\sum`. Der Editor wandelt es **sofort** in gerenderte Formeln um.
+  - *Inline:* $E=mc^2$
+  - *Block:* Volle Equation-Umgebung
+
+- **🎨 UX Focus:** Clean UI, Focus Mode, Dark/Light Support.
+
+---
 
 ### 🤝 Realtime Collaboration
-*   **Google Docs-Style Sync**: Gleichzeitiges Bearbeiten ohne Konflikte (Yjs).
-*   **Presence**: Live Cursors sehen, wo andere gerade schreiben.
-*   **Review System**: Kommentare und Vorschlagsmodus (Track Changes) für professionelles Feedback.
+
+- **⚡ Google Docs-Style Sync**  
+  Gleichzeitiges Bearbeiten ohne Konflikte dank Yjs CRDTs.
+
+- **👀 Presence**  
+  Live Cursors zeigen, wo Teammitglieder gerade arbeiten.
+
+- **💬 Review System**  
+  Kommentare und Vorschlagsmodus (Track Changes) für professionelles Feedback.
 
 ---
 
