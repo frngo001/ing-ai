@@ -60,67 +60,67 @@
 
 ## ⚡ Features
 
-### 🧠 Advanced AI & Agents
+### Advanced AI & Agents
+
 <div align="center">
-  <img src="public/chat_dark.gif" alt="AI Agent Workflow" width="100%" style="border-radius: 8px; border: 1px solid #333; margin-bottom: 20px;">
+  <img src="public/chat_dark.gif" alt="AI Agent Workflow" width="100%" style="border-radius: 8px; border: 1px solid #333; margin-bottom: 24px;">
 </div>
 
-- **🚀 Context-Aware Autocomplete**  
-  Die AI versteht den Kontext deiner Arbeit und schreibt Sätze logisch weiter.
+**Context-Aware Autocomplete**  
+Die AI versteht den Kontext deiner Arbeit und schreibt Sätze logisch weiter – als würde sie deine Gedanken lesen.
 
-- **🤖 Specialized Agents**  
-  - **Bachelor- & Master-Agent:** Ein geführter Workflow, der dich proaktiv durch die Phasen deiner Abschlussarbeit leitet (Themenfindung → Gliederung → Schreibphase).
-  - **AskJenni:** Dein persönlicher Forschungsassistent. Chatte direkt mit deiner Bibliothek: *"Fasse die Methodik von Quelle X zusammen"*.
+**Specialized Agents**  
+*   **Bachelor- & Master-Agent:** Ein geführter Workflow für deine Thesis (Themenfindung → Gliederung → Schreibphase).
+*   **AskJenni:** Chatte direkt mit deiner Bibliothek. *"Fasse die Methodik von Quelle X zusammen"* oder *"Finde Gegenargumente"*.
 
-- **🪄 Smart Commands**  
-  Text markieren und über `/` Befehle transformieren (z.B. *Umschreiben*, *Kürzen*, *Akademisch formulieren*).
+**Smart Commands**  
+Text markieren und transformieren: *Umschreiben*, *Kürzen*, *Vereinfachen* oder *Akademisch formulieren*.
 
 ---
 
-### 🔬 Scientific Engine
+### Scientific Engine
 
-<div align="center">
+<div align="center" style="margin: 20px 0;">
 
-| Metric | Details |
+| Metric | Source Coverage |
 | :--- | :--- |
-| **📚 Databases** | Zugriff auf **>20** Datenbanken (CrossRef, OpenAlex, PubMed, arXiv) |
-| **🔎 Coverage** | Suche in über **250 Millionen** wissenschaftlichen Artikeln |
-| **📖 Styles** | Unterstützung von **>9000** Zitierstilen (APA, Harvard, IEEE) via CSL |
+| **Databases** | Zugriff auf **>20** Datenbanken (CrossRef, OpenAlex, PubMed, arXiv) |
+| **Index** | Suche in über **250 Millionen** wissenschaftlichen Artikeln |
+| **Styles** | Unterstützung von **>9000** Zitierstilen (APA, Harvard, IEEE) via CSL |
 
 </div>
 
-- **Citation Management:** Automatische Bibliographie-Erstellung in Echtzeit.
-- **Reference Integrity:** BibTeX Import & Export für volle Kompatibilität mit Zotero/Mendeley.
-- **Research Library:** Zentrale Verwaltung von PDFs, Notizen und Quellen.
+**Citation Management**  
+Automatische Bibliographie-Erstellung in Echtzeit. Füge eine Quelle hinzu, und das Verzeichnis aktualisiert sich sofort.
+
+**Research Library**  
+Zentrale Verwaltung von PDFs, Notizen und Metadaten. BibTeX Import & Export für volle Kompatibilität.
 
 ---
 
-### 📝 Pro Editor (Powered by Plate.js)
+### Pro Editor
+
 Wir setzen auf [Plate.js](https://platejs.org/docs) für eine unschlagbare Editing-Experience.
 
-- **🔄 Format Flexibility**
-  - **Import:** Markdown, HTML, BibTeX
-  - **Export:** DOCX (Word), HTML, Markdown, LaTeX, PDF
+**Format Flexibility**  
+Importiere und exportiere in allen relevanten Formaten:
+*   **Input:** Markdown, HTML, BibTeX
+*   **Output:** DOCX (Word), HTML, Markdown, LaTeX, PDF
 
-- **➗ TextLive Math**  
-  Tippe einfach `/mat` oder LaTeX-Syntax wie `\sum`. Der Editor wandelt es **sofort** in gerenderte Formeln um.
-  - *Inline:* $E=mc^2$
-  - *Block:* Volle Equation-Umgebung
-
-- **🎨 UX Focus:** Clean UI, Focus Mode, Dark/Light Support.
+**TextLive Math**  
+Schreibe Formeln natürlich im Fluss. Tippe `/mat` oder Syntax wie `\sum`:
+*   *Inline:* $E=mc^2$
+*   *Block:* Volle LaTeX Equation-Umgebung
 
 ---
 
-### 🤝 Realtime Collaboration
+### Realtime Collaboration
 
-- **⚡ Google Docs-Style Sync**  
-  Gleichzeitiges Bearbeiten ohne Konflikte dank Yjs CRDTs.
+**Sync Engine**  
+Konfliktfreies, gleichzeitiges Bearbeiten im Google Docs-Stil (powered by Yjs).
 
-- **👀 Presence**  
-  Live Cursors zeigen, wo Teammitglieder gerade arbeiten.
-
-- **💬 Review System**  
-  Kommentare und Vorschlagsmodus (Track Changes) für professionelles Feedback.
+**Presence & Review**  
+Live Cursors zeigen Team-Aktivität. Nutze Kommentare und den Vorschlagsmodus (Track Changes) für professionelles Feedback.
 
 ---
 
