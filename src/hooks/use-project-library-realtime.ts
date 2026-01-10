@@ -35,10 +35,6 @@ export function useProjectLibraryRealtime({
                     onLibraryChange();
                 }
             )
-            // Listen for changes to citations (we can't easily filter by project, so we rely on client-side or RLS)
-            // Ideally we would filter by library_id, but the list of libraries changes.
-            // Listening to all citations might be noisy but ensures we catch updates.
-            // We rely on the parent component to debounce re-fetches.
             .on(
                 'postgres_changes',
                 {
@@ -47,8 +43,6 @@ export function useProjectLibraryRealtime({
                     table: 'citations',
                 },
                 (payload) => {
-                    // Optimization: We could check if the library_id of the payload is in our store,
-                    // but simpler for now to just trigger refresh.
                     devLog('[LIBRARY REALTIME] Received citation change:', payload);
                     onLibraryChange();
                 }

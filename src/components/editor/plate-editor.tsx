@@ -439,7 +439,7 @@ export function PlateEditor({
         avatarUrl: currentUser.avatarUrl,
         selection: editor.selection || null,
       });
-    }, 500); // Send cursor update Every 500ms
+    }, 1); // Send cursor update Every 1ms
 
     return () => clearInterval(interval);
   }, [editor, isUUIDDocument, currentUser, updatePresence]);
@@ -625,7 +625,7 @@ const LOCAL_STORAGE_DISCUSSIONS_KEY_PREFIX = 'plate-editor-discussions';
 const LOCAL_STORAGE_STATE_PREFIX = 'plate-editor-state';
 const LOCAL_STORAGE_KEY_LEGACY = 'plate-editor-content';
 const LOCAL_STORAGE_DISCUSSIONS_KEY_LEGACY = 'plate-editor-discussions';
-const SAVE_DEBOUNCE_MS = 400;
+const SAVE_DEBOUNCE_MS = 1;
 const DEFAULT_VALUE = normalizeNodeId([{ type: 'p', children: [{ text: '' }] }]);
 
 /**

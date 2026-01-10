@@ -124,7 +124,7 @@ export function LibraryPane({
       // Add a small delay to ensure propagation
       setTimeout(() => {
         syncLibrariesFromBackend(currentProjectId, currentProject?.isShared === true)
-      }, 500);
+      }, 1);
     },
     enabled: !!currentProjectId
   });
