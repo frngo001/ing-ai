@@ -1,5 +1,4 @@
 <div align="center">
-  <div align="center">
   <a href="https://ingai-editor.vercel.app/">
     <img src="public/logos/logosApp/ing_AI.png" alt="Ing AI Logo" width="100" height="auto">
   </a>
@@ -55,6 +54,8 @@
 </div>
 
 <br />
+
+<div align="center">
 
 ---
 
@@ -136,11 +137,11 @@ This stack defines the standard for modern AI web apps in 2025.
 
 | Scope | Technology | Usage |
 |-------|------------|-------|
-| **Framework** | ![Next.js](https://img.shields.io/badge/Next.js_16-black?logo=next.js) | App Router, Server Actions |
-| **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_4-38bdf8?logo=tailwindcss) | + Shadcn/ui & Framer Motion |
-| **Editor** | ![Plate](https://img.shields.io/badge/Plate.js-slate) | [See Docs](https://platejs.org/docs) |
-| **Database** | ![Supabase](https://img.shields.io/badge/Supabase-3ecf8e?logo=supabase) | Postgres, Auth, Realtime, Vector |
-| **AI Layer** | ![Deepseek](https://img.shields.io/badge/Deepseek-6366f1) | High-Performance LLM Integration |
+| **Framework** | Next.js 16 | App Router, Server Actions |
+| **Styling** | Tailwind 4 | + Shadcn/ui & Framer Motion |
+| **Editor** | Plate.js | Headless WYSIWYG Framework |
+| **Database** | Supabase | Postgres, Auth, Realtime, Vector |
+| **AI Layer** | Deepseek | High-Performance LLM Integration |
 
 ---
 
@@ -199,6 +200,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ---
 
-<div align="center">
-  <small>Built with ❤️ by Francloic & Community.</small>
+<small>Built with ❤️ by Francloic & Community.</small>
+
 </div>
