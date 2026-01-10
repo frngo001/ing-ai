@@ -16,7 +16,7 @@ export function ToggleElement(props: PlateElementProps) {
   const { buttonProps, open } = useToggleButton(state);
 
   return (
-    <PlateElement {...props} className="pl-6">
+    <PlateElement {...props} className="pl-6 text-justify">
       <Button
         size="icon"
         variant="ghost"

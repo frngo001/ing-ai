@@ -58,7 +58,7 @@ export function CalloutElement({
         >
           <EmojiPicker {...emojiPickerState} {...calloutProps} />
         </EmojiPopover>
-        <div className="w-full">{children}</div>
+        <div className="w-full text-justify">{children}</div>
       </div>
     </PlateElement>
   );

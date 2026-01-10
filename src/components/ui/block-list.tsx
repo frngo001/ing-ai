@@ -45,7 +45,7 @@ function List(props: PlateElementProps) {
   return (
     <List
       className={cn(
-        'relative m-0',
+        'relative m-0 text-justify',
         listStyleType === 'todo' ? 'pl-8' : 'pl-10'
       )}
       style={{ listStyleType }}
@@ -81,7 +81,7 @@ function TodoLi(props: PlateElementProps) {
       className={cn(
         'list-none',
         (props.element.checked as boolean) &&
-          'text-muted-foreground line-through'
+        'text-muted-foreground line-through'
       )}
     >
       {props.children}

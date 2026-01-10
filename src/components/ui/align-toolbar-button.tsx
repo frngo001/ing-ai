@@ -49,13 +49,13 @@ export function AlignToolbarButton(props: DropdownMenuProps) {
   const { t, language } = useLanguage();
   const value =
     useSelectionFragmentProp({
-      defaultValue: 'start',
+      defaultValue: 'justify',
       getProp: (node) => node.align,
     }) ?? 'left';
 
   const [open, setOpen] = React.useState(false);
   const IconValue = React.useMemo(
-    () => items.find((item) => item.value === value)?.icon ?? AlignLeftIcon,
+    () => items.find((item) => item.value === value)?.icon ?? AlignJustifyIcon,
     [value, language]
   );
   const tooltipText = React.useMemo(() => t('toolbar.align'), [t, language]);
