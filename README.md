@@ -13,8 +13,6 @@
     </a>
   <br />
 
-  <h1 align="center">Ing AI</h1>
-
   <p align="center">
     <strong>The next-gen platform for academic writing.</strong>
     <br />

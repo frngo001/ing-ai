@@ -12,9 +12,7 @@
       <img src="https://img.shields.io/badge/Ing_AI-Academic_Writer-000000?style=for-the-badge&logo=openai&logoColor=white" alt="Ing AI Banner">
     </a>
   <br />
-
-  <h1 align="center">Ing AI</h1>
-
+  
   <p align="center">
     <strong>Die next-gen Plattform für akademisches Schreiben.</strong>
     <br />
