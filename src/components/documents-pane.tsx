@@ -253,7 +253,7 @@ export function DocumentsPane({
     onDocumentsChange: () => {
       // Reload documents when a change occurs in the database
       // Add a small delay to ensure the database write has propagated
-      setTimeout(() => loadFromSupabase(true), 10);
+      setTimeout(() => loadFromSupabase(true), 50);
     },
     enabled: !!currentProjectId
   });
