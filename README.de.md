@@ -4,8 +4,8 @@
   </a>
   <br />
   <br />
-  <a href="README.md"><img src="https://img.shields.io/badge/Lang-Deutsch-grey?style=flat-square" alt="Deutsch"></a>
-  <a href="README.en.md"><img src="https://img.shields.io/badge/Lang-English-blue?style=flat-square" alt="English"></a>
+  <a href="README.de.md"><img src="https://img.shields.io/badge/Lang-Deutsch-blue?style=flat-square" alt="Deutsch"></a>
+  <a href="README.md"><img src="https://img.shields.io/badge/Lang-English-grey?style=flat-square" alt="English"></a>
   <br />
   <br />
     <a href="https://ingai-editor.vercel.app/">
@@ -16,13 +16,13 @@
   <h1 align="center">Ing AI</h1>
 
   <p align="center">
-    <strong>The next-gen platform for academic writing.</strong>
+    <strong>Die next-gen Plattform für akademisches Schreiben.</strong>
     <br />
     <span style="color: #666;">Open Source ⸱ AI-Native ⸱ Collaborative</span>
   </p>
 
   <p align="center">
-    <a href="https://ingai-editor.vercel.app/"><strong>📱 Live App</strong></a> •
+    <a href="https://ingai-editor.vercel.app/"><strong>Live App</strong></a> •
     <a href="#features">Features</a> •
     <a href="#tech-stack">Stack</a> •
     <a href="#getting-started">Setup</a>
@@ -33,6 +33,7 @@
     <img src="https://img.shields.io/badge/Next.js-16.1-black?style=flat-square&logo=next.js" alt="Next.js" />
     <img src="https://img.shields.io/badge/Supabase-Ready-3ecf8e?style=flat-square&logo=supabase" alt="Supabase" />
     <img src="https://img.shields.io/badge/Deepseek-V3-6366f1?style=flat-square" alt="AI Model" />
+    <img src="https://img.shields.io/badge/License-Apache_2.0-D22128?style=flat-square&logo=apache" alt="License" />
   </div>
 </div>
 
@@ -58,7 +59,7 @@
 
 ## 🔮 Vision
 
-**Ing AI** revolutionizes the academic writing process. Inspired by Jenni.ai, it offers an environment that accompanies students and researchers from initial research to final export. We combine the power of **LLMs (Deepseek)**, a massive database of scientific sources (>250M papers), and a state-of-the-art editor.
+**Ing AI** revolutioniert den akademischen Schreibprozess. Inspiriert von Jenni.ai, bietet es eine Umgebung, die Studierende und Forschende von der ersten Recherche bis zum fertigen Export begleitet. Wir kombinieren die Power von **LLMs (Deepseek)**, eine massive Datenbank an wissenschaftlichen Quellen (>250M Papers) und einen hochmodernen Editor.
 
 ---
 
@@ -71,14 +72,14 @@
 </div>
 
 **Context-Aware Autocomplete**  
-The AI understands the context of your work and logically continues your sentences – as if it were reading your mind.
+Die AI versteht den Kontext deiner Arbeit und schreibt Sätze logisch weiter – als würde sie deine Gedanken lesen.
 
 **Specialized Agents**  
-*   **Bachelor & Master Agent:** A guided workflow for your thesis (Topic finding → Outline → Writing phase).
-*   **AskJenni:** Chat directly with your library. *"Summarize the methodology of Source X"* or *"Find counterarguments"*.
+*   **Bachelor- & Master-Agent:** Ein geführter Workflow für deine Thesis (Themenfindung → Gliederung → Schreibphase).
+*   **AskJenni:** Chatte direkt mit deiner Bibliothek. *"Fasse die Methodik von Quelle X zusammen"* oder *"Finde Gegenargumente"*.
 
 **Smart Commands**  
-Highlight text and transform: *Rewrite*, *Shorten*, *Simplify*, or *Make Academic*.
+Text markieren und transformieren: *Umschreiben*, *Kürzen*, *Vereinfachen* oder *Akademisch formulieren*.
 
 ---
 
@@ -88,49 +89,49 @@ Highlight text and transform: *Rewrite*, *Shorten*, *Simplify*, or *Make Academi
 
 | Metric | Source Coverage |
 | :--- | :--- |
-| **Databases** | Access to **>20** databases (CrossRef, OpenAlex, PubMed, arXiv) |
-| **Index** | Search in over **250 million** scientific articles |
-| **Styles** | Support for **>9000** citation styles (APA, Harvard, IEEE) via CSL |
+| **Databases** | Zugriff auf **>20** Datenbanken (CrossRef, OpenAlex, PubMed, arXiv) |
+| **Index** | Suche in über **250 Millionen** wissenschaftlichen Artikeln |
+| **Styles** | Unterstützung von **>9000** Zitierstilen (APA, Harvard, IEEE) via CSL |
 
 </div>
 
 **Citation Management**  
-Automatic bibliography generation in real-time. Add a source, and the bibliography updates immediately.
+Automatische Bibliographie-Erstellung in Echtzeit. Füge eine Quelle hinzu, und das Verzeichnis aktualisiert sich sofort.
 
 **Research Library**  
-Central management of PDFs, notes, and metadata. BibTeX Import & Export for full compatibility.
+Zentrale Verwaltung von PDFs, Notizen und Metadaten. BibTeX Import & Export für volle Kompatibilität.
 
 ---
 
 ### Pro Editor
 
-We use [Plate.js](https://platejs.org/docs) for an unbeatable editing experience.
+Wir setzen auf [Plate.js](https://platejs.org/docs) für eine unschlagbare Editing-Experience.
 
 **Format Flexibility**  
-Import and export in all relevant formats:
+Importiere und exportiere in allen relevanten Formaten:
 *   **Input:** Markdown, HTML, BibTeX
 *   **Output:** DOCX (Word), HTML, Markdown, LaTeX, PDF
 
 **TextLive Math**  
-Write formulas naturally in the flow. Type `/mat` or syntax like `\sum`:
+Schreibe Formeln natürlich im Fluss. Tippe `/mat` oder Syntax wie `\sum`:
 *   *Inline:* $E=mc^2$
-*   *Block:* Full LaTeX Equation environment
+*   *Block:* Volle LaTeX Equation-Umgebung
 
 ---
 
 ### Realtime Collaboration
 
 **Sync Engine**  
-Conflict-free, simultaneous editing in Google Docs style (powered by Yjs).
+Konfliktfreies, gleichzeitiges Bearbeiten im Google Docs-Stil (powered by Yjs).
 
 **Presence & Review**  
-Live cursors show team activity. Use comments and suggestion mode (Track Changes) for professional feedback.
+Live Cursors zeigen Team-Aktivität. Nutze Kommentare und den Vorschlagsmodus (Track Changes) für professionelles Feedback.
 
 ---
 
 ## 🛠 Tech Stack
 
-This stack defines the standard for modern AI web apps in 2025.
+Dieser Stack definiert den Standard für moderne AI-Webapps im Jahr 2025.
 
 | Scope | Technology | Usage |
 |-------|------------|-------|
@@ -145,7 +146,7 @@ This stack defines the standard for modern AI web apps in 2025.
 ## 🏁 Getting Started
 
 ### Prerequisites
-*   Node.js 18+ (pnpm recommended)
+*   Node.js 18+ (pnpm empfohlen)
 *   Supabase Account
 *   Deepseek API Key
 
@@ -153,7 +154,7 @@ This stack defines the standard for modern AI web apps in 2025.
 
 1.  **Clone Repository**
     ```bash
-    git clone https://github.com/your-username/ing-ai.git
+    git clone https://github.com/dein-username/ing-ai.git
     cd ing-ai
     ```
 
@@ -165,11 +166,11 @@ This stack defines the standard for modern AI web apps in 2025.
 3.  **Environment Setup**
     ```bash
     cp ENV_TEMPLATE.md .env.local
-    # Enter your API Keys in .env.local
+    # Trage deine API Keys in .env.local ein
     ```
 
 4.  **Database Migration**
-    Run the SQL script `supabase/schema.sql` in the Supabase Dashboard.
+    Führe das SQL-Skript init `supabase/schema.sql` im Supabase Dashboard aus.
 
 5.  **Run Dev Server**
     ```bash
@@ -186,8 +187,14 @@ This stack defines the standard for modern AI web apps in 2025.
 *   [x] **Citations**: >9000 Styles, >20 Databases, BibTeX Support
 *   [x] **Exports**: DOCX, HTML, Markdown
 *   [ ] **Mobile**: Native Mobile App
-*   [ ] **Plagiarism**: External Plagiarism Scanner APIs Integration
+*   [ ] **Plagiarism**: Integration externer Plagiat-Scanner APIs
 *   [ ] **Offline**: Local-First Sync Architecture
+
+---
+
+## 📄 Lizenz
+
+Dieses Projekt ist unter der Apache License 2.0 lizenziert - siehe die [LICENSE](LICENSE) Datei für Details.
 
 ---
 
