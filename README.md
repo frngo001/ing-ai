@@ -1,156 +1,166 @@
-# Jenni AI Clone
+<div align="center">
+  <a href="https://ingai-editor.vercel.app/">
+    <img src="public/logos/logosApp/ing_AI.png" alt="Ing AI Logo" width="100" height="auto">
+  </a>
+  <br />
+  <br />
+    <a href="https://ingai-editor.vercel.app/">
+      <img src="https://img.shields.io/badge/Ing_AI-Academic_Writer-000000?style=for-the-badge&logo=openai&logoColor=white" alt="Ing AI Banner">
+    </a>
+  <br />
 
-A comprehensive AI-powered writing assistant built with Next.js 16, AI SDK 6, Deepseek, and Supabase.
+  <h1 align="center">Ing AI</h1>
 
-## Features
+  <p align="center">
+    <strong>Die next-gen Plattform für akademisches Schreiben.</strong>
+    <br />
+    <span style="color: #666;">Open Source ⸱ AI-Native ⸱ Collaborative</span>
+  </p>
 
-### AI Writing Assistance
-- ✅ **AI Autocomplete** - Real-time intelligent writing suggestions
-- ✅ **AI Commands** - Rewrite, paraphrase, simplify, and expand text
-- ✅ **Tone Adjustment** - Academic, professional, persuasive, friendly, casual
-- ✅ **Outline Generator** - Create structured document outlines
+  <p align="center">
+    <a href="https://ingai-editor.vercel.app/"><strong>📱 Live App</strong></a> •
+    <a href="#features">Features</a> •
+    <a href="#tech-stack">Stack</a> •
+    <a href="#getting-started">Setup</a>
+  </p>
 
-### Research & Citations
-- ✅ **AskJenni AI Assistant** - Chat-based research help
-- ✅ **Citation Generator** - Support for APA, MLA, Chicago, IEEE, Harvard, Vancouver
-- 📚 **PDF Upload & Management** - Upload and organize research papers
-- 📚 **Web Search** - DuckDuckGo integration for research
+  <div align="center">
+    <img src="https://img.shields.io/badge/Status-Beta-3b82f6?style=flat-square" alt="Status" />
+    <img src="https://img.shields.io/badge/Next.js-16.1-black?style=flat-square&logo=next.js" alt="Next.js" />
+    <img src="https://img.shields.io/badge/Supabase-Ready-3ecf8e?style=flat-square&logo=supabase" alt="Supabase" />
+    <img src="https://img.shields.io/badge/Deepseek-V3-6366f1?style=flat-square" alt="AI Model" />
+  </div>
+</div>
 
-### Editor Features
-- ✅ **Rich Text Editor** - Powered by Tiptap with formatting toolbar
-- ✅ **Word/Character Counter** - Track document statistics
-- ✅ **Resizable Panels** - Customizable workspace layout
-- 💾 **Auto-save** - Never lose your work
+<br />
 
-### Design
-- ✅ **Supabase-Inspired Theme** - Jungle Green (#34B27B) primary color
-- ✅ **Dark Mode Support** - Beautiful light and dark themes
-- ✅ **shadcn/ui Components** - 27+ premium UI components
-- ✅ **Responsive Design** - Works on all devices
+<div align="center">
+  <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+    <a href="https://ingai-editor.vercel.app/" target="_blank">
+      <img src="public/dashboaed-dark_1.png" alt="Library" width="100%" style="border-radius: 8px; border: 1px solid #333;">
+    </a>
+    <a href="https://ingai-editor.vercel.app/" target="_blank">
+      <img src="public/dashboard-dark-2.png" alt="Editor" width="100%" style="border-radius: 8px; border: 1px solid #333;">
+    </a>
+    <a href="https://ingai-editor.vercel.app/" target="_blank">
+      <img src="public/dashboard-dark-3.png" alt="Research" width="100%" style="border-radius: 8px; border: 1px solid #333;">
+    </a>
+  </div>
+</div>
 
-## Tech Stack
+<br />
 
-- **Framework**: Next.js 16 (App Router)
-- **UI**: TailwindCSS 4, shadcn/ui
-- **AI**: AI SDK 6, Deepseek
-- **Database**: Supabase (PostgreSQL)
-- **Editor**: Tiptap
-- **Language**: TypeScript
+---
 
-## Getting Started
+## 🔮 Vision
+
+**Ing AI** revolutioniert den akademischen Schreibprozess. Inspiriert von Jenni.ai, bietet es eine Umgebung, die Studierende und Forschende von der ersten Recherche bis zum fertigen Export begleitet. Wir kombinieren die Power von **LLMs (Deepseek)**, eine massive Datenbank an wissenschaftlichen Quellen (>250M Papers) und einen hochmodernen Editor.
+
+---
+
+## ⚡ Features
+
+### 🧠 Advanced AI & Agents
+
+<div align="center">
+  <img src="public/chat_dark.gif" alt="AI Agent Workflow" width="100%" style="border-radius: 8px; border: 1px solid #333; margin-bottom: 20px;">
+</div>
+
+*   **Context-Aware Autocomplete**: Die AI versteht den Kontext deiner Arbeit und schreibt Sätze logisch weiter.
+*   **Specialized Agents**: 
+    *   **Bachelor- & Master-Agent**: Ein geführter Workflow, der dich proaktiv durch die Phasen deiner Abschlussarbeit leitet (Themenfindung, Gliederung, Literaturrecherche, Schreibphase).
+    *   **AskJenni**: Dein persönlicher Forschungsassistent. Chatte direkt mit deiner Bibliothek: "Fasse die Methodik von Quelle X zusammen" oder "Finde Gegenargumente in meinen PDFs".
+*   **Smart Commands**: Text markieren und über `/` Befehle umschreiben, kürzen oder den Stil anpassen (z.B. "Make it academic").
+*   **Grammar & Style**: Tiefgehende Analyse auf akademischen Sprachstil, Kohärenz und logische Struktur.
+
+### 🔬 Scientific Engine
+*   **Massive Citation Database**: 
+    *   Zugriff auf **>20 Literaturdatenbanken** (CrossRef, OpenAlex, PubMed, arXiv, u.a.).
+    *   Suche in über **250 Millionen** wissenschaftlichen Artikeln.
+*   **Citation Management**:
+    *   Unterstützung von **>9000 Zitierstilen** (APA, MLA, Harvard, IEEE, Chicago, etc.) via CSL.
+    *   Automatische Bibliographie-Erstellung in Echtzeit.
+    *   **BibTeX** Import & Export für volle Kompatibilität (Zotero, Mendeley).
+*   **Research Library**: Verwalte PDFs, Notizen und Quellen zentral an einem Ort.
+
+### 📝 Pro Editor (Powered by Plate.js)
+Wir setzen auf [Plate.js](https://platejs.org/docs) für eine unschlagbare Editing-Experience.
+*   **Format Flexibility**:
+    *   **Import**: Markdown, HTML, BibTeX.
+    *   **Export**: **DOCX (Word)**, **HTML**, **Markdown**, **LaTeX**, **PDF**.
+*   **TextLive Math**: Schreibe mathematische Formeln so natürlich wie Text. Tippe einfach `/mat` oder LaTeX-Syntax wie `\sum`, `\frac` – der Editor wandelt es **sofort** in gerenderte Formeln um. Voller Support für `Inline` ($E=mc^2$) und `Block` Formeln.
+*   **User Experience**: Clean UI, Focus Mode, Dark/Light Support.
+
+### 🤝 Realtime Collaboration
+*   **Google Docs-Style Sync**: Gleichzeitiges Bearbeiten ohne Konflikte (Yjs).
+*   **Presence**: Live Cursors sehen, wo andere gerade schreiben.
+*   **Review System**: Kommentare und Vorschlagsmodus (Track Changes) für professionelles Feedback.
+
+---
+
+## 🛠 Tech Stack
+
+Dieser Stack definiert den Standard für moderne AI-Webapps im Jahr 2025.
+
+| Scope | Technology | Usage |
+|-------|------------|-------|
+| **Framework** | ![Next.js](https://img.shields.io/badge/Next.js_16-black?logo=next.js) | App Router, Server Actions |
+| **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_4-38bdf8?logo=tailwindcss) | + Shadcn/ui & Framer Motion |
+| **Editor** | ![Plate](https://img.shields.io/badge/Plate.js-slate) | [See Docs](https://platejs.org/docs) |
+| **Database** | ![Supabase](https://img.shields.io/badge/Supabase-3ecf8e?logo=supabase) | Postgres, Auth, Realtime, Vector |
+| **AI Layer** | ![Deepseek](https://img.shields.io/badge/Deepseek-6366f1) | High-Performance LLM Integration |
+
+---
+
+## 🏁 Getting Started
 
 ### Prerequisites
-
-- Node.js 18+ 
-- npm or pnpm
-- Supabase account
-- Deepseek API key
+*   Node.js 18+ (pnpm empfohlen)
+*   Supabase Account
+*   Deepseek API Key
 
 ### Installation
 
-1. Clone the repository
-```bash
-git clone <your-repo-url>
-cd jenni-ai-clone
-```
+1.  **Clone Repository**
+    ```bash
+    git clone https://github.com/dein-username/ing-ai.git
+    cd ing-ai
+    ```
 
-2. Install dependencies
-```bash
-npm install
-```
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
-3. Set up environment variables
+3.  **Environment Setup**
+    ```bash
+    cp ENV_TEMPLATE.md .env.local
+    # Trage deine API Keys in .env.local ein
+    ```
 
-Create a `.env.local` file (see `ENV_TEMPLATE.md` for reference):
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-DEEPSEEK_API_KEY=your_deepseek_api_key
-DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
-```
+4.  **Database Migration**
+    Führe das SQL-Skript init `supabase/schema.sql` im Supabase Dashboard aus.
 
-4. Set up Supabase database
+5.  **Run Dev Server**
+    ```bash
+    npm run dev
+    ```
+    Visit: `http://localhost:3000`
 
-Run the SQL in `supabase/schema.sql` in your Supabase SQL editor to create all necessary tables and policies.
+---
 
-5. Run the development server
-```bash
-npm run dev
-```
+## 📍 Roadmap
 
-Open [http://localhost:3000](http://localhost:3000) to see your application.
+*   [x] **Core Editor**: Markdown, LaTeX, Realtime Sync (Yjs)
+*   [x] **AI Engine**: Deepseek Autocomplete & Chat Agents
+*   [x] **Citations**: >9000 Styles, >20 Databases, BibTeX Support
+*   [x] **Exports**: DOCX, HTML, Markdown
+*   [ ] **Mobile**: Native Mobile App
+*   [ ] **Plagiarism**: Integration externer Plagiat-Scanner APIs
+*   [ ] **Offline**: Local-First Sync Architecture
 
-## Project Structure
+---
 
-```
-jenni-ai-clone/
-├── src/
-│   ├── app/                    # Next.js app router pages
-│   │   ├── api/               # API routes
-│   │   │   └── ai/           # AI endpoints
-│   │   ├── dashboard/        # Dashboard page
-│   │   ├── editor/           # Editor page
-│   │   └── page.tsx          # Landing page
-│   ├── components/            # React components
-│   │   ├── ui/               # shadcn/ui components
-│   │   ├── editor/           # Editor components
-│   │   └── ai-assistant/     # AI assistant components
-│   ├── lib/                   # Utility libraries
-│   │   ├── ai/               # AI configuration & prompts
-│   │   ├── supabase/         # Supabase clients
-│   │   └── citations/        # Citation generation
-│   └── hooks/                 # Custom React hooks
-├── supabase/
-│   └── schema.sql            # Database schema
-└── public/                    # Static files
-```
-
-## Key Features Implementation
-
-### AI Autocomplete
-The AI autocomplete feature uses streaming responses from Deepseek to provide real-time writing suggestions based on document context.
-
-### Citation Generator
-Unterstützt 6 vordefinierte Stile (APA, MLA, Chicago, IEEE, Harvard, Vancouver) und kann via **Bibify** (>9000 CSL-Stile) weitere Zitierstile sowie Buch- und Webseiten-Metadaten beziehen.
-
-### Rich Text Editor
-Built with Tiptap, includes:
-- Text formatting (bold, italic, headings)
-- Lists (bullet, ordered)
-- Blockquotes
-- Undo/Redo
-- Character and word counting
-
-### Database Schema
-Comprehensive Supabase schema with:
-- User profiles and preferences
-- Documents with version history
-- Research sources and PDFs
-- Citations
-- Row-level security (RLS) policies
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-
-## Environment Variables
-
-See `ENV_TEMPLATE.md` for all required environment variables.
-
-## Contributing
-
-This is a clone project built for educational purposes.
-
-## License
-
-MIT
-
-## Acknowledgments
-
-- Inspired by Jenni AI
-- Design inspired by Supabase
-- Built with shadcn/ui components
-- Powered by Deepseek AI
+<div align="center">
+  <small>Built with ❤️ by Francloic & Community.</small>
+</div>

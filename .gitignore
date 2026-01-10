@@ -42,6 +42,7 @@ next-env.d.ts
 
 # cursor rules
 .cursor/rules/
+.cursor/*
 
 #test files
 test.md
@@ -53,3 +54,7 @@ test.md
 !.claude/settings.local.jsonc
 .mcp.json
 CLAUDE.md
+
+# plan 
+plan.md
+ENV_TEMPLATE
