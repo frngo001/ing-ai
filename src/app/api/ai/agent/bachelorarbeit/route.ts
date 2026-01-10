@@ -40,7 +40,7 @@ function createToolStepMarker(
 ): string {
   const payload = JSON.stringify(data)
   const base64 = Buffer.from(payload).toString('base64')
-  return type === 'start' 
+  return type === 'start'
     ? `[TOOL_STEP_START:${base64}]`
     : `[TOOL_STEP_END:${base64}]`
 }
@@ -422,7 +422,7 @@ const analyzeSourcesTool = tool({
 
       // Filter anwenden
       let filtered = analyzed.filter((s) => s.relevanceScore >= minRelevanceScore)
-  
+
 
 
       // Top Ergebnisse auswählen
@@ -533,7 +533,7 @@ const addThemaTool = tool({
     }
     const jsonString = JSON.stringify(toolResult)
     const base64Payload = Buffer.from(jsonString).toString('base64')
-    
+
     const response = {
       success: true,
       message: (translations[language as Language]?.askAi?.toolAddThemaMessage || 'Thema "{thema}" wurde gesetzt').replace('{thema}', thema),
@@ -563,12 +563,12 @@ const getCurrentStepTool = tool({
 // Helper: Konvertiere Source zu Citation (für direkte DB-Operationen)
 function convertSourceToCitation(source: any) {
   const authors = source.authors
-    ? (typeof source.authors === 'string' 
-        ? source.authors.split(',').map((a: string) => a.trim())
-        : Array.isArray(source.authors)
-        ? source.authors.map((a: any) => 
-            typeof a === 'string' ? a : a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim()
-          )
+    ? (typeof source.authors === 'string'
+      ? source.authors.split(',').map((a: string) => a.trim())
+      : Array.isArray(source.authors)
+        ? source.authors.map((a: any) =>
+          typeof a === 'string' ? a : a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim()
+        )
         : [])
     : []
 
@@ -655,7 +655,7 @@ function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited
       const language = await queryLanguage()
       const stepId = generateToolStepId()
       const toolName = 'addSourcesToLibrary'
-      
+
       if (!sources || !Array.isArray(sources) || sources.length === 0) {
         return {
           success: false,
@@ -686,7 +686,7 @@ function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited
 
         // Konvertiere Quellen zu Citations
         const newCitations = sources.map(convertSourceToCitation)
-        
+
         // Lade bestehende Citations
         const existingCitations = await citationsUtils.getCitationsByLibrary(libraryId, userId, supabaseClient)
         const existingIds = new Set(existingCitations.map((c) => c.id))
@@ -726,7 +726,7 @@ function addSourcesToLibraryToolWithUser(userId: string, supabaseClient: Awaited
             id: stepId,
             toolName,
             status: 'completed',
-            output: { added: uniqueCitations.length, libraryName: library.name },
+            output: { added: uniqueCitations.length, libraryName: library.name, citations: uniqueCitations },
           }),
         }
       } catch (error) {
@@ -761,7 +761,7 @@ function listAllLibrariesToolWithUser(userId: string, supabaseClient: Awaited<Re
         const language = await queryLanguage()
         // Filter nach projectId wenn vorhanden
         const libraries = await citationLibrariesUtils.getCitationLibraries(userId, supabaseClient, projectId)
-        
+
         // Für jede Bibliothek die Anzahl der Citations ermitteln
         const librariesWithCounts = await Promise.all(
           libraries.map(async (lib) => {
@@ -909,7 +909,7 @@ function createGetEditorContentTool(editorContent: string) {
     execute: async ({ includeFullText = true, maxLength }) => {
       const stepId = generateToolStepId()
       const toolName = 'getEditorContent'
-      
+
       // Debug-Logging
       devWarn('📄 [BACHELORARBEIT AGENT] getEditorContent Tool aufgerufen', {
         editorContentLength: editorContent?.length || 0,
@@ -918,7 +918,7 @@ function createGetEditorContentTool(editorContent: string) {
         includeFullText,
         maxLength,
       })
-      
+
       const language = await queryLanguage()
       if (!editorContent || editorContent.trim().length === 0) {
         devWarn('⚠️ [BACHELORARBEIT AGENT] Editor-Inhalt ist leer oder nicht vorhanden')
@@ -937,19 +937,19 @@ function createGetEditorContentTool(editorContent: string) {
           }),
         }
       }
-      
+
       let content = editorContent.trim()
-      
+
       if (maxLength && content.length > maxLength) {
         content = content.substring(0, maxLength) + '...'
       }
-      
+
       const characterCount = editorContent.length
       const wordCount = editorContent.split(/\s+/).filter(w => w.length > 0).length
       const paragraphCount = editorContent.split(/\n\n+/).filter(p => p.trim().length > 0).length
-      
+
       const headings = editorContent.match(/^#{1,6}\s.+$/gm) || []
-      
+
       const response = {
         success: true,
         isEmpty: false,
@@ -965,15 +965,15 @@ function createGetEditorContentTool(editorContent: string) {
           id: stepId,
           toolName,
           status: 'completed',
-          output: { 
-            wordCount, 
+          output: {
+            wordCount,
             characterCount,
             paragraphCount,
             headingCount: headings.length,
           },
         }),
       }
-      
+
       // Debug-Logging für erfolgreichen Abruf
       devWarn('✅ [BACHELORARBEIT AGENT] Editor-Inhalt erfolgreich abgerufen', {
         wordCount,
@@ -982,7 +982,7 @@ function createGetEditorContentTool(editorContent: string) {
         headingCount: headings.length,
         contentLength: content.length,
       })
-      
+
       return response
     },
   })
@@ -1156,9 +1156,9 @@ export async function POST(req: NextRequest) {
       documentContextEnabled,
       hasFileContents: !!fileContents && Array.isArray(fileContents) && fileContents.length > 0,
     })
-    
+
     const currentEditorContent: string = editorContent || ''
-    
+
     if (currentEditorContent.length > 0) {
       devWarn('✅ [BACHELORARBEIT AGENT] Editor-Inhalt im Request vorhanden', {
         length: currentEditorContent.length,
@@ -1177,7 +1177,7 @@ export async function POST(req: NextRequest) {
     // Thema ist optional - kann vom Agent bestimmt werden
     const arbeitType = agentState.arbeitType || 'bachelor'
     const arbeitTypeText = arbeitType === 'master' ? 'Masterarbeit' : 'Bachelorarbeit'
-    
+
     // Wenn kein Thema vorhanden ist, versuche es aus der ersten Nachricht zu extrahieren
     let thema = agentState.thema
     if (!thema && messages && messages.length > 0) {
@@ -1192,7 +1192,7 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    
+
     // Wenn immer noch kein Thema vorhanden ist, verwende einen generischen Platzhalter
     if (!thema) {
       thema = 'Thema wird bestimmt'
@@ -1228,7 +1228,7 @@ export async function POST(req: NextRequest) {
       '{{THEMA}}',
       thema
     ).replace('{{CURRENT_DATE}}', new Date().toLocaleDateString('de-DE', { dateStyle: 'full' }))
-    .replace('{{CURRENT_STEP}}', currentStepText)
+      .replace('{{CURRENT_STEP}}', currentStepText)
 
     // Ersetze Platzhalter für Arbeitstyp
     systemPrompt = systemPrompt.replace(/{{ARBEIT_TYPE}}/g, arbeitTypeText)
@@ -1237,11 +1237,11 @@ export async function POST(req: NextRequest) {
     if (documentContextEnabled && currentEditorContent.trim().length > 0) {
       const wordCount = currentEditorContent.split(/\s+/).filter(w => w.length > 0).length
       const headings = currentEditorContent.match(/^#{1,6}\s.+$/gm) || []
-      
-      const truncatedContent = currentEditorContent.length > 8000 
+
+      const truncatedContent = currentEditorContent.length > 8000
         ? currentEditorContent.substring(0, 8000) + '\n\n[... Text gekürzt ...]'
         : currentEditorContent
-      
+
       const editorContextSection = `
 
 ## Aktueller Editor-Inhalt (Kontext aktiviert)
@@ -1273,7 +1273,7 @@ Inhalt (${wordCount} Wörter):
 ${file.content}
 \`\`\``
         })
-      
+
       if (fileSections.length > 0) {
         const fileContentSection = `
 
@@ -1332,12 +1332,12 @@ ${fileSections.join('\n\n---\n\n')}
         3. **Wissenschaftlichkeit**: Scheint es eine seriöse, wissenschaftlich fundierte Quelle zu sein?
 
         Quellen (mit vollständigem Abstract):
-        ${JSON.stringify(sources.map(s => ({ 
-          id: s.id, 
-          title: s.title, 
-          abstract: s.abstract || 'Kein Abstract verfügbar',
-          year: s.year
-        })), null, 2)}
+        ${JSON.stringify(sources.map(s => ({
+            id: s.id,
+            title: s.title,
+            abstract: s.abstract || 'Kein Abstract verfügbar',
+            year: s.year
+          })), null, 2)}
         
         Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel und Abstract eingeht und erklärt, warum die Quelle relevant oder nicht relevant ist.
       `
@@ -1414,7 +1414,7 @@ ${fileSections.join('\n\n---\n\n')}
     const encoder = new TextEncoder()
     const toolStepTimestamps: Record<string, number> = {}
     const toolStepIds: Record<string, string> = {}
-    
+
     const customStream = new ReadableStream({
       async start(controller) {
         try {
@@ -1424,24 +1424,24 @@ ${fileSections.join('\n\n---\n\n')}
               const stepId = `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
               toolStepTimestamps[event.toolCallId] = Date.now()
               toolStepIds[event.toolCallId] = stepId
-              
+
               // 'input' ist die korrekte Property fuer tool-call Events
               const toolInput = 'input' in event ? (event.input as Record<string, any>) : {}
-              
+
               const startMarker = createToolStepMarker('start', {
                 id: stepId,
                 toolName: event.toolName,
                 input: toolInput,
               })
               controller.enqueue(encoder.encode(startMarker))
-                    
+
               await new Promise(resolve => setTimeout(resolve, 10))
             } else if (event.type === 'tool-result') {
               const stepId = toolStepIds[event.toolCallId] || `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
               const startTime = toolStepTimestamps[event.toolCallId] || Date.now()
-              
+
               const toolOutput = 'output' in event ? event.output : null
-              
+
               const output: Record<string, any> = {}
               if (typeof toolOutput === 'object' && toolOutput !== null) {
                 const result = toolOutput as Record<string, any>
@@ -1455,7 +1455,7 @@ ${fileSections.join('\n\n---\n\n')}
                 if (result.success !== undefined) output.success = result.success
                 if (result.error !== undefined) output.error = result.error
                 if (result.message !== undefined) output.message = result.message
-                
+
                 // WICHTIG: Wenn das Tool einen _streamMarker zurückgibt, schreibe ihn in den Stream
                 // Dies ist notwendig für insertTextInEditor und andere Tools, die Events auslösen
                 if (result._streamMarker && typeof result._streamMarker === 'string') {
@@ -1473,7 +1473,7 @@ ${fileSections.join('\n\n---\n\n')}
                   })
                 }
               }
-              
+
               const endMarker = createToolStepMarker('end', {
                 id: stepId,
                 toolName: event.toolName,

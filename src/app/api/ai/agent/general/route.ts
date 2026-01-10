@@ -22,36 +22,36 @@ import { getLanguageForServer } from '@/lib/i18n/server-language'
 export const runtime = 'nodejs'
 
 const queryLanguage = async () => {
-  try {
-    const language = await getLanguageForServer()
-    return language
-  } catch (error) {
-    return 'de'
-  }
+    try {
+        const language = await getLanguageForServer()
+        return language
+    } catch (error) {
+        return 'de'
+    }
 }
 
 // Helper: Generiere Tool-Step-Marker fuer die Stream-Visualisierung
 function createToolStepMarker(
-  type: 'start' | 'end',
-  data: {
-    id: string
-    toolName: string
-    input?: Record<string, any>
-    output?: Record<string, any>
-    status?: 'completed' | 'error'
-    error?: string
-  }
+    type: 'start' | 'end',
+    data: {
+        id: string
+        toolName: string
+        input?: Record<string, any>
+        output?: Record<string, any>
+        status?: 'completed' | 'error'
+        error?: string
+    }
 ): string {
-  const payload = JSON.stringify(data)
-  const base64 = Buffer.from(payload).toString('base64')
-  return type === 'start' 
-    ? `[TOOL_STEP_START:${base64}]`
-    : `[TOOL_STEP_END:${base64}]`
+    const payload = JSON.stringify(data)
+    const base64 = Buffer.from(payload).toString('base64')
+    return type === 'start'
+        ? `[TOOL_STEP_START:${base64}]`
+        : `[TOOL_STEP_END:${base64}]`
 }
 
 // Helper: Generiere eindeutige Tool-Step-ID
 function generateToolStepId(): string {
-  return `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    return `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
 }
 
 // Tool: Quellen suchen
@@ -71,7 +71,7 @@ const searchSourcesTool = tool({
         const language = await queryLanguage()
         const stepId = generateToolStepId()
         const toolName = 'searchSources'
-        
+
         try {
             const fetcher = new SourceFetcher({
                 maxParallelRequests: 5,
@@ -131,7 +131,7 @@ const analyzeSourcesTool = tool({
         try {
             const model = deepseek(DEEPSEEK_CHAT_MODEL)
             const noAbstractText = translations[language as Language]?.askAi?.toolNoAbstractAvailable || 'Kein Abstract verfügbar'
-            
+
             // Bereite Quellen für LLM-Bewertung vor
             const sourcesForEvaluation = (sources as unknown as NormalizedSource[]).map((source) => ({
                 id: source.id || `src-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -173,16 +173,16 @@ Bewertungskriterien (in dieser Reihenfolge):
 
 Quellen:
 ${JSON.stringify(sourcesForEvaluation.map(s => ({
-    id: s.id,
-    title: s.title,
-    abstract: s.abstract || noAbstractText,
-    authors: s.authors,
-    year: s.year,
-    keywords: s.keywords,
-    citationCount: s.citationCount,
-    impactFactor: s.impactFactor,
-    isOpenAccess: s.isOpenAccess
-})), null, 2)}
+                id: s.id,
+                title: s.title,
+                abstract: s.abstract || noAbstractText,
+                authors: s.authors,
+                year: s.year,
+                keywords: s.keywords,
+                citationCount: s.citationCount,
+                impactFactor: s.impactFactor,
+                isOpenAccess: s.isOpenAccess
+            })), null, 2)}
 
 Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel und Abstract eingeht und erklärt, warum die Quelle relevant oder nicht relevant ist.`
 
@@ -205,9 +205,9 @@ Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel un
             // Kombiniere LLM-Bewertung mit Metadaten
             const analyzed = sourcesForEvaluation.map((source) => {
                 const evaluation = object.evaluations.find((e) => e.id === source.id)
-                
+
                 const noEvaluationText = translations[language as Language]?.askAi?.toolNoEvaluationAvailable || 'Keine Bewertung verfügbar'
-                
+
                 if (!evaluation) {
                     return {
                         ...source,
@@ -220,13 +220,13 @@ Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel un
 
                 // Berechne Ranking-Score: LLM-Bewertung + Metadaten-Bonus
                 const llmScore = evaluation.relevanceScore
-                
+
                 // Metadaten-Bonus (max. 30 Punkte)
                 const impactBonus = source.impactFactor ? Math.min(source.impactFactor * 2, 10) : 0
                 const citationBonus = source.citationCount ? Math.min(source.citationCount / 10, 10) : 0
                 const openAccessBonus = source.isOpenAccess ? 5 : 0
                 const completenessBonus = (source.title && source.abstract) ? 5 : 0
-                
+
                 const metadataBonus = impactBonus + citationBonus + openAccessBonus + completenessBonus
                 const rankingScore = llmScore + metadataBonus
 
@@ -284,7 +284,7 @@ Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel un
 
             const messageTemplate = translations[language as Language]?.askAi?.toolAnalyzeSourcesMessage || 'Analyse abgeschlossen. {totalSelected} Quellen aus {totalAnalyzed} analysierten Quellen ausgewählt.'
             const message = messageTemplate.replace('{totalSelected}', selectedWithReason.length.toString()).replace('{totalAnalyzed}', analyzed.length.toString())
-            
+
             return {
                 success: true,
                 selected: selectedWithReason,
@@ -336,12 +336,12 @@ const evaluateSourcesTool = tool({
         3. **Wissenschaftlichkeit**: Scheint es eine seriöse, wissenschaftlich fundierte Quelle zu sein?
         
         Quellen (mit vollständigem Abstract):
-        ${JSON.stringify(sources.map(s => ({ 
-          id: s.id, 
-          title: s.title, 
-          abstract: s.abstract || noAbstractText,
-          year: s.year
-        })), null, 2)}
+        ${JSON.stringify(sources.map(s => ({
+                id: s.id,
+                title: s.title,
+                abstract: s.abstract || noAbstractText,
+                year: s.year
+            })), null, 2)}
         
         Für jede Quelle: Gib eine detaillierte Begründung, die spezifisch auf Titel und Abstract eingeht und erklärt, warum die Quelle relevant oder nicht relevant ist.
       `
@@ -379,13 +379,13 @@ const evaluateSourcesTool = tool({
 // Helper: Konvertiere Source zu Citation (für direkte DB-Operationen)
 function convertSourceToCitation(source: any) {
     const authors = source.authors
-        ? (typeof source.authors === 'string' 
+        ? (typeof source.authors === 'string'
             ? source.authors.split(',').map((a: string) => a.trim())
             : Array.isArray(source.authors)
-            ? source.authors.map((a: any) => 
-                typeof a === 'string' ? a : a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim()
-              )
-            : [])
+                ? source.authors.map((a: any) =>
+                    typeof a === 'string' ? a : a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim()
+                )
+                : [])
         : []
 
     const externalUrl = getCitationLink({
@@ -460,7 +460,7 @@ function addSourcesToLibraryToolWithUser(userId: string) {
             const language = await queryLanguage()
             const stepId = generateToolStepId()
             const toolName = 'addSourcesToLibrary'
-            
+
             try {
                 const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId)
                 if (!library) {
@@ -504,7 +504,7 @@ function addSourcesToLibraryToolWithUser(userId: string) {
 
                 const messageTemplate = translations[language as Language]?.askAi?.toolAddSourcesToLibraryMessage || 'hinzugefügt'
                 const message = `${uniqueCitations.length} Quelle(n) zur Bibliothek "${library.name}" ${messageTemplate}`
-                
+
                 return {
                     success: true,
                     added: uniqueCitations.length,
@@ -513,7 +513,7 @@ function addSourcesToLibraryToolWithUser(userId: string) {
                         id: stepId,
                         toolName,
                         status: 'completed',
-                        output: { added: uniqueCitations.length, libraryName: library.name },
+                        output: { added: uniqueCitations.length, libraryName: library.name, citations: uniqueCitations },
                     }),
                 }
             } catch (error) {
@@ -547,7 +547,7 @@ function listAllLibrariesToolWithUser(userId: string, projectId?: string) {
             try {
                 // Filter nach projectId wenn vorhanden
                 const libraries = await citationLibrariesUtils.getCitationLibraries(userId, undefined, projectId)
-                
+
                 // Für jede Bibliothek die Anzahl der Citations ermitteln
                 const librariesWithCounts = await Promise.all(
                     libraries.map(async (lib) => {
@@ -565,7 +565,7 @@ function listAllLibrariesToolWithUser(userId: string, projectId?: string) {
                 const message = librariesWithCounts.length === 0
                     ? (translations[language as Language]?.askAi?.toolListAllLibrariesNoLibraries || 'Keine Bibliotheken gefunden. Erstelle zuerst eine Bibliothek mit createLibrary.')
                     : (translations[language as Language]?.askAi?.toolListAllLibrariesFound || '{count} Bibliothek(en) gefunden. Verwende getLibrarySources mit der libraryId, um die Quellen einer Bibliothek abzurufen.').replace('{count}', librariesWithCounts.length.toString())
-                
+
                 return {
                     success: true,
                     libraries: librariesWithCounts,
@@ -605,7 +605,7 @@ function getLibrarySourcesToolWithUser(userId: string) {
             const stepId = generateToolStepId()
             const toolName = 'getLibrarySources'
             const libraryNotFoundText = translations[language as Language]?.askAi?.toolGetLibrarySourcesNotFound || 'Bibliothek nicht gefunden'
-            
+
             try {
                 const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId)
                 if (!library) {
@@ -637,7 +637,7 @@ function getLibrarySourcesToolWithUser(userId: string) {
 
                 const messageTemplate = translations[language as Language]?.askAi?.toolGetLibrarySourcesContains || 'Bibliothek "{name}" enthält {count} Quelle(n)'
                 const message = messageTemplate.replace('{name}', library.name).replace('{count}', savedCitations.length.toString())
-                
+
                 return {
                     success: true,
                     libraryId: library.id,
@@ -758,10 +758,10 @@ const addThemaTool = tool({
         }
         const jsonString = JSON.stringify(toolResult)
         const base64Payload = Buffer.from(jsonString).toString('base64')
-        
+
         const messageTemplate = translations[language as Language]?.askAi?.toolAddThemaMessage || 'Thema "{thema}" wurde gesetzt'
         const message = messageTemplate.replace('{thema}', thema)
-        
+
         const response = {
             success: true,
             message,
@@ -785,93 +785,93 @@ const getCurrentStepTool = tool({
 
 // Tool: Editor-Inhalt abrufen (Factory-Funktion mit editorContent)
 function createGetEditorContentTool(editorContent: string) {
-  return tool({
-    description: 'Ruft den aktuellen Inhalt des Editors ab. Nutze dieses Tool, um zu sehen, was der Student bereits geschrieben hat oder um den aktuellen Stand der Arbeit zu analysieren.',
-    inputSchema: z.object({
-      includeFullText: z.boolean().optional().describe('Ob der vollständige Text zurückgegeben werden soll (Standard: true). Bei false wird nur eine Zusammenfassung zurückgegeben.'),
-      maxLength: z.number().optional().describe('Maximale Länge des zurückgegebenen Textes in Zeichen (Standard: unbegrenzt)'),
-    }),
-    execute: async ({ includeFullText = true, maxLength }) => {
-      const language = await queryLanguage()
-      const stepId = generateToolStepId()
-      const toolName = 'getEditorContent'
-      
-      devLog('📄 [GENERAL AGENT] getEditorContent Tool aufgerufen')
-      devLog('📥 [GENERAL AGENT] Parameter:', {
-        includeFullText,
-        maxLength,
-        editorContentLength: editorContent?.length || 0,
-      })
-      
-      if (!editorContent || editorContent.trim().length === 0) {
-        return {
-          success: true,
-          isEmpty: true,
-          content: '',
-          message: translations[language as Language]?.askAi?.toolGetEditorContentEmpty || 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
-          characterCount: 0,
-          wordCount: 0,
-          _toolStep: createToolStepMarker('end', {
-            id: stepId,
-            toolName,
-            status: 'completed',
-            output: { isEmpty: true, characterCount: 0, wordCount: 0 },
-          }),
-        }
-      }
-      
-      let content = editorContent.trim()
-      
-      // Kürze auf maxLength wenn angegeben
-      if (maxLength && content.length > maxLength) {
-        content = content.substring(0, maxLength) + '...'
-      }
-      
-      // Berechne Statistiken
-      const characterCount = editorContent.length
-      const wordCount = editorContent.split(/\s+/).filter(w => w.length > 0).length
-      const paragraphCount = editorContent.split(/\n\n+/).filter(p => p.trim().length > 0).length
-      
-      // Extrahiere Überschriften
-      const headings = editorContent.match(/^#{1,6}\s.+$/gm) || []
-      
-      const messageTemplate = translations[language as Language]?.askAi?.toolGetEditorContentMessage || 'Editor-Inhalt abgerufen: {wordCount} Wörter, {characterCount} Zeichen.'
-      const message = messageTemplate.replace('{wordCount}', wordCount.toString()).replace('{characterCount}', characterCount.toString())
-      
-      const response = {
-        success: true,
-        isEmpty: false,
-        content: includeFullText ? content : undefined,
-        summary: !includeFullText ? `${wordCount} Wörter, ${paragraphCount} Absätze, ${headings.length} Überschriften` : undefined,
-        message,
-        characterCount,
-        wordCount,
-        paragraphCount,
-        headingCount: headings.length,
-        headings: headings.slice(0, 10), // Erste 10 Überschriften
-        _toolStep: createToolStepMarker('end', {
-          id: stepId,
-          toolName,
-          status: 'completed',
-          output: { 
-            wordCount, 
-            characterCount,
-            paragraphCount,
-            headingCount: headings.length,
-          },
+    return tool({
+        description: 'Ruft den aktuellen Inhalt des Editors ab. Nutze dieses Tool, um zu sehen, was der Student bereits geschrieben hat oder um den aktuellen Stand der Arbeit zu analysieren.',
+        inputSchema: z.object({
+            includeFullText: z.boolean().optional().describe('Ob der vollständige Text zurückgegeben werden soll (Standard: true). Bei false wird nur eine Zusammenfassung zurückgegeben.'),
+            maxLength: z.number().optional().describe('Maximale Länge des zurückgegebenen Textes in Zeichen (Standard: unbegrenzt)'),
         }),
-      }
-      
-      devLog('📤 [GENERAL AGENT] getEditorContent Response:', {
-        wordCount,
-        characterCount,
-        paragraphCount,
-        headingCount: headings.length,
-      })
-      
-      return response
-    },
-  })
+        execute: async ({ includeFullText = true, maxLength }) => {
+            const language = await queryLanguage()
+            const stepId = generateToolStepId()
+            const toolName = 'getEditorContent'
+
+            devLog('📄 [GENERAL AGENT] getEditorContent Tool aufgerufen')
+            devLog('📥 [GENERAL AGENT] Parameter:', {
+                includeFullText,
+                maxLength,
+                editorContentLength: editorContent?.length || 0,
+            })
+
+            if (!editorContent || editorContent.trim().length === 0) {
+                return {
+                    success: true,
+                    isEmpty: true,
+                    content: '',
+                    message: translations[language as Language]?.askAi?.toolGetEditorContentEmpty || 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
+                    characterCount: 0,
+                    wordCount: 0,
+                    _toolStep: createToolStepMarker('end', {
+                        id: stepId,
+                        toolName,
+                        status: 'completed',
+                        output: { isEmpty: true, characterCount: 0, wordCount: 0 },
+                    }),
+                }
+            }
+
+            let content = editorContent.trim()
+
+            // Kürze auf maxLength wenn angegeben
+            if (maxLength && content.length > maxLength) {
+                content = content.substring(0, maxLength) + '...'
+            }
+
+            // Berechne Statistiken
+            const characterCount = editorContent.length
+            const wordCount = editorContent.split(/\s+/).filter(w => w.length > 0).length
+            const paragraphCount = editorContent.split(/\n\n+/).filter(p => p.trim().length > 0).length
+
+            // Extrahiere Überschriften
+            const headings = editorContent.match(/^#{1,6}\s.+$/gm) || []
+
+            const messageTemplate = translations[language as Language]?.askAi?.toolGetEditorContentMessage || 'Editor-Inhalt abgerufen: {wordCount} Wörter, {characterCount} Zeichen.'
+            const message = messageTemplate.replace('{wordCount}', wordCount.toString()).replace('{characterCount}', characterCount.toString())
+
+            const response = {
+                success: true,
+                isEmpty: false,
+                content: includeFullText ? content : undefined,
+                summary: !includeFullText ? `${wordCount} Wörter, ${paragraphCount} Absätze, ${headings.length} Überschriften` : undefined,
+                message,
+                characterCount,
+                wordCount,
+                paragraphCount,
+                headingCount: headings.length,
+                headings: headings.slice(0, 10), // Erste 10 Überschriften
+                _toolStep: createToolStepMarker('end', {
+                    id: stepId,
+                    toolName,
+                    status: 'completed',
+                    output: {
+                        wordCount,
+                        characterCount,
+                        paragraphCount,
+                        headingCount: headings.length,
+                    },
+                }),
+            }
+
+            devLog('📤 [GENERAL AGENT] getEditorContent Response:', {
+                wordCount,
+                characterCount,
+                paragraphCount,
+                headingCount: headings.length,
+            })
+
+            return response
+        },
+    })
 }
 
 export async function POST(req: NextRequest) {
@@ -934,7 +934,7 @@ Inhalt (${wordCount} Wörter):
 ${file.content}
 \`\`\``
                 })
-            
+
             if (fileSections.length > 0) {
                 const fileContentSection = `\n\n## Hochgeladene Dateien
 
@@ -947,14 +947,14 @@ ${fileSections.join('\n\n---\n\n')}`
         }
 
         if (documentContextEnabled && currentEditorContent.trim().length > 0) {
-          const wordCount = currentEditorContent.split(/\s+/).filter(w => w.length > 0).length
-          const headings = currentEditorContent.match(/^#{1,6}\s.+$/gm) || []
-          
-          const truncatedContent = currentEditorContent.length > 8000 
-            ? currentEditorContent.substring(0, 8000) + '\n\n' + (translations[language as Language]?.askAi?.toolTextTruncated || '[... Text gekürzt ...]')
-            : currentEditorContent
-          
-          const editorContextSection = `
+            const wordCount = currentEditorContent.split(/\s+/).filter(w => w.length > 0).length
+            const headings = currentEditorContent.match(/^#{1,6}\s.+$/gm) || []
+
+            const truncatedContent = currentEditorContent.length > 8000
+                ? currentEditorContent.substring(0, 8000) + '\n\n' + (translations[language as Language]?.askAi?.toolTextTruncated || '[... Text gekürzt ...]')
+                : currentEditorContent
+
+            const editorContextSection = `
 
 ## Aktueller Editor-Inhalt (Kontext aktiviert)
 
@@ -969,8 +969,8 @@ ${truncatedContent}
 
 **WICHTIG**: Beziehe dich auf diesen vorhandenen Text, wenn der Nutzer danach fragt oder wenn es relevant ist. Du kannst den Text analysieren, Verbesserungen vorschlagen oder darauf aufbauen.
 `
-          systemPrompt += editorContextSection
-          devLog('[GENERAL AGENT] Editor-Kontext hinzugefügt:', { wordCount, headingsCount: headings.length })
+            systemPrompt += editorContextSection
+            devLog('[GENERAL AGENT] Editor-Kontext hinzugefügt:', { wordCount, headingsCount: headings.length })
         }
 
         const agent = new Agent({
@@ -1025,7 +1025,7 @@ ${truncatedContent}
         let stepCount = 0
         let lastEventTime = Date.now()
         let isReasoningPhase = false
-        
+
         const customStream = new ReadableStream({
             async start(controller) {
                 try {
@@ -1033,15 +1033,15 @@ ${truncatedContent}
                         const now = Date.now()
                         const timeSinceLastEvent = now - lastEventTime
                         lastEventTime = now
-                        
+
                         if (event.type !== 'text-delta') {
                         }
-                        
+
                         if (event.type === 'reasoning-start') {
                             isReasoningPhase = true
                             continue
                         }
-                        
+
                         if (event.type === 'reasoning-delta' || event.type === 'reasoning-end') {
                             isReasoningPhase = event.type === 'reasoning-delta'
                             const reasoningText = 'textDelta' in event ? (event as { textDelta: string }).textDelta : ''
@@ -1053,35 +1053,35 @@ ${truncatedContent}
                             }
                             continue
                         }
-                        
+
                         if (event.type === 'start') {
                             stepCount++
                             isReasoningPhase = false
                             continue
                         }
-                        
+
                         if (event.type === 'tool-call') {
                             isReasoningPhase = false
                             const stepId = `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
                             toolStepTimestamps[event.toolCallId] = Date.now()
                             toolStepIds[event.toolCallId] = stepId
-                            
+
                             const toolInput = 'input' in event ? (event.input as Record<string, any>) : {}
-                            
+
                             const startMarker = createToolStepMarker('start', {
                                 id: stepId,
                                 toolName: event.toolName,
                                 input: toolInput,
                             })
                             controller.enqueue(encoder.encode(startMarker))
-                            
+
                             await new Promise(resolve => setTimeout(resolve, 10))
                         } else if (event.type === 'tool-result') {
                             const stepId = toolStepIds[event.toolCallId] || `step_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
                             const startTime = toolStepTimestamps[event.toolCallId] || Date.now()
-                            
+
                             const toolOutput = 'output' in event ? event.output : null
-                            
+
                             const output: Record<string, any> = {}
                             if (typeof toolOutput === 'object' && toolOutput !== null) {
                                 const result = toolOutput as Record<string, any>
@@ -1096,7 +1096,7 @@ ${truncatedContent}
                                 if (result.error !== undefined) output.error = result.error
                                 if (result.message !== undefined) output.message = result.message
                             }
-                            
+
                             const endMarker = createToolStepMarker('end', {
                                 id: stepId,
                                 toolName: event.toolName,
@@ -1116,20 +1116,20 @@ ${truncatedContent}
                         } else if (event.type === 'finish') {
                         } else if (event.type === 'error') {
                             const errorMessage = 'error' in event ? String(event.error) : 'Unbekannter Fehler'
-                            
+
                             const errorMarker = `\n\n**Fehler:** Es ist ein Problem aufgetreten. Bitte versuche es erneut.\n`
                             controller.enqueue(encoder.encode(errorMarker))
                         }
                     }
                     controller.close()
                 } catch (error) {
-                    
+
                     try {
                         const errorMarker = `\n\n**Fehler:** Die Verarbeitung wurde unterbrochen. Bitte versuche es erneut.\n`
                         controller.enqueue(encoder.encode(errorMarker))
                     } catch (e) {
                     }
-                    
+
                     controller.error(error)
                 }
             }

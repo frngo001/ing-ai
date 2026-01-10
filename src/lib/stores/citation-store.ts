@@ -195,6 +195,7 @@ interface CitationState {
   syncLibrariesFromBackend: (projectId?: string | null, isSharedProject?: boolean) => Promise<void>
   setLibraries: (libraries: CitationLibrary[]) => void
   loadLibrariesFromSupabase: (projectId?: string | null, isSharedProject?: boolean) => Promise<void>
+  addCitationsToLibrary: (libraryId: string, citations: SavedCitation[]) => void
 }
 
 const createDefaultLibrary = (): CitationLibrary => ({
@@ -717,6 +718,27 @@ export const useCitationStore = create<CitationState>()(
       },
       syncLibrariesFromBackend: async (projectId?: string | null, isSharedProject?: boolean) => {
         await get().loadLibrariesFromSupabase(projectId, isSharedProject)
+      },
+      addCitationsToLibrary: (libraryId: string, newCitations: SavedCitation[]) => {
+        set((state) => {
+          const libraries = state.libraries.map((lib) => {
+            if (lib.id === libraryId) {
+              const existingIds = new Set(lib.citations.map((c) => c.id))
+              const uniqueNew = newCitations.filter((c) => !existingIds.has(c.id))
+              return {
+                ...lib,
+                citations: [...lib.citations, ...uniqueNew],
+              }
+            }
+            return lib
+          })
+
+          const activeLib = libraries.find((lib) => lib.id === state.activeLibraryId)
+          return {
+            libraries,
+            savedCitations: activeLib?.citations || state.savedCitations,
+          }
+        })
       },
     }),
     {

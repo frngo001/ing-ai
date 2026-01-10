@@ -306,14 +306,14 @@ export function EditorBibliography({ className: _className }: { className?: stri
           .trim();
 
         return {
-        ...item,
-        entry: {
-          authors: '',
+          ...item,
+          entry: {
+            authors: '',
             rest,
             link,
-        },
-        sortKey: `${index}`,
-        orderIndex: index,
+          },
+          sortKey: `${index}`,
+          orderIndex: index,
         };
       });
     }
@@ -350,7 +350,9 @@ export function EditorBibliography({ className: _className }: { className?: stri
       .map((e, idx) => {
         const prefix = citationStyle === 'vancouver' ? `[${idx + 1}] ` : '';
         const link = e.entry.link ? `::${e.entry.link}` : '';
-        return `${e.data.sourceId || e.path.join('-')}::${prefix}${e.entry.authors}${e.entry.rest}${link}`;
+        // Verwende sourceId für Stabilität. Nur wenn keine ID vorhanden ist (manuelle Zitate), weiche auf den Pfad aus.
+        const stableId = e.data.sourceId || e.path.join('-');
+        return `${stableId}::${prefix}${e.entry.authors}${e.entry.rest}${link}`;
       })
       .join('|');
   }, [bibliographyEntries, citationStyle, externalEntries, isExternalStyle]);
