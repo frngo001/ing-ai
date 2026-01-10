@@ -439,7 +439,7 @@ export function PlateEditor({
         avatarUrl: currentUser.avatarUrl,
         selection: editor.selection || null,
       });
-    }, 1); // Send cursor update Every 1ms
+    }, 5); // Send cursor update Every 1ms
 
     return () => clearInterval(interval);
   }, [editor, isUUIDDocument, currentUser, updatePresence]);
