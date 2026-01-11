@@ -314,7 +314,7 @@ export function MessageInput({
           onPaste={onPaste}
           onKeyDown={onKeyDown}
           className={cn(
-            "z-10 w-full grow resize-none bg-transparent p-2.5 sm:p-3 text-sm ring-0 focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/60 focus-visible:outline-none border-0 shadow-none disabled:cursor-not-allowed disabled:opacity-50 overflow-y-auto scrollbar-none transition-all duration-200 min-h-[36px]",
+            "z-10 w-full resize-none bg-transparent p-2.5 sm:p-3 text-sm ring-0 focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/60 focus-visible:outline-none border-0 shadow-none disabled:cursor-not-allowed disabled:opacity-50 overflow-y-auto scrollbar-none transition-all duration-200 min-h-[44px]",
             className
           )}
           {...(props.allowAttachments
