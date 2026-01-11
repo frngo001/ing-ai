@@ -45,7 +45,7 @@ function List(props: PlateElementProps) {
   return (
     <List
       className={cn(
-        'relative m-0 text-justify',
+        'relative m-0',
         listStyleType === 'todo' ? 'pl-8' : 'pl-10'
       )}
       style={{ listStyleType }}

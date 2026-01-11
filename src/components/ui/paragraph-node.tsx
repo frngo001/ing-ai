@@ -17,7 +17,7 @@ export function ParagraphElement(props: PlateElementProps) {
     <PlateElement
       {...props}
       className={cn(
-        'm-0 px-0 py-1 text-justify',
+        'm-0 px-0 py-1',
         isBibliographyEntry && 'bibliography-entry',
         isBibliography && 'bibliography-block'
       )}
