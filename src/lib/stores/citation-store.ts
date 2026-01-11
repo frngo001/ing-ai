@@ -542,6 +542,13 @@ export const useCitationStore = create<CitationState>()(
 
         // Optimistisch aus lokalem State und localStorage löschen
         const previousState = get()
+
+        // Verhindere das Löschen, wenn es die letzte Bibliothek ist
+        if (previousState.libraries.length <= 1) {
+          devWarn('⚠️ [CITATION STORE] Mindestens eine Bibliothek muss erhalten bleiben')
+          return
+        }
+
         set((state) => {
           const filteredLibraries = state.libraries.filter((lib) => lib.id !== id)
 

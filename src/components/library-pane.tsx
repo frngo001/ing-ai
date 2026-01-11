@@ -395,7 +395,8 @@ export function LibraryPane({
           )}
           {activeLibraryId &&
             !isViewOnly &&
-            activeLibraryId !== 'library_default' && (
+            activeLibraryId !== 'library_default' &&
+            libraries.length > 1 && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
