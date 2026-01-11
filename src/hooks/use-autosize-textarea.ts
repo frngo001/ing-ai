@@ -5,6 +5,7 @@ interface UseAutosizeTextAreaProps {
   | React.RefObject<HTMLTextAreaElement | null>
   | React.MutableRefObject<HTMLTextAreaElement | null>
   maxHeight?: number
+  minHeight?: number
   borderWidth?: number
   dependencies: React.DependencyList
 }
@@ -12,6 +13,7 @@ interface UseAutosizeTextAreaProps {
 export function useAutosizeTextArea({
   ref,
   maxHeight = Number.MAX_SAFE_INTEGER,
+  minHeight = 60,
   borderWidth = 0,
   dependencies,
 }: UseAutosizeTextAreaProps) {
@@ -26,10 +28,14 @@ export function useAutosizeTextArea({
 
     const scrollHeight = currentRef.scrollHeight
 
-    // Clamp between content size and maxHeight
-    const targetHeight = Math.min(scrollHeight, maxHeight)
+    // Explicitly handle empty state to ensure minHeight is respected
+    const isEmpty = currentRef.value.trim() === ""
+    const contentHeight = isEmpty ? 0 : scrollHeight
+
+    // Clamp between minHeight, content size and maxHeight
+    const targetHeight = Math.max(minHeight, Math.min(contentHeight, maxHeight))
 
     currentRef.style.height = `${targetHeight + borderAdjustment}px`
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maxHeight, ref, ...dependencies])
+  }, [maxHeight, minHeight, ref, ...dependencies])
 }

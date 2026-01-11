@@ -221,7 +221,8 @@ export function MessageInput({
   useAutosizeTextArea({
     ref: innerTextAreaRef,
     maxHeight: 320,
-    borderWidth: 1,
+    minHeight: 60,
+    borderWidth: 0,
     dependencies: [props.value, showFileList],
   })
 
@@ -229,10 +230,6 @@ export function MessageInput({
     <div
       className="relative flex w-full max-w-full flex-col gap-1.5 rounded-lg border border-primary/60 bg-background/50 transition-all duration-200 focus-within:ring-1 focus-within:ring-primary/40 focus-within:bg-background/80 focus-within:border-primary focus-within:shadow-sm"
       onDragOver={onDragOver}
-
-
-
-
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
@@ -314,7 +311,7 @@ export function MessageInput({
           onPaste={onPaste}
           onKeyDown={onKeyDown}
           className={cn(
-            "z-10 w-full resize-none bg-transparent p-2.5 sm:p-3 text-sm ring-0 focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/60 focus-visible:outline-none border-0 shadow-none disabled:cursor-not-allowed disabled:opacity-50 overflow-y-auto scrollbar-none transition-all duration-200 min-h-[44px]",
+            "z-10 w-full resize-none bg-transparent p-2.5 sm:p-3 text-sm ring-0 focus:ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/60 focus-visible:outline-none border-0 shadow-none disabled:cursor-not-allowed disabled:opacity-50 overflow-y-auto scrollbar-none min-h-[60px]",
             className
           )}
           {...(props.allowAttachments
