@@ -309,6 +309,7 @@ export function DocumentsPane({
 
     const remainingDocs = documents.filter(doc => doc.id !== id)
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    const previousDocs = documents
 
     if (typeof window !== "undefined") {
       try {
@@ -320,12 +321,15 @@ export function DocumentsPane({
       }
     }
 
+    setDocuments(remainingDocs)
+
     if (isUUID && userId) {
       try {
         await documentsUtils.deleteDocument(id, userId)
         documentCountCache.decrementDocumentCount(userId, currentProjectId ?? undefined)
       } catch (error) {
         devError("Fehler beim Löschen des Dokuments aus Supabase:", error)
+        setDocuments(previousDocs)
       }
     } else if (userId) {
       documentCountCache.decrementDocumentCount(userId, currentProjectId ?? undefined)
@@ -339,8 +343,8 @@ export function DocumentsPane({
       }
     }
 
-    loadFromSupabase()
     setDocToDelete(null)
+    loadFromSupabase(true)
   }, [docToDelete, loadFromSupabase, searchParams, router, documents, currentProjectId])
 
   /**

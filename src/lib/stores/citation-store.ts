@@ -444,17 +444,7 @@ export const useCitationStore = create<CitationState>()(
       removeCitation: async (id) => {
         const userId = await getCurrentUserId()
 
-        // Lösche aus Supabase, wenn User eingeloggt ist
-        if (userId) {
-          try {
-            await citationsUtils.deleteCitation(id, userId)
-          } catch (error) {
-            devError('❌ [CITATION STORE] Fehler beim Löschen der Citation aus Supabase:', error)
-            // Weiter mit lokalem Löschen auch wenn Supabase fehlschlägt
-          }
-        }
-
-        // Lösche aus allen Libraries im State (nicht nur der aktiven)
+        // Optimistisch aus allen Libraries im State löschen (nicht nur der aktiven)
         // Der persist Middleware aktualisiert automatisch den localStorage
         set((state) => {
           const updatedLibraries = state.libraries.map((lib) => ({
@@ -470,6 +460,18 @@ export const useCitationStore = create<CitationState>()(
             savedCitations: activeLib?.citations || [],
           }
         })
+
+        // Lösche aus Supabase, wenn User eingeloggt ist
+        if (userId) {
+          try {
+            await citationsUtils.deleteCitation(id, userId)
+          } catch (error) {
+            devError('❌ [CITATION STORE] Fehler beim Löschen der Citation aus Supabase:', error)
+            // Synchronisiere den State neu, falls das Löschen in der DB fehlgeschlagen ist
+            const currentProjectId = get().currentProjectId
+            await get().syncLibrariesFromBackend(currentProjectId)
+          }
+        }
       },
       addLibrary: async (name: string) => {
         const userId = await getCurrentUserId()
@@ -538,26 +540,8 @@ export const useCitationStore = create<CitationState>()(
           return
         }
 
-        // Verhindere das Löschen, wenn es die letzte Bibliothek ist
-        const state = get()
-        const nonDefaultLibraries = state.libraries.filter((lib) => lib.id !== 'library_default')
-        if (nonDefaultLibraries.length <= 1 && nonDefaultLibraries[0]?.id === id) {
-          devWarn('⚠️ [CITATION STORE] Mindestens eine Bibliothek muss erhalten bleiben')
-          return
-        }
-
-        // Lösche aus Supabase, wenn User eingeloggt und es eine UUID ist
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
-        if (isUUID && userId) {
-          try {
-            await citationLibrariesUtils.deleteCitationLibrary(id, userId)
-          } catch (error) {
-            devError('❌ [CITATION STORE] Fehler beim Löschen der Bibliothek aus Supabase:', error)
-            // Weiter mit lokalem Löschen auch wenn Supabase fehlschlägt
-          }
-        }
-
-        // Lösche aus lokalem State und localStorage (wird durch persist automatisch aktualisiert)
+        // Optimistisch aus lokalem State und localStorage löschen
+        const previousState = get()
         set((state) => {
           const filteredLibraries = state.libraries.filter((lib) => lib.id !== id)
 
@@ -565,7 +549,7 @@ export const useCitationStore = create<CitationState>()(
           let newActiveId = state.activeLibraryId
           if (state.activeLibraryId === id) {
             // Bevorzuge die Standardbibliothek, falls vorhanden, sonst die erste verfügbare
-            newActiveId = state.libraries.find((lib) => lib.id === 'library_default')?.id || filteredLibraries[0]?.id
+            newActiveId = filteredLibraries.find((lib) => lib.id === 'library_default')?.id || filteredLibraries[0]?.id
           }
 
           const activeLib = filteredLibraries.find((lib) => lib.id === newActiveId) ?? filteredLibraries[0]
@@ -576,6 +560,24 @@ export const useCitationStore = create<CitationState>()(
             savedCitations: activeLib?.citations || [],
           }
         })
+
+        // Lösche aus Supabase, wenn User eingeloggt und es eine UUID ist
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+        if (isUUID && userId) {
+          try {
+            await citationLibrariesUtils.deleteCitationLibrary(id, userId)
+          } catch (error) {
+            devError('❌ [CITATION STORE] Fehler beim Löschen der Bibliothek aus Supabase:', error)
+            // Rollback bei Fehler oder Neu-Synchronisation
+            set({
+              libraries: previousState.libraries,
+              activeLibraryId: previousState.activeLibraryId,
+              savedCitations: previousState.savedCitations
+            })
+            const currentProjectId = get().currentProjectId
+            await get().syncLibrariesFromBackend(currentProjectId)
+          }
+        }
       },
       setActiveLibrary: (id: string) =>
         set((state) => {
