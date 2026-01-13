@@ -124,12 +124,18 @@ function BentoGridItem({ item }: { item: BentoItem }) {
           </CardCurtainRevealDescription>
           {link && (
             <Link href={link} aria-label={`${t('landing.blog.learnMore')}: ${title}`}>
+              <span className="sr-only">
+                {t('landing.blog.learnMore')}: {title}
+              </span>
               <Button
                 variant="secondary"
                 size="icon"
                 className="aspect-square rounded-full"
+                asChild
               >
-                <ArrowUpRight className="h-5 w-5" />
+                <span>
+                  <ArrowUpRight className="h-5 w-5" />
+                </span>
               </Button>
             </Link>
           )}
@@ -190,7 +196,10 @@ function BentoGridItem({ item }: { item: BentoItem }) {
       <CardFooter>
         {link && (
           <Link href={link} aria-label={`${t('landing.blog.learnMore')}: ${title}`}>
-            <LiftButton showArrow size="sm" variant="outline">
+            <span className="sr-only">
+              {t('landing.blog.learnMore')}: {title}
+            </span>
+            <LiftButton showArrow size="sm" variant="outline" render={<span />}>
               {t('landing.blog.learnMore')}
             </LiftButton>
           </Link>

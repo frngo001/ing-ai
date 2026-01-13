@@ -84,7 +84,7 @@ export function BlogSection() {
                     </p>
                 </div>
                 <BentoGridTemplateTwo items={items} gap={6} animate={true} />
-                
+
                 {/* View All Blog Posts Button */}
                 <div className="mt-12 text-center">
                     <Link href="/blog">
@@ -92,9 +92,12 @@ export function BlogSection() {
                             size="lg"
                             variant="outline"
                             className="rounded-full group"
+                            asChild
                         >
-                            {t('landing.blog.viewAll')}
-                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            <span>
+                                {t('landing.blog.viewAll')}
+                                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            </span>
                         </Button>
                     </Link>
                 </div>

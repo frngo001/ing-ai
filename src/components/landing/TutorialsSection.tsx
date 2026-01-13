@@ -53,7 +53,7 @@ function TutorialCard({
     index: number;
 }) {
     const { t, language } = useLanguage()
-    
+
     const authorPrefix = React.useMemo(() => t('landing.tutorials.author'), [t, language])
     const displayDescription = React.useMemo(() => {
         // Wenn die Beschreibung nur ein Autor-Name ist (kein "Von" Präfix), füge das übersetzte Präfix hinzu
@@ -214,6 +214,7 @@ export function TutorialsSection() {
                                     className="rounded-full h-10 w-10 border-neutral-200 dark:border-neutral-800 disabled:opacity-30"
                                     onClick={() => scroll("left")}
                                     disabled={!canScrollLeft}
+                                    aria-label="Previous"
                                 >
                                     <ChevronLeft className="h-5 w-5" />
                                 </Button>
@@ -223,6 +224,7 @@ export function TutorialsSection() {
                                     className="rounded-full h-10 w-10 border-neutral-200 dark:border-neutral-800 disabled:opacity-30"
                                     onClick={() => scroll("right")}
                                     disabled={!canScrollRight}
+                                    aria-label="Next"
                                 >
                                     <ChevronRight className="h-5 w-5" />
                                 </Button>
@@ -251,13 +253,13 @@ export function TutorialsSection() {
                                 className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4"
                                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                             >
-                            {tutorials.map((tutorial, index) => (
-                                <TutorialCard
-                                    key={tutorial.id}
-                                    tutorial={tutorial}
-                                    index={index}
-                                />
-                            ))}
+                                {tutorials.map((tutorial, index) => (
+                                    <TutorialCard
+                                        key={tutorial.id}
+                                        tutorial={tutorial}
+                                        index={index}
+                                    />
+                                ))}
                             </div>
                         )}
 

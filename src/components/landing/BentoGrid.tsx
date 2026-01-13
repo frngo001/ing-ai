@@ -120,31 +120,31 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
 
     return (
         <>
-        <motion.div
-            whileHover={{ y: -2 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="h-full"
+            <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="h-full"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-        >
-            <Card className={cn(
-                "h-full border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-none hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors duration-200",
-                className
-            )}>
-                <CardContent className="p-6 h-full flex flex-col">
-                    {badge && (
-                        <Badge variant="outline" className="w-fit mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                            {badge}
-                        </Badge>
-                    )}
-                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
-                        {title}
-                    </h3>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 leading-relaxed">
-                        {description}
-                    </p>
-                    <div className="flex-1 relative">
-                        {children}
+            >
+                <Card className={cn(
+                    "h-full border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-none hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors duration-200",
+                    className
+                )}>
+                    <CardContent className="p-6 h-full flex flex-col">
+                        {badge && (
+                            <Badge variant="outline" className="w-fit mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                                {badge}
+                            </Badge>
+                        )}
+                        <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
+                            {title}
+                        </h3>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 leading-relaxed">
+                            {description}
+                        </p>
+                        <div className="flex-1 relative">
+                            {children}
                             {video && (video.youtubeId || video.videoSrc || video.gifSrc || video.gifSrcLight || video.gifSrcDark) && (
                                 <div className="mt-4">
                                     {getGifSrc() ? (
@@ -172,7 +172,7 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                                                             backgroundSize: '24px 24px'
                                                         }} />
                                                     </div>
-                                                    
+
                                                     <div className="relative z-10 space-y-4">
                                                         <div className="space-y-1">
                                                             <h4 className="text-lg font-bold text-white dark:text-neutral-100 leading-tight">
@@ -183,8 +183,8 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                                                             </p>
                                                         </div>
                                                         <Link href={ctaHref} className="block">
-                                                            <Button 
-                                                                size="lg" 
+                                                            <Button
+                                                                size="lg"
                                                                 className="w-full bg-white text-neutral-900 hover:bg-neutral-100 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 font-semibold text-base py-6 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                                                             >
                                                                 {t('landing.bentoGrid.cta.button')}
@@ -197,6 +197,7 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                                     ) : (
                                         <button
                                             onClick={() => setShowVideo(true)}
+                                            aria-label={`Play video: ${video.title || title}`}
                                             className={cn(
                                                 "w-full relative aspect-video rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 group transition-all duration-300",
                                                 "hover:border-primary/50 dark:hover:border-primary/50"
@@ -240,10 +241,10 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                                     )}
                                 </div>
                             )}
-                    </div>
-                </CardContent>
-            </Card>
-        </motion.div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
 
             <AnimatePresence>
                 {showVideo && video && (
@@ -284,31 +285,31 @@ export default function BentoGrid() {
                     <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* AI Autocomplete */}
                         <StaggerItem className="lg:col-span-2">
-                        <FeatureCard
-                            title={t('landing.bentoGrid.features.aiAutocomplete.title')}
+                            <FeatureCard
+                                title={t('landing.bentoGrid.features.aiAutocomplete.title')}
                                 description={t('landing.bentoGrid.features.aiAutocomplete.description')}
-                            badge={t('landing.bentoGrid.featureBadges.writing')}
+                                badge={t('landing.bentoGrid.featureBadges.writing')}
                                 video={{
                                     gifSrc: "/autocomplete_dark.gif"
                                 }}
                             >
-                        </FeatureCard>
-                    </StaggerItem>
+                            </FeatureCard>
+                        </StaggerItem>
 
-                    {/* Citations */}
+                        {/* Citations */}
                         <StaggerItem>
-                        <FeatureCard
-                            title={t('landing.bentoGrid.features.instantCitations.title')}
+                            <FeatureCard
+                                title={t('landing.bentoGrid.features.instantCitations.title')}
                                 description={t('landing.bentoGrid.features.instantCitations.description')}
-                            badge={t('landing.bentoGrid.featureBadges.research')}
+                                badge={t('landing.bentoGrid.featureBadges.research')}
                                 showCTA={true}
                                 video={{
                                     gifSrcLight: "/zitate-white.gif",
                                     gifSrcDark: "/zitate-dark.gif"
                                 }}
                             >
-                        </FeatureCard>
-                    </StaggerItem>
+                            </FeatureCard>
+                        </StaggerItem>
                     </StaggerContainer>
                 </div>
 
@@ -321,39 +322,39 @@ export default function BentoGrid() {
                     <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Chat with KI-Agenten */}
                         <StaggerItem className="lg:col-span-2">
-                        <FeatureCard
+                            <FeatureCard
                                 title={t('landing.bentoGrid.features.chatWithAgent.title')}
                                 description={t('landing.bentoGrid.features.chatWithAgent.description')}
-                            badge={t('landing.bentoGrid.featureBadges.aiAssistant')}
+                                badge={t('landing.bentoGrid.featureBadges.aiAssistant')}
                                 video={{
                                     gifSrc: "/chat_dark-2.gif"
                                 }}
                             >
-                        </FeatureCard>
-                    </StaggerItem>
+                            </FeatureCard>
+                        </StaggerItem>
 
-                    {/* Research Library */}
+                        {/* Research Library */}
                         <StaggerItem>
-                        <FeatureCard
-                            title={t('landing.bentoGrid.features.researchLibrary.title')}
+                            <FeatureCard
+                                title={t('landing.bentoGrid.features.researchLibrary.title')}
                                 description={t('landing.bentoGrid.features.researchLibrary.description')}
-                            badge={t('landing.bentoGrid.featureBadges.organization')}
-                        >
-                            <div className="grid grid-cols-2 gap-2">
-                                {[1, 2, 3, 4].map((i) => (
-                                    <motion.div
-                                        key={i}
-                                        whileHover={{ y: -2 }}
-                                        className="aspect-[3/4] bg-neutral-100 dark:bg-neutral-900 rounded-md border border-neutral-200 dark:border-neutral-800 p-2 cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
-                                    >
-                                        <div className="h-1/2 bg-neutral-200 dark:bg-neutral-800 rounded-sm mb-2" />
-                                        <div className="h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full w-full mb-1" />
-                                        <div className="h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full w-2/3" />
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </FeatureCard>
-                    </StaggerItem>
+                                badge={t('landing.bentoGrid.featureBadges.organization')}
+                            >
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <motion.div
+                                            key={i}
+                                            whileHover={{ y: -2 }}
+                                            className="aspect-[3/4] bg-neutral-100 dark:bg-neutral-900 rounded-md border border-neutral-200 dark:border-neutral-800 p-2 cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+                                        >
+                                            <div className="h-1/2 bg-neutral-200 dark:bg-neutral-800 rounded-sm mb-2" />
+                                            <div className="h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full w-full mb-1" />
+                                            <div className="h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full w-2/3" />
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </FeatureCard>
+                        </StaggerItem>
                     </StaggerContainer>
                 </div>
 
@@ -430,7 +431,7 @@ export default function BentoGrid() {
 
                         {/* Scientific Databases */}
                         <StaggerItem>
-                        <FeatureCard
+                            <FeatureCard
                                 title={t('landing.bentoGrid.features.scientificDatabases.title')}
                                 description={t('landing.bentoGrid.features.scientificDatabases.description')}
                                 badge={t('landing.bentoGrid.featureBadges.search')}
@@ -440,22 +441,22 @@ export default function BentoGrid() {
                                         "CrossRef", "OpenAlex", "PubMed", "arXiv",
                                         "Semantic Scholar", "CORE", "BASE", "Europe PMC"
                                     ].map((db, i) => (
-                                    <motion.div
+                                        <motion.div
                                             key={db}
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: 0.1 + i * 0.05 }}
-                                        whileHover={{ scale: 1.05 }}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.1 + i * 0.05 }}
+                                            whileHover={{ scale: 1.05 }}
                                             className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors"
                                         >
                                             <Database className="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
                                             <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">{db}</span>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </FeatureCard>
-                    </StaggerItem>
-                </StaggerContainer>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </FeatureCard>
+                        </StaggerItem>
+                    </StaggerContainer>
                 </div>
 
                 {/* Section 4: Import & Export */}
