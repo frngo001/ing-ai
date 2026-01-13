@@ -13,7 +13,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useCTAHref } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/i18n/use-language";
-import LiteYouTubeEmbed from "react-lite-youtube-embed";
+import dynamic from "next/dynamic";
+const LiteYouTubeEmbed = dynamic(() => import("react-lite-youtube-embed"));
 import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
 
 interface Tutorial {

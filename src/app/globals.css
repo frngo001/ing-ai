@@ -2,13 +2,9 @@
 
 @import "tw-animate-css";
 
-/* Highlight.js Styles - Light Mode (default) */
-@import "highlight.js/styles/github.css";
-/* KaTeX Styles for Formel-Darstellung im Editor */
-@import "katex/dist/katex.min.css";
-/* MathLive Styles */
-@import "mathlive/static.css";
-@import "mathlive/fonts.css";
+@import "tailwindcss";
+
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 

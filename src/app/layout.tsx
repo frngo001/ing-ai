@@ -100,11 +100,12 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const language = await getLanguageForMetadata()
-  
+
   return (
     <html lang={language} suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="C2lA7r1tRdBBpcRarmOfJ4ZXwwfGr1x0oXFSgQcYKeQ" />
+        <link rel="preconnect" href="https://i.pravatar.cc" />
         <StructuredData />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>

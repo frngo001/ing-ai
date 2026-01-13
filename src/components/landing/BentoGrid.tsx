@@ -11,19 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/ui/section";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scroll-reveal";
 import { Button } from "@/components/ui/button";
-import { Play, X, ShieldCheck, FileCheck, Database, FileText, Code, Code2, FileType, ArrowUpToLine, Download, Upload, FileCode } from "lucide-react";
+import { Play, ShieldCheck, FileCheck, Database, FileText, Code, Code2, FileType, ArrowUpToLine, Download, Upload, FileCode } from "lucide-react";
 import { useCTAHref } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/i18n/use-language";
+import dynamic from "next/dynamic";
+import { FeatureVideo } from "@/components/landing/VideoModal";
 
-interface FeatureVideo {
-    youtubeId?: string;
-    videoSrc?: string; // Für lokale Videos
-    gifSrc?: string; // Für GIF-Dateien (spielen sich automatisch ab)
-    gifSrcLight?: string; // Für GIF-Dateien im Light-Mode
-    gifSrcDark?: string; // Für GIF-Dateien im Dark-Mode
-    thumbnail?: string;
-    title?: string;
-}
+const VideoModal = dynamic(() => import("@/components/landing/VideoModal"));
 
 interface FeatureCardProps {
     title: string;
@@ -35,66 +29,7 @@ interface FeatureCardProps {
     children?: React.ReactNode;
 }
 
-function VideoModal({
-    video,
-    onClose
-}: {
-    video: FeatureVideo;
-    onClose: () => void;
-}) {
-    if (!video.youtubeId && !video.videoSrc) return null;
 
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/90 backdrop-blur-sm"
-            onClick={onClose}
-        >
-            <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative w-full max-w-5xl"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <button
-                    onClick={onClose}
-                    className="absolute -top-12 right-0 p-2 text-white/80 hover:text-white transition-colors"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-
-                <div className="relative aspect-video rounded-xl overflow-hidden bg-neutral-950 border border-neutral-800">
-                    {video.youtubeId ? (
-                        <iframe
-                            src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0`}
-                            title={video.title || "Feature Video"}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="absolute inset-0 w-full h-full"
-                        />
-                    ) : video.videoSrc ? (
-                        <video
-                            src={video.videoSrc}
-                            controls
-                            autoPlay
-                            className="absolute inset-0 w-full h-full"
-                        />
-                    ) : null}
-                </div>
-
-                {video.title && (
-                    <div className="mt-4">
-                        <h3 className="text-xl font-semibold text-white">{video.title}</h3>
-                    </div>
-                )}
-            </motion.div>
-        </motion.div>
-    );
-}
 
 function FeatureCard({ title, description, badge, className, video, showCTA, children }: FeatureCardProps) {
     const [isHovered, setIsHovered] = useState(false);
@@ -117,6 +52,19 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
         }
         return video.gifSrc || null;
     };
+
+    const getVideoLoopSrc = () => {
+        if (!video) return null;
+        if (video.videoLoopSrcLight && video.videoLoopSrcDark) {
+            if (!mounted) return video.videoLoopSrcLight;
+            const currentTheme = theme === "system" ? systemTheme : theme;
+            return currentTheme === "dark" ? video.videoLoopSrcDark : video.videoLoopSrcLight;
+        }
+        return video.videoLoopSrc || null;
+    };
+
+    const videoLoopSrc = getVideoLoopSrc();
+    const gifSrc = getGifSrc();
 
     return (
         <>
@@ -145,14 +93,25 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
                         </p>
                         <div className="flex-1 relative">
                             {children}
-                            {video && (video.youtubeId || video.videoSrc || video.gifSrc || video.gifSrcLight || video.gifSrcDark) && (
+                            {video && (video.youtubeId || video.videoSrc || gifSrc || videoLoopSrc) && (
                                 <div className="mt-4">
-                                    {getGifSrc() ? (
+                                    {videoLoopSrc ? (
+                                        <div className="w-full rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                            <video
+                                                src={videoLoopSrc}
+                                                className="w-full h-auto"
+                                                autoPlay
+                                                loop
+                                                muted
+                                                playsInline
+                                            />
+                                        </div>
+                                    ) : gifSrc ? (
                                         <>
                                             {/* GIF wird direkt angezeigt und spielt sich automatisch ab */}
                                             <div className="w-full rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
                                                 <img
-                                                    src={getGifSrc() || ""}
+                                                    src={gifSrc}
                                                     alt={video.title || title}
                                                     className="w-full h-auto"
                                                 />

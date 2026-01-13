@@ -96,7 +96,7 @@ export function Footer() {
 
                         {/* Produkt */}
                         <div>
-                            <h4 className="font-semibold mb-4 text-foreground">{footerLinks.produkt.title}</h4>
+                            <h3 className="font-semibold mb-4 text-foreground">{footerLinks.produkt.title}</h3>
                             <ul className="space-y-3 text-sm text-muted-foreground">
                                 {footerLinks.produkt.links.map((link) => (
                                     <li key={link.label}>
@@ -110,7 +110,7 @@ export function Footer() {
 
                         {/* Ressourcen */}
                         <div>
-                            <h4 className="font-semibold mb-4 text-foreground">{footerLinks.ressourcen.title}</h4>
+                            <h3 className="font-semibold mb-4 text-foreground">{footerLinks.ressourcen.title}</h3>
                             <ul className="space-y-3 text-sm text-muted-foreground">
                                 {footerLinks.ressourcen.links.map((link) => (
                                     <li key={link.label}>
@@ -124,7 +124,7 @@ export function Footer() {
 
                         {/* Unternehmen */}
                         <div>
-                            <h4 className="font-semibold mb-4 text-foreground">{footerLinks.unternehmen.title}</h4>
+                            <h3 className="font-semibold mb-4 text-foreground">{footerLinks.unternehmen.title}</h3>
                             <ul className="space-y-3 text-sm text-muted-foreground">
                                 {footerLinks.unternehmen.links.map((link) => (
                                     <li key={link.label}>
@@ -138,7 +138,7 @@ export function Footer() {
 
                         {/* Rechtliches */}
                         <div>
-                            <h4 className="font-semibold mb-4 text-foreground">{footerLinks.rechtliches.title}</h4>
+                            <h3 className="font-semibold mb-4 text-foreground">{footerLinks.rechtliches.title}</h3>
                             <ul className="space-y-3 text-sm text-muted-foreground">
                                 {footerLinks.rechtliches.links.map((link) => (
                                     <li key={link.label}>

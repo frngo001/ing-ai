@@ -2,16 +2,18 @@ import Navbar from '@/components/landing/Navbar'
 import Hero from '@/components/landing/Hero'
 import SocialProof from '@/components/landing/SocialProof'
 import BentoGrid from '@/components/landing/BentoGrid'
-import { UseCases } from '@/components/landing/UseCases'
-import { HowItWorks } from '@/components/landing/HowItWorks'
-import { Testimonials } from '@/components/landing/Testimonials'
-import Pricing from '@/components/landing/Pricing'
-import WhyIng from '@/components/landing/WhyIng'
-import { BlogSection } from '@/components/landing/BlogSection'
-import { TutorialsSection } from '@/components/landing/TutorialsSection'
-import { FAQ } from '@/components/landing/FAQ'
-import { CTASection } from '@/components/landing/CTASection'
-import { Footer } from '@/components/landing/Footer'
+import dynamic from 'next/dynamic'
+
+const UseCases = dynamic(() => import('@/components/landing/UseCases').then(mod => mod.UseCases))
+const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks').then(mod => mod.HowItWorks))
+const Testimonials = dynamic(() => import('@/components/landing/Testimonials').then(mod => mod.Testimonials))
+const Pricing = dynamic(() => import('@/components/landing/Pricing'))
+const WhyIng = dynamic(() => import('@/components/landing/WhyIng'))
+const BlogSection = dynamic(() => import('@/components/landing/BlogSection').then(mod => mod.BlogSection))
+const TutorialsSection = dynamic(() => import('@/components/landing/TutorialsSection').then(mod => mod.TutorialsSection))
+const FAQ = dynamic(() => import('@/components/landing/FAQ').then(mod => mod.FAQ))
+const CTASection = dynamic(() => import('@/components/landing/CTASection').then(mod => mod.CTASection))
+const Footer = dynamic(() => import('@/components/landing/Footer').then(mod => mod.Footer))
 
 export default function HomePage() {
   return (
