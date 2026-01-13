@@ -58,6 +58,8 @@ export default function SocialProof() {
                                         src={uni.logo}
                                         alt={uni.name}
                                         fill
+                                        sizes="(max-width: 768px) 128px, 160px"
+                                        loading="lazy"
                                         className="object-contain"
                                     />
                                 </div>

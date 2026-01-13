@@ -65,7 +65,7 @@ export function Footer() {
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-12">
                         {/* Brand */}
                         <div className="col-span-2">
-                            <Link href="/" className="flex items-center space-x-3 mb-4">
+                            <Link href="/" className="flex items-center space-x-3 mb-4" aria-label="Ing AI Home">
                                 <div className="relative h-20 w-20">
                                     <Image
                                         src="/logos/logosApp/ing_AI.png"

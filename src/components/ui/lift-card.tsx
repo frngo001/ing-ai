@@ -155,11 +155,15 @@ function CardImage({
   className,
   src,
   alt,
+  width = 300,
+  height = 300,
   ...props
 }: {
   className?: string;
   src: string;
   alt: string;
+  width?: number;
+  height?: number;
 } & Omit<
   React.ComponentProps<typeof Image>,
   "src" | "alt" | "width" | "height" | "children"
@@ -175,9 +179,9 @@ function CardImage({
         className
       )}
       data-slot="card-image"
-      height={300}
+      height={height}
       src={src}
-      width={300}
+      width={width}
       {...props}
     />
   );

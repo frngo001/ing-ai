@@ -59,7 +59,7 @@ function PricingCard({
   const savings = plan.monthlyPrice > 0
     ? Math.round(((plan.monthlyPrice - plan.yearlyPrice) / plan.monthlyPrice) * 100)
     : 0;
-  
+
   // Für Pricing-Pläne: Wenn der Plan eine spezifische URL hat (z.B. mit Plan-Parameter), diese verwenden, sonst CTA-Href
   const href = plan.cta.href.includes("plan=") ? plan.cta.href : ctaHref;
 
@@ -173,7 +173,7 @@ export default function Pricing() {
     const freeFeatures = langTranslations?.landing?.pricing?.plans?.free?.features || []
     const proFeatures = langTranslations?.landing?.pricing?.plans?.pro?.features || []
     const teamFeatures = langTranslations?.landing?.pricing?.plans?.team?.features || []
-    
+
     return [
       {
         id: "free",
@@ -253,6 +253,7 @@ export default function Pricing() {
               checked={isYearly}
               onCheckedChange={setIsYearly}
               className="data-[state=checked]:bg-primary"
+              aria-label="Billing cycle toggle"
             />
             <span className={cn(
               "text-sm font-medium transition-colors",

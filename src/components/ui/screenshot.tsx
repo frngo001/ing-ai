@@ -1,16 +1,13 @@
 "use client";
 
-import Image from "next/image";
+import Image, { type ImageProps } from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-interface ScreenshotProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface ScreenshotProps extends Omit<ImageProps, 'src'> {
     srcLight: string;
     srcDark: string;
-    alt: string;
-    width: number;
-    height: number;
 }
 
 export default function Screenshot({
@@ -20,7 +17,6 @@ export default function Screenshot({
     width,
     height,
     className,
-    src: _src, // Destructure src to avoid passing it to Image
     ...props
 }: ScreenshotProps) {
     const { theme, systemTheme } = useTheme();

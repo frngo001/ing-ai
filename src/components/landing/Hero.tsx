@@ -45,11 +45,11 @@ export default function Hero() {
 
           {/* Badge */}
           <div className="animate-appear bg-background/50 backdrop-blur-sm rounded-full">
-            <Link href="/auth/login">
+            <Link href="/auth/login" aria-label={heroContent.badge}>
               <Announcement movingBorder className="px-2.5 py-0 h-6">
                 <AnnouncementTitle className="gap-1 text-[11px] font-medium">
                   <span className="text-muted-foreground">{heroContent.badge}</span>
-                  <ArrowRight className="size-2.5 text-muted-foreground" />
+                  <ArrowRight className="size-2.5 text-muted-foreground" aria-hidden="true" />
                 </AnnouncementTitle>
               </Announcement>
             </Link>
@@ -72,14 +72,17 @@ export default function Hero() {
             <div className="group relative flex items-center gap-3 px-4 py-2.5 rounded-full bg-background/60 backdrop-blur-md border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 hover:border-border/80">
               <div className="flex -space-x-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div 
-                    key={i} 
+                  <div
+                    key={i}
                     className="relative w-10 h-10 rounded-full border-2 border-background overflow-hidden bg-muted shadow-sm hover:scale-110 transition-transform duration-200 z-0 hover:z-10"
                   >
-                    <img 
-                      src={`https://i.pravatar.cc/100?img=${i + 10}`} 
-                      alt="User" 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={`https://i.pravatar.cc/100?img=${i + 10}`}
+                      alt={`User ${i}`}
+                      width={40}
+                      height={40}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
                     />
                   </div>
                 ))}
@@ -105,52 +108,55 @@ export default function Hero() {
         {/* 3D Mockup Section */}
         <div className="group relative sm:px-24 h-[600px] sm:h-[700px] md:h-[800px] flex justify-center items-center perspective-[2000px] z-10 -mt-8 sm:-mt-12">
 
-          {/* Left Mockup */}
           <div className="absolute left-[5%] sm:left-[10%] z-10 w-[80%] sm:w-[60%] md:w-[55%] transition-all delay-200 duration-1000 ease-in-out group-hover:left-[5%] sm:group-hover:left-[5%] group-hover:-translate-x-10">
-            <div className="bg-border/50 flex relative z-10 overflow-hidden rounded-2xl dark:bg-border/10 p-2 animate-appear shadow-2xl opacity-60">
-              <div className="flex relative z-10 overflow-hidden shadow-2xl border border-border/70 dark:border-border/5 dark:border-t-border/15 rounded-md bg-background">
+            <PerspectiveWrapper intensity="subtle">
+              <Mockup type="browser" className="opacity-60 shadow-2xl">
                 <Screenshot
-                  srcLight="/dashboard-ligth-1.png"
-                  srcDark="/dashboaed-dark_1.png"
-                  alt="Ing AI Editor"
+                  srcLight="/dashboard-light-1.png"
+                  srcDark="/dashboard-dark-1.png"
+                  alt="Ing AI Editor Dashboard"
                   width={1248}
                   height={1065}
-                  className="object-contain h-full w-full"
+                  sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-contain w-full h-auto"
+                  loading="lazy"
                 />
-              </div>
-            </div>
+              </Mockup>
+            </PerspectiveWrapper>
           </div>
 
-          {/* Right Mockup */}
           <div className="absolute right-[5%] sm:right-[10%] z-10 w-[80%] sm:w-[60%] md:w-[55%] transition-all delay-200 duration-1000 ease-in-out group-hover:right-[5%] sm:group-hover:right-[5%] group-hover:translate-x-10">
-            <div className="bg-border/50 flex relative z-10 overflow-hidden rounded-2xl dark:bg-border/10 p-2 animate-appear shadow-2xl opacity-60">
-              <div className="flex relative z-10 overflow-hidden shadow-2xl border border-border/70 dark:border-border/5 dark:border-t-border/15 rounded-md bg-background">
+            <PerspectiveWrapper intensity="subtle">
+              <Mockup type="browser" className="opacity-60 shadow-2xl">
                 <Screenshot
-                  srcLight="/dashboard-ligth-2.png"
+                  srcLight="/dashboard-light-2.png"
                   srcDark="/dashboard-dark-2.png"
-                  alt="Jenni AI Dashboard 3"
+                  alt="Ing AI Dashboard 2"
                   width={1248}
                   height={1065}
-                  className="object-contain h-full w-full"
+                  sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-contain w-full h-auto"
+                  loading="lazy"
                 />
-              </div>
-            </div>
+              </Mockup>
+            </PerspectiveWrapper>
           </div>
 
-          {/* Center Mockup */}
           <div className="relative z-20 w-[90%] sm:w-[75%] md:w-[70%] transition-all delay-200 duration-1000 ease-in-out hover:!scale-105 hover:!z-30">
-            <div className="bg-border/50 flex relative z-10 overflow-hidden rounded-2xl dark:bg-border/10 p-2 animate-appear shadow-2xl opacity-100">
-              <div className="flex relative z-10 overflow-hidden shadow-2xl border border-border/70 dark:border-border/5 dark:border-t-border/15 rounded-md bg-background">
+            <PerspectiveWrapper intensity="medium">
+              <Mockup type="browser" className="shadow-2xl ring-1 ring-white/10">
                 <Screenshot
-                  srcLight="/dashboard-ligth-3.png"
+                  srcLight="/dashboard-light-3.png"
                   srcDark="/dashboard-dark-3.png"
-                  alt="Jenni AI Dashboard 2"
+                  alt="Ing AI Dashboard 3"
                   width={1248}
                   height={1065}
-                  className="object-contain max-h-full max-w-full"
+                  sizes="(max-width: 768px) 90vw, (max-width: 1200px) 75vw, 70vw"
+                  priority
+                  className="object-contain w-full h-auto"
                 />
-              </div>
-            </div>
+              </Mockup>
+            </PerspectiveWrapper>
           </div>
 
         </div>

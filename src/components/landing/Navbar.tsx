@@ -63,6 +63,7 @@ function Logo() {
     <Link
       href="/"
       className="flex shrink-0 items-center gap-2 text-lg font-semibold"
+      aria-label="Ing AI Home"
     >
       <div className="relative h-20 w-20">
         <Image
