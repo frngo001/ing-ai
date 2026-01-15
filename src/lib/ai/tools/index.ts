@@ -4,6 +4,8 @@ export {
   deleteTextFromEditorTool,
   addCitationTool,
   createGetEditorContentTool,
+  updateNodeByIdTool,
+  findNodesInEditorTool,
 } from './editor-tools'
 
 // Library Tools

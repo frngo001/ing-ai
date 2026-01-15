@@ -13,7 +13,21 @@ type Path = number[]
 // Types
 // ============================================================================
 
-export type InsertPosition = 'start' | 'end' | 'current' | 'before-bibliography' | 'after-target' | 'before-target' | 'replace-target'
+export type InsertPosition =
+  | 'start'
+  | 'end'
+  | 'current'
+  | 'before-bibliography'
+  | 'after-target'
+  | 'before-target'
+  | 'replace-target'
+  // Neue ID-basierte Positionen
+  | 'after-node'
+  | 'before-node'
+  | 'replace-node'
+  | 'append-to-section'
+  | 'after-heading'
+  | 'before-heading'
 
 export interface InsertTextOptions {
   markdown: string
@@ -21,6 +35,10 @@ export interface InsertTextOptions {
   targetText?: string
   targetHeading?: string
   focusOnHeadings?: boolean
+  // Neue ID-basierte Optionen
+  nodeId?: string
+  sectionHeading?: string
+  preventDuplicate?: boolean
 }
 
 export type DeleteMode = 'block' | 'text' | 'heading-section' | 'range'
@@ -161,6 +179,63 @@ const findHeadingInEditor = (
 }
 
 /**
+ * Finds a node in the editor by its ID
+ */
+const findNodeById = (
+  editor: PlateEditor,
+  nodeId: string
+): { blockIndex: number } | null => {
+  if (!nodeId) return null
+
+  const blocks = editor.children || []
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i] as any
+    if (block.id === nodeId) {
+      return { blockIndex: i }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Finds the end of a section (next heading with same or higher level)
+ */
+const findSectionEnd = (
+  editor: PlateEditor,
+  startBlockIndex: number
+): number => {
+  const blocks = editor.children || []
+  const startBlock = blocks[startBlockIndex] as any
+
+  // Get the heading level of the start block
+  let startLevel = 6
+  if (startBlock?.type) {
+    const match = startBlock.type.match(/h(\d)/)
+    if (match) {
+      startLevel = parseInt(match[1])
+    }
+  }
+
+  // Find next heading with same or higher level
+  for (let i = startBlockIndex + 1; i < blocks.length; i++) {
+    const block = blocks[i] as any
+    if (block?.type) {
+      const match = block.type.match(/h(\d)/)
+      if (match) {
+        const level = parseInt(match[1])
+        if (level <= startLevel) {
+          return i - 1
+        }
+      }
+    }
+  }
+
+  return blocks.length - 1
+}
+
+/**
  * Teilt Markdown-Text in logische Blöcke auf
  * Berücksichtigt Headings, Code-Blöcke und Listen, damit sie nicht mitten drin getrennt werden
  */
@@ -275,13 +350,20 @@ function splitMarkdownIntoBlocks(markdown: string): string[] {
  * Fügt Markdown-Text im Editor ein
  * Teilt den Text in mehrere Blöcke auf und fügt sie sequenziell ein (wie bei Copy/Paste)
  * Unterstützt verschiedene Positionen und zielbasiertes Einfügen
+ *
+ * Neue Positionierungsoptionen:
+ * - 'after-node', 'before-node', 'replace-node': ID-basierte Positionierung mit nodeId
+ * - 'append-to-section': Am Ende einer Section mit sectionHeading
+ * - 'after-heading', 'before-heading': Heading-basierte Positionierung mit targetHeading
  */
 export function insertMarkdownText(
   editor: PlateEditor,
   markdown: string,
   position: InsertPosition = 'end',
   targetText?: string,
-  targetHeading?: string
+  targetHeading?: string,
+  nodeId?: string,
+  sectionHeading?: string
 ): void {
   if (!markdown || typeof markdown !== 'string') {
     devWarn('⚠️ [EDITOR] Kein Markdown-Text zum Einfügen')
@@ -359,8 +441,52 @@ export function insertMarkdownText(
     let startBlockIndex: number = editor.children.length // Default: Am Ende
     let shouldReplaceBlock = false
 
-    // Zielbasierte Positionen
-    if ((position === 'after-target' || position === 'before-target' || position === 'replace-target') && (targetText || targetHeading)) {
+    // ID-basierte Positionierung (NEU)
+    if ((position === 'after-node' || position === 'before-node' || position === 'replace-node') && nodeId) {
+      const nodeResult = findNodeById(editor, nodeId)
+      if (nodeResult) {
+        if (position === 'before-node') {
+          startBlockIndex = nodeResult.blockIndex
+          devLog(`✅ [EDITOR] Node ${nodeId} gefunden, füge davor ein`)
+        } else if (position === 'after-node') {
+          startBlockIndex = nodeResult.blockIndex + 1
+          devLog(`✅ [EDITOR] Node ${nodeId} gefunden, füge danach ein`)
+        } else if (position === 'replace-node') {
+          startBlockIndex = nodeResult.blockIndex
+          shouldReplaceBlock = true
+          devLog(`✅ [EDITOR] Node ${nodeId} gefunden, ersetze`)
+        }
+      } else {
+        devWarn(`⚠️ [EDITOR] Node ${nodeId} nicht gefunden, füge am Ende ein`)
+      }
+    }
+    // Section-basierte Positionierung (NEU)
+    else if (position === 'append-to-section' && sectionHeading) {
+      const headingResult = findHeadingInEditor(editor, sectionHeading)
+      if (headingResult) {
+        const sectionEnd = findSectionEnd(editor, headingResult.blockIndex)
+        startBlockIndex = sectionEnd + 1
+        devLog(`✅ [EDITOR] Section "${sectionHeading}" gefunden, füge am Ende ein (nach Block ${sectionEnd})`)
+      } else {
+        devWarn(`⚠️ [EDITOR] Section "${sectionHeading}" nicht gefunden, füge am Ende ein`)
+      }
+    }
+    // Heading-basierte Positionierung (NEU)
+    else if ((position === 'after-heading' || position === 'before-heading') && targetHeading) {
+      const headingResult = findHeadingInEditor(editor, targetHeading)
+      if (headingResult) {
+        if (position === 'before-heading') {
+          startBlockIndex = headingResult.blockIndex
+        } else {
+          startBlockIndex = headingResult.blockIndex + 1
+        }
+        devLog(`✅ [EDITOR] Heading "${targetHeading}" gefunden in Block ${headingResult.blockIndex}`)
+      } else {
+        devWarn(`⚠️ [EDITOR] Heading "${targetHeading}" nicht gefunden, füge am Ende ein`)
+      }
+    }
+    // Legacy: Zielbasierte Positionen
+    else if ((position === 'after-target' || position === 'before-target' || position === 'replace-target') && (targetText || targetHeading)) {
       let targetBlockIndex: number | null = null
 
       if (targetText) {
@@ -445,9 +571,11 @@ export function setupEditorTextInsertion(): void {
       position: event.detail?.position,
       targetText: event.detail?.targetText,
       targetHeading: event.detail?.targetHeading,
+      nodeId: event.detail?.nodeId,
+      sectionHeading: event.detail?.sectionHeading,
     })
 
-    const { markdown, position, targetText, targetHeading } = event.detail
+    const { markdown, position, targetText, targetHeading, nodeId, sectionHeading } = event.detail
 
     if (!markdown) {
       devError('❌ [EDITOR] Kein Markdown im Event-Detail')
@@ -458,7 +586,7 @@ export function setupEditorTextInsertion(): void {
       detail: { callback: (editor: PlateEditor) => {
         if (editor) {
           devLog('✅ [EDITOR] Editor-Instance erhalten, füge Text ein')
-          insertMarkdownText(editor, markdown, position, targetText, targetHeading)
+          insertMarkdownText(editor, markdown, position, targetText, targetHeading, nodeId, sectionHeading)
         } else {
           devWarn('⚠️ [EDITOR] Kein Editor-Instance verfügbar')
         }

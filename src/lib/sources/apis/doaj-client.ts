@@ -62,7 +62,11 @@ export class DoajClient extends BaseApiClient {
                 issue: bib.journal?.number,
                 pages: bib.start_page && bib.end_page ? `${bib.start_page}-${bib.end_page}` : undefined,
                 publisher: bib.journal?.publisher,
-                url: bib.link?.find((l: any) => l.type === 'fulltext')?.url,
+                url: bib.link?.find((l: any) => l.type === 'fulltext')?.url
+                    || bib.link?.[0]?.url
+                    || (bib.identifier?.find((id: any) => id.type === 'doi')?.id
+                        ? `https://doi.org/${bib.identifier.find((id: any) => id.type === 'doi').id}`
+                        : undefined),
                 isOpenAccess: true,
                 abstract: bib.abstract,
                 keywords: bib.keywords,

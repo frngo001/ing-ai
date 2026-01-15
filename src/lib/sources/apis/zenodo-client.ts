@@ -62,7 +62,9 @@ export class ZenodoClient extends BaseApiClient {
                 publicationDate: metadata.publication_date,
                 type: metadata.resource_type?.type || 'dataset',
                 publisher: metadata.imprint?.publisher,
-                url: record.links?.html,
+                url: record.links?.html
+                    || (metadata.doi ? `https://doi.org/${metadata.doi}` : undefined)
+                    || (record.id ? `https://zenodo.org/record/${record.id}` : undefined),
                 pdfUrl: record.files?.[0]?.links?.self,
                 isOpenAccess: metadata.access_right === 'open',
                 abstract: metadata.description,

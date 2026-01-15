@@ -8,6 +8,8 @@ import {
   deleteTextFromEditorTool,
   addCitationTool,
   createGetEditorContentTool,
+  updateNodeByIdTool,
+  findNodesInEditorTool,
   createLibraryTool,
   createAddSourcesToLibraryTool,
   createListAllLibrariesTool,
@@ -27,6 +29,7 @@ export interface AgentConfig {
   userId: string
   projectId?: string
   editorContent?: string
+  editorJson?: any[] // Vollständige Editor-Struktur als JSON
   systemPrompt: string
   maxSteps?: number
   maxOutputTokens?: number
@@ -39,13 +42,16 @@ export function createAgentTools(config: {
   userId: string
   projectId?: string
   editorContent?: string
+  editorJson?: any[]
 }): Record<string, AnyTool> {
   return {
-    // Editor tools
+    // Editor tools (erweitert mit Struktur-Zugriff)
     insertTextInEditor: insertTextInEditorTool,
     deleteTextFromEditor: deleteTextFromEditorTool,
     addCitation: addCitationTool,
-    getEditorContent: createGetEditorContentTool(config.editorContent || ''),
+    getEditorContent: createGetEditorContentTool(config.editorContent || '', config.editorJson),
+    updateNodeById: updateNodeByIdTool,
+    findNodesInEditor: findNodesInEditorTool,
     // Library tools
     createLibrary: createLibraryTool(config.userId, config.projectId),
     addSourcesToLibrary: createAddSourcesToLibraryTool(config.userId),
@@ -90,6 +96,7 @@ export function createAgent(
         userId: config.userId,
         projectId: config.projectId,
         editorContent: config.editorContent,
+        editorJson: config.editorJson,
       })
 
   const agent = new ToolLoopAgent({

@@ -58,7 +58,10 @@ export class BaseClient extends BaseApiClient {
             publicationDate: doc.dcdate,
             type: doc.dctypenorm?.[0] || 'other',
             publisher: doc.dcpublisher?.[0],
-            url: doc.dclink?.[0],
+            url: doc.dclink?.[0]
+                || (doc.dcidentifier?.find((id: string) => id.startsWith('10.'))
+                    ? `https://doi.org/${doc.dcidentifier.find((id: string) => id.startsWith('10.'))}`
+                    : undefined),
             isOpenAccess: doc.dcoa === '1',
             abstract: doc.dcdescription?.[0],
             language: doc.dclang?.[0],

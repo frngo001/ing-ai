@@ -55,7 +55,8 @@ export class ArxivClient extends BaseApiClient {
         })
 
         return this.executeRequest(
-            () => fetch(`${this.config.baseUrl}/query?${params}`)
+            () => fetch(`${this.config.baseUrl}/query?${params}`),
+            { parseAs: 'text' }
         )
     }
 
@@ -68,7 +69,8 @@ export class ArxivClient extends BaseApiClient {
         })
 
         return this.executeRequest(
-            () => fetch(`${this.config.baseUrl}/query?${params}`)
+            () => fetch(`${this.config.baseUrl}/query?${params}`),
+            { parseAs: 'text' }
         )
     }
 
@@ -76,7 +78,12 @@ export class ArxivClient extends BaseApiClient {
      * Transform arXiv Atom feed to normalized format
      * Note: In production, use a proper XML/Atom parser
      */
-    transformResponse(atomXml: string): any[] {
+    transformResponse(atomXml: unknown): any[] {
+        // Guard: Ensure atomXml is a string
+        if (typeof atomXml !== 'string' || !atomXml) {
+            return []
+        }
+
         const entries: any[] = []
 
         // Extract entries using regex (simplified - use proper XML parser in production)

@@ -51,7 +51,7 @@ export async function getCitationLibraryById(
   supabaseClient?: SupabaseClientType
 ): Promise<CitationLibrary | null> {
   const supabase = supabaseClient || createClient()
-  
+
   try {
     const { data, error } = await supabase
       .from('citation_libraries')
@@ -70,14 +70,14 @@ export async function getCitationLibraryById(
           .eq('id', id)
           .eq('user_id', userId)
           .limit(1)
-        
+
         if (fallbackError) {
           if (fallbackError.code === 'PGRST116') return null
           throw fallbackError
         }
         return fallbackData?.[0] || null
       }
-      
+
       if (error.code === 'PGRST116') return null
       throw error
     }
@@ -98,11 +98,11 @@ export async function createCitationLibrary(
   supabaseClient?: SupabaseClientType
 ): Promise<CitationLibrary> {
   const supabase = supabaseClient || createClient()
-  
+
   // Da das Profile durch den auth.users Trigger automatisch erstellt wird,
   // müssen wir es hier nicht mehr manuell erstellen.
   // Der Trigger `on_auth_user_created` in der DB kümmert sich darum.
-  
+
   try {
     const { data, error } = await supabase
       .from('citation_libraries')
@@ -116,20 +116,20 @@ export async function createCitationLibrary(
         // Das sollte nicht passieren, wenn der User authentifiziert ist
         throw new Error(`Foreign Key Constraint: Profile für User ${library.user_id} existiert nicht. Bitte stelle sicher, dass der User authentifiziert ist.`)
       }
-      
+
       if (error.code === '23505') {
         // Unique Constraint - Bibliothek existiert bereits
         if (library.is_default && library.user_id) {
           const defaultLib = await getDefaultCitationLibrary(library.user_id, supabase)
           if (defaultLib) return defaultLib
         }
-        
+
         if (library.name && library.user_id) {
           const existing = await getCitationLibraries(library.user_id, supabase)
           const found = existing.find((lib) => lib.name === library.name)
           if (found) return found
         }
-        
+
         if (library.user_id) {
           const allLibs = await getCitationLibraries(library.user_id, supabase)
           if (library.is_default) {
@@ -137,23 +137,23 @@ export async function createCitationLibrary(
             if (found) return found
           }
         }
-        
+
         throw new Error(`Bibliothek existiert bereits: ${library.name || 'Unbekannt'}`)
       }
       throw error
     }
-    
+
     if (!data || data.length === 0) {
       throw new Error('Bibliothek konnte nicht erstellt werden')
     }
-    
+
     return data[0]
   } catch (error: any) {
     if (error.code === '23505') {
       if (library.is_default && library.user_id) {
         const defaultLib = await getDefaultCitationLibrary(library.user_id, supabase)
         if (defaultLib) return defaultLib
-        
+
         const allLibs = await getCitationLibraries(library.user_id, supabase)
         const found = allLibs.find((lib) => lib.is_default === true)
         if (found) return found
@@ -202,7 +202,7 @@ export async function getDefaultCitationLibrary(
   supabaseClient?: SupabaseClientType
 ): Promise<CitationLibrary | null> {
   const supabase = supabaseClient || createClient()
-  
+
   try {
     const { data, error } = await supabase
       .from('citation_libraries')
@@ -215,7 +215,7 @@ export async function getDefaultCitationLibrary(
       if (error.code === 'PGRST116') return null
       throw error
     }
-    
+
     return data?.[0] || null
   } catch (error: any) {
     if (error.message?.includes('406') || error.code === 'PGRST116') {

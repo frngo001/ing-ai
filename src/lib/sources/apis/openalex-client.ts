@@ -113,7 +113,8 @@ export class OpenAlexClient extends BaseApiClient {
                 ? `${work.biblio.first_page}-${work.biblio.last_page}`
                 : undefined,
             publisher: work.primary_location?.source?.host_organization_name,
-            url: work.primary_location?.landing_page_url,
+            url: work.primary_location?.landing_page_url
+                || (work.doi ? `https://doi.org/${work.doi.replace('https://doi.org/', '')}` : undefined),
             pdfUrl: work.open_access?.oa_url,
             isOpenAccess: work.open_access?.is_oa || false,
             abstract: work.abstract_inverted_index ? this.reconstructAbstract(work.abstract_inverted_index) : undefined,

@@ -205,7 +205,7 @@ export function LibraryPane({
         source: journal,
         year,
         lastEdited: nowText,
-        href: "/editor",
+        href: undefined,
         externalUrl: url,
         doi: doi || undefined,
         authors,
@@ -465,7 +465,8 @@ export function LibraryPane({
             </div>
           ) : (
             filteredCitations.map((item, index) => {
-              const url = item.externalUrl || item.href
+              const rawUrl = item.externalUrl || item.href
+              const url = rawUrl === '/editor' ? undefined : rawUrl
               return (
                 <div
                   key={item.id}
@@ -535,22 +536,24 @@ export function LibraryPane({
                         </TooltipTrigger>
                         <TooltipContent side="bottom">{translations.citeInText}</TooltipContent>
                       </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 cursor-pointer"
-                            aria-label={translations.openSource}
-                            asChild
-                          >
-                            <a href={url} target="_blank" rel="noreferrer">
-                              <ExternalLink className="size-3" />
-                            </a>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">{translations.openSource}</TooltipContent>
-                      </Tooltip>
+                      {url && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 cursor-pointer"
+                              aria-label={translations.openSource}
+                              asChild
+                            >
+                              <a href={url} target="_blank" rel="noreferrer">
+                                <ExternalLink className="size-3" />
+                              </a>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom">{translations.openSource}</TooltipContent>
+                        </Tooltip>
+                      )}
                       {!isViewOnly && (
                         <Tooltip>
                           <TooltipTrigger asChild>

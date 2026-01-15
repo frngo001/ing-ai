@@ -122,47 +122,70 @@ export class SourceFetcher {
 
     /**
      * Get API priority rankings for different query types
+     * 
+     * Priority is based on:
+     * - Coverage: OpenAlex (260M+), Semantic Scholar (200M+), CrossRef (130M+)
+     * - Reliability: APIs with better uptime and response quality
+     * - Link availability: APIs that consistently provide URLs
+     * - Metadata quality: APIs that provide complete metadata
      */
     private getApiPriorities(queryType: string): Map<string, number> {
         const priorities = new Map<string, number>()
 
         switch (queryType) {
             case 'doi':
-                priorities.set('crossref', 1)
-                priorities.set('datacite', 2)
-                priorities.set('openalex', 3)
-                priorities.set('semanticscholar', 4)
-                priorities.set('unpaywall', 5)
+                // DOI lookup - CrossRef is the primary DOI registry
+                priorities.set('crossref', 1)      // Primary DOI registry, best for DOI resolution
+                priorities.set('openalex', 2)      // 260M+ works, excellent metadata + links
+                priorities.set('datacite', 3)      // Good for research data DOIs
+                priorities.set('semanticscholar', 4) // AI-enhanced, good metadata
+                priorities.set('europepmc', 5)     // Good for biomedical DOIs
                 break
 
             case 'title':
-                priorities.set('semanticscholar', 1)
-                priorities.set('openalex', 2)
-                priorities.set('crossref', 3)
-                priorities.set('base', 4)
-                priorities.set('core', 5)
+                // Title search - prioritize coverage and AI-enhanced search
+                priorities.set('openalex', 1)      // 260M+ works, best coverage overall
+                priorities.set('semanticscholar', 2) // 200M+ papers, AI-powered relevance
+                priorities.set('crossref', 3)      // 130M+ DOI records, reliable links
+                priorities.set('pubmed', 4)        // Essential for biomedical
+                priorities.set('arxiv', 5)         // Essential for physics/math/CS preprints
+                priorities.set('core', 6)          // 200M+ papers, good OA coverage
+                priorities.set('base', 7)          // 350M+ documents, academic search
+                priorities.set('europepmc', 8)     // Life sciences coverage
                 break
 
             case 'author':
-                priorities.set('semanticscholar', 1)
-                priorities.set('openalex', 2)
-                priorities.set('pubmed', 3)
-                priorities.set('crossref', 4)
+                // Author search - prioritize APIs with good author metadata
+                priorities.set('openalex', 1)      // Best author data with ORCID integration
+                priorities.set('semanticscholar', 2) // Good author profiles with metrics
+                priorities.set('crossref', 3)      // Reliable author metadata
+                priorities.set('pubmed', 4)        // Good for biomedical authors
+                priorities.set('arxiv', 5)         // Physics/Math/CS authors
+                priorities.set('europepmc', 6)     // Life sciences authors
                 break
 
             case 'keyword':
-                priorities.set('semanticscholar', 1)
-                priorities.set('openalex', 2)
-                priorities.set('base', 3)
-                priorities.set('core', 4)
-                priorities.set('crossref', 5)
+                // Keyword/topic search - prioritize semantic search capabilities
+                priorities.set('openalex', 1)      // Excellent concept/topic tagging
+                priorities.set('semanticscholar', 2) // AI-powered semantic search
+                priorities.set('pubmed', 3)        // MeSH terms for biomedical
+                priorities.set('arxiv', 4)         // Good category-based search
+                priorities.set('crossref', 5)      // Subject filtering
+                priorities.set('core', 6)          // Full-text search
+                priorities.set('base', 7)          // Academic content search
+                priorities.set('doaj', 8)          // Open access journals
                 break
 
             default:
-                // Default priority
-                priorities.set('semanticscholar', 1)
-                priorities.set('openalex', 2)
-                priorities.set('crossref', 3)
+                // General search - balanced approach with best overall APIs
+                priorities.set('openalex', 1)      // Best coverage, always provides URLs
+                priorities.set('semanticscholar', 2) // AI-enhanced, good relevance
+                priorities.set('crossref', 3)      // Reliable metadata + DOI links
+                priorities.set('pubmed', 4)        // Biomedical essential
+                priorities.set('arxiv', 5)         // Preprints, always has URLs
+                priorities.set('core', 6)          // Good OA coverage
+                priorities.set('europepmc', 7)     // Life sciences
+                priorities.set('base', 8)          // Academic documents
         }
 
         return priorities
@@ -252,7 +275,8 @@ export class SourceFetcher {
             for (const source of sources) {
                 try {
                     const normalizedSource = SourceNormalizer.normalize(source, result.apiName)
-                    if (normalizedSource.title) { // Only add if has title
+                    // Only add if has title AND a valid URL link (not DOI)
+                    if (normalizedSource.title && normalizedSource.url) {
                         normalized.push(normalizedSource)
                     }
                 } catch (error) {

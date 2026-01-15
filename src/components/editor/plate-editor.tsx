@@ -616,7 +616,7 @@ export function PlateEditor({
               source: sourceLabel,
               year: source.publicationYear,
               lastEdited: timestamp,
-              href: externalUrl || '/editor',
+              href: externalUrl || undefined,
               externalUrl,
               doi: validDoi || undefined,
               authors,

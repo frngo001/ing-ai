@@ -75,7 +75,7 @@ export class DataCiteClient extends BaseApiClient {
                 publicationDate: attrs.published,
                 type: this.mapResourceType(attrs.types?.resourceTypeGeneral),
                 publisher: attrs.publisher,
-                url: attrs.url,
+                url: attrs.url || (attrs.doi ? `https://doi.org/${attrs.doi}` : undefined),
                 abstract: attrs.descriptions?.find((d: any) => d.descriptionType === 'Abstract')?.description,
             }
         })

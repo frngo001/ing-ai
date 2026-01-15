@@ -23,7 +23,7 @@ export class PubMedClient extends BaseApiClient {
         const ids = await this.searchIds(title, limit)
         if (!ids.success || !ids.data?.length) return ids
 
-        return this.fetchDetails(ids.data)
+        return this.fetchSummaries(ids.data)
     }
 
     async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
@@ -31,7 +31,7 @@ export class PubMedClient extends BaseApiClient {
         const ids = await this.searchIds(query, limit)
         if (!ids.success || !ids.data?.length) return ids
 
-        return this.fetchDetails(ids.data)
+        return this.fetchSummaries(ids.data)
     }
 
     async searchByDoi(doi: string): Promise<ApiResponse<any>> {
@@ -49,7 +49,7 @@ export class PubMedClient extends BaseApiClient {
         const ids = await this.searchIds(query, 1)
         if (!ids.success || !ids.data?.length) return ids
 
-        return this.fetchDetails(ids.data)
+        return this.fetchSummaries(ids.data)
     }
 
     async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
@@ -57,7 +57,7 @@ export class PubMedClient extends BaseApiClient {
     }
 
     /**
-     * Search for PubMed IDs (PMIDs)
+     * Search for PubMed IDs (PMIDs) using ESearch
      */
     private async searchIds(query: string, limit: number): Promise<ApiResponse<string[]>> {
         const params = new URLSearchParams({
@@ -85,13 +85,14 @@ export class PubMedClient extends BaseApiClient {
     }
 
     /**
-     * Fetch detailed information for PMIDs
+     * Fetch document summaries using ESummary with JSON format
+     * This is the proper way to get structured data from PubMed
      */
-    private async fetchDetails(pmids: string[]): Promise<ApiResponse<any>> {
+    private async fetchSummaries(pmids: string[]): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             db: 'pubmed',
             id: pmids.join(','),
-            retmode: 'xml',
+            retmode: 'json', // JSON format is supported by ESummary!
         })
 
         if (this.config.apiKey) {
@@ -99,39 +100,65 @@ export class PubMedClient extends BaseApiClient {
         }
 
         return this.executeRequest(
-            () => fetch(`${this.config.baseUrl}/efetch.fcgi?${params}`),
-            { parseAs: 'text' }
+            () => fetch(`${this.config.baseUrl}/esummary.fcgi?${params}`)
         )
     }
 
     /**
-     * Transform PubMed XML response to normalized format
-     * Note: In production, use a proper XML parser
+     * Transform ESummary JSON response to normalized format
+     * ESummary returns structured JSON - no regex parsing needed!
      */
-    transformResponse(xmlText: string): any[] {
-        // Simplified parsing - in production use proper XML parser
+    transformResponse(response: unknown): any[] {
+        if (!response || typeof response !== 'object') {
+            return []
+        }
+
+        const data = response as Record<string, any>
+        const result = data.result
+
+        if (!result) {
+            return []
+        }
+
         const articles: any[] = []
+        const uids = result.uids || []
 
-        // Extract basic info with regex (not recommended for production)
-        const titleMatch = xmlText.match(/<ArticleTitle>(.*?)<\/ArticleTitle>/g)
-        const authorMatch = xmlText.match(/<Author[\s\S]*?>([\s\S]*?)<\/Author>/g)
-        const yearMatch = xmlText.match(/<PubDate>[\s\S]*?<Year>(\d{4})<\/Year>/g)
-        const abstractMatch = xmlText.match(/<Abstract>([\s\S]*?)<\/Abstract>/g)
-        const pmidMatch = xmlText.match(/<PMID[\s\S]*?>(.*?)<\/PMID>/g)
-        const doiMatch = xmlText.match(/<ArticleId IdType="doi">(.*?)<\/ArticleId>/g)
+        for (const uid of uids) {
+            const article = result[uid]
+            if (!article) continue
 
-        if (titleMatch && titleMatch.length > 0) {
-            for (let i = 0; i < titleMatch.length; i++) {
-                articles.push({
-                    pmid: pmidMatch?.[i]?.match(/>(.*?)</)?.[1],
-                    doi: doiMatch?.[i]?.match(/>(.*?)</)?.[1],
-                    title: titleMatch[i].match(/>(.*?)</)?.[1],
-                    year: yearMatch?.[i]?.match(/(\d{4})/)?.[1],
-                    abstract: abstractMatch?.[i]?.match(/>([\s\S]*?)</)?.[1],
-                    type: 'journal',
-                    authors: [], // Would need proper XML parsing
-                })
-            }
+            // Extract authors from the structured format
+            const authors = article.authors?.map((a: any) => ({
+                fullName: a.name,
+                lastName: a.name?.split(' ').pop(),
+                firstName: a.name?.split(' ').slice(0, -1).join(' '),
+            })) || []
+
+            // Extract DOI from articleids
+            const articleIds = article.articleids || []
+            const doiEntry = articleIds.find((id: any) => id.idtype === 'doi')
+            const doi = doiEntry?.value
+
+            // Extract publication year from sortpubdate or pubdate
+            const pubDate = article.sortpubdate || article.pubdate || ''
+            const yearMatch = pubDate.match(/(\d{4})/)
+            const year = yearMatch ? yearMatch[1] : undefined
+
+            articles.push({
+                pmid: uid,
+                doi,
+                title: article.title,
+                year,
+                abstract: article.abstract, // ESummary may not include abstract
+                type: 'journal',
+                authors,
+                journal: article.source || article.fulljournalname,
+                volume: article.volume,
+                issue: article.issue,
+                pages: article.pages,
+                url: `https://pubmed.ncbi.nlm.nih.gov/${uid}/`,
+                citationCount: article.pmcrefcount, // Citation count if available
+            })
         }
 
         return articles

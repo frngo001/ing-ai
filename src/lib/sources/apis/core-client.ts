@@ -64,13 +64,18 @@ export class CoreClient extends BaseApiClient {
             id: work.id,
             doi: work.doi,
             title: work.title,
-            authors: work.authors?.map((a: string) => ({ fullName: a })),
+            authors: work.authors?.map((a: any) => ({
+                fullName: typeof a === 'string' ? a : (a.name || a.fullName)
+            })),
             year: work.yearPublished,
             publicationDate: work.publishedDate,
             type: work.documentType || 'journal',
             journal: work.journals?.[0],
             publisher: work.publisher,
-            url: work.downloadUrl,
+            url: work.downloadUrl
+                || work.sourceFulltextUrls?.[0]
+                || (work.doi ? `https://doi.org/${work.doi}` : undefined)
+                || (work.oai ? `https://core.ac.uk/display/${work.id}` : undefined),
             pdfUrl: work.downloadUrl,
             isOpenAccess: true,
             abstract: work.abstract,

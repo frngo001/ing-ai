@@ -23,7 +23,7 @@ export class SemanticScholarClient extends BaseApiClient {
         const params = new URLSearchParams({
             query: title,
             limit: limit.toString(),
-            fields: 'title,authors,year,abstract,citationCount,referenceCount,fieldsOfStudy,publicationTypes,journal,doi,url,isOpenAccess,openAccessPdf',
+            fields: 'title,authors,year,abstract,citationCount,referenceCount,s2FieldsOfStudy,publicationTypes,publicationVenue,journal,externalIds,url,isOpenAccess,openAccessPdf',
         })
 
         const headers: HeadersInit = {}
@@ -54,7 +54,7 @@ export class SemanticScholarClient extends BaseApiClient {
         }
 
         const params = new URLSearchParams({
-            fields: 'title,authors,year,abstract,citationCount,referenceCount,fieldsOfStudy,publicationTypes,journal,doi,url,isOpenAccess,openAccessPdf',
+            fields: 'title,authors,year,abstract,citationCount,referenceCount,s2FieldsOfStudy,publicationTypes,publicationVenue,journal,externalIds,url,isOpenAccess,openAccessPdf',
         })
 
         const headers: HeadersInit = {}
@@ -76,7 +76,7 @@ export class SemanticScholarClient extends BaseApiClient {
      */
     async getPaper(paperId: string): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
-            fields: 'title,authors,year,abstract,citationCount,referenceCount,fieldsOfStudy,publicationTypes,journal,doi,url,isOpenAccess,openAccessPdf',
+            fields: 'title,authors,year,abstract,citationCount,referenceCount,s2FieldsOfStudy,publicationTypes,publicationVenue,journal,externalIds,url,isOpenAccess,openAccessPdf',
         })
 
         const headers: HeadersInit = {}
@@ -92,31 +92,35 @@ export class SemanticScholarClient extends BaseApiClient {
     /**
      * Transform Semantic Scholar response to normalized format
      */
-    transformResponse(response: any): any[] {
-        if (!response) return []
+    transformResponse(response: unknown): any[] {
+        if (!response || typeof response !== 'object') return []
 
-        const papers = response.data || [response]
+        const data = response as Record<string, any>
+        const papers = data.data || [data]
+
+        if (!Array.isArray(papers)) return []
 
         return papers.map((paper: any) => ({
             id: paper.paperId,
-            doi: paper.doi,
+            doi: paper.externalIds?.DOI || paper.doi,
             title: paper.title,
             authors: paper.authors?.map((a: any) => ({
-                fullName: a.name,
-                authorId: a.authorId,
+                fullName: typeof a === 'string' ? a : (a.name || a.fullName)
             })),
             year: paper.year,
             type: this.inferType(paper.publicationTypes),
-            journal: paper.journal?.name,
+            journal: paper.journal?.name || paper.publicationVenue?.name,
             volume: paper.journal?.volume,
             pages: paper.journal?.pages,
             abstract: paper.abstract,
-            url: paper.url,
+            url: paper.url
+                || (paper.externalIds?.DOI ? `https://doi.org/${paper.externalIds.DOI}` : undefined)
+                || (paper.paperId ? `https://www.semanticscholar.org/paper/${paper.paperId}` : undefined),
             pdfUrl: paper.openAccessPdf?.url,
             isOpenAccess: paper.isOpenAccess,
             citationCount: paper.citationCount,
             references: paper.references?.map((r: any) => r.paperId),
-            keywords: paper.fieldsOfStudy,
+            keywords: paper.s2FieldsOfStudy?.map((f: any) => f.category),
         }))
     }
 

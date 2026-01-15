@@ -63,7 +63,7 @@ export type SavedCitation = {
   source: string
   year?: number | string
   lastEdited: string
-  href: string
+  href?: string
   externalUrl?: string
   doi?: string
   authors?: string[]
@@ -686,7 +686,7 @@ export const useCitationStore = create<CitationState>()(
                 source: c.source || '',
                 year: c.year || undefined,
                 lastEdited: c.last_edited ? new Date(c.last_edited).toLocaleDateString('de-DE', { dateStyle: 'short' }) : new Date().toLocaleDateString('de-DE', { dateStyle: 'short' }),
-                href: c.href || '/editor',
+                href: c.href || undefined,
                 externalUrl: c.external_url || undefined,
                 doi: c.doi || undefined,
                 authors: c.authors || undefined,

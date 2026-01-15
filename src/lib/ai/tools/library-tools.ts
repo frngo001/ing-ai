@@ -1,6 +1,7 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { Buffer } from 'node:buffer'
+import { createClient } from '@/lib/supabase/server'
 import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries'
 import * as citationsUtils from '@/lib/supabase/utils/citations'
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
@@ -48,9 +49,9 @@ interface ConvertedCitation {
   abstract: string | undefined
 }
 
-// Helper: Generiere konsistente Source-ID
+// Helper: Generiere konsistente Source-ID (muss UUID sein für DB)
 function generateSourceId(): string {
-  return `src-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+  return crypto.randomUUID()
 }
 
 // Helper: Konvertiere Source zu Citation
@@ -72,14 +73,10 @@ function convertSourceToCitation(source: Record<string, unknown>): ConvertedCita
   })
   const validDoi = getNormalizedDoi(source.doi as string | undefined)
 
-  // Verwende existierende ID wenn sie dem erwarteten Format entspricht, sonst generiere neue
+  // Verwende existierende ID nur wenn sie eine gültige UUID ist, sonst generiere neue
   const existingId = source.id as string | undefined
-  const isValidIdFormat = existingId && (
-    existingId.startsWith('src-') ||
-    existingId.startsWith('cite_') ||
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(existingId)
-  )
-  const id = isValidIdFormat ? existingId : generateSourceId()
+  const isValidUuid = existingId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(existingId)
+  const id = isValidUuid ? existingId : generateSourceId()
 
   return {
     id,
@@ -104,12 +101,15 @@ export function createLibraryTool(userId: string, projectId?: string) {
       const toolName = 'createLibrary'
 
       try {
+        // Erstelle Server-Client für authentifizierten Zugriff
+        const supabase = await createClient()
+
         const newLibrary = await citationLibrariesUtils.createCitationLibrary({
           user_id: userId,
           name: name.trim(),
           is_default: false,
           project_id: projectId || null,
-        })
+        }, supabase)
         return {
           success: true,
           libraryId: newLibrary.id,
@@ -150,7 +150,10 @@ export function createAddSourcesToLibraryTool(userId: string) {
       const toolName = 'addSourcesToLibrary'
 
       try {
-        const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId)
+        // Erstelle Server-Client für authentifizierten Zugriff
+        const supabase = await createClient()
+
+        const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId, supabase)
         if (!library) {
           return {
             success: false,
@@ -165,7 +168,7 @@ export function createAddSourcesToLibraryTool(userId: string) {
         }
 
         const newCitations = sources.map(s => convertSourceToCitation(s as Record<string, unknown>))
-        const existingCitations = await citationsUtils.getCitationsByLibrary(libraryId, userId)
+        const existingCitations = await citationsUtils.getCitationsByLibrary(libraryId, userId, supabase)
         const existingIds = new Set(existingCitations.map((c) => c.id))
         const uniqueCitations = newCitations.filter((c) => !existingIds.has(c.id))
 
@@ -187,7 +190,7 @@ export function createAddSourcesToLibraryTool(userId: string) {
             in_text_citation: citation.title,
             full_citation: citation.title,
             metadata: {},
-          })
+          }, supabase)
         }
 
         const messageTemplate = translations[language as Language]?.askAi?.toolAddSourcesToLibraryMessage || 'hinzugefügt'
@@ -205,14 +208,26 @@ export function createAddSourcesToLibraryTool(userId: string) {
           }),
         }
       } catch (error) {
+        // Besseres Error-Logging
+        console.error('[addSourcesToLibrary] Error:', error)
+
+        let errorMessage = 'Unknown error'
+        if (error instanceof Error) {
+          errorMessage = error.message
+        } else if (typeof error === 'object' && error !== null) {
+          errorMessage = JSON.stringify(error)
+        } else if (typeof error === 'string') {
+          errorMessage = error
+        }
+
         return {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: errorMessage,
           _toolStep: createToolStepMarker('end', {
             id: stepId,
             toolName,
             status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            error: errorMessage,
           }),
         }
       }
@@ -232,11 +247,14 @@ export function createListAllLibrariesTool(userId: string, projectId?: string) {
       const toolName = 'listAllLibraries'
 
       try {
-        const libraries = await citationLibrariesUtils.getCitationLibraries(userId, undefined, projectId)
+        // Erstelle Server-Client für authentifizierten Zugriff
+        const supabase = await createClient()
+
+        const libraries = await citationLibrariesUtils.getCitationLibraries(userId, supabase, projectId)
 
         const librariesWithCounts = await Promise.all(
           libraries.map(async (lib) => {
-            const citations = await citationsUtils.getCitationsByLibrary(lib.id, userId)
+            const citations = await citationsUtils.getCitationsByLibrary(lib.id, userId, supabase)
             return {
               id: lib.id,
               name: lib.name,
@@ -294,7 +312,10 @@ export function createGetLibrarySourcesTool(userId: string) {
       const libraryNotFoundText = translations[language as Language]?.askAi?.toolGetLibrarySourcesNotFound || 'Bibliothek nicht gefunden'
 
       try {
-        const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId)
+        // Erstelle Server-Client für authentifizierten Zugriff
+        const supabase = await createClient()
+
+        const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId, supabase)
         if (!library) {
           return {
             success: false,
@@ -308,7 +329,7 @@ export function createGetLibrarySourcesTool(userId: string) {
           }
         }
 
-        const citations = await citationsUtils.getCitationsByLibrary(libraryId, userId)
+        const citations = await citationsUtils.getCitationsByLibrary(libraryId, userId, supabase)
         const savedCitations = citations.map((c) => ({
           id: c.id,
           title: c.title || '',

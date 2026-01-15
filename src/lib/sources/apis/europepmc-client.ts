@@ -65,7 +65,11 @@ export class EuropePmcClient extends BaseApiClient {
             issue: article.issue,
             pages: article.pageInfo,
             abstract: article.abstractText,
-            url: `https://europepmc.org/article/MED/${article.pmid}`,
+            url: article.pmid
+                ? `https://europepmc.org/article/MED/${article.pmid}`
+                : (article.pmcid
+                    ? `https://europepmc.org/article/PMC/${article.pmcid}`
+                    : (article.doi ? `https://doi.org/${article.doi}` : undefined)),
             isOpenAccess: article.isOpenAccess === 'Y',
             citationCount: article.citedByCount,
         }))
