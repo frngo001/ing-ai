@@ -84,6 +84,8 @@ export function PlateEditor({
   const initialValue = React.useMemo(() => getInitialValue(storageId), [storageId]);
   const latestContentRef = React.useRef<Value>(initialValue);
   const contentSaveTimeout = React.useRef<number | ReturnType<typeof setTimeout> | null>(null);
+  const broadcastTimeout = React.useRef<number | ReturnType<typeof setTimeout> | null>(null);
+  const BROADCAST_THROTTLE_MS = 150; // Throttle broadcasts to avoid flooding the channel
   const topToolbarRef = React.useRef<HTMLDivElement | null>(null);
   const bottomToolbarRef = React.useRef<HTMLDivElement | null>(null);
   const [toolbarHeights, setToolbarHeights] = React.useState({ top: 0, bottom: 0 });
@@ -124,7 +126,7 @@ export function PlateEditor({
     } finally {
       setTimeout(() => {
         isUpdatingFromRealtimeRef.current = false;
-      }, 100);
+      }, 30); // Reduced from 100ms to 30ms for faster response
     }
   }, [editor]);
 
@@ -361,7 +363,7 @@ export function PlateEditor({
         // Reset broadcast block after a short delay
         setTimeout(() => {
           isUpdatingFromRealtimeRef.current = false;
-        }, 100);
+        }, 30); // Reduced from 100ms to 30ms
       }
 
       latestContentRef.current = finalContent;
@@ -406,9 +408,15 @@ export function PlateEditor({
 
       latestContentRef.current = nextValue;
 
-      // Broadcast change to other users
+      // Throttled broadcast to other users (prevents flooding the channel)
       if (isUUIDDocument && !isUpdatingFromRealtimeRef.current) {
-        broadcastContent(nextValue);
+        if (broadcastTimeout.current) {
+          window.clearTimeout(broadcastTimeout.current);
+        }
+        broadcastTimeout.current = window.setTimeout(() => {
+          broadcastContent(latestContentRef.current);
+          broadcastTimeout.current = null;
+        }, BROADCAST_THROTTLE_MS);
       }
 
       if (contentSaveTimeout.current) {
@@ -439,13 +447,17 @@ export function PlateEditor({
         avatarUrl: currentUser.avatarUrl,
         selection: editor.selection || null,
       });
-    }, 5); // Send cursor update Every 1ms
+    }, 100); // Send cursor update every 100ms (was 5ms - caused performance issues)
 
     return () => clearInterval(interval);
   }, [editor, isUUIDDocument, currentUser, updatePresence]);
 
   React.useEffect(() => {
     return () => {
+      // Clean up broadcast timeout
+      if (broadcastTimeout.current) {
+        window.clearTimeout(broadcastTimeout.current);
+      }
       if (contentSaveTimeout.current && hasHydrated.current) {
         window.clearTimeout(contentSaveTimeout.current);
         try {

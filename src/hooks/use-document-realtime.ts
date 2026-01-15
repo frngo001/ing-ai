@@ -47,6 +47,19 @@ export function useDocumentRealtime({
 
     const [presence, setPresence] = React.useState<Record<string, RealtimePresence>>({});
 
+    // Store callbacks in refs to avoid re-subscribing when they change
+    const onContentUpdateRef = React.useRef(onContentUpdate);
+    const onDiscussionsUpdateRef = React.useRef(onDiscussionsUpdate);
+
+    // Keep refs updated
+    React.useEffect(() => {
+        onContentUpdateRef.current = onContentUpdate;
+    }, [onContentUpdate]);
+
+    React.useEffect(() => {
+        onDiscussionsUpdateRef.current = onDiscussionsUpdate;
+    }, [onDiscussionsUpdate]);
+
     React.useEffect(() => {
         if (!enabled || !documentId) return;
 
@@ -63,13 +76,13 @@ export function useDocumentRealtime({
             .on('broadcast' as any, { event: 'content-update' }, (payload: { content: Value }) => {
                 devLog('[REALTIME] Received content-update');
                 if (payload.content) {
-                    onContentUpdate(payload.content);
+                    onContentUpdateRef.current(payload.content);
                 }
             })
             .on('broadcast' as any, { event: 'discussions-update' }, (payload: { discussions: any[] }) => {
                 devLog('[REALTIME] Received discussions-update');
-                if (payload.discussions && onDiscussionsUpdate) {
-                    onDiscussionsUpdate(payload.discussions);
+                if (payload.discussions && onDiscussionsUpdateRef.current) {
+                    onDiscussionsUpdateRef.current(payload.discussions);
                 }
             })
             .on('presence', { event: 'sync' }, () => {
@@ -104,7 +117,7 @@ export function useDocumentRealtime({
             channel.unsubscribe();
             channelRef.current = null;
         };
-    }, [documentId, enabled, onContentUpdate, supabase]);
+    }, [documentId, enabled, supabase]); // Removed onContentUpdate from dependencies
 
     const broadcastContent = React.useCallback((content: Value) => {
         if (!channelRef.current) return;
