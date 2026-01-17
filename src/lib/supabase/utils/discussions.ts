@@ -6,6 +6,11 @@ type DiscussionInsert = Database['public']['Tables']['discussions']['Insert']
 type DiscussionUpdate = Database['public']['Tables']['discussions']['Update']
 
 export async function getDiscussionsByDocument(documentId: string): Promise<Discussion[]> {
+  if (!isValidUUID(documentId)) {
+    console.warn(`[DISCUSSIONS] Überspringe API-Aufruf für ungültige document_id: ${documentId}`)
+    return []
+  }
+
   const supabase = createClient()
   const { data, error } = await supabase
     .from('discussions')
@@ -104,6 +109,11 @@ export async function deleteDiscussion(id: string, userId: string): Promise<void
 }
 
 export async function deleteDiscussionsByDocument(documentId: string, userId: string): Promise<void> {
+  if (!isValidUUID(documentId)) {
+    console.warn(`[DISCUSSIONS] Überspringe Löschen für ungültige document_id: ${documentId}`)
+    return
+  }
+
   const supabase = createClient()
   const { error } = await supabase
     .from('discussions')
@@ -115,6 +125,11 @@ export async function deleteDiscussionsByDocument(documentId: string, userId: st
 }
 
 export async function getDeepDiscussionsByDocument(documentId: string): Promise<any[]> {
+  if (!isValidUUID(documentId)) {
+    console.warn(`[DISCUSSIONS] Überspringe API-Aufruf für ungültige document_id: ${documentId}`)
+    return []
+  }
+
   const supabase = createClient()
   const { data, error } = await supabase
     .from('discussions')
@@ -145,6 +160,11 @@ export async function getDeepDiscussionsByDocument(documentId: string): Promise<
 }
 
 export async function syncDiscussions(documentId: string, discussions: any[]) {
+  if (!isValidUUID(documentId)) {
+    console.warn(`[SYNC DISCUSSIONS] Überspringe Sync für ungültige document_id: ${documentId}`)
+    return
+  }
+
   const supabase = createClient()
 
   for (const discussion of discussions) {

@@ -22,6 +22,7 @@ export function EditorLoading() {
             src="/logos/logosApp/ing_AI.png"
             alt="Ing AI"
             fill
+            sizes="150px"
             className="object-contain"
             priority
           />

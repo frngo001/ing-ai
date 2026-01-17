@@ -6,13 +6,13 @@ import {
   CirclePlus,
   Download,
   ExternalLink,
+  Upload,
   PanelLeftClose,
+  Search,
+  Trash,
   Plus,
   Quote,
   Trash2,
-  Upload,
-  Search,
-  Trash,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -43,6 +43,7 @@ import { useProjectStore, type Project } from "@/lib/stores/project-store"
 import * as React from "react"
 import { useLanguage } from "@/lib/i18n/use-language"
 import { useProjectLibraryRealtime } from "@/hooks/use-project-library-realtime"
+import { ImportCitationsDialog } from "@/components/citations/import-citations-dialog"
 
 const fallbackCitations: SavedCitation[] = []
 
@@ -61,7 +62,6 @@ export function LibraryPane({
 
   const isSharedProject = currentProject?.isShared === true;
   const isViewOnly = isSharedProject && currentProject?.shareMode === 'view';
-  const addCitation = useCitationStore((state) => state.addCitation)
   const removeCitation = useCitationStore((state) => state.removeCitation)
   const citations = useCitationStore((state) => state.savedCitations)
   const libraries = useCitationStore((state) => state.libraries)
@@ -71,13 +71,13 @@ export function LibraryPane({
   const deleteLibrary = useCitationStore((state) => state.deleteLibrary)
   const syncLibrariesFromBackend = useCitationStore((state) => state.syncLibrariesFromBackend)
   const setCurrentProjectId = useCitationStore((state) => state.setCurrentProjectId)
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const [isCreateLibraryOpen, setIsCreateLibraryOpen] = React.useState(false)
   const [newLibraryName, setNewLibraryName] = React.useState("")
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null)
   const [libraryToDelete, setLibraryToDelete] = React.useState<{ id: string; name: string } | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [expandedAbstracts, setExpandedAbstracts] = React.useState<Record<string, boolean>>({})
+  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false)
 
   // Memoized translations that update on language change
   const translations = React.useMemo(() => ({
@@ -87,6 +87,7 @@ export function LibraryPane({
     exportBib: t('library.exportBib'),
     addCitations: t('library.addCitations'),
     closePanel: t('library.closePanel'),
+    import: t('library.import') || "Importieren",
     selectLibrary: t('library.selectLibrary'),
     chooseLibrary: t('library.chooseLibrary'),
     newLibrary: t('library.newLibrary'),
@@ -110,6 +111,7 @@ export function LibraryPane({
     deleteLibraryTitle: t('library.deleteLibraryTitle'),
     deleteLibraryDescription: t('library.deleteLibraryDescription'),
     addedOn: t('library.addedOn'),
+
   }), [t, language])
 
   React.useEffect(() => {
@@ -179,50 +181,6 @@ export function LibraryPane({
     URL.revokeObjectURL(url)
   }
 
-  const parseBib = (text: string): SavedCitation[] => {
-    const rawEntries = text.split("@").filter((e) => e.trim())
-    const parsed: SavedCitation[] = []
-    for (const entry of rawEntries) {
-      const matchKey = entry.match(/^\w+\s*{\s*([^,]+),/)
-      const id = matchKey?.[1]?.trim() || `cite_${Math.random().toString(16).slice(2)}`
-      const getField = (name: string) => {
-        const regex = new RegExp(`${name}\\s*=\\s*[{\"]([^}"]+)[}\"]`, "i")
-        return entry.match(regex)?.[1]?.trim()
-      }
-      const title = getField("title") || "Untitled"
-      const authorsRaw = getField("author") || ""
-      const year = getField("year")
-      const doi = getField("doi")
-      const url = getField("url")
-      const journal = getField("journal") || getField("booktitle") || "Quelle"
-      const authors = authorsRaw
-        ? authorsRaw.split(/\s+and\s+/i).map((a) => a.trim()).filter(Boolean)
-        : []
-      const nowText = `${translations.addedOn} ${new Date().toLocaleDateString(language, { dateStyle: "short" })}`
-      parsed.push({
-        id,
-        title,
-        source: journal,
-        year,
-        lastEdited: nowText,
-        href: undefined,
-        externalUrl: url,
-        doi: doi || undefined,
-        authors,
-      })
-    }
-    return parsed
-  }
-
-  const importBib = async (file?: File | null) => {
-    if (!file) return
-    const text = await file.text()
-    const entries = parseBib(text)
-    entries.forEach((c) => addCitation(c))
-  }
-
-  const handleImportClick = () => fileInputRef.current?.click()
-
   const handleCreateLibrary = async () => {
     const name = newLibraryName.trim() || translations.newLibrary
     const id = await addLibrary(name)
@@ -259,19 +217,6 @@ export function LibraryPane({
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".bib,text/plain"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              importBib(file)
-              if (fileInputRef.current) {
-                fileInputRef.current.value = ""
-              }
-            }}
-          />
           {!isViewOnly && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -279,13 +224,13 @@ export function LibraryPane({
                   size="icon"
                   variant="ghost"
                   className="h-7 w-7 bg-transparent"
-                  onClick={handleImportClick}
-                  aria-label={translations.importBib}
+                  onClick={() => setIsImportDialogOpen(true)}
+                  aria-label={translations.import}
                 >
                   <Upload className="size-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">{translations.importBib}</TooltipContent>
+              <TooltipContent side="bottom">{translations.import}</TooltipContent>
             </Tooltip>
           )}
           <Tooltip>
@@ -678,6 +623,11 @@ export function LibraryPane({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ImportCitationsDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+      />
     </div >
   )
 }

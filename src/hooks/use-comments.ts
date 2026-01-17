@@ -71,6 +71,12 @@ export const useComments = (documentId: string) => {
     }, [documentId, fetchDiscussions, supabase]);
 
     const addDiscussion = async (discussion: TDiscussion) => {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId);
+        if (!isUUID) {
+            console.warn(`[USE-COMMENTS] Überspringe addDiscussion für ungültige documentId: ${documentId}`);
+            return;
+        }
+
         try {
             const { error } = await supabase.from('discussions').insert({
                 id: discussion.id,

@@ -196,6 +196,9 @@ interface CitationState {
   setLibraries: (libraries: CitationLibrary[]) => void
   loadLibrariesFromSupabase: (projectId?: string | null, isSharedProject?: boolean) => Promise<void>
   addCitationsToLibrary: (libraryId: string, citations: SavedCitation[]) => void
+  importCitationsFromLibrary: (sourceLibraryId: string, citationIds: string[]) => Promise<void>
+  getAllLibrariesWithCitations: () => Promise<CitationLibrary[]>
+  importBulkCitations: (citations: SavedCitation[]) => Promise<{ inserted: number; skipped: number }>
 }
 
 const createDefaultLibrary = (): CitationLibrary => ({
@@ -280,6 +283,27 @@ export const useCitationStore = create<CitationState>()(
       setCitationNumericRangeVariant: (variant) => set({ citationNumericRangeVariant: variant }),
       addCitation: async (citation) => {
         const userId = await getCurrentUserId()
+
+        // Prüfe auf Duplikate basierend auf DOI oder Titel+Jahr
+        const currentState = get()
+        const activeLib = currentState.libraries.find((l) => l.id === currentState.activeLibraryId)
+        if (activeLib) {
+          const isDuplicate = activeLib.citations.some((c) => {
+            // Prüfe auf gleiche ID
+            if (c.id === citation.id) return true
+            // Prüfe auf gleiche DOI
+            if (citation.doi && c.doi === citation.doi) return true
+            // Prüfe auf gleichen Titel und Jahr
+            if (c.title === citation.title && c.year === citation.year) return true
+            return false
+          })
+
+          if (isDuplicate) {
+            devLog('⏭️ [CITATION STORE] Zitation bereits vorhanden, wird übersprungen:', citation.title)
+            return
+          }
+        }
+
         if (!userId) {
           devWarn('⚠️ [CITATION STORE] Kein User eingeloggt, Citation wird nur lokal gespeichert')
           set((state) => {
@@ -751,6 +775,234 @@ export const useCitationStore = create<CitationState>()(
             savedCitations: activeLib?.citations || state.savedCitations,
           }
         })
+      },
+      importCitationsFromLibrary: async (sourceLibraryId: string, citationIds: string[]) => {
+        const userId = await getCurrentUserId()
+        if (!userId) {
+          devWarn('⚠️ [CITATION STORE] Kein User eingeloggt, Import nicht möglich')
+          return
+        }
+
+        const state = get()
+        const activeLibraryId = state.activeLibraryId
+
+        if (!activeLibraryId || activeLibraryId === sourceLibraryId) {
+          devWarn('⚠️ [CITATION STORE] Kann nicht in dieselbe Bibliothek importieren')
+          return
+        }
+
+        // Finde die Quell-Bibliothek
+        const sourceLibrary = state.libraries.find((lib) => lib.id === sourceLibraryId)
+        if (!sourceLibrary) {
+          devWarn('⚠️ [CITATION STORE] Quell-Bibliothek nicht gefunden')
+          return
+        }
+
+        // Filtere die zu importierenden Zitate
+        const citationsToImport = sourceLibrary.citations.filter((c) => citationIds.includes(c.id))
+        if (citationsToImport.length === 0) {
+          devWarn('⚠️ [CITATION STORE] Keine Zitate zum Importieren gefunden')
+          return
+        }
+
+        // Importiere jede Zitation mit neuer UUID in die aktive Bibliothek
+        for (const citation of citationsToImport) {
+          // Generiere eine neue UUID für die importierte Zitation
+          const newCitationId = crypto.randomUUID()
+          const now = new Date()
+          const lastEdited = `Importiert am ${now.toLocaleDateString('de-DE', { dateStyle: 'short' })}`
+
+          const newCitation: SavedCitation = {
+            ...citation,
+            id: newCitationId,
+            lastEdited,
+          }
+
+          try {
+            // Speichere in Supabase
+            const citationData = {
+              id: newCitationId,
+              user_id: userId,
+              library_id: activeLibraryId,
+              title: citation.title || null,
+              source: citation.source || null,
+              year: typeof citation.year === 'number' ? citation.year : citation.year ? parseInt(citation.year.toString()) : null,
+              last_edited: now.toISOString(),
+              href: citation.href || null,
+              external_url: citation.externalUrl || null,
+              authors: citation.authors?.map((a: any) => {
+                if (typeof a === 'string') return a === '[object Object]' ? '' : a;
+                return a?.fullName || a?.name || '';
+              }).filter(Boolean) || null,
+              abstract: citation.abstract || null,
+              doi: citation.doi || null,
+              citation_style: 'vancouver',
+              in_text_citation: citation.title || '',
+              full_citation: citation.title || '',
+              metadata: {},
+            }
+
+            await citationsUtils.createCitation(citationData)
+
+            // Aktualisiere lokalen State
+            set((s) => {
+              const libraries = s.libraries.map((lib) => {
+                if (lib.id === activeLibraryId) {
+                  // Prüfe, ob Zitation bereits existiert (nach DOI oder Titel+Jahr)
+                  const exists = lib.citations.some(
+                    (c) =>
+                      (citation.doi && c.doi === citation.doi) ||
+                      (c.title === citation.title && c.year === citation.year)
+                  )
+                  if (exists) return lib
+
+                  return {
+                    ...lib,
+                    citations: [newCitation, ...lib.citations],
+                  }
+                }
+                return lib
+              })
+
+              const activeLib = libraries.find((lib) => lib.id === activeLibraryId)
+              return {
+                libraries,
+                savedCitations: activeLib?.citations || s.savedCitations,
+              }
+            })
+
+            devLog(`✅ [CITATION STORE] Zitat importiert: ${citation.title}`)
+          } catch (error) {
+            devError('❌ [CITATION STORE] Fehler beim Importieren der Zitation:', error)
+          }
+        }
+      },
+      getAllLibrariesWithCitations: async () => {
+        const userId = await getCurrentUserId()
+        if (!userId) {
+          devWarn('⚠️ [CITATION STORE] Kein User eingeloggt')
+          return []
+        }
+
+        try {
+          // Lade ALLE Bibliotheken des Users (nicht projekt-gefiltert)
+          const allLibraries = await citationLibrariesUtils.getCitationLibraries(userId)
+
+          const librariesWithCitations: CitationLibrary[] = await Promise.all(
+            allLibraries.map(async (lib) => {
+              const citations = await citationsUtils.getCitationsByLibrary(lib.id, userId)
+              const savedCitations: SavedCitation[] = citations.map((c) => ({
+                id: c.id,
+                title: c.title || '',
+                source: c.source || '',
+                year: c.year || undefined,
+                lastEdited: c.last_edited
+                  ? new Date(c.last_edited).toLocaleDateString('de-DE', { dateStyle: 'short' })
+                  : new Date().toLocaleDateString('de-DE', { dateStyle: 'short' }),
+                href: c.href || undefined,
+                externalUrl: c.external_url || undefined,
+                doi: c.doi || undefined,
+                authors: c.authors || undefined,
+                abstract: c.abstract || undefined,
+              }))
+              return {
+                id: lib.id,
+                name: lib.name,
+                citations: savedCitations,
+              }
+            })
+          )
+
+          return librariesWithCitations
+        } catch (error) {
+          devError('❌ [CITATION STORE] Fehler beim Laden aller Bibliotheken:', error)
+          return []
+        }
+      },
+      importBulkCitations: async (citations: SavedCitation[]) => {
+        devLog('📥 [CITATION STORE] Starting bulk import of', citations.length, 'citations')
+
+        const userId = await getCurrentUserId()
+        if (!userId) {
+          devWarn('⚠️ [CITATION STORE] Kein User eingeloggt, Bulk-Import nicht möglich')
+          return { inserted: 0, skipped: citations.length }
+        }
+
+        const state = get()
+        let activeId: string | undefined = state.activeLibraryId || state.libraries[0]?.id
+
+        devLog('📥 [CITATION STORE] Active library ID:', activeId)
+
+        // Stelle sicher, dass eine gültige Library-ID vorhanden ist
+        if (!activeId || activeId === 'library_default') {
+          const defaultLib = await citationLibrariesUtils.getDefaultCitationLibrary(userId)
+          let libraryId = defaultLib?.id
+          if (!libraryId) {
+            try {
+              const newLib = await citationLibrariesUtils.createCitationLibrary({
+                user_id: userId,
+                name: 'Standardbibliothek',
+                is_default: true,
+              })
+              libraryId = newLib.id
+              activeId = libraryId
+              set((s) => ({
+                libraries: [...s.libraries.filter((l) => l.id !== 'library_default'), { id: libraryId!, name: 'Standardbibliothek', citations: [] }],
+                activeLibraryId: libraryId,
+              }))
+            } catch (error) {
+              devError('❌ [CITATION STORE] Fehler beim Erstellen der Standardbibliothek:', error)
+              return { inserted: 0, skipped: citations.length }
+            }
+          } else {
+            activeId = libraryId
+          }
+        }
+
+        const finalActiveId = activeId !== 'library_default' ? activeId : undefined
+
+        devLog('📥 [CITATION STORE] Final library ID:', finalActiveId, 'User ID:', userId)
+
+        // Konvertiere alle SavedCitations zu Supabase Citation Format
+        const citationDataList = citations.map((citation) => {
+          const citationId = crypto.randomUUID()
+          return {
+            id: citationId,
+            user_id: userId,
+            library_id: finalActiveId || null,
+            title: citation.title || null,
+            source: citation.source || null,
+            year: typeof citation.year === 'number' ? citation.year : citation.year ? parseInt(citation.year.toString()) : null,
+            last_edited: safeDateToISO(citation.lastEdited),
+            href: citation.href || null,
+            external_url: citation.externalUrl || null,
+            authors: citation.authors?.map((a: any) => {
+              if (typeof a === 'string') return a === '[object Object]' ? '' : a
+              return a?.fullName || a?.name || ''
+            }).filter(Boolean) || null,
+            abstract: citation.abstract || null,
+            doi: citation.doi || null,
+            citation_style: 'vancouver' as const,
+            in_text_citation: citation.title || '',
+            full_citation: citation.title || '',
+            metadata: {},
+          }
+        })
+
+        devLog('📥 [CITATION STORE] Prepared', citationDataList.length, 'citations for insert')
+
+        try {
+          const result = await citationsUtils.bulkCreateCitations(citationDataList)
+          devLog(`✅ [CITATION STORE] Bulk-Import: ${result.inserted} eingefügt, ${result.skipped} übersprungen`)
+
+          // Lade die Bibliothek neu um den State zu aktualisieren
+          await get().loadLibrariesFromSupabase(state.currentProjectId)
+
+          return result
+        } catch (error) {
+          devError('❌ [CITATION STORE] Fehler beim Bulk-Import:', error)
+          return { inserted: 0, skipped: citations.length }
+        }
       },
     }),
     {
