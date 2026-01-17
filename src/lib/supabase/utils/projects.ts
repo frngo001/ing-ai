@@ -5,7 +5,6 @@ import { devLog, devError } from '@/lib/utils/logger'
 type Project = Database['public']['Tables']['projects']['Row']
 type ProjectInsert = Database['public']['Tables']['projects']['Insert']
 type ProjectUpdate = Database['public']['Tables']['projects']['Update']
-type ProjectShare = Database['public']['Tables']['project_shares']['Row']
 
 export interface ProjectWithShareInfo extends Project {
   isShared?: boolean
@@ -39,19 +38,32 @@ export async function getProjectsWithShared(userId: string): Promise<ProjectWith
 
   devLog('[PROJECTS] Fetching projects with shared for user:', userId)
 
-  const [ownProjectsResult, sharedProjectsResult] = await Promise.all([
+  // Fetch own projects and share memberships (only projects user has explicitly joined)
+  const [ownProjectsResult, membershipResult] = await Promise.all([
     supabase
       .from('projects')
       .select('*')
       .eq('user_id', userId)
       .order('is_default', { ascending: false })
       .order('created_at', { ascending: false }),
+    // Only fetch projects where user is a member (clicked on share link)
     supabase
-      .from('project_shares')
-      .select('*, projects(*)')
-      .eq('is_active', true)
-      .neq('owner_id', userId)
-      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`),
+      .from('project_share_members')
+      .select(`
+        share_id,
+        joined_at,
+        project_shares (
+          id,
+          project_id,
+          mode,
+          share_token,
+          is_active,
+          expires_at,
+          owner_id,
+          projects (*)
+        )
+      `)
+      .eq('user_id', userId),
   ])
 
   if (ownProjectsResult.error) {
@@ -65,14 +77,31 @@ export async function getProjectsWithShared(userId: string): Promise<ProjectWith
   }))
 
   const sharedProjects: ProjectWithShareInfo[] = []
-  if (sharedProjectsResult.data) {
-    for (const share of sharedProjectsResult.data) {
-      const project = share.projects as unknown as Project
+  const now = new Date()
+
+  if (membershipResult.data) {
+    for (const membership of membershipResult.data) {
+      const share = membership.project_shares as unknown as {
+        id: string
+        project_id: string
+        mode: 'view' | 'edit' | 'suggest'
+        share_token: string
+        is_active: boolean
+        expires_at: string | null
+        owner_id: string
+        projects: Project
+      }
+
+      // Skip if share is inactive or expired
+      if (!share?.is_active) continue
+      if (share.expires_at && new Date(share.expires_at) < now) continue
+
+      const project = share.projects
       if (project && !ownProjects.some(p => p.id === project.id)) {
         sharedProjects.push({
           ...project,
           isShared: true,
-          shareMode: share.mode as 'view' | 'edit' | 'suggest',
+          shareMode: share.mode,
           shareToken: share.share_token,
         })
       }

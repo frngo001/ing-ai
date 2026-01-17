@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getSharedProjectData, validateShareAccess } from '@/lib/supabase/utils/project-shares'
+import { getSharedProjectData, joinProjectShare } from '@/lib/supabase/utils/project-shares'
 import { devLog, devError } from '@/lib/utils/logger'
 
 export async function GET(
@@ -24,17 +24,19 @@ export async function GET(
       )
     }
 
-    const accessResult = await validateShareAccess(token, supabase)
+    // Join the share - this creates a membership record so the user can access the project
+    const joinResult = await joinProjectShare(token, supabase)
 
-    if (!accessResult.isValid) {
+    if (!joinResult.success) {
       return NextResponse.json(
-        { error: 'Invalid or expired share link' },
+        { error: joinResult.error || 'Invalid or expired share link' },
         { status: 404 }
       )
     }
 
-    const isOwner = user.id === accessResult.ownerId
+    const isOwner = joinResult.isOwner || false
 
+    // Now fetch the full project data (user now has access via membership)
     const sharedData = await getSharedProjectData(token, supabase)
 
     if (!sharedData || !sharedData.project) {
@@ -44,15 +46,15 @@ export async function GET(
       )
     }
 
-    devLog('[API/PROJECT_ACCESS] Access granted for project:', sharedData.project.id)
+    devLog('[API/PROJECT_ACCESS] Access granted for project:', sharedData.project.id, 'isOwner:', isOwner)
 
     return NextResponse.json({
       project: sharedData.project,
       documents: sharedData.documents,
       libraries: sharedData.libraries,
-      mode: accessResult.mode,
+      mode: joinResult.mode,
       isOwner,
-      expiresAt: accessResult.expiresAt?.toISOString() || null,
+      expiresAt: sharedData.share?.expires_at || null,
     })
   } catch (error) {
     devError('[API/PROJECT_ACCESS] Error validating access:', error)

@@ -263,3 +263,100 @@ export async function updateProjectShare(
 
   return data
 }
+
+export interface JoinShareResult {
+  success: boolean
+  error?: string
+  isOwner?: boolean
+  projectId?: string
+  shareId?: string
+  mode?: ShareMode
+}
+
+/**
+ * Join a shared project via share token.
+ * This function calls a database function that:
+ * 1. Validates the share token
+ * 2. Creates a membership record for the current user
+ * 3. Returns the project info
+ */
+export async function joinProjectShare(
+  token: string,
+  supabaseClient?: SupabaseClientType
+): Promise<JoinShareResult> {
+  const supabase = supabaseClient || createClient()
+
+  devLog('[PROJECT_SHARES] Joining share via token')
+
+  const { data, error } = await supabase.rpc('join_project_share', {
+    share_token_param: token,
+  })
+
+  if (error) {
+    devError('[PROJECT_SHARES] Error joining share:', error)
+    return { success: false, error: error.message }
+  }
+
+  devLog('[PROJECT_SHARES] Join result:', data)
+  return data as JoinShareResult
+}
+
+/**
+ * Get all share memberships for a user (projects shared with them that they've joined)
+ */
+export async function getUserShareMemberships(
+  userId: string,
+  supabaseClient?: SupabaseClientType
+): Promise<Array<{
+  shareId: string
+  projectId: string
+  mode: ShareMode
+  joinedAt: Date
+}>> {
+  const supabase = supabaseClient || createClient()
+
+  devLog('[PROJECT_SHARES] Getting share memberships for user:', userId)
+
+  const { data, error } = await supabase
+    .from('project_share_members')
+    .select(`
+      id,
+      share_id,
+      joined_at,
+      project_shares (
+        id,
+        project_id,
+        mode,
+        is_active,
+        expires_at
+      )
+    `)
+    .eq('user_id', userId)
+
+  if (error) {
+    devError('[PROJECT_SHARES] Error getting memberships:', error)
+    throw error
+  }
+
+  // Filter out inactive or expired shares
+  const now = new Date()
+  const activeMemberships = (data || [])
+    .filter((m) => {
+      const share = m.project_shares as unknown as ProjectShare
+      if (!share?.is_active) return false
+      if (share.expires_at && new Date(share.expires_at) < now) return false
+      return true
+    })
+    .map((m) => {
+      const share = m.project_shares as unknown as ProjectShare
+      return {
+        shareId: m.share_id,
+        projectId: share.project_id,
+        mode: share.mode as ShareMode,
+        joinedAt: new Date(m.joined_at),
+      }
+    })
+
+  devLog('[PROJECT_SHARES] Found active memberships:', activeMemberships.length)
+  return activeMemberships
+}

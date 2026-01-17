@@ -706,12 +706,43 @@ export interface Database {
         }
         Relationships: []
       }
+      project_share_members: {
+        Row: {
+          id: string
+          share_id: string
+          user_id: string
+          joined_at: string
+        }
+        Insert: {
+          id?: string
+          share_id: string
+          user_id: string
+          joined_at?: string
+        }
+        Update: {
+          id?: string
+          share_id?: string
+          user_id?: string
+          joined_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      join_project_share: {
+        Args: { share_token_param: string }
+        Returns: {
+          success: boolean
+          error?: string
+          isOwner?: boolean
+          projectId?: string
+          shareId?: string
+          mode?: 'view' | 'edit' | 'suggest'
+        }
+      }
     }
     Enums: {
       [_ in never]: never
