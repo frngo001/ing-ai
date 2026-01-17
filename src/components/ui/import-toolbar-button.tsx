@@ -7,7 +7,6 @@ import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 import { MarkdownPlugin } from '@platejs/markdown';
 import { ArrowUpToLineIcon } from 'lucide-react';
 import { useEditorRef } from 'platejs/react';
-import { getEditorDOMFromHtmlString } from 'platejs/static';
 import { useFilePicker } from 'use-file-picker';
 import { useOnboardingStore } from '@/lib/stores/onboarding-store';
 
@@ -52,12 +51,17 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
   const tooltipText = React.useMemo(() => t('toolbar.import'), [t, language]);
   const importFromHtmlText = React.useMemo(() => t('toolbar.importFromHtml'), [t, language]);
   const importFromMarkdownText = React.useMemo(() => t('toolbar.importFromMarkdown'), [t, language]);
+  const importFromWordText = React.useMemo(() => t('toolbar.importFromWord'), [t, language]);
 
   const getFileNodes = (text: string, type: ImportType) => {
+    if (!text) return [];
+
     if (type === 'html') {
-      const editorNode = getEditorDOMFromHtmlString(text);
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/html');
+
       const nodes = editor.api.html.deserialize({
-        element: editorNode,
+        element: doc.body,
       });
 
       return nodes;
@@ -68,6 +72,18 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
     }
 
     return [];
+  };
+
+  /**
+   * Convert Word document to HTML using mammoth
+   * This is better for images and complex formatting than Markdown
+   */
+  const convertWordToHtml = async (arrayBuffer: ArrayBuffer): Promise<string> => {
+    const mammothModule = await import('mammoth');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mammoth = (mammothModule as any).default || mammothModule;
+    const result = await mammoth.convertToHtml({ arrayBuffer });
+    return result.value;
   };
 
   const { openFilePicker: openMdFilePicker } = useFilePicker({
@@ -94,14 +110,31 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
     },
   });
 
+  const { openFilePicker: openWordFilePicker } = useFilePicker({
+    accept: ['.docx', '.doc', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    multiple: false,
+    onFilesSelected: async ({ plainFiles }) => {
+      const file = plainFiles[0];
+      const arrayBuffer = await file.arrayBuffer();
+
+      // Convert Word to HTML using mammoth - better for images
+      const html = await convertWordToHtml(arrayBuffer);
+
+      // Deserialize HTML to Plate nodes
+      const nodes = getFileNodes(html, 'html');
+
+      editor.tf.insertNodes(nodes);
+    },
+  });
+
   return (
     <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton pressed={open} tooltip={tooltipText} isDropdown data-onboarding="import-btn">
-         <ArrowUpToLineIcon className="size-4" />
+          <ArrowUpToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
- 
+
       <DropdownMenuContent align="start" data-onboarding="import-dropdown">
         <DropdownMenuGroup>
           <DropdownMenuItem
@@ -118,6 +151,14 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
             }}
           >
             {importFromMarkdownText}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onSelect={() => {
+              openWordFilePicker();
+            }}
+          >
+            {importFromWordText}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

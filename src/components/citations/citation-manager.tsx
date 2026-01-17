@@ -120,7 +120,10 @@ export function CitationManager({ onInsertCitation }: CitationManagerProps) {
         // Convert source to citation format
         const newCitation: Citation = {
             id: Date.now().toString(),
-            type: source.type === 'journal' ? 'journal' : source.type === 'book' ? 'book' : 'article',
+            type: source.type === 'book' ? 'book'
+                : source.type === 'journal' ? 'journal'
+                    : source.type === 'webpage' || source.type === 'website' ? 'website'
+                        : 'article',
             title: source.title,
             author: source.authors?.map((a: any) => a.fullName || `${a.firstName} ${a.lastName}`.trim()).join(', ') || '',
             year: source.publicationYear?.toString() || '',

@@ -275,6 +275,67 @@ export function PlateEditor({
     };
   }, [editor]);
 
+  // Bereinige dunkle Textfarben und helle Hintergrundfarben nach dem Paste
+  // Dies ist notwendig für Text aus DOCX/Word, der schwarze Schrift mitbringt
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !editor) return;
+
+    const cleanupPastedColors = () => {
+      // Kurze Verzögerung, damit der Paste-Vorgang abgeschlossen ist
+      setTimeout(() => {
+        try {
+          // Durchlaufe alle Text-Nodes im Editor und entferne problematische Farben
+          const nodes = editor.api.nodes({
+            at: [],
+            match: (n) => TextApi.isText(n) && (n.color !== undefined || n.backgroundColor !== undefined),
+          });
+
+          for (const [node, path] of nodes) {
+            const textNode = node as TText & { color?: string; backgroundColor?: string };
+
+            // Prüfe auf dunkle Textfarbe (schwarz/dunkelgrau)
+            if (textNode.color) {
+              const color = textNode.color.toLowerCase();
+              const isDark =
+                color === 'black' ||
+                color === '#000' ||
+                color === '#000000' ||
+                color === 'windowtext' ||
+                color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/)?.slice(1).every(v => parseInt(v) < 50);
+
+              if (isDark) {
+                editor.tf.setNodes({ color: undefined } as any, { at: path });
+              }
+            }
+
+            // Prüfe auf helle Hintergrundfarbe (weiß/hellgrau)
+            if (textNode.backgroundColor) {
+              const bgColor = textNode.backgroundColor.toLowerCase();
+              const isLight =
+                bgColor === 'white' ||
+                bgColor === '#fff' ||
+                bgColor === '#ffffff' ||
+                bgColor.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/)?.slice(1).every(v => parseInt(v) > 220);
+
+              if (isLight) {
+                editor.tf.setNodes({ backgroundColor: undefined } as any, { at: path });
+              }
+            }
+          }
+        } catch (error) {
+          devWarn('[PLATE EDITOR] Fehler beim Bereinigen der Paste-Farben:', error);
+        }
+      }, 50);
+    };
+
+    // Paste-Event auf dem Document-Level abfangen
+    document.addEventListener('paste', cleanupPastedColors);
+
+    return () => {
+      document.removeEventListener('paste', cleanupPastedColors);
+    };
+  }, [editor]);
+
   // Focus editor at start when creating a new document
   React.useEffect(() => {
     if (typeof window === 'undefined' || !editor) return;
@@ -624,6 +685,12 @@ export function PlateEditor({
                 (typeof (source as any).abstract === 'string' && (source as any).abstract) ||
                 (typeof (source as any).description === 'string' && (source as any).description) ||
                 undefined,
+              type: source.type,
+              imageUrl: source.thumbnail || source.image,
+              isbn: source.isbn,
+              publisher: source.publisher,
+              edition: source.edition,
+              publisherPlace: source.publisherPlace,
             })
           }}
         />

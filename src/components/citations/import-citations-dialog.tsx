@@ -182,8 +182,16 @@ export function ImportCitationsDialog({
     const rawEntries = text.split("@").filter((e) => e.trim())
     const parsed: SavedCitation[] = []
     for (const entry of rawEntries) {
-      const matchKey = entry.match(/^\w+\s*{\s*([^,]+),/)
-      const id = matchKey?.[1]?.trim() || `cite_${Math.random().toString(16).slice(2)}`
+      const matchKey = entry.match(/^(\w+)\s*{\s*([^,]+),/)
+      const typeStr = matchKey?.[1]?.toLowerCase() || 'other'
+      let type = 'other'
+      if (typeStr.includes('book')) type = 'book'
+      else if (typeStr.includes('article') || typeStr.includes('journal')) type = 'journal'
+      else if (typeStr.includes('web')) type = 'website'
+      else if (typeStr.includes('proc') || typeStr.includes('inproceedings')) type = 'conference'
+      else if (typeStr.includes('thesis')) type = 'thesis'
+
+      const id = matchKey?.[2]?.trim() || `cite_${Math.random().toString(16).slice(2)}`
       const getField = (name: string) => {
         const regex = new RegExp(`${name}\\s*=\\s*[{\"]([^}"]+)[}\"]`, "i")
         return entry.match(regex)?.[1]?.trim()
@@ -208,6 +216,7 @@ export function ImportCitationsDialog({
         externalUrl: url,
         doi: doi || undefined,
         authors,
+        type,
       })
     }
     return parsed

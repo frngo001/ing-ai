@@ -68,6 +68,12 @@ export type SavedCitation = {
   doi?: string
   authors?: string[]
   abstract?: string
+  imageUrl?: string
+  type?: string
+  isbn?: string
+  publisher?: string
+  edition?: string
+  publisherPlace?: string
 }
 
 export type CitationLibrary = {
@@ -398,7 +404,14 @@ export const useCitationStore = create<CitationState>()(
             citation_style: 'vancouver', // Default, kann später angepasst werden
             in_text_citation: citation.title || '',
             full_citation: citation.title || '',
-            metadata: {},
+            metadata: {
+              type: citation.type,
+              imageUrl: citation.imageUrl || (citation as any).thumbnail || (citation as any).image,
+              isbn: (citation as any).isbn,
+              publisher: (citation as any).publisher,
+              edition: (citation as any).edition,
+              publisherPlace: (citation as any).publisherPlace,
+            },
           }
 
           await citationsUtils.createCitation(citationData)
@@ -718,6 +731,12 @@ export const useCitationStore = create<CitationState>()(
                 doi: c.doi || undefined,
                 authors: c.authors || undefined,
                 abstract: c.abstract || undefined,
+                type: (c.metadata as any)?.type || undefined,
+                imageUrl: (c.metadata as any)?.imageUrl || undefined,
+                isbn: (c.metadata as any)?.isbn || undefined,
+                publisher: (c.metadata as any)?.publisher || undefined,
+                edition: (c.metadata as any)?.edition || undefined,
+                publisherPlace: (c.metadata as any)?.publisherPlace || undefined,
               }))
               return {
                 id: lib.id,

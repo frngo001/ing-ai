@@ -42,6 +42,9 @@ export const createEditorKit = (placeholderText: string = 'Schreibe etwas...') =
   ...CopilotKit,
   ...AIKit,
 
+  // Parsers - WICHTIG: Vor anderen Plugins, damit Word-Inhalte korrekt erkannt werden
+  ...DocxKit,
+
   // Elements
   ...BasicBlocksKit,
   ...CodeBlockKit,
@@ -81,8 +84,7 @@ export const createEditorKit = (placeholderText: string = 'Schreibe etwas...') =
   ...ExitBreakKit,
   TrailingBlockPlugin,
 
-  // Parsers
-  ...DocxKit,
+  // Additional Parsers
   ...MarkdownKit,
 
   // UI

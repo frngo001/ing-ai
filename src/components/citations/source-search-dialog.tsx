@@ -26,7 +26,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
 import { useCitationStore, type SavedCitation } from '@/lib/stores/citation-store'
-import { fetchWebsiteInfo, searchBooks } from '@/lib/bibify'
+import { fetchWebsiteInfo } from '@/lib/bibify'
+import { searchGoogleBooks, mapGoogleBookToSource } from '@/lib/google-books'
 import { insertCitationWithMerge } from '@/components/editor/utils/insert-citation-with-merge'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/lib/i18n/use-language'
@@ -246,69 +247,6 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
         }
     }
 
-    const bookInfoToSource = (book: Awaited<ReturnType<typeof searchBooks>>[number]): Source => {
-        const year = book.date ? Number.parseInt(book.date.slice(0, 4), 10) : undefined
-        const dateParts = (() => {
-            if (!book.date) return undefined
-            const [y, m, d] = book.date.split('-').map((n) => Number.parseInt(n, 10))
-            return { 'date-parts': [[y, m || undefined, d || undefined].filter(Boolean) as number[]] }
-        })()
-
-        // Generiere Google Books URL falls keine URL vorhanden ist
-        const bookUrl = book.url || book.link || (() => {
-            const searchQuery = encodeURIComponent(book.title)
-            return `https://books.google.com/books?q=${searchQuery}`
-        })()
-
-        // Erfasse alle verfügbaren Metadaten aus der API
-        const isbn = book.isbn || book.ISBN
-        const issn = book.issn || book.ISSN
-        const doi = book.doi || book.DOI
-        const publisherPlace = book['publisher-place'] || book.publisherPlace || book['event-place'] || book.eventPlace
-        const containerTitle = book['container-title'] || book.containerTitle
-        const numberOfPages = book.pages || book['number-of-pages'] || book.numberOfPages
-        const page = book['page'] || (book.pages ? String(book.pages) : undefined)
-        const pageFirst = book['page-first'] || book.pageFirst
-
-        return {
-            id: book.id || `${book.title}-${book.publisher ?? ''}-${book.date ?? ''}-${book.pages ?? ''}`,
-            title: book.title,
-            authors: (book.authors ?? []).map((full) => ({ fullName: full })),
-            publicationYear: Number.isNaN(year) ? undefined : year,
-            type: 'book',
-            journal: undefined,
-            containerTitle: containerTitle,
-            publisher: book.publisher,
-            abstract: book.abstract,
-            description: book.description,
-            url: bookUrl,
-            URL: bookUrl,
-            pdfUrl: undefined,
-            isOpenAccess: true,
-            completeness: 1,
-            sourceApi: 'bibify.books',
-            citationCount: undefined,
-            impactFactor: undefined,
-            volume: book.volume ? String(book.volume) : undefined,
-            issue: book.issue ? String(book.issue) : undefined,
-            page: page || pageFirst,
-            pages: page || (book.pages ? String(book.pages) : undefined),
-            numberOfPages: numberOfPages,
-            categories: book.categories,
-            thumbnail: book.thumbnail,
-            image: book.thumbnail,
-            language: book.language,
-            note: book.note,
-            issued: dateParts,
-            accessed: undefined,
-            edition: book.edition,
-            isbn: isbn,
-            issn: issn,
-            publisherPlace: publisherPlace,
-            doi: doi,
-        }
-    }
-
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
             toast.error(translations.pleaseEnterSearchTerm)
@@ -336,11 +274,11 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
             return
         }
 
-        // Buchsuche über Bibify (Google Books)
+        // Buchsuche über Google Books API (ersetzt Bibify)
         if (searchType === 'book') {
             try {
-                const books = await searchBooks(searchQuery.trim(), 100)
-                const mapped = books.map(bookInfoToSource)
+                const response = await searchGoogleBooks(searchQuery.trim(), 100)
+                const mapped = (response.items ?? []).map(mapGoogleBookToSource)
                 setResults(mapped)
             } catch (error) {
                 console.error('Book lookup failed', error)

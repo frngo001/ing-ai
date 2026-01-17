@@ -162,13 +162,36 @@ export function LibraryPane({
     const entries = target
       .map((c) => {
         const authors = c.authors?.length ? c.authors.join(" and ") : ""
-        return `@article{${c.id || `cite_${Math.random().toString(16).slice(2)}`},
-  title={${c.title}},
-  author={${authors}},
-  year={${c.year ?? ""}},
-  journal={${c.source}},
-  doi={${c.doi ?? ""}},
-  url={${c.externalUrl || c.href}}
+        const id = c.id || `cite_${Math.random().toString(16).slice(2)}`
+
+        // Determine BibTeX type
+        let type = 'article'
+        if (c.type === 'book') type = 'book'
+        else if (c.type === 'webpage' || c.type === 'website') type = 'misc'
+        else if (c.type === 'conference') type = 'inproceedings'
+        else if (c.type === 'thesis') type = 'phdthesis'
+
+        // Construct fields dynamically
+        const fields = []
+        fields.push(`title={${c.title}}`)
+        if (authors) fields.push(`author={${authors}}`)
+        if (c.year) fields.push(`year={${c.year}}`)
+        if (c.doi) fields.push(`doi={${c.doi}}`)
+        if (c.externalUrl || c.href) fields.push(`url={${c.externalUrl || c.href}}`)
+
+        // Add source/journal/publisher based on type
+        if (c.source) {
+          if (type === 'article') {
+            fields.push(`journal={${c.source}}`)
+          } else if (type === 'book') {
+            fields.push(`publisher={${c.source}}`)
+          } else {
+            fields.push(`howpublished={${c.source}}`)
+          }
+        }
+
+        return `@${type}{${id},
+  ${fields.join(',\n  ')}
 }`
       })
       .join("\n\n")
@@ -421,66 +444,86 @@ export function LibraryPane({
                   )}
                   tabIndex={-1}
                 >
-                  <div className="flex flex-col gap-1">
-                    <p className="text-xs font-semibold leading-tight line-clamp-2">
-                      {item.title}
-                    </p>
-                    <div className="text-muted-foreground text-[11px] leading-snug line-clamp-2">
-                      {item.source}
-                      {item.year ? ` • ${item.year}` : ""}
-                    </div>
-                    {item.authors?.length ? (
+                  <div className="flex gap-3">
+                    {/* Thumbnail Display */}
+                    {item.imageUrl && (
+                      <div className="shrink-0">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="w-12 h-auto object-cover rounded-sm border border-border/40 shadow-sm"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 flex flex-col gap-1 min-w-0">
+                      <p className="text-xs font-semibold leading-tight line-clamp-2">
+                        {item.title}
+                      </p>
                       <div className="text-muted-foreground text-[11px] leading-snug line-clamp-2">
-                        {item.authors
-                          .map((a) => {
-                            // Handle various author formats defensively
-                            if (typeof a === 'string') {
-                              // Skip [object Object] strings
-                              return a === '[object Object]' ? '' : a;
-                            }
-                            if (typeof a === 'object' && a !== null) {
-                              // Extract name from object format
-                              return (a as any).fullName ||
-                                [(a as any).firstName, (a as any).lastName].filter(Boolean).join(' ') ||
-                                '';
-                            }
-                            return '';
-                          })
-                          .filter(Boolean)
-                          .join(', ')
-                        }
+                        {item.type && (
+                          <span className="inline-flex items-center rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-gray-500/10 mr-1.5 align-middle uppercase tracking-wider scale-[0.9] origin-left">
+                            {item.type}
+                          </span>
+                        )}
+                        <span>
+                          {item.source}
+                          {item.year ? ` • ${item.year}` : ""}
+                        </span>
                       </div>
-                    ) : null}
-                    {item.abstract ? (
-                      <div className="space-y-1">
-                        <div
-                          className={cn(
-                            "text-muted-foreground text-[11px] leading-snug",
-                            !expandedAbstracts[item.id] && "line-clamp-3"
-                          )}
-                        >
-                          {item.abstract}
-                        </div>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="h-auto px-0 text-[11px]"
-                          onClick={() =>
-                            setExpandedAbstracts((prev) => ({
-                              ...prev,
-                              [item.id]: !prev[item.id],
-                            }))
+                      {item.authors?.length ? (
+                        <div className="text-muted-foreground text-[11px] leading-snug line-clamp-2">
+                          {item.authors
+                            .map((a) => {
+                              // Handle various author formats defensively
+                              if (typeof a === 'string') {
+                                // Skip [object Object] strings
+                                return a === '[object Object]' ? '' : a;
+                              }
+                              if (typeof a === 'object' && a !== null) {
+                                // Extract name from object format
+                                return (a as any).fullName ||
+                                  [(a as any).firstName, (a as any).lastName].filter(Boolean).join(' ') ||
+                                  '';
+                              }
+                              return '';
+                            })
+                            .filter(Boolean)
+                            .join(', ')
                           }
-                        >
-                          {expandedAbstracts[item.id] ? translations.showLess : translations.showMore}
-                        </Button>
-                      </div>
-                    ) : null}
-                    {item.doi ? (
-                      <div className="text-muted-foreground text-[11px] leading-snug line-clamp-1">
-                        DOI: {item.doi}
-                      </div>
-                    ) : null}
+                        </div>
+                      ) : null}
+                      {item.abstract ? (
+                        <div className="space-y-1">
+                          <div
+                            className={cn(
+                              "text-muted-foreground text-[11px] leading-snug",
+                              !expandedAbstracts[item.id] && "line-clamp-3"
+                            )}
+                          >
+                            {item.abstract}
+                          </div>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto px-0 text-[11px]"
+                            onClick={() =>
+                              setExpandedAbstracts((prev) => ({
+                                ...prev,
+                                [item.id]: !prev[item.id],
+                              }))
+                            }
+                          >
+                            {expandedAbstracts[item.id] ? translations.showLess : translations.showMore}
+                          </Button>
+                        </div>
+                      ) : null}
+                      {item.doi ? (
+                        <div className="text-muted-foreground text-[11px] leading-snug line-clamp-1">
+                          DOI: {item.doi}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-0">
                     <div className="flex items-center gap-0">

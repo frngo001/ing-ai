@@ -67,8 +67,8 @@ export class SourceNormalizer {
     static normalizeType(type: string): SourceType {
         const typeStr = type?.toLowerCase() || ''
 
+        if (typeStr.includes('book') || typeStr.includes('chapter')) return 'book'
         if (typeStr.includes('journal') || typeStr.includes('article')) return 'journal'
-        if (typeStr.includes('book')) return 'book'
         if (typeStr.includes('conference') || typeStr.includes('proceeding')) return 'conference'
         if (typeStr.includes('preprint') || typeStr.includes('arxiv')) return 'preprint'
         if (typeStr.includes('thesis') || typeStr.includes('dissertation')) return 'thesis'
