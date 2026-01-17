@@ -560,7 +560,17 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                                     </p>
                                                     {citation.authors?.length ? (
                                                         <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                                                            {citation.authors.join(', ')}
+                                                            {citation.authors
+                                                                .map((a) => {
+                                                                    if (typeof a === 'string') return a === '[object Object]' ? '' : a;
+                                                                    if (typeof a === 'object' && a !== null) {
+                                                                        return (a as any).fullName || [(a as any).firstName, (a as any).lastName].filter(Boolean).join(' ') || '';
+                                                                    }
+                                                                    return '';
+                                                                })
+                                                                .filter(Boolean)
+                                                                .join(', ')
+                                                            }
                                                         </p>
                                                     ) : null}
                                                     {citation.doi ? (

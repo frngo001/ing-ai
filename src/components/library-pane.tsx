@@ -486,7 +486,24 @@ export function LibraryPane({
                     </div>
                     {item.authors?.length ? (
                       <div className="text-muted-foreground text-[11px] leading-snug line-clamp-2">
-                        {item.authors.join(", ")}
+                        {item.authors
+                          .map((a) => {
+                            // Handle various author formats defensively
+                            if (typeof a === 'string') {
+                              // Skip [object Object] strings
+                              return a === '[object Object]' ? '' : a;
+                            }
+                            if (typeof a === 'object' && a !== null) {
+                              // Extract name from object format
+                              return (a as any).fullName ||
+                                [(a as any).firstName, (a as any).lastName].filter(Boolean).join(' ') ||
+                                '';
+                            }
+                            return '';
+                          })
+                          .filter(Boolean)
+                          .join(', ')
+                        }
                       </div>
                     ) : null}
                     {item.abstract ? (
@@ -536,7 +553,7 @@ export function LibraryPane({
                         </TooltipTrigger>
                         <TooltipContent side="bottom">{translations.citeInText}</TooltipContent>
                       </Tooltip>
-                      {url && (
+                      {url && (url.startsWith('http://') || url.startsWith('https://')) && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -602,7 +619,19 @@ export function LibraryPane({
                     {confirmCitation.year ? ` • ${confirmCitation.year}` : ""}
                   </span>
                   {confirmCitation.authors?.length ? (
-                    <span className="line-clamp-2">{confirmCitation.authors.join(", ")}</span>
+                    <span className="line-clamp-2">
+                      {confirmCitation.authors
+                        .map((a) => {
+                          if (typeof a === 'string') return a === '[object Object]' ? '' : a;
+                          if (typeof a === 'object' && a !== null) {
+                            return (a as any).fullName || [(a as any).firstName, (a as any).lastName].filter(Boolean).join(' ') || '';
+                          }
+                          return '';
+                        })
+                        .filter(Boolean)
+                        .join(', ')
+                      }
+                    </span>
                   ) : null}
                   {confirmCitation.doi ? <span>DOI: {confirmCitation.doi}</span> : null}
                   {confirmCitation.lastEdited ? <span>{confirmCitation.lastEdited}</span> : null}

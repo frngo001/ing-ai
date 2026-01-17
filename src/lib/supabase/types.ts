@@ -403,6 +403,7 @@ export interface Database {
           files: Json
           context: Json
           mentions: Json
+          order_index: number
           created_at: string
         }
         Insert: {
@@ -417,6 +418,7 @@ export interface Database {
           files?: Json
           context?: Json
           mentions?: Json
+          order_index?: number
           created_at?: string
         }
         Update: {
@@ -431,6 +433,7 @@ export interface Database {
           files?: Json
           context?: Json
           mentions?: Json
+          order_index?: number
           created_at?: string
         }
         Relationships: []

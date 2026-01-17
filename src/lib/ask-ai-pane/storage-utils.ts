@@ -1,3 +1,12 @@
+/**
+ * Storage Utilities für Chat-Nachrichten und Konversationen
+ * 
+ * Diese Datei enthält alle Funktionen zum Speichern und Laden von:
+ * - Chat-Konversationen und Nachrichten
+ * - Slash Commands
+ * - Gespeicherte Favoriten-Nachrichten
+ */
+
 import type { ChatMessage, StoredConversation, SlashCommand, SavedMessage } from './types'
 import { SLASH_STORAGE_KEY, CHAT_HISTORY_STORAGE_KEY, SAVED_MESSAGES_STORAGE_KEY } from './constants'
 import { deriveConversationTitle } from './message-utils'
@@ -7,6 +16,10 @@ import * as chatMessagesUtils from '@/lib/supabase/utils/chat-messages'
 import * as savedMessagesUtils from '@/lib/supabase/utils/saved-messages'
 import * as slashCommandsUtils from '@/lib/supabase/utils/slash-commands'
 
+// ============================================================================
+// Hilfsfunktionen
+// ============================================================================
+
 /**
  * Prüft, ob localStorage im aktuellen Kontext verfügbar ist
  * (nur im Browser, nicht während SSR)
@@ -15,15 +28,48 @@ const isLocalStorageAvailable = (): boolean => {
   return typeof window !== 'undefined' && typeof localStorage !== 'undefined'
 }
 
+/**
+ * Konvertiert eine lokale ChatMessage in das Datenbank-Format
+ */
+const convertToDbMessage = (msg: ChatMessage, conversationId: string, index: number) => ({
+  id: msg.id,
+  role: msg.role as 'user' | 'assistant',
+  content: msg.content,
+  reasoning: msg.reasoning || null,
+  parts: msg.parts || [],
+  toolInvocations: msg.toolInvocations || [],
+  toolSteps: msg.toolSteps || [],
+  files: msg.files || [],
+  context: msg.context || [],
+  mentions: msg.mentions || [],
+})
+
+/**
+ * Konvertiert eine Datenbank-Message in das lokale ChatMessage-Format
+ */
+const convertFromDbMessage = (msg: any): ChatMessage => ({
+  id: msg.id,
+  role: msg.role,
+  content: msg.content,
+  reasoning: msg.reasoning || undefined,
+  parts: Array.isArray(msg.parts) ? msg.parts : [],
+  toolInvocations: Array.isArray(msg.tool_invocations) ? msg.tool_invocations : [],
+  toolSteps: Array.isArray(msg.tool_steps) ? msg.tool_steps : [],
+  files: Array.isArray(msg.files) ? msg.files : undefined,
+  context: Array.isArray(msg.context) ? msg.context : undefined,
+  mentions: Array.isArray(msg.mentions) ? msg.mentions : undefined,
+})
+
+// ============================================================================
+// Slash Commands
+// ============================================================================
+
 export const saveSlashCommands = async (commands: SlashCommand[]) => {
   const userId = await getCurrentUserId()
 
   if (userId) {
     try {
-      // Lösche alle bestehenden Commands
       await slashCommandsUtils.deleteAllSlashCommands(userId)
-
-      // Erstelle neue Commands
       if (commands.length > 0) {
         await slashCommandsUtils.createSlashCommands(
           commands.map(cmd => ({
@@ -35,16 +81,12 @@ export const saveSlashCommands = async (commands: SlashCommand[]) => {
       }
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Speichern der Slash Commands:', error)
-      // Fallback auf localStorage
       if (isLocalStorageAvailable()) {
         localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(commands))
       }
     }
-  } else {
-    // Fallback auf localStorage wenn kein User eingeloggt
-    if (isLocalStorageAvailable()) {
-      localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(commands))
-    }
+  } else if (isLocalStorageAvailable()) {
+    localStorage.setItem(SLASH_STORAGE_KEY, JSON.stringify(commands))
   }
 }
 
@@ -53,21 +95,14 @@ export const saveSingleSlashCommand = async (command: SlashCommand): Promise<Sla
 
   if (userId) {
     try {
-      // Erstelle neuen Command in der Datenbank
       const created = await slashCommandsUtils.createSlashCommand({
         user_id: userId,
         label: command.label,
         content: command.content,
       })
-
-      return {
-        id: created.id,
-        label: created.label,
-        content: created.content,
-      }
+      return { id: created.id, label: created.label, content: created.content }
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Speichern des Slash Commands:', error)
-      // Fallback auf localStorage
       if (isLocalStorageAvailable()) {
         const stored = localStorage.getItem(SLASH_STORAGE_KEY)
         const commands = stored ? JSON.parse(stored) as SlashCommand[] : []
@@ -77,7 +112,6 @@ export const saveSingleSlashCommand = async (command: SlashCommand): Promise<Sla
       return command
     }
   } else {
-    // Fallback auf localStorage wenn kein User eingeloggt
     if (isLocalStorageAvailable()) {
       const stored = localStorage.getItem(SLASH_STORAGE_KEY)
       const commands = stored ? JSON.parse(stored) as SlashCommand[] : []
@@ -101,32 +135,18 @@ export const loadSlashCommands = async (): Promise<SlashCommand[]> => {
       }))
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Laden der Slash Commands:', error)
-      // Fallback auf localStorage
-      if (isLocalStorageAvailable()) {
-        const stored = localStorage.getItem(SLASH_STORAGE_KEY)
-        if (stored) {
-          try {
-            return JSON.parse(stored) as SlashCommand[]
-          } catch {
-            return getDefaultSlashCommands()
-          }
-        }
-      }
-      return getDefaultSlashCommands()
     }
   }
 
-  // Fallback auf localStorage wenn kein User eingeloggt
-  if (!isLocalStorageAvailable()) {
-    return getDefaultSlashCommands()
-  }
-  const stored = localStorage.getItem(SLASH_STORAGE_KEY)
-  if (stored) {
-    try {
-      return JSON.parse(stored) as SlashCommand[]
-    } catch (error) {
-      console.error("Failed to parse slash commands", error)
-      return getDefaultSlashCommands()
+  // Fallback auf localStorage
+  if (isLocalStorageAvailable()) {
+    const stored = localStorage.getItem(SLASH_STORAGE_KEY)
+    if (stored) {
+      try {
+        return JSON.parse(stored) as SlashCommand[]
+      } catch {
+        // Ignoriere Parse-Fehler
+      }
     }
   }
   return getDefaultSlashCommands()
@@ -140,6 +160,19 @@ export const getDefaultSlashCommands = (): SlashCommand[] => {
   ]
 }
 
+// ============================================================================
+// Chat-Konversationen und Nachrichten
+// ============================================================================
+
+/**
+ * Speichert eine Konversation mit allen Nachrichten in Supabase
+ * 
+ * Verwendet die neue atomare syncChatMessages-Funktion für zuverlässiges Speichern:
+ * - Neue Nachrichten werden erstellt
+ * - Geänderte Nachrichten werden aktualisiert (inkl. parts, reasoning, etc.)
+ * - Gelöschte Nachrichten werden entfernt
+ * - Reihenfolge wird über order_index garantiert
+ */
 export const persistConversation = async (
   msgs: ChatMessage[],
   id: string,
@@ -152,7 +185,7 @@ export const persistConversation = async (
 
   if (userId) {
     try {
-      // Erstelle oder aktualisiere Conversation
+      // 1. Erstelle oder aktualisiere Conversation
       let conversation = await chatConversationsUtils.getChatConversationById(id, userId)
 
       if (!conversation) {
@@ -169,40 +202,21 @@ export const persistConversation = async (
         }, userId)
       }
 
-      // Sichere Strategie: Erstelle zuerst neue Messages, dann lösche alte
-      // Dies verhindert Datenverlust bei Fehlern während des Deployments
+      // 2. Synchronisiere Nachrichten mit atomarer Funktion
       if (msgs.length > 0) {
-        // Hole bestehende Messages VOR dem Erstellen (als Backup)
-        const existingMessagesBefore = await chatMessagesUtils.getChatMessages(id)
-
-        // Erstelle neue Messages zuerst (bekommen neue UUIDs)
-        const createdMessages = await chatMessagesUtils.createChatMessages(
-          msgs.map(msg => ({
-            conversation_id: id,
-            role: msg.role,
-            content: msg.content,
-            reasoning: msg.reasoning || null,
-            parts: msg.parts || [],
-            tool_invocations: msg.toolInvocations || [],
-            tool_steps: msg.toolSteps || [],
-            files: msg.files || [],
-            context: msg.context || [],
-            mentions: msg.mentions || [],
-          }))
-        )
-
-        // Lösche nur Messages, die vor dem Erstellen existierten
-        // Die neuen Messages haben neue UUIDs und sind daher nicht in existingMessageIds
-        for (const oldMessage of existingMessagesBefore) {
-          try {
-            await chatMessagesUtils.deleteChatMessage(oldMessage.id)
-          } catch (deleteError) {
-            // Logge Fehler, aber breche nicht ab - neue Messages sind bereits erstellt
-            console.warn(`[STORAGE] Konnte alte Message ${oldMessage.id} nicht löschen:`, deleteError)
-          }
-        }
+        await chatMessagesUtils.syncChatMessages(id, msgs.map(msg => ({
+          id: msg.id,
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+          reasoning: msg.reasoning || null,
+          parts: msg.parts || [],
+          toolInvocations: msg.toolInvocations || [],
+          toolSteps: msg.toolSteps || [],
+          files: msg.files || [],
+          context: msg.context || [],
+          mentions: msg.mentions || [],
+        })))
       } else {
-        // Wenn keine Messages vorhanden sind, lösche alle
         await chatMessagesUtils.deleteChatMessagesByConversation(id)
       }
     } catch (error) {
@@ -256,6 +270,12 @@ export const persistConversation = async (
   })
 }
 
+/**
+ * Lädt die Chat-Historie aus Supabase
+ * 
+ * Nachrichten werden nach order_index sortiert, um die korrekte Reihenfolge zu garantieren.
+ * Alle Felder (parts, reasoning, toolSteps, etc.) werden korrekt konvertiert.
+ */
 export const loadChatHistory = async (projectId?: string): Promise<StoredConversation[]> => {
   const userId = await getCurrentUserId()
 
@@ -270,18 +290,7 @@ export const loadChatHistory = async (projectId?: string): Promise<StoredConvers
           return {
             id: conv.id,
             title: conv.title,
-            messages: messages.map(msg => ({
-              id: msg.id,
-              role: msg.role,
-              content: msg.content,
-              reasoning: msg.reasoning || undefined,
-              parts: msg.parts as ChatMessage['parts'],
-              toolInvocations: msg.tool_invocations as ChatMessage['toolInvocations'],
-              toolSteps: msg.tool_steps as ChatMessage['toolSteps'],
-              files: (msg.files as ChatMessage['files']) || undefined,
-              context: (msg.context as ChatMessage['context']) || undefined,
-              mentions: (msg.mentions as ChatMessage['mentions']) || undefined,
-            })),
+            messages: messages.map(convertFromDbMessage),
             updatedAt: new Date(conv.updated_at).getTime(),
           }
         })
@@ -290,41 +299,29 @@ export const loadChatHistory = async (projectId?: string): Promise<StoredConvers
       return conversationsWithMessages.sort((a, b) => b.updatedAt - a.updatedAt)
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Laden der Chat History:', error)
-      // Fallback auf localStorage
-      if (isLocalStorageAvailable()) {
-        const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY)
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored) as StoredConversation[]
-            if (Array.isArray(parsed)) {
-              return [...parsed].sort((a, b) => b.updatedAt - a.updatedAt)
-            }
-          } catch {
-            return []
-          }
-        }
-      }
-      return []
     }
   }
 
-  // Fallback auf localStorage wenn kein User eingeloggt
-  if (!isLocalStorageAvailable()) {
-    return []
-  }
-  try {
+  // Fallback auf localStorage
+  if (isLocalStorageAvailable()) {
     const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY)
     if (stored) {
-      const parsed = JSON.parse(stored) as StoredConversation[]
-      if (Array.isArray(parsed)) {
-        return [...parsed].sort((a, b) => b.updatedAt - a.updatedAt)
+      try {
+        const parsed = JSON.parse(stored) as StoredConversation[]
+        if (Array.isArray(parsed)) {
+          return [...parsed].sort((a, b) => b.updatedAt - a.updatedAt)
+        }
+      } catch {
+        // Ignoriere Parse-Fehler
       }
     }
-  } catch (error) {
-    console.error("Failed to load chat history", error)
   }
   return []
 }
+
+// ============================================================================
+// Gespeicherte Nachrichten (Favoriten)
+// ============================================================================
 
 export const saveMessage = async (message: ChatMessage, conversationId: string): Promise<SavedMessage> => {
   const userId = await getCurrentUserId()
@@ -350,7 +347,6 @@ export const saveMessage = async (message: ChatMessage, conversationId: string):
       })
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Speichern der Message:', error)
-      // Fallback auf localStorage
       if (isLocalStorageAvailable()) {
         const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
         const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
@@ -358,14 +354,11 @@ export const saveMessage = async (message: ChatMessage, conversationId: string):
         localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
       }
     }
-  } else {
-    // Fallback auf localStorage wenn kein User eingeloggt
-    if (isLocalStorageAvailable()) {
-      const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
-      const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
-      const updated = [savedMessage, ...saved.filter(m => m.messageId !== message.id)]
-      localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
-    }
+  } else if (isLocalStorageAvailable()) {
+    const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+    const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
+    const updated = [savedMessage, ...saved.filter(m => m.messageId !== message.id)]
+    localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
   }
 
   return savedMessage
@@ -379,7 +372,6 @@ export const removeSavedMessage = async (messageId: string): Promise<void> => {
       await savedMessagesUtils.deleteSavedMessageByMessageId(messageId, userId)
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Löschen der Message:', error)
-      // Fallback auf localStorage
       if (isLocalStorageAvailable()) {
         const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
         const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
@@ -387,9 +379,7 @@ export const removeSavedMessage = async (messageId: string): Promise<void> => {
         localStorage.setItem(SAVED_MESSAGES_STORAGE_KEY, JSON.stringify(updated))
       }
     }
-  } else {
-    // Fallback auf localStorage wenn kein User eingeloggt
-    if (!isLocalStorageAvailable()) return
+  } else if (isLocalStorageAvailable()) {
     const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
     const saved = stored ? JSON.parse(stored) as SavedMessage[] : []
     const updated = saved.filter(m => m.messageId !== messageId)
@@ -414,38 +404,22 @@ export const loadSavedMessages = async (): Promise<SavedMessage[]> => {
       }))
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Laden der Saved Messages:', error)
-      // Fallback auf localStorage
-      if (isLocalStorageAvailable()) {
-        const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored) as SavedMessage[]
-            if (Array.isArray(parsed)) {
-              return [...parsed].sort((a, b) => b.timestamp - a.timestamp)
-            }
-          } catch {
-            return []
-          }
-        }
-      }
-      return []
     }
   }
 
-  // Fallback auf localStorage wenn kein User eingeloggt
-  if (!isLocalStorageAvailable()) {
-    return []
-  }
-  try {
+  // Fallback auf localStorage
+  if (isLocalStorageAvailable()) {
     const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
     if (stored) {
-      const parsed = JSON.parse(stored) as SavedMessage[]
-      if (Array.isArray(parsed)) {
-        return [...parsed].sort((a, b) => b.timestamp - a.timestamp)
+      try {
+        const parsed = JSON.parse(stored) as SavedMessage[]
+        if (Array.isArray(parsed)) {
+          return [...parsed].sort((a, b) => b.timestamp - a.timestamp)
+        }
+      } catch {
+        // Ignoriere Parse-Fehler
       }
     }
-  } catch (error) {
-    console.error("Failed to load saved messages", error)
   }
   return []
 }
@@ -459,35 +433,20 @@ export const isMessageSaved = async (messageId: string): Promise<boolean> => {
       return !!message
     } catch (error) {
       console.error('❌ [STORAGE] Fehler beim Prüfen der Message:', error)
-      // Fallback auf localStorage
-      if (isLocalStorageAvailable()) {
-        const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
-        if (stored) {
-          try {
-            const saved = JSON.parse(stored) as SavedMessage[]
-            return saved.some(m => m.messageId === messageId)
-          } catch {
-            return false
-          }
-        }
-      }
-      return false
     }
   }
 
-  // Fallback auf localStorage wenn kein User eingeloggt
-  if (!isLocalStorageAvailable()) {
-    return false
-  }
-  const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
-  if (stored) {
-    try {
-      const saved = JSON.parse(stored) as SavedMessage[]
-      return saved.some(m => m.messageId === messageId)
-    } catch {
-      return false
+  // Fallback auf localStorage
+  if (isLocalStorageAvailable()) {
+    const stored = localStorage.getItem(SAVED_MESSAGES_STORAGE_KEY)
+    if (stored) {
+      try {
+        const saved = JSON.parse(stored) as SavedMessage[]
+        return saved.some(m => m.messageId === messageId)
+      } catch {
+        // Ignoriere Parse-Fehler
+      }
     }
   }
   return false
 }
-

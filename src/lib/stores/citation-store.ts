@@ -365,7 +365,10 @@ export const useCitationStore = create<CitationState>()(
             last_edited: safeDateToISO(citation.lastEdited),
             href: citation.href || null,
             external_url: citation.externalUrl || null,
-            authors: citation.authors || null,
+            authors: citation.authors?.map((a: any) => {
+              if (typeof a === 'string') return a === '[object Object]' ? '' : a;
+              return a?.fullName || a?.name || '';
+            }).filter(Boolean) || null,
             abstract: citation.abstract || null,
             doi: citation.doi || null,
             citation_style: 'vancouver', // Default, kann später angepasst werden
