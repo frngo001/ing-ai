@@ -1524,15 +1524,38 @@ async function persistState(
 
           if (nextContent) {
             const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
+            let shouldUpdateTitle = true;
+
+            try {
+              const currentUserId = await getCurrentUserId();
+              // Check existing document metadata
+              const existingDoc = await documentsUtils.getDocumentById(
+                documentId,
+                currentUserId ?? undefined,
+                isSharedProject // skipUserCheck
+              );
+
+              if (existingDoc && (existingDoc.metadata as any)?.is_manually_named) {
+                shouldUpdateTitle = false;
+              }
+            } catch (err) {
+              devWarn('[PERSIST] Failed to check document metadata', err);
+            }
+
+            const updatePayload: any = {
+              content: nextContent as any,
+              updated_at: updatedAt,
+            };
+
+            if (shouldUpdateTitle) {
+              updatePayload.title = extractedTitle;
+            }
+
             if (isSharedProject) {
               devLog('[PERSIST] Saving shared document with skipUserCheck');
               await documentsUtils.updateDocument(
                 documentId,
-                {
-                  title: extractedTitle,
-                  content: nextContent as any,
-                  updated_at: updatedAt,
-                },
+                updatePayload,
                 undefined,
                 true // skipUserCheck for shared projects
               );
@@ -1541,11 +1564,7 @@ async function persistState(
               if (userId) {
                 await documentsUtils.updateDocument(
                   documentId,
-                  {
-                    title: extractedTitle,
-                    content: nextContent as any,
-                    updated_at: updatedAt,
-                  },
+                  updatePayload,
                   userId
                 );
               }
@@ -1558,14 +1577,36 @@ async function persistState(
             devWarn('[PLATE EDITOR] Dokument existiert bereits. Versuche Update erneut...');
             try {
               const extractedTitle = extractTitleFromContent(nextContent, defaultTitle);
+              let shouldUpdateTitle = true;
+
+              try {
+                const currentUserId = await getCurrentUserId();
+                const existingDoc = await documentsUtils.getDocumentById(
+                  documentId,
+                  currentUserId ?? undefined,
+                  isSharedProject
+                );
+
+                if (existingDoc && (existingDoc.metadata as any)?.is_manually_named) {
+                  shouldUpdateTitle = false;
+                }
+              } catch (err) {
+                // ignore
+              }
+
+              const updatePayload: any = {
+                content: nextContent as any,
+                updated_at: updatedAt,
+              };
+
+              if (shouldUpdateTitle) {
+                updatePayload.title = extractedTitle;
+              }
+
               if (isSharedProject) {
                 await documentsUtils.updateDocument(
                   documentId,
-                  {
-                    title: extractedTitle,
-                    content: nextContent as any,
-                    updated_at: updatedAt,
-                  },
+                  updatePayload,
                   undefined,
                   true // skipUserCheck for shared projects
                 );
@@ -1574,11 +1615,7 @@ async function persistState(
                 if (userId) {
                   await documentsUtils.updateDocument(
                     documentId,
-                    {
-                      title: extractedTitle,
-                      content: nextContent as any,
-                      updated_at: updatedAt,
-                    },
+                    updatePayload,
                     userId
                   );
                 }

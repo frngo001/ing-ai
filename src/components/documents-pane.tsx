@@ -45,6 +45,7 @@ type DocumentItem = {
   lastEdited: string
   author: string
   href: string
+  metadata?: any
 }
 
 const LOCAL_STATE_PREFIX = "plate-editor-state-"
@@ -204,9 +205,11 @@ export function DocumentsPane({
           const content = doc.content as any
           const extractedTitle = extractTitleFromContent(content, untitledDocText)
           const updatedAt = doc.updated_at ? new Date(doc.updated_at) : undefined
+          const isManuallyNamed = (doc.metadata as any)?.is_manually_named === true
 
           const currentTitle = doc.title || extractedTitle
-          if (extractedTitle !== untitledDocText && currentTitle !== extractedTitle) {
+          // Only update title from content if NOT manually named
+          if (!isManuallyNamed && extractedTitle !== untitledDocText && currentTitle !== extractedTitle) {
             try {
               await documentsUtils.updateDocument(
                 doc.id,
@@ -220,10 +223,11 @@ export function DocumentsPane({
 
           return {
             id: doc.id,
-            title: extractedTitle !== untitledDocText ? extractedTitle : currentTitle,
+            title: isManuallyNamed ? doc.title : (extractedTitle !== untitledDocText ? extractedTitle : currentTitle),
             lastEdited: updatedAt ? formatRelativeTime(updatedAt, language) : savedText,
             author: meText,
             href: `/editor?doc=${encodeURIComponent(doc.id)}`,
+            metadata: doc.metadata
           }
         })
       )
@@ -294,6 +298,7 @@ export function DocumentsPane({
         document_type: "essay",
         word_count: 0,
         project_id: currentProjectId ?? undefined,
+        metadata: { is_manually_named: false }
       })
 
       documentCountCache.incrementDocumentCount(userId, currentProjectId ?? undefined)
@@ -414,16 +419,24 @@ export function DocumentsPane({
 
     setIsRenaming(true)
     try {
+      const newMetadata = {
+        ...(docToRename.metadata || {}),
+        is_manually_named: true
+      }
+
       await documentsUtils.updateDocument(
         docToRename.id,
-        { title: renameValue.trim() },
+        {
+          title: renameValue.trim(),
+          metadata: newMetadata
+        },
         userId
       )
 
       setDocuments(prev =>
         prev.map(doc =>
           doc.id === docToRename.id
-            ? { ...doc, title: renameValue.trim() }
+            ? { ...doc, title: renameValue.trim(), metadata: newMetadata }
             : doc
         )
       )

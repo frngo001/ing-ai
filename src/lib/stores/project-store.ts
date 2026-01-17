@@ -140,7 +140,7 @@ export const useProjectStore = create<ProjectState>()(
           })
         } catch (error) {
           devError('[PROJECT STORE] Error loading projects:', error)
-          set({ error: 'Failed to load projects', isLoading: false })
+          set({ error: 'Failed to load projects', isLoading: false, isHydrated: true, projects: [] })
         }
       },
 

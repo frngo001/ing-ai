@@ -38,36 +38,21 @@ export async function getProjectsWithShared(userId: string): Promise<ProjectWith
 
   devLog('[PROJECTS] Fetching projects with shared for user:', userId)
 
-  // Fetch own projects and share memberships (only projects user has explicitly joined)
-  const [ownProjectsResult, membershipResult] = await Promise.all([
-    supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', userId)
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: false }),
-    // Only fetch projects where user is a member (clicked on share link)
-    supabase
-      .from('project_share_members')
-      .select(`
-        share_id,
-        joined_at,
-        project_shares (
-          id,
-          project_id,
-          mode,
-          share_token,
-          is_active,
-          expires_at,
-          owner_id,
-          projects (*)
-        )
-      `)
-      .eq('user_id', userId),
-  ])
+  // First, fetch own projects
+  const ownProjectsResult = await supabase
+    .from('projects')
+    .select('*')
+    .eq('user_id', userId)
+    .order('is_default', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (ownProjectsResult.error) {
-    devError('[PROJECTS] Error fetching own projects:', ownProjectsResult.error)
+    devError('[PROJECTS] Error fetching own projects:', {
+      message: ownProjectsResult.error.message,
+      code: ownProjectsResult.error.code,
+      details: ownProjectsResult.error.details,
+      hint: ownProjectsResult.error.hint,
+    })
     throw ownProjectsResult.error
   }
 
@@ -76,36 +61,46 @@ export async function getProjectsWithShared(userId: string): Promise<ProjectWith
     isShared: false,
   }))
 
+  // Then, fetch share memberships separately
   const sharedProjects: ProjectWithShareInfo[] = []
-  const now = new Date()
 
-  if (membershipResult.data) {
-    for (const membership of membershipResult.data) {
-      const share = membership.project_shares as unknown as {
-        id: string
-        project_id: string
-        mode: 'view' | 'edit' | 'suggest'
-        share_token: string
-        is_active: boolean
-        expires_at: string | null
-        owner_id: string
-        projects: Project
-      }
+  try {
+    const membershipResult = await supabase
+      .from('project_share_members')
+      .select('share_id')
+      .eq('user_id', userId)
 
-      // Skip if share is inactive or expired
-      if (!share?.is_active) continue
-      if (share.expires_at && new Date(share.expires_at) < now) continue
+    if (membershipResult.data && membershipResult.data.length > 0) {
+      const shareIds = membershipResult.data.map(m => m.share_id)
 
-      const project = share.projects
-      if (project && !ownProjects.some(p => p.id === project.id)) {
-        sharedProjects.push({
-          ...project,
-          isShared: true,
-          shareMode: share.mode,
-          shareToken: share.share_token,
-        })
+      // Fetch the shares with their projects
+      const sharesResult = await supabase
+        .from('project_shares')
+        .select('*, projects(*)')
+        .in('id', shareIds)
+        .eq('is_active', true)
+
+      if (sharesResult.data) {
+        const now = new Date()
+        for (const share of sharesResult.data) {
+          // Skip expired shares
+          if (share.expires_at && new Date(share.expires_at) < now) continue
+
+          const project = share.projects as unknown as Project
+          if (project && !ownProjects.some(p => p.id === project.id)) {
+            sharedProjects.push({
+              ...project,
+              isShared: true,
+              shareMode: share.mode as 'view' | 'edit' | 'suggest',
+              shareToken: share.share_token,
+            })
+          }
+        }
       }
     }
+  } catch (error) {
+    // If project_share_members table doesn't exist yet or has issues, just continue with own projects
+    devError('[PROJECTS] Error fetching shared projects (continuing with own projects):', error)
   }
 
   devLog('[PROJECTS] Found projects:', {
