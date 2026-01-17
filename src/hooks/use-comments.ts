@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { TDiscussion } from '@/components/editor/plugins/discussion-kit';
 import { TComment } from '@/components/ui/comment';
+import * as discussionsUtils from '@/lib/supabase/utils/discussions';
 
 export const useComments = (documentId: string) => {
     const [discussions, setDiscussions] = useState<TDiscussion[]>([]);
@@ -11,61 +12,21 @@ export const useComments = (documentId: string) => {
     const fetchDiscussions = useCallback(async () => {
         if (!documentId) return;
 
+        // Validating documentId before attempting to fetch
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId);
+        if (!isUUID) {
+            setDiscussions([]);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
-            // Fetch discussions for the document
-            const { data: discussionsData, error: discussionsError } = await supabase
-                .from('discussions')
-                .select('*')
-                .eq('document_id', documentId);
-
-            if (discussionsError) throw discussionsError;
-
-            if (!discussionsData || discussionsData.length === 0) {
-                setDiscussions([]);
-                setLoading(false);
-                return;
-            }
-
-            // Fetch comments for these discussions
-            const discussionIds = discussionsData.map((d) => d.id);
-            const { data: commentsData, error: commentsError } = await supabase
-                .from('comments')
-                .select('*')
-                .in('discussion_id', discussionIds)
-                .order('created_at', { ascending: true });
-
-            if (commentsError) throw commentsError;
-
-            // Group comments by discussion
-            const filledDiscussions: TDiscussion[] = discussionsData.map((d) => {
-                const discussionComments = commentsData
-                    ?.filter((c) => c.discussion_id === d.id)
-                    .map((c) => ({
-                        id: c.id,
-                        contentRich: c.content_rich,
-                        createdAt: new Date(c.created_at),
-                        discussionId: c.discussion_id,
-                        isEdited: c.is_edited,
-                        userId: c.user_id,
-                        userName: c.user_name,
-                        avatarUrl: c.avatar_url,
-                        updatedAt: c.updated_at ? new Date(c.updated_at) : undefined,
-                    } as TComment)) || [];
-
-                return {
-                    id: d.id,
-                    comments: discussionComments,
-                    createdAt: new Date(d.created_at),
-                    isResolved: d.is_resolved,
-                    userId: d.user_id,
-                    documentContent: d.document_content,
-                };
-            });
-
-            setDiscussions(filledDiscussions);
+            // Use the utility function to get deep discussions with comments in one go
+            const discussionsWithComments = await discussionsUtils.getDeepDiscussionsByDocument(documentId);
+            setDiscussions(discussionsWithComments);
         } catch (error) {
-            console.error('Error fetching comments:', error);
+            console.error('Error fetching comments:', JSON.stringify(error, null, 2) || error);
         } finally {
             setLoading(false);
         }
