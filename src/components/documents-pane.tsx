@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { FilePenLine, PanelLeftClose, Plus, Search, Trash, Trash2 } from "lucide-react"
+import { FilePenLine, PanelLeftClose, Pencil, Plus, Search, Trash, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +17,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
@@ -91,6 +100,9 @@ export function DocumentsPane({
   const [searchQuery, setSearchQuery] = React.useState("")
   const [docToDelete, setDocToDelete] = React.useState<DocumentItem | null>(null)
   const [showDeleteAllDialog, setShowDeleteAllDialog] = React.useState(false)
+  const [docToRename, setDocToRename] = React.useState<DocumentItem | null>(null)
+  const [renameValue, setRenameValue] = React.useState("")
+  const [isRenaming, setIsRenaming] = React.useState(false)
 
   const isSharedProject = currentProject?.isShared === true;
   const isViewOnly = isSharedProject && currentProject?.shareMode === 'view';
@@ -391,6 +403,41 @@ export function DocumentsPane({
     }
   }, [currentProjectId, documents, loadFromSupabase, searchParams, router])
 
+  /**
+   * Benennt ein Dokument um
+   */
+  const handleConfirmRename = React.useCallback(async () => {
+    if (!docToRename || !renameValue.trim()) return
+
+    const userId = await getCurrentUserId()
+    if (!userId) return
+
+    setIsRenaming(true)
+    try {
+      await documentsUtils.updateDocument(
+        docToRename.id,
+        { title: renameValue.trim() },
+        userId
+      )
+
+      setDocuments(prev =>
+        prev.map(doc =>
+          doc.id === docToRename.id
+            ? { ...doc, title: renameValue.trim() }
+            : doc
+        )
+      )
+
+      setDocToRename(null)
+      setRenameValue("")
+      loadFromSupabase(true)
+    } catch (error) {
+      devError("Fehler beim Umbenennen des Dokuments:", error)
+    } finally {
+      setIsRenaming(false)
+    }
+  }, [docToRename, renameValue, loadFromSupabase])
+
   React.useEffect(() => {
     loadFromSupabase()
 
@@ -567,24 +614,45 @@ export function DocumentsPane({
                     <div className="text-muted-foreground text-xs">{doc.lastEdited}</div>
                   </Link>
                   {!isViewOnly && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          className="size-4 p-0 opacity-70 hover:opacity-100 hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                          aria-label={`${t('documents.deleteDocument')} ${doc.title}`}
-                          onClick={(event) => {
-                            event.preventDefault()
-                            event.stopPropagation()
-                            setDocToDelete(doc)
-                          }}
-                        >
-                          <Trash className="size-3" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">{t('documents.delete')}</TooltipContent>
-                    </Tooltip>
+                    <div className="flex items-center gap-0.5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            className="size-4 p-0 opacity-70 hover:opacity-100 hover:bg-muted cursor-pointer"
+                            aria-label={`${t('documents.renameDocument')} ${doc.title}`}
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              setDocToRename(doc)
+                              setRenameValue(doc.title)
+                            }}
+                          >
+                            <Pencil className="size-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{t('documents.rename')}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            className="size-4 p-0 opacity-70 hover:opacity-100 hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                            aria-label={`${t('documents.deleteDocument')} ${doc.title}`}
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              setDocToDelete(doc)
+                            }}
+                          >
+                            <Trash className="size-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{t('documents.delete')}</TooltipContent>
+                      </Tooltip>
+                    </div>
                   )}
                 </div>
               )
@@ -648,6 +716,56 @@ export function DocumentsPane({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={!!docToRename}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDocToRename(null)
+            setRenameValue("")
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t('documents.renameDocumentTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('documents.renameDocumentDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="doc-name">{t('documents.documentName')}</Label>
+              <Input
+                id="doc-name"
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                placeholder={untitledDocText}
+                onKeyDown={(e) => e.key === 'Enter' && !isRenaming && handleConfirmRename()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDocToRename(null)
+                setRenameValue("")
+              }}
+              disabled={isRenaming}
+            >
+              {t('documents.cancel')}
+            </Button>
+            <Button
+              onClick={handleConfirmRename}
+              disabled={!renameValue.trim() || isRenaming}
+            >
+              {t('documents.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   )

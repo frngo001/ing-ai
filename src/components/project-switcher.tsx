@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, FolderOpen, Check, Loader2, Pencil, Share2, Users } from "lucide-react"
+import { ChevronsUpDown, Plus, FolderOpen, Check, Loader2, Pencil, Share2, Trash2, Users } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -19,6 +19,16 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -45,6 +55,7 @@ export function ProjectSwitcher() {
   const setCurrentProject = useProjectStore((state) => state.setCurrentProject)
   const createProject = useProjectStore((state) => state.createProject)
   const updateProject = useProjectStore((state) => state.updateProject)
+  const deleteProject = useProjectStore((state) => state.deleteProject)
   const loadProjects = useProjectStore((state) => state.loadProjects)
 
   const [dropdownOpen, setDropdownOpen] = React.useState(false)
@@ -55,6 +66,11 @@ export function ProjectSwitcher() {
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = React.useState(false)
+
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [projectToDelete, setProjectToDelete] = React.useState<{ id: string; name: string; isDefault: boolean } | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
   // Share dialog state
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
@@ -193,6 +209,28 @@ export function ProjectSwitcher() {
       devError("Error renaming project:", error)
     } finally {
       setIsRenaming(false)
+    }
+  }
+
+  const handleOpenDeleteDialog = (project: { id: string; name: string; isDefault: boolean }, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setProjectToDelete(project)
+    setDropdownOpen(false)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return
+
+    setIsDeleting(true)
+    try {
+      await deleteProject(projectToDelete.id)
+      setDeleteDialogOpen(false)
+      setProjectToDelete(null)
+    } catch (error) {
+      devError("Error deleting project:", error)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -390,6 +428,15 @@ export function ProjectSwitcher() {
                       >
                         <Pencil className="size-3.5 text-muted-foreground" />
                       </button>
+                      {!project.isDefault && (
+                        <button
+                          onClick={(e) => handleOpenDeleteDialog({ id: project.id, name: project.name, isDefault: project.isDefault }, e)}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 transition-opacity"
+                          title={t('projects.deleteProject')}
+                        >
+                          <Trash2 className="size-3.5 text-destructive" />
+                        </button>
+                      )}
                     </>
                   )}
                   {project.id === currentProjectId && (
@@ -540,6 +587,42 @@ export function ProjectSwitcher() {
           projectName={projectToShare.name}
         />
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('projects.deleteProjectTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('projects.deleteProjectDescription').replace('{name}', projectToDelete?.name || '')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setProjectToDelete(null)
+              }}
+              disabled={isDeleting}
+            >
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProject}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  {t('common.loading')}
+                </>
+              ) : (
+                t('projects.delete')
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
