@@ -8,6 +8,9 @@ import type { PlateElementProps } from 'platejs/react';
 import { useMediaState } from '@platejs/media/react';
 import { ResizableProvider } from '@platejs/resizable';
 import { PlateElement, withHOC } from 'platejs/react';
+import { MediaToolbar } from './media-toolbar';
+import { AudioPlugin } from '@platejs/media/react';
+import { useFigureIndex } from './figure-toc';
 
 import { useLanguage } from '@/lib/i18n/use-language';
 
@@ -19,26 +22,31 @@ export const AudioElement = withHOC(
     const { t } = useLanguage();
     const { align = 'center', readOnly, unsafeUrl } = useMediaState();
 
-    return (
-      <PlateElement {...props} className="mb-1">
-        <figure
-          className="group relative cursor-default"
-          contentEditable={false}
-        >
-          <div className="h-16">
-            <audio className="size-full" src={unsafeUrl} controls />
-          </div>
+    const index = useFigureIndex(props.element.id);
 
-          <Caption style={{ width: '100%' }} align={align}>
-            <CaptionTextarea
-              className="h-20"
-              readOnly={readOnly}
-              placeholder={t('toolbar.mediaWriteCaption')}
-            />
-          </Caption>
-        </figure>
-        {props.children}
-      </PlateElement>
+    return (
+      <MediaToolbar plugin={AudioPlugin}>
+        <PlateElement {...props} className="mb-1">
+          <figure
+            className="group relative cursor-default"
+            contentEditable={false}
+          >
+            <div className="h-16">
+              <audio className="size-full" src={unsafeUrl} controls />
+            </div>
+
+            <Caption style={{ width: '100%' }} align={align}>
+              <CaptionTextarea
+                index={index}
+                className="h-20"
+                readOnly={readOnly}
+                placeholder={t('toolbar.mediaWriteCaption')}
+              />
+            </Caption>
+          </figure>
+          {props.children}
+        </PlateElement>
+      </MediaToolbar>
     );
   }
 );

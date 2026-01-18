@@ -49,6 +49,12 @@ import { RemoteCursors } from '@/components/editor/remote-cursors';
 import { useComments } from '@/hooks/use-comments';
 import { CommentsContext } from '@/components/providers/comments-provider';
 import { CollapsibleHeadingsManager, CollapsibleHeadingsStyles, CollapsibleHeadingsPlugin } from '@/components/editor/plugins/collapsible-headings-kit';
+import { FigureRegistryProvider } from '@/components/ui/figure-toc';
+import { TableRegistryProvider } from '@/components/ui/table-registry';
+import { EditorFigureList } from '@/components/ui/editor-figure-list';
+import { EditorTableList } from '@/components/ui/editor-table-list';
+import { useVisibilityStore } from '@/lib/stores/visibility-store';
+import { ReferencePicker } from '@/components/editor/reference-picker';
 
 export function PlateEditor({
   showToc = true,
@@ -113,6 +119,7 @@ export function PlateEditor({
   const addCitation = useCitationStore((state) => state.addCitation);
   const pendingCitation = useCitationStore((state) => state.pendingCitation);
   const setPendingCitation = useCitationStore((state) => state.setPendingCitation);
+  const { figureTocEnabled } = useVisibilityStore();
   const supabase = createClient();
   const isUpdatingFromRealtimeRef = React.useRef(false);
 
@@ -590,120 +597,130 @@ export function PlateEditor({
   return (
     <CommentsContext.Provider value={comments}>
       <Plate editor={editor} onChange={handleChange} readOnly={isReadOnlyMode}>
-        <CollapsibleHeadingsManager documentId={storageId} />
-        <CollapsibleHeadingsStyles />
+        <FigureRegistryProvider>
+          <TableRegistryProvider>
+            <CollapsibleHeadingsManager documentId={storageId} />
+            <CollapsibleHeadingsStyles />
 
-        <div className="flex h-full items-start gap-6">
-          <CommentTocSidebar visible={showCommentToc} className="overflow-auto max-h-[40vh]" />
-          <SuggestionTocSidebar
-            visible={showSuggestionToc}
-            className="top-[45vh]"
-          />
-          <div className="flex-1 flex flex-col h-full overflow-hidden">
-            <div className="flex h-full flex-col min-h-0">
-              <ConditionalFixedToolbar toolbarRef={topToolbarRef} />
-              <div className="flex-1 min-h-0 overflow-hidden relative">
-                {/* Overlay wenn kein Dokument erstellt wurde und keine Dokumente existieren */}
-                {storageId === 'empty' && hasDocuments === false && (
-                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="flex flex-col items-center text-center space-y-4 p-8 max-w-md">
-                      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted border-2 border-border">
-                        <FilePenLine className="size-8 text-muted-foreground" />
+            <div className="flex h-full items-start gap-6">
+              <CommentTocSidebar visible={showCommentToc} className="overflow-auto max-h-[40vh]" />
+              <SuggestionTocSidebar
+                visible={showSuggestionToc}
+                className="top-[45vh]"
+              />
+
+
+              <div className="flex-1 flex flex-col h-full overflow-hidden">
+                <div className="flex h-full flex-col min-h-0">
+                  <ConditionalFixedToolbar toolbarRef={topToolbarRef} />
+                  <div className="flex-1 min-h-0 overflow-hidden relative">
+                    {/* Overlay wenn kein Dokument erstellt wurde und keine Dokumente existieren */}
+                    {storageId === 'empty' && hasDocuments === false && (
+                      <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                        <div className="flex flex-col items-center text-center space-y-4 p-8 max-w-md">
+                          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted border-2 border-border">
+                            <FilePenLine className="size-8 text-muted-foreground" />
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="text-lg font-semibold text-foreground">
+                              {t('documents.welcomeDialogTitle')}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {t('documents.welcomeDialogDescription')}
+                            </p>
+                          </div>
+                          <Button
+                            variant="default"
+                            size="default"
+                            className="mt-2"
+                            onClick={() => {
+                              if (typeof window !== 'undefined') {
+                                window.dispatchEvent(new Event('documents:create-new'));
+                              }
+                            }}
+                          >
+                            <Plus className="size-4 mr-2" />
+                            {t('documents.newDocument')}
+                          </Button>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold text-foreground">
-                          {t('documents.welcomeDialogTitle')}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {t('documents.welcomeDialogDescription')}
-                        </p>
-                      </div>
-                      <Button
-                        variant="default"
-                        size="default"
-                        className="mt-2"
-                        onClick={() => {
-                          if (typeof window !== 'undefined') {
-                            window.dispatchEvent(new Event('documents:create-new'));
-                          }
-                        }}
-                      >
-                        <Plus className="size-4 mr-2" />
-                        {t('documents.newDocument')}
-                      </Button>
-                    </div>
+                    )}
+                    <EditorContainer
+                      className="overflow-y-auto h-full"
+                      style={toolbarVars}
+                      data-onboarding="editor-container"
+                    >
+                      <RemoteCursors presence={presence} currentUserId={currentUser?.id} sessionId={sessionId} />
+                      <Editor variant="demo" className="overflow-y-auto" data-onboarding="editor-content" />
+                      <EditorFigureList />
+                      <EditorTableList />
+                      <EditorBibliography />
+                    </EditorContainer>
                   </div>
-                )}
-                <EditorContainer
-                  className="overflow-y-auto h-full"
-                  style={toolbarVars}
-                  data-onboarding="editor-container"
-                >
-                  <RemoteCursors presence={presence} currentUserId={currentUser?.id} sessionId={sessionId} />
-                  <Editor variant="demo" className="overflow-y-auto" data-onboarding="editor-content" />
-                  <EditorBibliography />
-                </EditorContainer>
+                  <div ref={bottomToolbarRef}>
+                    <EditorStatusBar />
+                  </div>
+                </div>
               </div>
-              <div ref={bottomToolbarRef}>
-                <EditorStatusBar />
-              </div>
+
+              <EditorTocSidebar visible={showToc} />
             </div>
-          </div>
 
-          <EditorTocSidebar visible={showToc} />
-        </div>
+            <SourceSearchDialog
+              showTrigger={false}
+              onImport={(source: Source) => {
+                const title =
+                  typeof source.title === 'string'
+                    ? source.title
+                    : source.title?.title || 'Unbenanntes Zitat'
 
-        <SourceSearchDialog
-          showTrigger={false}
-          onImport={(source: Source) => {
-            const title =
-              typeof source.title === 'string'
-                ? source.title
-                : source.title?.title || 'Unbenanntes Zitat'
+                const sourceLabel =
+                  (typeof source.journal === 'string' && source.journal) ||
+                  (typeof source.publisher === 'string' && source.publisher) ||
+                  source.sourceApi ||
+                  'Quelle'
+                const externalUrl = getCitationLink({
+                  url: source.url,
+                  doi: source.doi,
+                  pdfUrl: source.pdfUrl,
+                });
+                const validDoi = getNormalizedDoi(source.doi);
 
-            const sourceLabel =
-              (typeof source.journal === 'string' && source.journal) ||
-              (typeof source.publisher === 'string' && source.publisher) ||
-              source.sourceApi ||
-              'Quelle'
-            const externalUrl = getCitationLink({
-              url: source.url,
-              doi: source.doi,
-              pdfUrl: source.pdfUrl,
-            });
-            const validDoi = getNormalizedDoi(source.doi);
+                const authors =
+                  source.authors?.map((a) => a.fullName || [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean) ?? []
 
-            const authors =
-              source.authors?.map((a) => a.fullName || [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean) ?? []
+                const timestamp =
+                  typeof window !== 'undefined'
+                    ? `hinzugefügt am ${new Date().toLocaleDateString('de-DE', { dateStyle: 'short' })}`
+                    : 'soeben'
 
-            const timestamp =
-              typeof window !== 'undefined'
-                ? `hinzugefügt am ${new Date().toLocaleDateString('de-DE', { dateStyle: 'short' })}`
-                : 'soeben'
+                addCitation({
+                  id: source.id || `${Date.now()}`,
+                  title,
+                  source: sourceLabel,
+                  year: source.publicationYear,
+                  lastEdited: timestamp,
+                  href: externalUrl || undefined,
+                  externalUrl,
+                  doi: validDoi || undefined,
+                  authors,
+                  abstract:
+                    (typeof (source as any).abstract === 'string' && (source as any).abstract) ||
+                    (typeof (source as any).description === 'string' && (source as any).description) ||
+                    undefined,
+                  type: source.type,
+                  imageUrl: source.thumbnail || source.image,
+                  isbn: source.isbn,
+                  publisher: source.publisher,
+                  edition: source.edition,
+                  publisherPlace: source.publisherPlace,
+                })
+              }}
+            />
 
-            addCitation({
-              id: source.id || `${Date.now()}`,
-              title,
-              source: sourceLabel,
-              year: source.publicationYear,
-              lastEdited: timestamp,
-              href: externalUrl || undefined,
-              externalUrl,
-              doi: validDoi || undefined,
-              authors,
-              abstract:
-                (typeof (source as any).abstract === 'string' && (source as any).abstract) ||
-                (typeof (source as any).description === 'string' && (source as any).description) ||
-                undefined,
-              type: source.type,
-              imageUrl: source.thumbnail || source.image,
-              isbn: source.isbn,
-              publisher: source.publisher,
-              edition: source.edition,
-              publisherPlace: source.publisherPlace,
-            })
-          }}
-        />
+            <ReferencePicker />
+          </TableRegistryProvider>
+        </FigureRegistryProvider>
       </Plate>
     </CommentsContext.Provider>
   );

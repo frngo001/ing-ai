@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ListOrdered, MessageCircleWarning, BookOpenCheck } from 'lucide-react';
+import { ListOrdered, MessageCircleWarning, BookOpenCheck, Image as ImageIcon } from 'lucide-react';
 
 import { useVisibilityStore } from '@/lib/stores/visibility-store';
 import { cn } from '@/lib/utils';
@@ -28,9 +28,9 @@ export function BottomTocToggle() {
         onClick={toggleToc}
       >
         <ListOrdered className={cn(
-            'h-3 w-3 text-muted-foreground',
-            tocEnabled && 'text-primary'
-          )}
+          'h-3 w-3 text-muted-foreground',
+          tocEnabled && 'text-primary'
+        )}
           aria-hidden
         />
         {tableOfContentsText}
@@ -54,11 +54,11 @@ export function BottomCommentTocToggle() {
         className={cn(
           'text-xs bg-none text-muted-foreground hover:text-muted-foreground dark:bg-transparent dark:hover:text-foreground/50',
           commentTocEnabled &&
-            'bg-none text-primary hover:text-muted-foreground dark:bg-transparent'
+          'bg-none text-primary hover:text-muted-foreground dark:bg-transparent'
         )}
         onClick={toggleCommentToc}
       >
-        <MessageCircleWarning 
+        <MessageCircleWarning
           className={cn(
             'h-3 w-3 text-muted-foreground',
             commentTocEnabled && 'text-primary'
@@ -86,7 +86,7 @@ export function BottomSuggestionTocToggle() {
         className={cn(
           'text-xs bg-none text-muted-foreground hover:text-muted-foreground dark:bg-transparent dark:hover:text-foreground/50',
           suggestionTocEnabled &&
-            'bg-none text-primary hover:text-muted-foreground dark:bg-transparent'
+          'bg-none text-primary hover:text-muted-foreground dark:bg-transparent'
         )}
         onClick={toggleSuggestionToc}
       >
@@ -98,6 +98,38 @@ export function BottomSuggestionTocToggle() {
           aria-hidden
         />
         {suggestionText}
+      </ToolbarButton>
+    </ToolbarGroup>
+  );
+}
+
+export function BottomFigureTocToggle() {
+  const { figureTocEnabled, toggleFigureToc } = useVisibilityStore();
+  const { t, language } = useLanguage();
+
+  const tooltipText = React.useMemo(() => t('toolbar.figureToc'), [t, language]);
+  const figureText = React.useMemo(() => t('figure.figure'), [t, language]);
+
+  return (
+    <ToolbarGroup className="flex">
+      <ToolbarButton
+        tooltip={tooltipText}
+        pressed={figureTocEnabled}
+        className={cn(
+          'text-xs bg-none text-muted-foreground hover:text-muted-foreground dark:bg-transparent dark:hover:text-foreground/50',
+          figureTocEnabled &&
+          'bg-none text-primary hover:text-muted-foreground dark:bg-transparent'
+        )}
+        onClick={toggleFigureToc}
+      >
+        <ImageIcon
+          className={cn(
+            'h-3 w-3 text-muted-foreground',
+            figureTocEnabled && 'text-primary'
+          )}
+          aria-hidden
+        />
+        {figureText}
       </ToolbarButton>
     </ToolbarGroup>
   );

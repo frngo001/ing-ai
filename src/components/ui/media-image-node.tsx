@@ -20,6 +20,7 @@ import {
   Resizable,
   ResizeHandle,
 } from './resize-handle';
+import { useFigureIndex } from './figure-toc';
 
 export const ImageElement = withHOC(
   ResizableProvider,
@@ -31,6 +32,8 @@ export const ImageElement = withHOC(
     const { isDragging, handleRef } = useDraggable({
       element: props.element,
     });
+
+    const index = useFigureIndex(props.element.id);
 
     return (
       <MediaToolbar plugin={ImagePlugin}>
@@ -67,10 +70,13 @@ export const ImageElement = withHOC(
 
             <Caption style={{ width }} align={align}>
               <CaptionTextarea
+                index={index}
                 readOnly={readOnly}
                 onFocus={(e) => {
                   e.preventDefault();
                 }}
+                className="w-auto min-w-[50px] text-left"
+                style={{ fieldSizing: 'content' } as any}
                 placeholder={t('toolbar.mediaWriteCaption')}
               />
             </Caption>

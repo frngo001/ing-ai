@@ -18,6 +18,7 @@ import {
 import { SuggestionPlugin } from '@platejs/suggestion/react';
 import { TablePlugin } from '@platejs/table/react';
 import { insertToc } from '@platejs/toc';
+import { useReferencePickerStore } from '@/lib/stores/reference-picker-store';
 import {
   type NodeEntry,
   type Path,
@@ -77,6 +78,10 @@ const insertInlineMap: Record<
   [KEYS.inlineEquation]: (editor) =>
     insertInlineEquation(editor, '', { select: true }),
   [KEYS.link]: (editor) => triggerFloatingLink(editor, { focused: true }),
+  'internal_reference_input': (editor) => {
+    // Open the reference picker dialog with editor reference
+    useReferencePickerStore.getState().openPicker(editor);
+  },
 };
 
 type InsertBlockOptions = {

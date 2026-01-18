@@ -28,8 +28,8 @@ export interface MyBlockElement extends TElement, TListProps {
 
 export interface MyTextBlockElement
   extends TElement,
-    TLineHeightProps,
-    TTextAlignProps {
+  TLineHeightProps,
+  TTextAlignProps {
   children: (
     | MyLinkElement
     | MyMentionElement
@@ -85,9 +85,9 @@ export interface MyHrElement extends MyBlockElement {
 
 export interface MyImageElement
   extends MyBlockElement,
-    TCaptionProps,
-    TImageElement,
-    TResizableProps {
+  TCaptionProps,
+  TImageElement,
+  TResizableProps {
   children: [EmptyText];
   type: typeof KEYS.img;
 }
@@ -99,9 +99,9 @@ export interface MyLinkElement extends TLinkElement {
 
 export interface MyMediaEmbedElement
   extends MyBlockElement,
-    TCaptionProps,
-    TMediaEmbedElement,
-    TResizableProps {
+  TCaptionProps,
+  TMediaEmbedElement,
+  TResizableProps {
   children: [EmptyText];
   type: typeof KEYS.mediaEmbed;
 }
@@ -127,7 +127,10 @@ export interface MyTableCellElement extends TElement {
   type: typeof KEYS.td;
 }
 
-export interface MyTableElement extends MyBlockElement, TTableElement {
+export interface MyTableElement
+  extends MyBlockElement,
+  TCaptionProps,
+  TTableElement {
   children: MyTableRowElement[];
   type: typeof KEYS.table;
 }

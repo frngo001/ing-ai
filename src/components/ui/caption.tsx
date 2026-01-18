@@ -15,8 +15,9 @@ import { cva } from 'class-variance-authority';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n/use-language';
 
-const captionVariants = cva('max-w-full', {
+const captionVariants = cva('max-w-full mt-3', {
   defaultVariants: {
     align: 'center',
   },
@@ -43,19 +44,45 @@ export function Caption({
   );
 }
 
-export function CaptionTextarea(
-  props: React.ComponentProps<typeof CaptionTextareaPrimitive>
-) {
+export function CaptionTextarea({
+  index,
+  type = 'figure',
+  ...props
+}: React.ComponentProps<typeof CaptionTextareaPrimitive> & {
+  index?: number;
+  type?: 'figure' | 'table';
+}) {
+  const { t } = useLanguage();
+
+  const label = type === 'table'
+    ? (t('table.table') || 'Tabelle')
+    : (t('figure.figure') || 'Abbildung');
+
   return (
-    <CaptionTextareaPrimitive
-      {...props}
-      className={cn(
-        'mt-2 w-full resize-none border-none bg-inherit p-0 font-[inherit] text-inherit',
-        'focus:outline-none focus:[&::placeholder]:opacity-0',
-        'text-center print:placeholder:text-transparent',
-        props.className
+    <div className="flex items-baseline justify-center">
+      {index !== undefined && (
+        <button
+          className="font-semibold text-sm whitespace-nowrap select-none hover:text-brand/80 transition-colors"
+          onClick={(e) => {
+            const container = e.currentTarget.parentElement;
+            const textarea = container?.querySelector('textarea');
+            textarea?.focus();
+          }}
+          type="button"
+        >
+          {label} {index}:&nbsp;
+        </button>
       )}
-    />
+      <CaptionTextareaPrimitive
+        {...props}
+        className={cn(
+          'w-full resize-none border-none bg-inherit p-0 font-[inherit] text-inherit',
+          'focus:outline-none focus:[&::placeholder]:opacity-0',
+          'text-left print:placeholder:text-transparent',
+          props.className
+        )}
+      />
+    </div>
   );
 }
 

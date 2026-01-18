@@ -38,7 +38,9 @@ export function useHiddenElementIds(documentId: string = 'global'): Set<string> 
         at: [],
         match: (node: any) => {
           const asAny = node as any;
-          return !asAny.bibliographyHeading && !asAny.bibliography;
+          return !asAny.bibliographyHeading && !asAny.bibliography &&
+            !asAny.figureListHeading && !asAny.figureList &&
+            !asAny.tableListHeading && !asAny.tableList;
         },
       });
 

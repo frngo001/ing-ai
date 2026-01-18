@@ -421,6 +421,37 @@ export function CitationElement(
   };
 
   // --------------------------------------------------------------------------
+  // Deduplicated Entries for HoverCard (must be before early return to maintain hooks order)
+  // --------------------------------------------------------------------------
+
+  const { uniqueEntries, uniqueNumbers } = React.useMemo(() => {
+    if (!runInfo?.entries || !runInfo?.numbers) {
+      return { uniqueEntries: [], uniqueNumbers: [] };
+    }
+
+    const seen = new Set<string>();
+    const pairs: Array<{ entry: typeof runInfo.entries[0]; number: number }> = [];
+
+    for (let i = 0; i < runInfo.entries.length; i++) {
+      const entry = runInfo.entries[i];
+      const number = runInfo.numbers[i] ?? i + 1;
+      const sourceId = entry.node.sourceId;
+
+      if (sourceId && !seen.has(sourceId)) {
+        seen.add(sourceId);
+        pairs.push({ entry, number });
+      }
+    }
+
+    pairs.sort((a, b) => a.number - b.number);
+
+    return {
+      uniqueEntries: pairs.map((p) => p.entry),
+      uniqueNumbers: pairs.map((p) => p.number),
+    };
+  }, [runInfo?.entries, runInfo?.numbers]);
+
+  // --------------------------------------------------------------------------
   // Display Text
   // --------------------------------------------------------------------------
 
@@ -481,37 +512,6 @@ export function CitationElement(
       </PlateElement>
     );
   }
-
-  // --------------------------------------------------------------------------
-  // Deduplicated Entries for HoverCard
-  // --------------------------------------------------------------------------
-
-  const { uniqueEntries, uniqueNumbers } = React.useMemo(() => {
-    if (!runInfo?.entries || !runInfo?.numbers) {
-      return { uniqueEntries: [], uniqueNumbers: [] };
-    }
-
-    const seen = new Set<string>();
-    const pairs: Array<{ entry: typeof runInfo.entries[0]; number: number }> = [];
-
-    for (let i = 0; i < runInfo.entries.length; i++) {
-      const entry = runInfo.entries[i];
-      const number = runInfo.numbers[i] ?? i + 1;
-      const sourceId = entry.node.sourceId;
-
-      if (sourceId && !seen.has(sourceId)) {
-        seen.add(sourceId);
-        pairs.push({ entry, number });
-      }
-    }
-
-    pairs.sort((a, b) => a.number - b.number);
-
-    return {
-      uniqueEntries: pairs.map((p) => p.entry),
-      uniqueNumbers: pairs.map((p) => p.number),
-    };
-  }, [runInfo?.entries, runInfo?.numbers]);
 
   // --------------------------------------------------------------------------
   // Render

@@ -14,13 +14,29 @@ export const BlockSelectionKit = [
         const path = editor.api.findPath(element);
         const isBibliography = path
           ? editor.api.some({
-              at: path,
-              match: (node) => (node as any).bibliography === true,
-              mode: 'all',
-            })
+            at: path,
+            match: (node) => (node as any).bibliography === true,
+            mode: 'all',
+          })
           : (element as any).bibliography;
 
-        if (isBibliography) return false;
+        const isFigureList = path
+          ? editor.api.some({
+            at: path,
+            match: (node) => (node as any).figureList === true,
+            mode: 'all',
+          })
+          : (element as any).figureList;
+
+        const isTableList = path
+          ? editor.api.some({
+            at: path,
+            match: (node) => (node as any).tableList === true,
+            mode: 'all',
+          })
+          : (element as any).tableList;
+
+        if (isBibliography || isFigureList || isTableList) return false;
 
         return !getPluginTypes(editor, [
           KEYS.column,

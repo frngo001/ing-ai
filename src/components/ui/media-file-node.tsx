@@ -9,6 +9,9 @@ import { useMediaState } from '@platejs/media/react';
 import { ResizableProvider } from '@platejs/resizable';
 import { Eye, FileUp } from 'lucide-react';
 import { PlateElement, useReadOnly, withHOC } from 'platejs/react';
+import { MediaToolbar } from './media-toolbar';
+import { FilePlugin } from '@platejs/media/react';
+import { useFigureIndex } from './figure-toc';
 
 import { useLanguage } from '@/lib/i18n/use-language';
 
@@ -39,44 +42,49 @@ export const FileElement = withHOC(
       setPreviewOpen(true);
     };
 
+    const index = useFigureIndex(props.element.id);
+
     return (
       <>
-        <PlateElement className="my-px rounded-sm" {...props}>
-          <div className="group relative m-0 flex items-center rounded px-0.5 py-[3px]">
-            <a
-              className="flex flex-1 cursor-pointer items-center gap-1 p-1 hover:bg-muted"
-              contentEditable={false}
-              download={name}
-              href={unsafeUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <FileUp className="size-5" />
-              <div className="flex-1 truncate">{name}</div>
-            </a>
-            
-            {(isPdf || isImage || isText) && (
-              <button
-                className="ml-1 flex items-center justify-center rounded p-1 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
+        <MediaToolbar plugin={FilePlugin}>
+          <PlateElement className="my-px rounded-sm" {...props}>
+            <div className="group relative m-0 flex items-center rounded px-0.5 py-[3px]">
+              <a
+                className="flex flex-1 cursor-pointer items-center gap-1 p-1 hover:bg-muted"
                 contentEditable={false}
-                onClick={handlePreview}
-                title="Vorschau anzeigen"
-                type="button"
+                download={name}
+                href={unsafeUrl}
+                rel="noopener noreferrer"
+                target="_blank"
               >
-                <Eye className="size-4 text-muted-foreground" />
-              </button>
-            )}
+                <FileUp className="size-5" />
+                <div className="flex-1 truncate">{name}</div>
+              </a>
 
-            <Caption align="left">
-              <CaptionTextarea
-                className="text-left"
-                readOnly={readOnly}
-                placeholder={t('toolbar.mediaWriteCaption')}
-              />
-            </Caption>
-          </div>
-          {props.children}
-        </PlateElement>
+              {(isPdf || isImage || isText) && (
+                <button
+                  className="ml-1 flex items-center justify-center rounded p-1 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
+                  contentEditable={false}
+                  onClick={handlePreview}
+                  title="Vorschau anzeigen"
+                  type="button"
+                >
+                  <Eye className="size-4 text-muted-foreground" />
+                </button>
+              )}
+
+              <Caption align="left">
+                <CaptionTextarea
+                  index={index}
+                  className="text-left"
+                  readOnly={readOnly}
+                  placeholder={t('toolbar.mediaWriteCaption')}
+                />
+              </Caption>
+            </div>
+            {props.children}
+          </PlateElement>
+        </MediaToolbar>
 
         <Dialog onOpenChange={setPreviewOpen} open={previewOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -134,7 +142,7 @@ function DocumentTextPreview({ url }: { url: string }) {
   React.useEffect(() => {
     setLoading(true);
     setError(null);
-    
+
     fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error('Fehler beim Laden der Datei');

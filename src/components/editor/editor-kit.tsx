@@ -39,6 +39,7 @@ import { TableKit } from '@/components/editor/plugins/table-kit';
 import { TocKit } from '@/components/editor/plugins/toc-kit';
 import { ToggleKit } from '@/components/editor/plugins/toggle-kit';
 import { CollapsibleHeadingsKit } from '@/components/editor/plugins/collapsible-headings-kit';
+import { ReferenceKit } from '@/components/editor/plugins/reference-kit';
 
 export const createEditorKit = (placeholderText: string = 'Schreibe etwas...') => [
   ...CopilotKit,
@@ -99,6 +100,9 @@ export const createEditorKit = (placeholderText: string = 'Schreibe etwas...') =
 
   // Collapsible Headings
   ...CollapsibleHeadingsKit,
+
+  // Universal Internal References
+  ...ReferenceKit,
 ];
 
 // Default export for backwards compatibility

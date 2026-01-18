@@ -75,11 +75,10 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/i18n/use-language';
 
 import { blockSelectionVariants } from './block-selection';
-import {
-  ColorDropdownMenuItems,
-  DEFAULT_COLORS,
-} from './font-color-toolbar-button';
+import { ColorDropdownMenuItems, DEFAULT_COLORS } from './font-color-toolbar-button';
 import { ResizeHandle } from './resize-handle';
+import { Caption, CaptionButton, CaptionTextarea } from './caption';
+import { useTableIndex } from './table-registry';
 import {
   BorderAllIcon,
   BorderBottomIcon,
@@ -106,13 +105,11 @@ export const TableElement = withHOC(
       'isSelectionAreaVisible'
     );
     const hasControls = !readOnly && !isSelectionAreaVisible;
-    const {
-      isSelectingCell,
-      marginLeft,
-      props: tableProps,
-    } = useTableElement();
+    const { isSelectingCell, marginLeft, props: tableProps } = useTableElement();
+    const { t } = useLanguage();
 
     const isSelectingTable = useBlockSelected(props.element.id as string);
+    const index = useTableIndex(props.element.id as string);
 
     const content = (
       <PlateElement
@@ -124,6 +121,18 @@ export const TableElement = withHOC(
         style={{ paddingLeft: marginLeft }}
       >
         <div className="group/table relative w-fit">
+          <div contentEditable={false} className="select-text">
+            <Caption align="left">
+              <CaptionTextarea
+                index={index}
+                type="table"
+                readOnly={readOnly}
+                className="mt-0 mb-3"
+                placeholder={t('toolbar.mediaWriteCaption')}
+              />
+            </Caption>
+          </div>
+
           <table
             className={cn(
               'mr-0 ml-px table h-px table-fixed border-collapse',
@@ -195,7 +204,7 @@ function TableFloatingToolbar({
           contentEditable={false}
         >
           <ToolbarGroup>
-          <ColorDropdownMenu tooltip={backgroundColorText}>
+            <ColorDropdownMenu tooltip={backgroundColorText}>
               <PaintBucketIcon />
             </ColorDropdownMenu>
             {canMerge && (
@@ -236,6 +245,12 @@ function TableFloatingToolbar({
                 </ToolbarButton>
               </ToolbarGroup>
             )}
+
+            <ToolbarGroup>
+              <CaptionButton size="sm" variant="ghost">
+                {t('toolbar.mediaCaption')}
+              </CaptionButton>
+            </ToolbarGroup>
           </ToolbarGroup>
 
           {collapsedInside && (

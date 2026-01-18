@@ -305,6 +305,13 @@ const createGroups = (t: (key: string) => string): Group[] => [
         label: t('slash.inlineEquation'),
         value: KEYS.inlineEquation,
       },
+      {
+        focusEditor: true,
+        icon: <Link2Icon className="size-4" />,
+        keywords: ['reference', 'verweis', 'cross reference', 'querverweis', 'figure', 'table', 'heading', 'abbildung', 'tabelle', 'kapitel', 'internal link'],
+        label: t('reference.insertReference') || 'Referenz einfügen',
+        value: 'internal_reference_input',
+      },
     ].map((item) => ({
       ...item,
       onSelect: (editor: PlateEditor, value: string) => {

@@ -49,7 +49,14 @@ function calculateHeadingNumber(
     at: [],
     match: (node: any) => {
       const asAny = node as any;
-      if (asAny.bibliographyHeading === true || asAny.bibliography === true) {
+      if (
+        asAny.bibliographyHeading === true ||
+        asAny.bibliography === true ||
+        asAny.figureListHeading === true ||
+        asAny.figureList === true ||
+        asAny.tableListHeading === true ||
+        asAny.tableList === true
+      ) {
         return false;
       }
       return headingTypes.includes((node as TElement).type);
@@ -182,7 +189,17 @@ export function HeadingElement({
   const editor = useEditorRef();
   const isBibliography = (props.element as any)?.bibliography;
   const isBibliographyHeading = (props.element as any)?.bibliographyHeading;
-  const isReadOnly = isBibliography || isBibliographyHeading;
+
+  const isFigureList = (props.element as any)?.figureList;
+  const isFigureListHeading = (props.element as any)?.figureListHeading;
+
+  const isTableList = (props.element as any)?.tableList;
+  const isTableListHeading = (props.element as any)?.tableListHeading;
+
+  const isReadOnly = isBibliography || isBibliographyHeading ||
+    isFigureList || isFigureListHeading ||
+    isTableList || isTableListHeading;
+
   const elementId = (props.element as any)?.id as string;
 
   // Collapse state
@@ -201,7 +218,7 @@ export function HeadingElement({
   // Berechne die Nummerierung für diese Überschrift
   const headingNumber = useEditorSelector(
     (ed) => {
-      if (isBibliography || isBibliographyHeading) return '';
+      if (isReadOnly) return '';
 
       const path = ed.api.findPath(props.element);
       if (!path) return '';
@@ -213,7 +230,7 @@ export function HeadingElement({
 
       return calculateHeadingNumber(ed, path, currentLevel, headingTypes);
     },
-    [props.element, headingTypes, isBibliography, isBibliographyHeading]
+    [props.element, headingTypes, isReadOnly]
   );
 
   const handleToggleCollapse = React.useCallback(
@@ -233,6 +250,10 @@ export function HeadingElement({
       className={cn(headingVariants({ variant }), 'group/heading')}
       data-bibliography={isBibliography || undefined}
       data-bibliography-heading={isBibliographyHeading || undefined}
+      data-figure-list={isFigureList || undefined}
+      data-figure-list-heading={isFigureListHeading || undefined}
+      data-table-list={isTableList || undefined}
+      data-table-list-heading={isTableListHeading || undefined}
       data-collapsed={isCollapsed || undefined}
       {...props}
     >

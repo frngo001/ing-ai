@@ -22,6 +22,8 @@ import {
   useSelected,
 } from 'platejs/react';
 
+import { cn } from '@/lib/utils';
+
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Popover,

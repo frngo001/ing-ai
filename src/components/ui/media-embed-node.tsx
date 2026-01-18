@@ -22,6 +22,7 @@ import {
   Resizable,
   ResizeHandle,
 } from './resize-handle';
+import { useFigureIndex } from './figure-toc';
 
 export const MediaEmbedElement = withHOC(
   ResizableProvider,
@@ -41,6 +42,8 @@ export const MediaEmbedElement = withHOC(
     });
     const width = useResizableValue('width');
     const provider = embed?.provider;
+
+    const index = useFigureIndex(props.element.id);
 
     return (
       <MediaToolbar plugin={MediaEmbedPlugin}>
@@ -113,8 +116,8 @@ export const MediaEmbedElement = withHOC(
                   className={cn(
                     '[&_.react-tweet-theme]:my-0',
                     !readOnly &&
-                      selected &&
-                      '[&_.react-tweet-theme]:ring-2 [&_.react-tweet-theme]:ring-ring [&_.react-tweet-theme]:ring-offset-2'
+                    selected &&
+                    '[&_.react-tweet-theme]:ring-2 [&_.react-tweet-theme]:ring-ring [&_.react-tweet-theme]:ring-offset-2'
                   )}
                 >
                   <Tweet id={embed!.id!} />
@@ -127,8 +130,13 @@ export const MediaEmbedElement = withHOC(
               />
             </Resizable>
 
-            <Caption style={{ width }} align={align}>
-              <CaptionTextarea placeholder={t('toolbar.mediaWriteCaption')} />
+            <Caption style={{ width }} align="center">
+              <CaptionTextarea
+                index={index}
+                className="w-auto min-w-[50px] text-left"
+                style={{ fieldSizing: 'content' } as any}
+                placeholder={t('toolbar.mediaWriteCaption')}
+              />
             </Caption>
           </figure>
 
