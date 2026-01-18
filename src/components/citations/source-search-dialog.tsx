@@ -277,7 +277,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
         // Buchsuche über Google Books API (ersetzt Bibify)
         if (searchType === 'book') {
             try {
-                const response = await searchGoogleBooks(searchQuery.trim(), 100)
+                const response = await searchGoogleBooks(searchQuery.trim(), 40)
                 const mapped = (response.items ?? []).map(mapGoogleBookToSource)
                 setResults(mapped)
             } catch (error) {
