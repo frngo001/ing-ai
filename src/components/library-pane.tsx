@@ -199,7 +199,10 @@ export function LibraryPane({
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = "library.bib"
+    // Get active library name for filename
+    const activeLibrary = libraries.find(lib => lib.id === activeLibraryId)
+    const filename = activeLibrary ? `${activeLibrary.name}.bib` : "library.bib"
+    a.download = filename
     a.click()
     URL.revokeObjectURL(url)
   }
