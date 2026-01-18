@@ -1,6 +1,6 @@
 'use client';
 
-import { type Value, TrailingBlockPlugin } from 'platejs';
+import { type Value, TrailingBlockPlugin, NodeIdPlugin } from 'platejs';
 import { type TPlateEditor, useEditorRef } from 'platejs/react';
 
 import { AIKit } from '@/components/editor/plugins/ai-kit';
@@ -38,6 +38,7 @@ import { SuggestionKit } from '@/components/editor/plugins/suggestion-kit';
 import { TableKit } from '@/components/editor/plugins/table-kit';
 import { TocKit } from '@/components/editor/plugins/toc-kit';
 import { ToggleKit } from '@/components/editor/plugins/toggle-kit';
+import { CollapsibleHeadingsKit } from '@/components/editor/plugins/collapsible-headings-kit';
 
 export const createEditorKit = (placeholderText: string = 'Schreibe etwas...') => [
   ...CopilotKit,
@@ -92,6 +93,12 @@ export const createEditorKit = (placeholderText: string = 'Schreibe etwas...') =
   // UI
   ...createBlockPlaceholderKit(placeholderText),
   ...FloatingToolbarKit,
+
+  // Id - MUST be early to ensure IDs are generated
+  NodeIdPlugin,
+
+  // Collapsible Headings
+  ...CollapsibleHeadingsKit,
 ];
 
 // Default export for backwards compatibility

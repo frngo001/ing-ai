@@ -910,3 +910,17 @@ body {
     color: inherit !important;
   }
 }
+/* Collapsible Headings - verstecke Elemente unter eingeklappten Überschriften */
+[data-collapsed-hidden="true"] {
+  display: none !important;
+}
+
+/* Animation für das Ein-/Ausklappen */
+[data-slate-node="element"] {
+  transition: opacity 150ms ease-in-out;
+}
+
+/* Chevron-Rotation für eingeklappte Überschriften */
+[data-collapsed="true"] .heading-collapse-chevron {
+  transform: rotate(0deg);
+}

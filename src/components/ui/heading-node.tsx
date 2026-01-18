@@ -8,6 +8,10 @@ import type { TElement, Path } from 'platejs';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { PlateElement, useEditorRef, useEditorSelector } from 'platejs/react';
 import { KEYS } from 'platejs';
+import { ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useCollapsedHeadingsStore } from '@/lib/stores/collapsed-headings-store';
+import { useCollapsibleDocumentId } from '@/components/editor/plugins/collapsible-headings-kit';
 
 const headingVariants = cva('relative mb-1', {
   variants: {
@@ -39,7 +43,7 @@ function calculateHeadingNumber(
   headingTypes: string[]
 ): string {
   const allHeadings: Array<{ node: TElement; path: Path; level: number }> = [];
-  
+
   // Sammle alle Überschriften im Dokument
   const headingNodes = editor.api.nodes({
     at: [],
@@ -62,7 +66,7 @@ function calculateHeadingNumber(
     const pathA = a.path;
     const pathB = b.path;
     const minLength = Math.min(pathA.length, pathB.length);
-    
+
     for (let i = 0; i < minLength; i++) {
       if (pathA[i] !== pathB[i]) {
         return (pathA[i] ?? 0) - (pathB[i] ?? 0);
@@ -100,7 +104,7 @@ function calculateHeadingNumber(
           }
         }
       }
-      
+
       // Zähle alle H1 bis searchIndex
       for (let i = 0; i <= searchIndex; i++) {
         if (allHeadings[i].level === 1) {
@@ -112,7 +116,7 @@ function calculateHeadingNumber(
       // Für Ebenen > 1: Finde die letzte Überschrift der direkt übergeordneten Ebene (level - 1)
       let foundParent = false;
       let parentIndex = -1;
-      
+
       for (let i = currentIndex - 1; i >= 0; i--) {
         if (allHeadings[i].level === level - 1) {
           parentIndex = i;
@@ -125,7 +129,7 @@ function calculateHeadingNumber(
           break;
         }
       }
-      
+
       // Wenn keine direkt übergeordnete Überschrift gefunden wurde, können wir nicht nummerieren
       if (!foundParent) {
         return numbers.join('.');
@@ -152,18 +156,18 @@ function calculateHeadingNumber(
       // Zähle Überschriften dieser Ebene von startIndex bis searchIndex
       for (let i = startIndex; i <= searchIndex; i++) {
         const heading = allHeadings[i];
-        
+
         // Überspringe Überschriften mit niedrigerem Level (neue Hierarchie-Ebene)
         if (heading.level < level) {
           break;
         }
-        
+
         // Zähle nur Überschriften mit genau diesem Level
         if (heading.level === level) {
           count++;
         }
       }
-      
+
       numbers.push(count);
     }
   }
@@ -179,6 +183,15 @@ export function HeadingElement({
   const isBibliography = (props.element as any)?.bibliography;
   const isBibliographyHeading = (props.element as any)?.bibliographyHeading;
   const isReadOnly = isBibliography || isBibliographyHeading;
+  const elementId = (props.element as any)?.id as string;
+
+  // Collapse state
+  const toggleCollapsed = useCollapsedHeadingsStore((state) => state.toggleCollapsed);
+  const collapsedHeadings = useCollapsedHeadingsStore((state) => state.collapsedHeadings);
+
+  // Verwende die documentId aus den Plugin-Optionen (standardmäßig 'global')
+  const documentId = useCollapsibleDocumentId();
+  const isCollapsed = collapsedHeadings.get(documentId)?.has(elementId) ?? false;
 
   const headingTypes = React.useMemo(
     () => [KEYS.h1, KEYS.h2, KEYS.h3, KEYS.h4, KEYS.h5, KEYS.h6].map((key) => editor.getType(key)),
@@ -189,7 +202,7 @@ export function HeadingElement({
   const headingNumber = useEditorSelector(
     (ed) => {
       if (isBibliography || isBibliographyHeading) return '';
-      
+
       const path = ed.api.findPath(props.element);
       if (!path) return '';
 
@@ -203,16 +216,28 @@ export function HeadingElement({
     [props.element, headingTypes, isBibliography, isBibliographyHeading]
   );
 
+  const handleToggleCollapse = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (elementId) {
+        toggleCollapsed(documentId, elementId);
+      }
+    },
+    [elementId, toggleCollapsed, documentId]
+  );
+
   return (
     <PlateElement
       as={variant!}
-      className={headingVariants({ variant })}
+      className={cn(headingVariants({ variant }), 'group/heading')}
       data-bibliography={isBibliography || undefined}
       data-bibliography-heading={isBibliographyHeading || undefined}
+      data-collapsed={isCollapsed || undefined}
       {...props}
     >
       {headingNumber && (
-        <span 
+        <span
           className="mr-2 select-none text-muted-foreground"
           contentEditable={false}
           suppressContentEditableWarning
@@ -225,7 +250,31 @@ export function HeadingElement({
           {props.children}
         </div>
       ) : (
-        props.children
+        <>
+          {props.children}
+          {!isBibliography && !isBibliographyHeading && (
+            <button
+              type="button"
+              onClick={handleToggleCollapse}
+              className={cn(
+                'ml-2 inline-flex h-5 w-5 items-center justify-center rounded-sm align-middle',
+                'text-muted-foreground/50 hover:text-foreground hover:bg-muted',
+                'opacity-0 group-hover/heading:opacity-100 hover:!opacity-100 transition-opacity duration-200',
+                'cursor-pointer select-none',
+                isCollapsed && 'opacity-100'
+              )}
+              contentEditable={false}
+              suppressContentEditableWarning
+            >
+              <ChevronRight
+                className={cn(
+                  'h-4 w-4 transition-transform duration-200',
+                  isCollapsed ? 'rotate-0' : 'rotate-90'
+                )}
+              />
+            </button>
+          )}
+        </>
       )}
     </PlateElement>
   );

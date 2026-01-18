@@ -48,6 +48,7 @@ import { useDocumentRealtime } from '../../hooks/use-document-realtime';
 import { RemoteCursors } from '@/components/editor/remote-cursors';
 import { useComments } from '@/hooks/use-comments';
 import { CommentsContext } from '@/components/providers/comments-provider';
+import { CollapsibleHeadingsManager, CollapsibleHeadingsStyles, CollapsibleHeadingsPlugin } from '@/components/editor/plugins/collapsible-headings-kit';
 
 export function PlateEditor({
   showToc = true,
@@ -232,6 +233,13 @@ export function PlateEditor({
       subscription.unsubscribe();
     };
   }, [editor, supabase]);
+
+  // Sync collapsible headings documentId
+  React.useEffect(() => {
+    if (editor && storageId) {
+      editor.setOption(CollapsibleHeadingsPlugin, 'documentId', storageId);
+    }
+  }, [editor, storageId]);
 
   // Discussions Sync
   React.useEffect(() => {
@@ -582,6 +590,8 @@ export function PlateEditor({
   return (
     <CommentsContext.Provider value={comments}>
       <Plate editor={editor} onChange={handleChange} readOnly={isReadOnlyMode}>
+        <CollapsibleHeadingsManager documentId={storageId} />
+        <CollapsibleHeadingsStyles />
 
         <div className="flex h-full items-start gap-6">
           <CommentTocSidebar visible={showCommentToc} className="overflow-auto max-h-[40vh]" />

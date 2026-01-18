@@ -326,8 +326,8 @@ export function LibraryPane({
           {!isViewOnly && (
             <Popover open={isCreateLibraryOpen} onOpenChange={setIsCreateLibraryOpen}>
               <Tooltip>
-                <PopoverTrigger asChild>
-                  <TooltipTrigger asChild>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
                     <Button
                       size="sm"
                       variant="outline"
@@ -336,8 +336,8 @@ export function LibraryPane({
                     >
                       <CirclePlus className="h-4 w-4" />
                     </Button>
-                  </TooltipTrigger>
-                </PopoverTrigger>
+                  </PopoverTrigger>
+                </TooltipTrigger>
                 <TooltipContent side="bottom">{translations.newLibrary}</TooltipContent>
               </Tooltip>
               <PopoverContent align="start" className="w-[260px]">
