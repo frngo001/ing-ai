@@ -337,12 +337,96 @@ const WordTocDeserializerPlugin = createSlatePlugin({
 });
 
 /**
+ * Extrahiert die Listen-Ebene aus Word mso-list Styles
+ * Word verwendet Formate wie "mso-list:l0 level1 lfo1" oder "mso-list:Ignore"
+ */
+function extractListLevel(styleAttr: string): number {
+  // Suche nach "level" gefolgt von einer Zahl
+  const levelMatch = styleAttr.match(/level(\d+)/i);
+  if (levelMatch) {
+    return parseInt(levelMatch[1], 10);
+  }
+  return 1; // Default zu Level 1
+}
+
+/**
+ * Entfernt Word-Listennummern/Bullets vom Textanfang
+ * Word fügt oft Nummern wie "1.", "a)", "•" als Text ein
+ */
+function cleanListItemText(text: string): string {
+  // Entferne führende Nummerierung: 1., 2), a., A), i., I., etc.
+  let cleaned = text.replace(/^[\s]*(\d+[.):]|\([a-zA-Z0-9]+\)|[a-zA-Z][.):]|[ivxIVX]+[.)]|\u2022|\u2023|\u25E6|\u2043|\u2219|[-–—*•◦▪▫●○■□])\s*/u, '');
+
+  // Entferne führende und nachfolgende Leerzeichen
+  cleaned = cleaned.trim();
+
+  return cleaned;
+}
+
+/**
+ * Erkennt, ob ein Element eine nummerierte Liste ist basierend auf verschiedenen Indikatoren
+ */
+function detectNumberedList(text: string, styleAttr: string): boolean {
+  // 1. Prüfe auf nummerierte Muster im Text
+  if (/^[\s]*(\d+[.):]|[a-zA-Z][.):]|[ivxIVX]+[.)]|\([a-zA-Z0-9]+\))/.test(text)) {
+    return true;
+  }
+
+  // 2. Prüfe auf Word-spezifische Nummerierungs-Styles
+  // Word verwendet verschiedene Nummerierungsformate in mso-list
+  if (styleAttr.includes('decimal') ||
+      styleAttr.includes('alpha') ||
+      styleAttr.includes('roman') ||
+      styleAttr.includes('lfo')) {
+    // lfo = list format override, oft für nummerierte Listen verwendet
+    // Aber wir müssen auch prüfen, ob es kein Bullet ist
+    if (!styleAttr.includes('bullet')) {
+      // Prüfe auf typische Bullet-Zeichen am Textanfang
+      const hasBullet = /^[\s]*[\u2022\u2023\u25E6\u2043\u2219\-–—*•◦▪▫●○■□]/.test(text);
+      if (!hasBullet) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Entfernt führende Listen-Marker aus HTML-Knoten
+ * Word fügt oft Nummern/Bullets als Span-Elemente oder Text ein
+ */
+function removeLeadingListMarkers(element: HTMLElement): void {
+  // Entferne führende Span-Elemente, die nur Marker enthalten
+  const firstChild = element.firstChild;
+  if (firstChild && firstChild.nodeType === Node.ELEMENT_NODE) {
+    const span = firstChild as HTMLElement;
+    if (span.tagName === 'SPAN') {
+      const spanText = span.textContent?.trim() || '';
+      // Prüfe, ob das Span nur einen Marker enthält
+      if (/^(\d+[.):]|[a-zA-Z][.):]|[ivxIVX]+[.)]|\u2022|\u2023|\u25E6|\u2043|\u2219|[-–—*•◦▪▫●○■□])$/.test(spanText)) {
+        span.remove();
+      }
+    }
+  }
+
+  // Entferne führende Textknoten mit Markern
+  const firstTextNode = element.firstChild;
+  if (firstTextNode && firstTextNode.nodeType === Node.TEXT_NODE) {
+    const text = firstTextNode.textContent || '';
+    const cleaned = text.replace(/^[\s]*(\d+[.):]|\([a-zA-Z0-9]+\)|[a-zA-Z][.):]|[ivxIVX]+[.)]|\u2022|\u2023|\u25E6|\u2043|\u2219|[-–—*•◦▪▫●○■□])\s*/u, '');
+    firstTextNode.textContent = cleaned;
+  }
+}
+
+/**
  * Plugin zur Erkennung und Konvertierung von Word-Listen (MsoListParagraph)
- * Word-Listen kommen oft als P mit speziellen Klassen und mso-list Styles.
+ * Konvertiert Word-Listen zu Plate.js Indent-List Format:
+ * Paragraphen mit listStyleType und indent Properties.
  */
 const WordListDeserializerPlugin = createSlatePlugin({
   key: 'wordListDeserializer',
-  priority: 220, // Zwischen TOC und Heading
+  priority: 300, // Höhere Priorität, um vor anderen Deserializern zu greifen
   parsers: {
     html: {
       deserializer: {
@@ -351,25 +435,101 @@ const WordListDeserializerPlugin = createSlatePlugin({
           const el = element as HTMLElement;
           const className = el.className || '';
           const styleAttr = el.getAttribute('style') || '';
+          const tagName = el.tagName.toLowerCase();
 
-          // Check for Word List Paragraph
-          if (className.includes('MsoListParagraph') || styleAttr.includes('mso-list')) {
-            // Determine if it's an ordered or unordered list by looking for numbering indicators
-            // If the element is already an LI, we don't need to do anything special here as standard plugins handle it.
-            if (el.tagName.toLowerCase() === 'li') return undefined;
+          // Debug: Log all elements being processed
+          if (typeof window !== 'undefined' && ['ol', 'ul', 'li', 'p'].includes(tagName)) {
+            console.log('[WordListDeserializer] Processing element:', {
+              tagName,
+              className: className.substring(0, 50),
+              textPreview: el.textContent?.substring(0, 30),
+              hasListStyleAttr: styleAttr.includes('mso-list'),
+              hasDataListType: el.hasAttribute('data-list-type')
+            });
+          }
 
-            // Strategy: Convert these to LIs. Plate's ListPlugin will handle wrapping them in UL/OL.
-            const text = el.textContent?.trim() || '';
-            const isNumbered = /^\d+[.)]/.test(text) || styleAttr.includes('level1 lfo');
+          // Behandle native HTML-Listen (ol, ul) - ignorieren, nur children verarbeiten
+          if (tagName === 'ol' || tagName === 'ul') {
+            if (typeof window !== 'undefined') {
+              console.log('[WordListDeserializer] Found list container, letting children be processed:', {
+                tagName,
+                childCount: el.children.length
+              });
+            }
+            return undefined;
+          }
+
+          // Behandle LI-Elemente aus HTML-Listen
+          if (tagName === 'li') {
+            const parentTag = el.parentElement?.tagName.toLowerCase();
+            const isNumbered = parentTag === 'ol';
+
+            // Debug logging (nur in Browser)
+            if (typeof window !== 'undefined') {
+              console.log('[WordListDeserializer] *** Converting LI to paragraph ***:', {
+                text: el.textContent?.substring(0, 40),
+                isNumbered,
+                parentTag,
+                innerHTML: el.innerHTML?.substring(0, 100)
+              });
+            }
+
+            // Entferne führende Marker, aber behalte die innere Struktur
+            removeLeadingListMarkers(el);
+
+            // Plate.js Indent-List Format: Paragraph mit listStyleType
+            return {
+              type: KEYS.p,
+              listStyleType: isNumbered ? 'decimal' : 'disc',
+              indent: 1,
+            };
+          }
+
+          // Behandle Word MsoListParagraph mit data-Attributen (von unserem Import)
+          const dataListType = el.getAttribute('data-list-type');
+          const dataListLevel = el.getAttribute('data-list-level');
+
+          if (dataListType) {
+            const isNumbered = dataListType === 'ordered';
+            const listLevel = dataListLevel ? parseInt(dataListLevel, 10) : 1;
+
+            // Debug logging
+            if (typeof window !== 'undefined') {
+              console.log('[WordListDeserializer] *** Converting MsoListParagraph with data-attributes ***:', {
+                text: el.textContent?.substring(0, 40),
+                dataListType,
+                dataListLevel,
+                isNumbered,
+                listLevel,
+                resultingListStyleType: isNumbered ? 'decimal' : 'disc'
+              });
+            }
+
+            // Entferne führende Marker, aber behalte die innere Struktur
+            removeLeadingListMarkers(el);
 
             return {
-              type: isNumbered ? KEYS.ol : KEYS.ul,
-              children: [
-                {
-                  type: KEYS.li,
-                  children: [{ type: KEYS.p, children: [{ text }] }]
-                }
-              ]
+              type: KEYS.p,
+              listStyleType: isNumbered ? 'decimal' : 'disc',
+              indent: listLevel,
+            };
+          }
+
+          // Behandle Word MsoListParagraph (Fallback für Klasse/Style)
+          if (className.includes('MsoListParagraph') || styleAttr.includes('mso-list')) {
+            const rawText = el.textContent?.trim() || '';
+            const isNumbered = detectNumberedList(rawText, styleAttr);
+            const listLevel = extractListLevel(styleAttr);
+
+            // Entferne führende Marker, aber behalte die innere Struktur
+            removeLeadingListMarkers(el);
+
+            // Plate.js Indent-List Format: Paragraph mit listStyleType und indent
+            // Rückgabe ohne children - lässt Standard-Deserializer die Kinder verarbeiten
+            return {
+              type: KEYS.p,
+              listStyleType: isNumbered ? 'decimal' : 'disc',
+              indent: listLevel,
             };
           }
 
@@ -377,7 +537,7 @@ const WordListDeserializerPlugin = createSlatePlugin({
         },
         rules: [
           {
-            validNodeName: ['P', 'DIV'],
+            validNodeName: ['P', 'DIV', 'LI', 'OL', 'UL'],
           },
         ],
       },
