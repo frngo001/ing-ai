@@ -12,5 +12,21 @@ export const LineHeightKit = [
       },
       targetPlugins: [...KEYS.heading, KEYS.p],
     },
+    parsers: {
+      html: {
+        deserializer: {
+          parse: ({ element }) => {
+            const lineHeight = element.style?.lineHeight;
+            if (lineHeight) {
+              const lh = parseFloat(lineHeight);
+              if (!isNaN(lh) && lh > 0) {
+                return { lineHeight: lh };
+              }
+            }
+            return undefined;
+          },
+        },
+      },
+    },
   }),
 ];

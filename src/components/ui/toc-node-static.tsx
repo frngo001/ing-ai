@@ -29,6 +29,11 @@ export function TocElementStatic(props: SlateElementProps) {
   return (
     <SlateElement {...props} className="mb-1 p-0">
       <div>
+        {headingList.length > 0 && (
+          <div className="mb-2 pl-0.5 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Table of Contents
+          </div>
+        )}
         {headingList.length > 0 ? (
           headingList.map((item) => (
             <Button

@@ -20,5 +20,18 @@ export const AlignKit = [
         KEYS.audio,
       ],
     },
+    parsers: {
+      html: {
+        deserializer: {
+          parse: ({ element }) => {
+            const textAlign = element.style?.textAlign;
+            if (textAlign) {
+              return { align: textAlign };
+            }
+            return undefined;
+          },
+        },
+      },
+    },
   }),
 ];

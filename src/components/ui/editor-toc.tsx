@@ -48,7 +48,6 @@ export function EditorTocSidebar({ className, visible = true }: EditorTocSidebar
         },
       });
 
-      const allHeadings: Array<{ node: TElement; path: Path; level: number }> = [];
       const baseItems: TocItem[] = [];
 
       // Sammle alle Überschriften und erstelle baseItems
@@ -64,10 +63,6 @@ export function EditorTocSidebar({ className, visible = true }: EditorTocSidebar
 
         if (!text || typeof text !== 'string') return;
 
-        if (!isBibliographyHeading) {
-          allHeadings.push({ node: node as TElement, path: path as Path, level });
-        }
-
         baseItems.push({
           id: ((node as TElement).id as string) ?? path.join('-'),
           level,
@@ -77,120 +72,8 @@ export function EditorTocSidebar({ className, visible = true }: EditorTocSidebar
         });
       });
 
-      // Sortiere alle Überschriften nach Position im Dokument
-      allHeadings.sort((a, b) => {
-        const pathA = a.path;
-        const pathB = b.path;
-        const minLength = Math.min(pathA.length, pathB.length);
-        
-        for (let i = 0; i < minLength; i++) {
-          if (pathA[i] !== pathB[i]) {
-            return (pathA[i] ?? 0) - (pathB[i] ?? 0);
-          }
-        }
-        return pathA.length - pathB.length;
-      });
-
-      // Berechne Nummerierung für jedes Element
-      return baseItems.map((item) => {
-        // Überspringe Nummerierung für Bibliography-Überschriften
-        if (item.text === bibliographyText) {
-          return { ...item, prefix: '' };
-        }
-
-        // Finde den Index dieser Überschrift in allHeadings
-        const currentIndex = allHeadings.findIndex(
-          (h) => h.path.join(',') === item.path.join(',')
-        );
-
-        if (currentIndex === -1) {
-          return { ...item, prefix: '' };
-        }
-
-        // Berechne die Nummerierung für jede Ebene
-        const numbers: number[] = [];
-        const currentLevel = item.level;
-
-        for (let level = 1; level <= currentLevel; level++) {
-          let count = 0;
-          let startIndex = 0;
-
-          if (level === 1) {
-            // Für Level 1: Zähle alle H1 bis zur aktuellen Position
-            let searchIndex = currentIndex;
-            if (allHeadings[currentIndex].level > 1) {
-              // Suche die letzte H1 vor der aktuellen Überschrift
-              for (let i = currentIndex - 1; i >= 0; i--) {
-                if (allHeadings[i].level === 1) {
-                  searchIndex = i;
-                  break;
-                }
-              }
-            }
-            
-            // Zähle alle H1 bis searchIndex
-            for (let i = 0; i <= searchIndex; i++) {
-              if (allHeadings[i].level === 1) {
-                count++;
-              }
-            }
-            numbers.push(count);
-          } else {
-            // Für Ebenen > 1: Finde die letzte Überschrift der direkt übergeordneten Ebene (level - 1)
-            let foundParent = false;
-            
-            for (let i = currentIndex - 1; i >= 0; i--) {
-              if (allHeadings[i].level === level - 1) {
-                startIndex = i + 1;
-                foundParent = true;
-                break;
-              }
-              if (allHeadings[i].level < level - 1) {
-                break;
-              }
-            }
-            
-            if (!foundParent) {
-              return { ...item, prefix: numbers.join('.') };
-            }
-
-            // Zähle Überschriften dieser Ebene von startIndex bis zur aktuellen
-            let searchIndex = currentIndex;
-            if (allHeadings[currentIndex].level > level) {
-              // Die aktuelle Überschrift ist tiefer, finde die letzte Überschrift dieser Ebene vor ihr
-              for (let i = currentIndex - 1; i >= startIndex; i--) {
-                if (allHeadings[i].level === level) {
-                  searchIndex = i;
-                  break;
-                }
-                if (allHeadings[i].level < level) {
-                  break;
-                }
-              }
-            }
-
-            // Zähle Überschriften dieser Ebene von startIndex bis searchIndex
-            for (let i = startIndex; i <= searchIndex; i++) {
-              const heading = allHeadings[i];
-              
-              if (heading.level < level) {
-                break;
-              }
-              
-              if (heading.level === level) {
-                count++;
-              }
-            }
-            
-            numbers.push(count);
-          }
-        }
-
-        return {
-          ...item,
-          prefix: numbers.join('.'),
-        };
-      });
+      // Return baseItems without manual numbering
+      return baseItems;
     },
     [headingTypes, bibliographyText]
   );
@@ -261,7 +144,7 @@ export function EditorTocSidebar({ className, visible = true }: EditorTocSidebar
                 {item.prefix}
               </span>
             )}
-            <span className="text-sm leading-snug">{item.text}</span>
+            <span className="text-sm leading-snug">{item.text.replace(/^\d+(\.\d+)*\s+/, '')}</span>
           </button>
         ))}
       </nav>

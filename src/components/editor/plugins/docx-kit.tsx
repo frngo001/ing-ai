@@ -3,6 +3,7 @@
 import { DocxPlugin } from '@platejs/docx';
 import { JuicePlugin } from '@platejs/juice';
 import { createSlatePlugin, KEYS } from 'platejs';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 /**
  * Prüft, ob eine Farbe dunkel ist (schwarz/dunkelgrau)
@@ -152,12 +153,9 @@ function detectWordHeadingLevel(element: HTMLElement): number | null {
   }
 
   // 3. Prüfe auf MsoListParagraph mit Überschriften-Eigenschaften
-  // Word-Überschriften mit Nummerierung haben oft MsoListParagraph ABER auch outline-level
   if (className.includes('MsoListParagraph')) {
-    // Wenn es ein outline-level hat, ist es eine Überschrift, keine Liste
     if (outlineLevel) return outlineLevel;
 
-    // Prüfe auf Überschriften-typische Styles
     const fontSize = style?.fontSize;
     const fontWeight = style?.fontWeight;
     const isBold = fontWeight === 'bold' || fontWeight === '700' || parseInt(fontWeight || '0') >= 600;
@@ -169,31 +167,26 @@ function detectWordHeadingLevel(element: HTMLElement): number | null {
       if (unit === 'px') ptSize = sizeValue * 0.75;
       if (unit === 'em' || unit === 'rem') ptSize = sizeValue * 12;
 
-      // Große, fette Schrift in MsoListParagraph = wahrscheinlich Überschrift
       if (ptSize >= 16) return 1;
       if (ptSize >= 14) return 2;
       if (ptSize >= 12) return 3;
     }
   }
 
-  // 4. Prüfe auf Überschriften-Klassen aus Word-Vorlagen
-  // z.B. "berschrift1", "Überschrift1", "Heading 1", etc.
   const germanHeadingMatch = className.match(/(?:Ü|ü|U|u)berschrift\s*(\d)/i);
   if (germanHeadingMatch) {
     const level = parseInt(germanHeadingMatch[1], 10);
     if (level >= 1 && level <= 6) return level;
   }
 
-  // 5. Heuristik basierend auf Schriftgröße und Fettdruck (für <p> ohne spezielle Klassen)
   const tagName = element.tagName?.toLowerCase();
   if ((tagName === 'p' || tagName === 'div') && style) {
     const fontSize = style.fontSize;
     const fontWeight = style.fontWeight;
     const isBold = fontWeight === 'bold' || fontWeight === '700' || parseInt(fontWeight || '0') >= 600;
 
-    // Nur wenn es NICHT wie eine normale Liste aussieht
     const hasListStyle = styleAttr.includes('mso-list') && !outlineLevel;
-    if (hasListStyle) return null; // Echte Liste, keine Überschrift
+    if (hasListStyle) return null;
 
     if (fontSize && isBold) {
       const sizeValue = parseFloat(fontSize);
@@ -202,7 +195,6 @@ function detectWordHeadingLevel(element: HTMLElement): number | null {
       if (unit === 'px') ptSize = sizeValue * 0.75;
       if (unit === 'em' || unit === 'rem') ptSize = sizeValue * 12;
 
-      // Word-Überschriften-Größen (ungefähr)
       if (ptSize >= 24) return 1;
       if (ptSize >= 18) return 2;
       if (ptSize >= 14) return 3;
@@ -213,17 +205,9 @@ function detectWordHeadingLevel(element: HTMLElement): number | null {
   return null;
 }
 
-/**
- * Plugin zur Erkennung von Word-Überschriften beim Paste
- * Word verwendet verschiedene Methoden für Überschriften:
- * - MsoTitle, MsoHeading1-6 Klassen
- * - mso-outline-level Style
- * - Überschrift1-6 Klassen (deutsche Word-Version)
- * - Schriftgröße + Fettdruck Heuristik
- */
 const WordHeadingDeserializerPlugin = createSlatePlugin({
   key: 'wordHeadingDeserializer',
-  priority: 200, // Höhere Priorität als Standard-Plugins (100)
+  priority: 200,
   parsers: {
     html: {
       deserializer: {
@@ -250,9 +234,163 @@ const WordHeadingDeserializerPlugin = createSlatePlugin({
   },
 });
 
+const WordFormattingDeserializerPlugin = createSlatePlugin({
+  key: 'wordFormattingDeserializer',
+  priority: 150,
+  parsers: {
+    html: {
+      deserializer: [
+        {
+          isElement: true,
+          parse: ({ element }: { element: any }) => {
+            const el = element as HTMLElement;
+            const result: any = {};
+
+            const align = el.getAttribute('data-align') || el.style.textAlign;
+            if (align) result.align = align;
+
+            const indent = el.getAttribute('data-indent');
+            if (indent) result.indent = parseInt(indent, 10);
+
+            const marginLeft = el.style.marginLeft;
+            if (marginLeft && !result.indent) {
+              const px = parseInt(marginLeft, 10);
+              if (px > 0) result.indent = Math.round(px / 24);
+            }
+
+            const textIndent = el.getAttribute('data-text-indent');
+            if (textIndent) result.textIndent = parseInt(textIndent, 10);
+
+            const lineHeight = el.getAttribute('data-line-height') || el.style.lineHeight;
+            if (lineHeight) result.lineHeight = parseFloat(lineHeight);
+
+            const marginTop = el.style.marginTop;
+            if (marginTop) {
+              const px = parseInt(marginTop, 10);
+              if (px > 0) result.marginTop = px;
+            }
+
+            const marginBottom = el.style.marginBottom;
+            if (marginBottom) {
+              const px = parseInt(marginBottom, 10);
+              if (px > 0) result.marginBottom = px;
+            }
+
+            return Object.keys(result).length > 0 ? result : undefined;
+          },
+          rules: [{ validNodeName: ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV'] }],
+        },
+        {
+          isLeaf: true,
+          parse: ({ element }: { element: any }) => {
+            const el = element as HTMLElement;
+            const result: any = {};
+
+            const fontSize = el.getAttribute('data-font-size') || el.style.fontSize;
+            if (fontSize) result.fontSize = fontSize;
+
+            const fontFamily = el.getAttribute('data-font-family') || el.style.fontFamily;
+            if (fontFamily) result.fontFamily = fontFamily;
+
+            const color = el.getAttribute('data-color') || el.style.color;
+            if (color) result.color = color;
+
+            return Object.keys(result).length > 0 ? result : undefined;
+          },
+          rules: [{ validNodeName: ['SPAN', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV'] }],
+        },
+      ],
+    },
+  },
+});
+
+/**
+ * Plugin zur Erkennung und Konvertierung von Word-Inhaltsverzeichnissen
+ * Word TOC verwendet MsoToc Klassen oder spezielle Texte
+ */
+const WordTocDeserializerPlugin = createSlatePlugin({
+  key: 'wordTocDeserializer',
+  priority: 250, // Höchste Priorität - vor anderen Plugins
+  parsers: {
+    html: {
+      deserializer: {
+        isElement: true,
+        parse: ({ element }) => {
+          const el = element as HTMLElement;
+          const className = el.className || '';
+
+          // Detect the specific placeholder injected during import
+          if (className.includes('plate-toc-placeholder')) {
+            return { type: KEYS.toc };
+          }
+
+          return undefined;
+        },
+        rules: [
+          {
+            validNodeName: ['P', 'DIV', 'SPAN', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
+          },
+        ],
+      },
+    },
+  },
+});
+
+/**
+ * Plugin zur Erkennung und Konvertierung von Word-Listen (MsoListParagraph)
+ * Word-Listen kommen oft als P mit speziellen Klassen und mso-list Styles.
+ */
+const WordListDeserializerPlugin = createSlatePlugin({
+  key: 'wordListDeserializer',
+  priority: 220, // Zwischen TOC und Heading
+  parsers: {
+    html: {
+      deserializer: {
+        isElement: true,
+        parse: ({ element }) => {
+          const el = element as HTMLElement;
+          const className = el.className || '';
+          const styleAttr = el.getAttribute('style') || '';
+
+          // Check for Word List Paragraph
+          if (className.includes('MsoListParagraph') || styleAttr.includes('mso-list')) {
+            // Determine if it's an ordered or unordered list by looking for numbering indicators
+            // If the element is already an LI, we don't need to do anything special here as standard plugins handle it.
+            if (el.tagName.toLowerCase() === 'li') return undefined;
+
+            // Strategy: Convert these to LIs. Plate's ListPlugin will handle wrapping them in UL/OL.
+            const text = el.textContent?.trim() || '';
+            const isNumbered = /^\d+[.)]/.test(text) || styleAttr.includes('level1 lfo');
+
+            return {
+              type: isNumbered ? KEYS.ol : KEYS.ul,
+              children: [
+                {
+                  type: KEYS.li,
+                  children: [{ type: KEYS.p, children: [{ text }] }]
+                }
+              ]
+            };
+          }
+
+          return undefined;
+        },
+        rules: [
+          {
+            validNodeName: ['P', 'DIV'],
+          },
+        ],
+      },
+    },
+  },
+});
+
 export const DocxKit = [
   WordColorFilterPlugin,
+  WordTocDeserializerPlugin,
+  WordListDeserializerPlugin,
   WordHeadingDeserializerPlugin,
+  WordFormattingDeserializerPlugin,
   DocxPlugin,
   JuicePlugin,
 ];

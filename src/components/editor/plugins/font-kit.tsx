@@ -11,7 +11,13 @@ import {
 import { KEYS } from 'platejs';
 
 const options = {
-  inject: { targetPlugins: [KEYS.p] },
+  inject: {
+    targetPlugins: [
+      ...KEYS.heading,
+      KEYS.p,
+      KEYS.blockquote,
+    ],
+  },
 } satisfies PlatePluginConfig;
 
 /**
@@ -136,6 +142,30 @@ export const FontKit = [
       },
     },
   }),
-  FontSizePlugin.configure(options),
-  FontFamilyPlugin.configure(options),
+  FontSizePlugin.configure({
+    ...options,
+    parsers: {
+      html: {
+        deserializer: {
+          parse: ({ element }) => {
+            const fontSize = element.style?.fontSize;
+            return fontSize ? { fontSize } : undefined;
+          },
+        },
+      },
+    },
+  }),
+  FontFamilyPlugin.configure({
+    ...options,
+    parsers: {
+      html: {
+        deserializer: {
+          parse: ({ element }) => {
+            const fontFamily = element.style?.fontFamily;
+            return fontFamily ? { fontFamily } : undefined;
+          },
+        },
+      },
+    },
+  }),
 ];

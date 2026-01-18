@@ -9,6 +9,7 @@ import { cva } from 'class-variance-authority';
 import { PlateElement } from 'platejs/react';
 
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/lib/i18n/use-language';
 
 const headingItemVariants = cva(
   'block h-auto w-full cursor-pointer truncate rounded-none px-0.5 py-1.5 text-left font-medium text-muted-foreground underline decoration-[0.5px] underline-offset-4 hover:bg-accent hover:text-muted-foreground',
@@ -24,6 +25,7 @@ const headingItemVariants = cva(
 );
 
 export function TocElement(props: PlateElementProps) {
+  const { t } = useLanguage();
   const state = useTocElementState();
   const { props: btnProps } = useTocElement(state);
   const { headingList } = state;
@@ -31,6 +33,11 @@ export function TocElement(props: PlateElementProps) {
   return (
     <PlateElement {...props} className="mb-1 p-0">
       <div contentEditable={false}>
+        {headingList.length > 0 && (
+          <div className="mb-2 pl-0.5 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            {t('toolbar.tocTitle')}
+          </div>
+        )}
         {headingList.length > 0 ? (
           headingList.map((item) => (
             <Button
@@ -42,7 +49,7 @@ export function TocElement(props: PlateElementProps) {
               onClick={(e) => btnProps.onClick(e, item, 'smooth')}
               aria-current
             >
-              {item.title}
+              {item.title.replace(/^\d+(\.\d+)*\s+/, '')}
             </Button>
           ))
         ) : (

@@ -82,8 +82,229 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
     const mammothModule = await import('mammoth');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mammoth = (mammothModule as any).default || mammothModule;
-    const result = await mammoth.convertToHtml({ arrayBuffer });
-    return result.value;
+
+    // Store paragraph styles using text content as key (more robust than index)
+    const paragraphStyles: Map<string, { align?: string; indent?: number; lineHeight?: number }> = new Map();
+
+    // Helper to extract text from paragraph children
+    const extractText = (element: any): string => {
+      if (!element) return '';
+      if (typeof element === 'string') return element;
+      if (element.value) return element.value;
+      if (element.children) {
+        return element.children.map((c: any) => extractText(c)).join('');
+      }
+      return '';
+    };
+
+    const options = {
+      // IMPORTANT: Preserve empty paragraphs for spacing/line breaks
+      ignoreEmptyParagraphs: false,
+      styleMap: [
+        // English Headings
+        "p[style-name='Heading 1'] => h1:fresh",
+        "p[style-name='Heading 2'] => h2:fresh",
+        "p[style-name='Heading 3'] => h3:fresh",
+        "p[style-name='Heading 4'] => h4:fresh",
+        "p[style-name='Heading 5'] => h5:fresh",
+        "p[style-name='Heading 6'] => h6:fresh",
+
+        // German Headings
+        "p[style-name='Überschrift 1'] => h1:fresh",
+        "p[style-name='Überschrift 2'] => h2:fresh",
+        "p[style-name='Überschrift 3'] => h3:fresh",
+        "p[style-name='Überschrift 4'] => h4:fresh",
+        "p[style-name='Überschrift 5'] => h5:fresh",
+        "p[style-name='Überschrift 6'] => h6:fresh",
+        "p[style-name='Überschrift'] => h1:fresh",
+
+        // Title/Subtitle
+        "p[style-name='Title'] => h1:fresh",
+        "p[style-name='Titel'] => h1:fresh",
+        "p[style-name='Subtitle'] => h2:fresh",
+        "p[style-name='Untertitel'] => h2:fresh",
+
+        // Abstract/Summary
+        "p[style-name='Abstract'] => h3:fresh",
+        "p[style-name='Abstrakt'] => h3:fresh",
+        "p[style-name='Kurzfassung'] => h3:fresh",
+
+        // Quotes
+        "p[style-name='Quote'] => blockquote:fresh > p:fresh",
+        "p[style-name='Zitat'] => blockquote:fresh > p:fresh",
+        "p[style-name='Intense Quote'] => blockquote:fresh > p:fresh",
+        "p[style-name='Intensives Zitat'] => blockquote:fresh > p:fresh",
+
+        // TOC Styles
+        "p[style-name='TOC Heading'] => div.toc-ignore:fresh",
+        "p[style-name='Inhaltsverzeichnisüberschrift'] => div.toc-ignore:fresh",
+        "p[style-name='TOC 1'] => div.toc-item:fresh",
+        "p[style-name='TOC 2'] => div.toc-item:fresh",
+        "p[style-name='TOC 3'] => div.toc-item:fresh",
+        "p[style-name='TOC 4'] => div.toc-item:fresh",
+        "p[style-name='Verzeichnis 1'] => div.toc-item:fresh",
+        "p[style-name='Verzeichnis 2'] => div.toc-item:fresh",
+        "p[style-name='Verzeichnis 3'] => div.toc-item:fresh",
+
+        // List Styles
+        "p[style-name='List Paragraph'] => li > p:fresh",
+        "p[style-name='Listenabsatz'] => li > p:fresh",
+        "p[style-name='List Bullet'] => ul > li:fresh",
+        "p[style-name='Aufzählungszeichen'] => ul > li:fresh",
+        "p[style-name='List Number'] => ol > li:fresh",
+        "p[style-name='Listenfortsetzung'] => li > p:fresh",
+        "p[style-name='Normal (Web)'] => p:fresh",
+
+        // Emphasis styles (for runs/text)
+        "r[style-name='Emphasis'] => em",
+        "r[style-name='Hervorhebung'] => em",
+        "r[style-name='Strong'] => strong",
+        "r[style-name='Fett'] => strong",
+        "r[style-name='Intense Emphasis'] => strong > em",
+        "r[style-name='Intensive Hervorhebung'] => strong > em",
+      ],
+      transformDocument: (element: any) => {
+        const processElement = (el: any) => {
+          if (el.children) {
+            el.children.forEach((child: any) => {
+              // Capture paragraph styles
+              if (child.type === 'paragraph') {
+                const text = extractText(child).trim();
+                const style: {
+                  align?: string;
+                  indent?: number;
+                  lineHeight?: number;
+                  marginTop?: number;
+                  marginBottom?: number;
+                } = {};
+
+                // Alignment
+                if (child.alignment) {
+                  const alignmentMap: Record<string, string> = {
+                    'left': 'left',
+                    'center': 'center',
+                    'right': 'right',
+                    'both': 'justify'
+                  };
+                  style.align = alignmentMap[child.alignment] || child.alignment;
+                }
+
+                // Indentation (convert twips to meaningful indent level)
+                if (child.indent && child.indent.left) {
+                  const marginPx = Math.round(child.indent.left / 20);
+                  if (marginPx > 0) {
+                    style.indent = Math.round(marginPx / 24);
+                  }
+                }
+
+                // Paragraph spacing (before/after)
+                if (child.spacing) {
+                  // Line height
+                  if (child.spacing.line) {
+                    const lineHeight = parseFloat((child.spacing.line / 240).toFixed(2));
+                    if (lineHeight > 0.1) {
+                      style.lineHeight = lineHeight;
+                    }
+                  }
+                  // Margin before (twips to pixels: 1 twip = 1/20 point, 1 point = 1.33px)
+                  if (child.spacing.before) {
+                    const marginTopPx = Math.round(child.spacing.before / 15);
+                    if (marginTopPx > 0) {
+                      style.marginTop = marginTopPx;
+                    }
+                  }
+                  // Margin after
+                  if (child.spacing.after) {
+                    const marginBottomPx = Math.round(child.spacing.after / 15);
+                    if (marginBottomPx > 0) {
+                      style.marginBottom = marginBottomPx;
+                    }
+                  }
+                }
+
+                if (Object.keys(style).length > 0) {
+                  // Use normalized text as key (first 100 chars to handle long paragraphs)
+                  // For empty paragraphs, use a unique empty key with index
+                  const key = text ? text.substring(0, 100).replace(/\s+/g, ' ') : `__empty_${paragraphStyles.size}__`;
+                  paragraphStyles.set(key, style);
+                }
+              }
+
+              // Recursive processing
+              if (child.children) {
+                processElement(child);
+              }
+            });
+          }
+        };
+        processElement(element);
+        return element;
+      },
+    };
+
+    const result = await mammoth.convertToHtml({ arrayBuffer }, options);
+    let html = result.value;
+
+    // Post-process HTML to add styles based on text content matching
+    // Helper function to build style string
+    const buildStyleString = (style: any): string => {
+      const styleAttrs: string[] = [];
+      if (style.align && style.align !== 'left') {
+        styleAttrs.push(`text-align: ${style.align}`);
+      }
+      if (style.indent && style.indent > 0) {
+        styleAttrs.push(`margin-left: ${style.indent * 24}px`);
+      }
+      if (style.lineHeight && style.lineHeight > 1) {
+        styleAttrs.push(`line-height: ${style.lineHeight}`);
+      }
+      if (style.marginTop && style.marginTop > 0) {
+        styleAttrs.push(`margin-top: ${style.marginTop}px`);
+      }
+      if (style.marginBottom && style.marginBottom > 0) {
+        styleAttrs.push(`margin-bottom: ${style.marginBottom}px`);
+      }
+      return styleAttrs.join('; ');
+    };
+
+    // Universal handler for ALL paragraph types (plain text, nested elements, mixed content)
+    html = html.replace(/<p>([\s\S]*?)<\/p>/g, (match: string, content: string) => {
+      // Extract plain text by stripping all HTML tags
+      const plainText = content.replace(/<[^>]+>/g, '').trim();
+      const normalizedText = plainText.substring(0, 100).replace(/\s+/g, ' ');
+
+      const style = paragraphStyles.get(normalizedText);
+      if (!style) return match;
+
+      const styleString = buildStyleString(style);
+      if (!styleString) return match;
+
+      return `<p style="${styleString}">${content}</p>`;
+    });
+
+    // TOC Handling:
+    // 1. Remove the "Inhaltsverzeichnis" title heading
+    html = html.replace(/<div class="toc-ignore">[\s\S]*?<\/div>/g, '');
+
+    // 2. Replace the first TOC item with a Plate TOC placeholder and remove others
+    let tocPlaceholderInserted = false;
+    html = html.replace(/<div class="toc-item">[\s\S]*?<\/div>/g, () => {
+      if (!tocPlaceholderInserted) {
+        tocPlaceholderInserted = true;
+        return '<div class="plate-toc-placeholder"></div>';
+      }
+      return ''; // Remove subsequent items
+    });
+
+    // DEBUG: Log the generated HTML and any warnings
+    console.log('=== MAMMOTH DEBUG ===');
+    console.log('Generated HTML:', html.substring(0, 2000));
+    console.log('Paragraph styles captured:', paragraphStyles.size);
+    console.log('Style keys:', Array.from(paragraphStyles.keys()).slice(0, 10));
+    console.log('Mammoth warnings:', result.messages);
+    console.log('=== END MAMMOTH DEBUG ===');
+
+    return html;
   };
 
   const { openFilePicker: openMdFilePicker } = useFilePicker({

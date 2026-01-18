@@ -24,6 +24,7 @@ import { EmojiKit } from '@/components/editor/plugins/emoji-kit';
 import { ExitBreakKit } from '@/components/editor/plugins/exit-break-kit';
 import { FloatingToolbarKit } from '@/components/editor/plugins/floating-toolbar-kit';
 import { FontKit } from '@/components/editor/plugins/font-kit';
+import { IndentKit } from '@/components/editor/plugins/indent-kit';
 import { LineHeightKit } from '@/components/editor/plugins/line-height-kit';
 import { LinkKit } from '@/components/editor/plugins/link-kit';
 import { ListKit } from '@/components/editor/plugins/list-kit';
@@ -67,6 +68,7 @@ export const createEditorKit = (placeholderText: string = 'Schreibe etwas...') =
   // Block Style
   ...ListKit,
   ...AlignKit,
+  ...IndentKit,
   ...LineHeightKit,
 
   // Collaboration
