@@ -68,7 +68,7 @@ export function TableTocSidebar({ className, visible = true }: { className?: str
             )}
         >
             <div className="mb-2 text-sm font-semibold text-muted-foreground ml-4">
-                {t('table.listTitle') || 'Tabellenverzeichnis'}
+                {t('table.listTitle')}
             </div>
 
             <nav className="flex flex-col gap-1 text-sm max-h-[35vh] overflow-auto px-2">

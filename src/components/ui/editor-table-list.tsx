@@ -85,8 +85,8 @@ export function EditorTableList({ className: _className }: { className?: string 
     const updateTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const translations = React.useMemo(() => ({
-        tableList: t('table.listTitle') || 'Tabellenverzeichnis',
-        table: t('table.table') || 'Tabelle',
+        tableList: t('table.listTitle'),
+        table: t('table.table'),
     }), [t, language]);
 
     // Use optimized selector with proper equality function

@@ -93,40 +93,51 @@ export function AppSidebar({
   const navMain = React.useMemo(() => getNavMain(t), [t, language])
 
   React.useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser()
-
-      if (!userError && user) {
-        setUser({
-          name: user.user_metadata?.full_name || user.email?.split("@")[0] || t('sidebar.user'),
-          email: user.email || "",
-          avatar: user.user_metadata?.avatar_url || `/logos/logosApp/ing_AI.png`,
-        })
-      } else {
+    // Helper to fetch profile data which is more up-to-date than auth session
+    const syncUser = async (sessionUser: any) => {
+      if (!sessionUser) {
         setUser(null)
+        return
       }
+
+      // 1. Basic info from session
+      let newUser = {
+        name: sessionUser.user_metadata?.full_name || sessionUser.email?.split("@")[0] || t('sidebar.user'),
+        email: sessionUser.email || "",
+        avatar: sessionUser.user_metadata?.avatar_url || `/logos/logosApp/ing_AI.png`,
+      }
+
+      // 2. Try to fetch latest profile data to get updated avatar immediately
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url, email')
+          .eq('id', sessionUser.id)
+          .single()
+
+        if (profile) {
+          newUser = {
+            name: profile.full_name || newUser.name,
+            email: profile.email || newUser.email,
+            avatar: profile.avatar_url || newUser.avatar,
+          }
+        }
+      } catch (e) {
+        console.error("Profile fetch error", e)
+      }
+
+      setUser(newUser)
     }
 
-    fetchUser()
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      syncUser(user)
+    }
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          name:
-            session.user.user_metadata?.full_name ||
-            session.user.email?.split("@")[0] ||
-            t('sidebar.user'),
-          email: session.user.email || "",
-          avatar: session.user.user_metadata?.avatar_url || `/logos/logosApp/ing_AI.png`,
-        })
-      } else {
-        setUser(null)
-      }
+    init()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncUser(session?.user)
     })
 
     return () => {
