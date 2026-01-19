@@ -837,6 +837,10 @@ export function PlateEditor({
                   publisher: source.publisher,
                   edition: source.edition,
                   publisherPlace: source.publisherPlace,
+                  volume: source.volume,
+                  issue: source.issue,
+                  pages: source.pages || source.page,
+                  issn: source.issn,
                 })
               }}
             />

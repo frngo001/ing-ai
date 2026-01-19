@@ -185,6 +185,10 @@ export function LibraryPane({
         if (c.isbn) fields.push(`isbn={${c.isbn}}`)
         if (c.edition) fields.push(`edition={${c.edition}}`)
         if (c.publisherPlace) fields.push(`address={${c.publisherPlace}}`)
+        if (c.volume) fields.push(`volume={${c.volume}}`)
+        if (c.issue) fields.push(`number={${c.issue}}`)
+        if (c.pages) fields.push(`pages={${c.pages}}`)
+        if (c.issn) fields.push(`issn={${c.issn}}`)
 
         // Add source/journal/publisher based on type
         // Use explicit publisher if available, otherwise fallback to source for books

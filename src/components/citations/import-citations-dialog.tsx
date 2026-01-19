@@ -213,6 +213,10 @@ export function ImportCitationsDialog({
       const edition = getField("edition")
       const publisher = getField("publisher")
       const publisherPlace = getField("address")
+      const volume = getField("volume")
+      const issue = getField("number")
+      const pages = getField("pages")
+      const issn = getField("issn")
 
       const nowText = `Importier am ${new Date().toLocaleDateString(language, { dateStyle: "short" })}`
       parsed.push({
@@ -232,6 +236,10 @@ export function ImportCitationsDialog({
         edition,
         publisher,
         publisherPlace,
+        volume,
+        issue,
+        pages,
+        issn,
       })
     }
     return parsed

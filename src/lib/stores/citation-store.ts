@@ -74,6 +74,10 @@ export type SavedCitation = {
   publisher?: string
   edition?: string
   publisherPlace?: string
+  volume?: string | number
+  issue?: string | number
+  pages?: string | number
+  issn?: string
 }
 
 export type CitationLibrary = {
@@ -411,6 +415,10 @@ export const useCitationStore = create<CitationState>()(
               publisher: (citation as any).publisher,
               edition: (citation as any).edition,
               publisherPlace: (citation as any).publisherPlace,
+              volume: citation.volume,
+              issue: citation.issue,
+              pages: citation.pages,
+              issn: (citation as any).issn,
             },
           }
 
@@ -737,6 +745,10 @@ export const useCitationStore = create<CitationState>()(
                 publisher: (c.metadata as any)?.publisher || undefined,
                 edition: (c.metadata as any)?.edition || undefined,
                 publisherPlace: (c.metadata as any)?.publisherPlace || undefined,
+                volume: (c.metadata as any)?.volume || undefined,
+                issue: (c.metadata as any)?.issue || undefined,
+                pages: (c.metadata as any)?.pages || undefined,
+                issn: (c.metadata as any)?.issn || undefined,
               }))
               return {
                 id: lib.id,
@@ -1011,6 +1023,10 @@ export const useCitationStore = create<CitationState>()(
               publisher: (citation as any).publisher,
               edition: (citation as any).edition,
               publisherPlace: (citation as any).publisherPlace || (citation as any).address,
+              volume: (citation as any).volume,
+              issue: (citation as any).issue,
+              pages: (citation as any).pages,
+              issn: (citation as any).issn,
             },
           }
         })
