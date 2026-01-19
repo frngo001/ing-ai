@@ -132,64 +132,22 @@ function captionsEqual(prev: FullFigureNode[], next: FullFigureNode[]): boolean 
 
 /**
  * Provider component that maintains the figure registry.
- * It tracks media nodes and their order/captions with debounced caption updates.
+ * Optimiert, um teure Dokument-Scans bei jedem Keystroke zu vermeiden.
  */
 export function FigureRegistryProvider({ children }: { children: React.ReactNode }) {
     const editor = useEditorRef();
+    const [registry, setRegistry] = React.useState<FigureRegistry>({
+        figures: [],
+        indexById: new Map(),
+        captionById: new Map(),
+    });
 
-    // Track STRUCTURAL changes immediately (add/remove/reorder figures)
-    const minimalFigures = useEditorSelector(
-        (ed) => extractMinimalFigures(ed),
-        [],
-        {
-            equalityFn: structuralEqual,
-        }
-    );
-
-    // Track the FULL figures including captions for debounced updates
-    const fullFigures = useEditorSelector(
-        (ed) => extractFullFigures(ed),
-        [],
-        {
-            equalityFn: captionsEqual,
-        }
-    );
-
-    // Debounced caption state - this is what we actually use for the registry
-    const [debouncedCaptions, setDebouncedCaptions] = React.useState<Map<string, string>>(new Map());
-    const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    // Update debounced captions after delay
-    React.useEffect(() => {
-        // Clear existing timeout
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
-
-        // Schedule debounced update
-        debounceRef.current = setTimeout(() => {
-            const newCaptions = new Map<string, string>();
-            for (const fig of fullFigures) {
-                newCaptions.set(fig.id, fig.caption || fig.name);
-            }
-            setDebouncedCaptions(newCaptions);
-            debounceRef.current = null;
-        }, CAPTION_UPDATE_DEBOUNCE_MS);
-
-        return () => {
-            if (debounceRef.current) {
-                clearTimeout(debounceRef.current);
-            }
-        };
-    }, [fullFigures]);
-
-    // Compute the registry - uses structural data immediately, captions debounced
-    const registry = React.useMemo((): FigureRegistry => {
+    const updateRegistry = React.useCallback(() => {
+        // Diese Funktion führt den teuren Scan durch
         const figures: FigureData[] = [];
         const indexById = new Map<string, number>();
         const captionById = new Map<string, string>();
 
-        // Get the actual nodes with paths
         const nodes = Array.from(editor.api.nodes({
             at: [],
             match: (n: any) => MEDIA_TYPES.includes(n.type as any),
@@ -198,8 +156,7 @@ export function FigureRegistryProvider({ children }: { children: React.ReactNode
         let index = 1;
         for (const [node, path] of nodes) {
             const id = node.id || path.join('-');
-            // Use debounced caption if available, otherwise get fresh caption
-            const caption = debouncedCaptions.get(id) ?? extractCaptionText(node.caption) ?? node.name ?? '';
+            const caption = extractCaptionText(node.caption) ?? node.name ?? '';
 
             figures.push({
                 id,
@@ -215,8 +172,96 @@ export function FigureRegistryProvider({ children }: { children: React.ReactNode
             index++;
         }
 
-        return { figures, indexById, captionById };
-    }, [minimalFigures, debouncedCaptions, editor]);
+        setRegistry({ figures, indexById, captionById });
+    }, [editor]);
+
+    // Listener für Änderungen im Editor
+    React.useEffect(() => {
+        let timeoutId: number;
+        let idleId: number;
+
+        const handleChange = () => {
+            // Cancel pending updates
+            clearTimeout(timeoutId);
+            if (typeof (window as any).cancelIdleCallback === 'function') {
+                (window as any).cancelIdleCallback(idleId);
+            }
+
+            // Debounce update: Warte 500ms Inaktivität ab, bevor gescannt wird
+            timeoutId = window.setTimeout(() => {
+                if (typeof (window as any).requestIdleCallback === 'function') {
+                    idleId = (window as any).requestIdleCallback(() => updateRegistry());
+                } else {
+                    updateRegistry();
+                }
+            }, 500);
+        };
+
+        // Plate bietet kein direktes "subscribe to all changes" Event im React-Kontext ohne Selector,
+        // daher nutzen wir einen Listener auf das DOM-Event 'plate-change' falls verfügbar,
+        // oder wir nutzen einen Interval-Check als Fallback für Änderungen
+        // BESSER: Wir wrappen den Editor-OnChange oder injecten uns.
+        // Da wir hier Zugriff auf die Editor-Instanz haben, können wir uns nicht einfach in onChange hooken.
+
+        // Workaround: Wir nutzen useEditorSelector mit einer sehr "dumb" selector function,
+        // die nur eine Versionsnummer zurückgibt, um Trigger zu erhalten, 
+        // ABER wir führen den teuren Scan nur debounced aus.
+        return () => {
+            clearTimeout(timeoutId);
+            if (typeof (window as any).cancelIdleCallback === 'function') {
+                (window as any).cancelIdleCallback(idleId);
+            }
+        };
+    }, [updateRegistry]);
+
+    // Wir nutzen useEditorSelector nur als Trigger, geben aber immer denselben Wert zurück,
+    // um Rerenders zu minimieren, und feuern dann den debounced Scan.
+    useEditorSelector(
+        (editor) => {
+            // Wir nutzen operations.length als Proxy für Änderungen
+            // Das ist billig.
+            return editor.operations.length;
+        },
+        [],
+        {
+            equalityFn: (prev, next) => {
+                // Wenn sich operations.length ändert (oder einfach immer wenn der Selector läuft),
+                // triggern wir den debounced update. 
+                // Da equalityFn bestimmt ob gerendert wird, nutzen wir es als Side-Effect Trigger
+                // und geben true zurück, um React-Rendering zu verhindern.
+
+                // HACK: Side-effect im Equality-Check, um den Debounce-Timer zu starten
+                // ohne dass React neu rendert.
+                onChangeTriggered();
+                return true;
+            }
+        }
+    );
+
+    // Debounce Logic ausgelagert, damit sie vom Selector aufgerufen werden kann
+    // Debounce Logic ausgelagert, damit sie vom Selector aufgerufen werden kann
+    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    const idleRef = React.useRef<number | null>(null);
+
+    const onChangeTriggered = React.useCallback(() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (idleRef.current && typeof (window as any).cancelIdleCallback === 'function') {
+            (window as any).cancelIdleCallback(idleRef.current);
+        }
+
+        timeoutRef.current = setTimeout(() => {
+            if (typeof (window as any).requestIdleCallback === 'function') {
+                idleRef.current = (window as any).requestIdleCallback(() => updateRegistry());
+            } else {
+                updateRegistry();
+            }
+        }, 500); // 500ms Debounce
+    }, [updateRegistry]);
+
+    // Initialer Scan beim Mounten
+    React.useEffect(() => {
+        updateRegistry();
+    }, [updateRegistry]);
 
     return (
         <FigureRegistryContext.Provider value={registry}>

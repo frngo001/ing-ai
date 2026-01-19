@@ -419,6 +419,7 @@ export const translations = {
         },
         editor: {
             untitled: 'Untitled Document',
+            loading: 'Loading editor...',
             chat: 'Chat',
             research: 'Research',
             library: 'Library',
@@ -2370,6 +2371,7 @@ export const translations = {
         },
         editor: {
             untitled: 'Documento sin título',
+            loading: 'Cargando editor...',
             chat: 'Chat',
             research: 'Investigación',
             library: 'Biblioteca',
@@ -4310,6 +4312,7 @@ export const translations = {
         },
         editor: {
             untitled: 'Document sans titre',
+            loading: 'Chargement de l\'éditeur...',
             chat: 'Discussion',
             research: 'Recherche',
             library: 'Bibliothèque',
@@ -6276,6 +6279,7 @@ export const translations = {
         },
         editor: {
             untitled: 'Unbenanntes Dokument',
+            loading: 'Editor wird geladen...',
             chat: 'Chat',
             research: 'Recherche',
             library: 'Bibliothek',

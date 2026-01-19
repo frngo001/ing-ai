@@ -116,56 +116,17 @@ function captionsEqual(prev: FullTableNode[], next: FullTableNode[]): boolean {
 
 /**
  * Provider component that maintains the table registry.
+ * Optimiert, um teure Dokument-Scans bei Updates zu vermeiden.
  */
 export function TableRegistryProvider({ children }: { children: React.ReactNode }) {
     const editor = useEditorRef();
+    const [registry, setRegistry] = React.useState<TableRegistry>({
+        tables: [],
+        indexById: new Map(),
+        captionById: new Map(),
+    });
 
-    // Track STRUCTURAL changes immediately
-    const minimalTables = useEditorSelector(
-        (ed) => extractMinimalTables(ed),
-        [],
-        {
-            equalityFn: structuralEqual,
-        }
-    );
-
-    // Track the FULL tables including captions for debounced updates
-    const fullTables = useEditorSelector(
-        (ed) => extractFullTables(ed),
-        [],
-        {
-            equalityFn: captionsEqual,
-        }
-    );
-
-    // Debounced caption state
-    const [debouncedCaptions, setDebouncedCaptions] = React.useState<Map<string, string>>(new Map());
-    const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    // Update debounced captions after delay
-    React.useEffect(() => {
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
-
-        debounceRef.current = setTimeout(() => {
-            const newCaptions = new Map<string, string>();
-            for (const table of fullTables) {
-                newCaptions.set(table.id, table.caption);
-            }
-            setDebouncedCaptions(newCaptions);
-            debounceRef.current = null;
-        }, CAPTION_UPDATE_DEBOUNCE_MS);
-
-        return () => {
-            if (debounceRef.current) {
-                clearTimeout(debounceRef.current);
-            }
-        };
-    }, [fullTables]);
-
-    // Compute the registry
-    const registry = React.useMemo((): TableRegistry => {
+    const updateRegistry = React.useCallback(() => {
         const tables: TableData[] = [];
         const indexById = new Map<string, number>();
         const captionById = new Map<string, string>();
@@ -178,7 +139,7 @@ export function TableRegistryProvider({ children }: { children: React.ReactNode 
         let index = 1;
         for (const [node, path] of nodes) {
             const id = node.id || path.join('-');
-            const caption = debouncedCaptions.get(id) ?? extractCaptionText(node.caption) ?? '';
+            const caption = extractCaptionText(node.caption) ?? '';
 
             tables.push({
                 id,
@@ -194,8 +155,51 @@ export function TableRegistryProvider({ children }: { children: React.ReactNode 
             index++;
         }
 
-        return { tables, indexById, captionById };
-    }, [minimalTables, debouncedCaptions, editor]);
+        setRegistry({ tables, indexById, captionById });
+    }, [editor]);
+
+    // Wir nutzen useEditorSelector nur als Trigger
+    useEditorSelector(
+        (editor) => editor.operations.length,
+        [],
+        {
+            equalityFn: (prev, next) => {
+                onChangeTriggered();
+                return true; // Prevent re-render
+            }
+        }
+    );
+
+    // Debounce Logic
+    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    const idleRef = React.useRef<number | null>(null);
+
+    const onChangeTriggered = React.useCallback(() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (idleRef.current && typeof (window as any).cancelIdleCallback === 'function') {
+            (window as any).cancelIdleCallback(idleRef.current);
+        }
+
+        timeoutRef.current = setTimeout(() => {
+            if (typeof (window as any).requestIdleCallback === 'function') {
+                idleRef.current = (window as any).requestIdleCallback(() => updateRegistry());
+            } else {
+                updateRegistry();
+            }
+        }, 500); // 500ms Debounce
+    }, [updateRegistry]);
+
+    // Initialer Scan
+    React.useEffect(() => {
+        updateRegistry();
+
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (idleRef.current && typeof (window as any).cancelIdleCallback === 'function') {
+                (window as any).cancelIdleCallback(idleRef.current);
+            }
+        };
+    }, [updateRegistry]);
 
     return (
         <TableRegistryContext.Provider value={registry}>

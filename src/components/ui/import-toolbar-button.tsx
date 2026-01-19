@@ -617,11 +617,20 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
     accept: ['.md', '.mdx'],
     multiple: false,
     onFilesSelected: async ({ plainFiles }) => {
-      const text = await plainFiles[0].text();
+      window.dispatchEvent(new CustomEvent('editor:set-loading', { detail: { loading: true } }));
 
-      const nodes = getFileNodes(text, 'markdown');
-
-      editor.tf.insertNodes(nodes);
+      try {
+        const text = await plainFiles[0].text();
+        const nodes = getFileNodes(text, 'markdown');
+        editor.tf.insertNodes(nodes);
+      } catch (error) {
+        console.error('Error importing markdown:', error);
+      } finally {
+        // Delay slightly for smoother transition if it's too fast
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('editor:set-loading', { detail: { loading: false } }));
+        }, 300);
+      }
     },
   });
 
@@ -629,11 +638,19 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
     accept: ['text/html'],
     multiple: false,
     onFilesSelected: async ({ plainFiles }) => {
-      const text = await plainFiles[0].text();
+      window.dispatchEvent(new CustomEvent('editor:set-loading', { detail: { loading: true } }));
 
-      const nodes = getFileNodes(text, 'html');
-
-      editor.tf.insertNodes(nodes);
+      try {
+        const text = await plainFiles[0].text();
+        const nodes = getFileNodes(text, 'html');
+        editor.tf.insertNodes(nodes);
+      } catch (error) {
+        console.error('Error importing html:', error);
+      } finally {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('editor:set-loading', { detail: { loading: false } }));
+        }, 300);
+      }
     },
   });
 
@@ -641,109 +658,119 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
     accept: ['.docx', '.doc', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     multiple: false,
     onFilesSelected: async ({ plainFiles }) => {
-      const file = plainFiles[0];
-      const arrayBuffer = await file.arrayBuffer();
+      window.dispatchEvent(new CustomEvent('editor:set-loading', { detail: { loading: true } }));
 
-      // Convert Word to HTML using mammoth - returns HTML and list markers
-      const { html, listMarkers } = await convertWordToHtml(arrayBuffer);
+      try {
+        const file = plainFiles[0];
+        const arrayBuffer = await file.arrayBuffer();
 
-      // Deserialize HTML to Plate nodes
-      const nodes = getFileNodes(html, 'html');
+        // Convert Word to HTML using mammoth - returns HTML and list markers
+        const { html, listMarkers } = await convertWordToHtml(arrayBuffer);
 
-      // DEBUG: Log nodes to see if listStyleType is being set
-      console.log('=== DESERIALIZED NODES DEBUG ===');
-      console.log('Total nodes:', nodes.length);
-      console.log('List markers available:', listMarkers.size);
+        // Deserialize HTML to Plate nodes
+        const nodes = getFileNodes(html, 'html');
 
-      // Extract text recursively from Plate.js node (including marker text)
-      const extractNodeText = (node: any): string => {
-        if (typeof node === 'string') return node;
-        if (node.text) return node.text;
-        if (node.children && Array.isArray(node.children)) {
-          return node.children.map((child: any) => extractNodeText(child)).join('');
+        // DEBUG: Log nodes to see if listStyleType is being set
+        console.log('=== DESERIALIZED NODES DEBUG ===');
+        console.log('Total nodes:', nodes.length);
+        console.log('List markers available:', listMarkers.size);
+
+        // Extract text recursively from Plate.js node (including marker text)
+        const extractNodeText = (node: any): string => {
+          if (typeof node === 'string') return node;
+          if (node.text) return node.text;
+          if (node.children && Array.isArray(node.children)) {
+            return node.children.map((child: any) => extractNodeText(child)).join('');
+          }
+          return '';
+        };
+
+        // Apply list properties using marker-based matching
+        // This is more reliable than text-based matching
+        const processNodesWithMarkers = (nodeList: any[]): any[] => {
+          return nodeList.map((node: any) => {
+            if (node.type === 'p' && node.children) {
+              // Extract all text including hidden markers
+              const fullText = extractNodeText(node);
+
+              // Check for list marker in the text
+              const markerMatch = fullText.match(/__LIST_MARKER_(\d+)__/);
+              if (markerMatch) {
+                const marker = markerMatch[0];
+                const listInfo = listMarkers.get(marker);
+
+                if (listInfo) {
+                  console.log('[MARKER] Applied list properties to node with marker:', marker);
+
+                  // Remove the marker text from children
+                  const cleanChildren = cleanMarkerFromChildren(node.children);
+
+                  return {
+                    ...node,
+                    children: cleanChildren,
+                    listStyleType: listInfo.listStyleType,
+                    indent: listInfo.indent,
+                  };
+                }
+              }
+            }
+
+            // Recursively process children if they exist (but not leaf text nodes)
+            if (node.children && Array.isArray(node.children) && !node.text) {
+              return {
+                ...node,
+                children: processNodesWithMarkers(node.children),
+              };
+            }
+
+            return node;
+          });
+        };
+
+        // Helper to remove marker text from children
+        const cleanMarkerFromChildren = (children: any[]): any[] => {
+          return children
+            .map((child: any) => {
+              if (child.text) {
+                // Remove marker from text
+                const cleanedText = child.text.replace(/__LIST_MARKER_\d+__/g, '');
+                if (cleanedText === '' && Object.keys(child).length === 1) {
+                  return null; // Remove empty text nodes
+                }
+                return { ...child, text: cleanedText };
+              }
+              if (child.children) {
+                return { ...child, children: cleanMarkerFromChildren(child.children) };
+              }
+              return child;
+            })
+            .filter((child: any) => child !== null);
+        };
+
+        const processedNodes = processNodesWithMarkers(nodes);
+        const nodesWithListStyle = processedNodes.filter((n: any) => n.listStyleType);
+
+        console.log('Nodes with listStyleType (after marker processing):', nodesWithListStyle.length);
+        console.log('Expected from markers:', listMarkers.size);
+
+        if (nodesWithListStyle.length < listMarkers.size) {
+          console.log(`[WARNING] ${listMarkers.size - nodesWithListStyle.length} list items could not be matched`);
         }
-        return '';
-      };
 
-      // Apply list properties using marker-based matching
-      // This is more reliable than text-based matching
-      const processNodesWithMarkers = (nodeList: any[]): any[] => {
-        return nodeList.map((node: any) => {
-          if (node.type === 'p' && node.children) {
-            // Extract all text including hidden markers
-            const fullText = extractNodeText(node);
+        if (nodesWithListStyle.length > 0) {
+          console.log('Sample list nodes:', nodesWithListStyle.slice(0, 3));
+        }
 
-            // Check for list marker in the text
-            const markerMatch = fullText.match(/__LIST_MARKER_(\d+)__/);
-            if (markerMatch) {
-              const marker = markerMatch[0];
-              const listInfo = listMarkers.get(marker);
+        console.log('=== END DESERIALIZED NODES DEBUG ===');
 
-              if (listInfo) {
-                console.log('[MARKER] Applied list properties to node with marker:', marker);
-
-                // Remove the marker text from children
-                const cleanChildren = cleanMarkerFromChildren(node.children);
-
-                return {
-                  ...node,
-                  children: cleanChildren,
-                  listStyleType: listInfo.listStyleType,
-                  indent: listInfo.indent,
-                };
-              }
-            }
-          }
-
-          // Recursively process children if they exist (but not leaf text nodes)
-          if (node.children && Array.isArray(node.children) && !node.text) {
-            return {
-              ...node,
-              children: processNodesWithMarkers(node.children),
-            };
-          }
-
-          return node;
-        });
-      };
-
-      // Helper to remove marker text from children
-      const cleanMarkerFromChildren = (children: any[]): any[] => {
-        return children
-          .map((child: any) => {
-            if (child.text) {
-              // Remove marker from text
-              const cleanedText = child.text.replace(/__LIST_MARKER_\d+__/g, '');
-              if (cleanedText === '' && Object.keys(child).length === 1) {
-                return null; // Remove empty text nodes
-              }
-              return { ...child, text: cleanedText };
-            }
-            if (child.children) {
-              return { ...child, children: cleanMarkerFromChildren(child.children) };
-            }
-            return child;
-          })
-          .filter((child: any) => child !== null);
-      };
-
-      const processedNodes = processNodesWithMarkers(nodes);
-      const nodesWithListStyle = processedNodes.filter((n: any) => n.listStyleType);
-
-      console.log('Nodes with listStyleType (after marker processing):', nodesWithListStyle.length);
-      console.log('Expected from markers:', listMarkers.size);
-
-      if (nodesWithListStyle.length < listMarkers.size) {
-        console.log(`[WARNING] ${listMarkers.size - nodesWithListStyle.length} list items could not be matched`);
+        editor.tf.insertNodes(processedNodes);
+      } catch (error) {
+        console.error('Error importing word:', error);
+      } finally {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('editor:set-loading', { detail: { loading: false } }));
+        }, 500);
       }
-
-      if (nodesWithListStyle.length > 0) {
-        console.log('Sample list nodes:', nodesWithListStyle.slice(0, 3));
-      }
-
-      console.log('=== END DESERIALIZED NODES DEBUG ===');
-
-      editor.tf.insertNodes(processedNodes);
     },
   });
 

@@ -15,8 +15,11 @@ import {
 import type { TEquationElement } from '@platejs/utils';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
 import { Plate, type PlateEditor, usePlateEditor, usePluginOption, usePlateState } from 'platejs/react';
+import { motion } from 'motion/react';
+import Image from 'next/image';
 
-import { FilePenLine, Plus } from 'lucide-react';
+import { FilePenLine, Plus, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { createEditorKit } from '@/components/editor/editor-kit';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/use-language';
@@ -77,11 +80,15 @@ export function PlateEditor({
   const isSuggestingMode = isSharedProject && shareMode === 'suggest';
   const hasHydrated = React.useRef(false);
   const discussionsApplied = React.useRef(false);
+  const lastLoadedContentRef = React.useRef<Value | null>(null); // Track loaded content by reference to avoid JSON.stringify
+  const deferredSyncRef = React.useRef<number | null>(null); // For requestIdleCallback
+  const lastStorageIdRef = React.useRef(storageId); // Track document switching
   const [currentUser, setCurrentUser] = React.useState<{
     id: string;
     name: string;
     avatarUrl: string;
   } | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
 
 
@@ -272,6 +279,23 @@ export function PlateEditor({
     }
   }, [editor, comments.discussions]);
 
+  // Listen for external loading state changes (e.g. from import)
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleSetLoading = (event: any) => {
+      const { loading } = event.detail || {};
+      if (typeof loading === 'boolean') {
+        setIsLoading(loading);
+      }
+    };
+
+    window.addEventListener('editor:set-loading', handleSetLoading as EventListener);
+    return () => {
+      window.removeEventListener('editor:set-loading', handleSetLoading as EventListener);
+    };
+  }, []);
+
   // Editor-Instance für Text-Einfügung verfügbar machen
   React.useEffect(() => {
     if (typeof window === 'undefined' || !editor) return;
@@ -379,22 +403,42 @@ export function PlateEditor({
   React.useEffect(() => {
     if (typeof window === 'undefined' || !editor) return;
 
-    const currentContent = JSON.stringify(editor.children);
-    const initialContentStr = JSON.stringify(initialValue);
-    const needsReload = currentContent !== initialContentStr || !hasHydrated.current;
+    // Reset hydration state when storageId changes to force reload
+    if (lastStorageIdRef.current !== storageId) {
+      hasHydrated.current = false;
+      lastLoadedContentRef.current = null;
+      setIsLoading(true);
+      lastStorageIdRef.current = storageId;
+    }
 
-    if (!needsReload && hasHydrated.current) {
+    // Use reference comparison instead of expensive JSON.stringify
+    // Only reload if we haven't hydrated or if the storageId changed
+    const needsReload = !hasHydrated.current || lastLoadedContentRef.current === null;
+
+    if (!needsReload) {
+      setIsLoading(false);
       return;
     }
     hasHydrated.current = false;
+
+    // Cancel any pending deferred sync operations
+    if (deferredSyncRef.current !== null) {
+      if (typeof (window as any).cancelIdleCallback === 'function') {
+        (window as any).cancelIdleCallback(deferredSyncRef.current);
+      } else {
+        clearTimeout(deferredSyncRef.current);
+      }
+      deferredSyncRef.current = null;
+    }
 
     const loadContent = async () => {
       // Wenn storageId 'empty' ist, zeige leeren Editor
       if (storageId === 'empty') {
         (editor as any).tf.setValue?.(DEFAULT_VALUE);
         latestContentRef.current = DEFAULT_VALUE;
-        (editor as any).tf.redecorate?.();
+        lastLoadedContentRef.current = DEFAULT_VALUE;
         hasHydrated.current = true;
+        setIsLoading(false);
         return;
       }
 
@@ -410,8 +454,8 @@ export function PlateEditor({
             // For shared projects, skip user check to allow access to shared documents
             const doc = await documentsUtils.getDocumentById(storageId, userId, isSharedProject);
             if (doc && doc.content) {
-              const normalizedContent = normalizeNodeId(doc.content as Value);
-              content = normalizedContent;
+              // Defer normalization to avoid blocking the main thread
+              content = doc.content as Value;
             }
           }
         } catch (error) {
@@ -429,37 +473,73 @@ export function PlateEditor({
       // Wenn kein Content vorhanden ist, verwende den initialValue
       const finalContent = content || initialValue;
 
-      // Setze nur wenn sich der Content geändert hat
-      const currentContentStr = JSON.stringify(editor.children);
-      const newContentStr = JSON.stringify(finalContent);
-      if (currentContentStr !== newContentStr) {
-        // Prevent broadcast during initial load
-        isUpdatingFromRealtimeRef.current = true;
+      // Set content immediately without expensive comparison
+      // The reference check above already ensures we only load when needed
+      isUpdatingFromRealtimeRef.current = true;
+
+      // Use requestAnimationFrame to batch DOM updates
+      requestAnimationFrame(() => {
         (editor as any).tf.setValue?.(finalContent);
-        // Reset broadcast block after a short delay
+        latestContentRef.current = finalContent;
+        lastLoadedContentRef.current = finalContent;
+
+        // Mark hydration as complete immediately
+        hasHydrated.current = true;
+        setIsLoading(false);
+
+        // Reset broadcast block
         setTimeout(() => {
           isUpdatingFromRealtimeRef.current = false;
-        }, 30); // Reduced from 100ms to 30ms
-      }
+        }, 30);
 
-      latestContentRef.current = finalContent;
-      (editor as any).tf.redecorate?.();
-      syncCommentPathMap(editor);
-      syncSuggestionPathMap(editor);
+        // Defer expensive sync operations using requestIdleCallback
+        const deferredSync = () => {
+          // Perform full LaTeX conversion scan once on load (background)
+          autoConvertLatexBlocks(editor, { fullScan: true });
 
-      if (discussions) {
-        editor.setOption(discussionPlugin, 'discussions', discussions);
-        syncCommentPathMap(editor);
-        syncSuggestionPathMap(editor);
-        (editor as any).tf.redecorate?.();
-        discussionsApplied.current = true;
-      }
+          // Normalize node IDs in the background after initial render
+          try {
+            const normalized = normalizeNodeId(finalContent);
+            if (normalized !== finalContent) {
+              latestContentRef.current = normalized;
+            }
+          } catch (e) {
+            devWarn('[PLATE EDITOR] Error during deferred normalization:', e);
+          }
 
-      // Mark hydration as complete immediately after setting value
-      hasHydrated.current = true;
+          syncCommentPathMap(editor);
+          syncSuggestionPathMap(editor);
+
+          if (discussions) {
+            editor.setOption(discussionPlugin, 'discussions', discussions);
+            discussionsApplied.current = true;
+          }
+
+          // Single redecorate call after all sync operations
+          (editor as any).tf.redecorate?.();
+        };
+
+        // Use requestIdleCallback for non-critical operations, with fallback
+        if (typeof (window as any).requestIdleCallback === 'function') {
+          deferredSyncRef.current = (window as any).requestIdleCallback(deferredSync, { timeout: 500 });
+        } else {
+          deferredSyncRef.current = setTimeout(deferredSync, 50) as unknown as number;
+        }
+      });
     };
 
     loadContent();
+
+    // Cleanup deferred operations on unmount
+    return () => {
+      if (deferredSyncRef.current !== null) {
+        if (typeof (window as any).cancelIdleCallback === 'function') {
+          (window as any).cancelIdleCallback(deferredSyncRef.current);
+        } else {
+          clearTimeout(deferredSyncRef.current);
+        }
+      }
+    };
   }, [editor, storageKeys, storageId, initialValue]);
 
   // Enforce editor mode for shared projects
@@ -614,6 +694,49 @@ export function PlateEditor({
                 <div className="flex h-full flex-col min-h-0">
                   <ConditionalFixedToolbar toolbarRef={topToolbarRef} />
                   <div className="flex-1 min-h-0 overflow-hidden relative">
+                    {/* Loading Overlay */}
+                    <div
+                      className={cn(
+                        "absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-500",
+                        isLoading ? "opacity-100" : "opacity-0 pointer-events-none"
+                      )}
+                    >
+                      <div className="flex flex-col items-center justify-center gap-4">
+                        <motion.div
+                          initial={{ opacity: 0.5, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{
+                            duration: 1.5,
+                            ease: "easeInOut",
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                          }}
+                          className="relative h-34 w-34"
+                        >
+                        </motion.div>
+                        <div className="flex items-center gap-2">
+                          {[0, 1, 2].map((index) => (
+                            <motion.div
+                              key={index}
+                              className="h-2 w-2 rounded-full bg-primary"
+                              animate={{
+                                opacity: [0.3, 1, 0.3],
+                                scale: [0.8, 1, 0.8],
+                              }}
+                              transition={{
+                                duration: 1.2,
+                                ease: "easeInOut",
+                                repeat: Infinity,
+                                delay: index * 0.2,
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground animate-pulse mt-2">
+                          {t('editor.loading') || 'Editor wird geladen...'}
+                        </p>
+                      </div>
+                    </div>
                     {/* Overlay wenn kein Dokument erstellt wurde und keine Dokumente existieren */}
                     {storageId === 'empty' && hasDocuments === false && (
                       <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
@@ -772,16 +895,17 @@ function getInitialValue(storageId: string): Value {
       (data) => data
     );
 
-    const contentFromState = state?.content ? normalizeNodeId(state.content) : null;
+    // Skip normalizeNodeId here for performance - will be done asynchronously in loadContent
+    const contentFromState = state?.content ? (state.content as Value) : null;
 
     const contentFallback =
       tryParse<Value>(
         window.localStorage.getItem(storageKeys.content),
-        (data) => normalizeNodeId(data as Value)
+        (data) => data as Value // Skip normalization - done later
       ) ??
       tryParse<Value>(
         window.localStorage.getItem(storageKeys.legacyContent),
-        (data) => normalizeNodeId(data as Value)
+        (data) => data as Value // Skip normalization - done later
       );
 
     const loadedContent = contentFromState ?? contentFallback;
@@ -896,7 +1020,8 @@ const LATEX_MARKERS = [
  * Die erkannten Formeln werden automatisch normalisiert und als Equation-Elemente eingefügt,
  * die dann mit MathLive oder der LaTeX-Textarea bearbeitet werden können.
  */
-function autoConvertLatexBlocks(editor: PlateEditor | null) {
+function autoConvertLatexBlocks(editor: PlateEditor | null, options: { fullScan?: boolean } = {}) {
+  const { fullScan = false } = options;
   if (!editor) return;
 
   const paragraphType = editor.getType(KEYS.p);
@@ -904,7 +1029,11 @@ function autoConvertLatexBlocks(editor: PlateEditor | null) {
   const inlineEquationType = editor.getType(KEYS.inlineEquation);
   const codeBlockType = editor.getType(KEYS.codeBlock);
 
-  const entries = editor.api.blocks({ mode: 'lowest' });
+  // Performance optimization: Only scan blocks in current selection to avoid iterating entire doc
+  // This is critical for typing performance in large documents
+  if (!fullScan && !editor.selection) return;
+
+  const entries = editor.api.blocks({ at: fullScan ? [] : editor.selection!, mode: 'lowest' });
 
   let changed = false;
 
@@ -1539,7 +1668,9 @@ function loadPersistedState(keys: {
     (data) => data
   );
 
-  const contentFromState = state?.content ? normalizeNodeId(state.content) : null;
+  // Skip normalizeNodeId here - it will be done asynchronously during loadContent
+  // This significantly improves loading performance for large documents
+  const contentFromState = state?.content ? (state.content as Value) : null;
   const discussionsFromState = state?.discussions
     ? reviveDiscussions(state.discussions)
     : null;
@@ -1547,11 +1678,11 @@ function loadPersistedState(keys: {
   const contentFallback =
     tryParse<Value>(
       window.localStorage.getItem(keys.content),
-      (data) => normalizeNodeId(data as Value)
+      (data) => data as Value // Skip normalization - done later
     ) ??
     tryParse<Value>(
       window.localStorage.getItem(keys.legacyContent),
-      (data) => normalizeNodeId(data as Value)
+      (data) => data as Value // Skip normalization - done later
     );
 
   const discussionsFallback =
