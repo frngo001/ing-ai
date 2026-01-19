@@ -20,6 +20,8 @@ export const translations = {
             copied: 'Copied',
             deleteRow: 'Delete Row',
             deleteColumn: 'Delete Column',
+            source: 'Source',
+            untitled: 'Untitled',
         },
         cookieConsent: {
             title: 'Cookie Settings',
@@ -833,6 +835,7 @@ export const translations = {
             supportsBib: 'Supports .bib files',
             importFile: 'Import file',
             loadingLibraries: 'Loading libraries...',
+            importedOn: 'Imported on {date}',
         },
         askAi: {
             title: 'AI chat',
@@ -2005,6 +2008,8 @@ export const translations = {
             copied: 'Copiado',
             deleteRow: 'Eliminar Fila',
             deleteColumn: 'Eliminar Columna',
+            source: 'Fuente',
+            untitled: 'Sin título',
         },
         cookieConsent: {
             title: 'Configuración de Cookies',
@@ -2205,7 +2210,6 @@ export const translations = {
                 createDocument: {
                     button: {
                         title: 'Crear Nuevo Documento',
-                        description: 'Haz clic en este botón para crear tu primer documento. También puedes usar el atajo Cmd/Ctrl + N.',
                     },
                     action: {
                         title: 'Vamos a Crear Uno',
@@ -2780,6 +2784,13 @@ export const translations = {
             importing: 'Importando...',
             citationsSelected: 'seleccionadas',
             loadingLibraries: 'Cargando bibliotecas...',
+            fromLibrary: 'Desde biblioteca',
+            fromFile: 'Desde archivo',
+            uploadBibFile: 'Subir archivo BibTeX',
+            dropFileHere: 'Seleccionar archivo o arrastrar aquí',
+            supportsBib: 'Soporta archivos .bib',
+            importFile: 'Importar archivo',
+            importedOn: 'Importado el {date}',
         },
         askAi: {
             title: 'Chat de IA',
@@ -3946,6 +3957,8 @@ export const translations = {
             copied: 'Copié',
             deleteRow: 'Supprimer la Ligne',
             deleteColumn: 'Supprimer la Colonne',
+            source: 'Source',
+            untitled: 'Sans titre',
         },
         cookieConsent: {
             title: 'Paramètres des Cookies',
@@ -4721,6 +4734,13 @@ export const translations = {
             importing: 'Importation...',
             citationsSelected: 'sélectionnées',
             loadingLibraries: 'Chargement des bibliothèques...',
+            fromLibrary: 'Depuis la bibliothèque',
+            fromFile: 'Depuis un fichier',
+            uploadBibFile: 'Téléverser un fichier BibTeX',
+            dropFileHere: 'Sélectionnez un fichier ou glissez-le ici',
+            supportsBib: 'Prend en charge les fichiers .bib',
+            importFile: 'Importer le fichier',
+            importedOn: 'Importé le {date}',
         },
         askAi: {
             title: 'Chat IA',
@@ -5886,6 +5906,8 @@ export const translations = {
             copied: 'Kopiert',
             deleteRow: 'Zeile löschen',
             deleteColumn: 'Spalte löschen',
+            source: 'Quelle',
+            untitled: 'Unbenannt',
         },
         cookieConsent: {
             title: 'Cookie-Einstellungen',
@@ -6700,6 +6722,7 @@ export const translations = {
 
             importFile: 'Datei importieren',
             loadingLibraries: 'Lade Bibliotheken...',
+            importedOn: 'Importiert am {date}',
         },
         askAi: {
             title: 'AI Chat',

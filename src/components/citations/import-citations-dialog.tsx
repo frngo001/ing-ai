@@ -80,12 +80,12 @@ export function ImportCitationsDialog({
       importing: t("library.importing"),
       citationsSelected: t("library.citationsSelected"),
       loadingLibraries: t("library.loadingLibraries"),
-      fromLibrary: t("library.fromLibrary") || "Aus Bibliothek",
-      fromFile: t("library.fromFile") || "Aus Datei",
-      uploadBibFile: t("library.uploadBibFile") || "BibTeX-Datei hochladen",
-      dropFileHere: t("library.dropFileHere") || "Datei auswählen oder hierher ziehen",
-      supportsBib: t("library.supportsBib") || "Unterstützt .bib Dateien",
-      importFile: t("library.importFile") || "Datei importieren",
+      fromLibrary: t("library.fromLibrary"),
+      fromFile: t("library.fromFile"),
+      uploadBibFile: t("library.uploadBibFile"),
+      dropFileHere: t("library.dropFileHere"),
+      supportsBib: t("library.supportsBib"),
+      importFile: t("library.importFile"),
     }),
     [t, language]
   )
@@ -196,12 +196,12 @@ export function ImportCitationsDialog({
         const regex = new RegExp(`${name}\\s*=\\s*[{\"]([^}"]+)[}\"]`, "i")
         return entry.match(regex)?.[1]?.trim()
       }
-      const title = getField("title") || "Untitled"
+      const title = getField("title") || t("common.untitled")
       const authorsRaw = getField("author") || ""
       const year = getField("year")
       const doi = getField("doi")
       const url = getField("url")
-      const journal = getField("journal") || getField("booktitle") || "Quelle"
+      const journal = getField("journal") || getField("booktitle") || t("common.source")
       const authors = authorsRaw
         ? authorsRaw.split(/\s+and\s+/i).map((a) => a.trim()).filter(Boolean)
         : []
@@ -218,7 +218,9 @@ export function ImportCitationsDialog({
       const pages = getField("pages")
       const issn = getField("issn")
 
-      const nowText = `Importier am ${new Date().toLocaleDateString(language, { dateStyle: "short" })}`
+      const nowText = t("library.importedOn", {
+        date: new Date().toLocaleDateString(language, { dateStyle: "short" })
+      })
       parsed.push({
         id,
         title,
@@ -256,7 +258,7 @@ export function ImportCitationsDialog({
       await importBulkCitations(entries)
       onOpenChange(false)
     } catch (error) {
-      console.error("Fehler beim Datei-Import:", error)
+      console.error(t("library.failedToParseBib"), error)
     } finally {
       setIsImporting(false)
       if (fileInputRef.current) {
