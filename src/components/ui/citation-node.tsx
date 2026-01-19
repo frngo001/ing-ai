@@ -100,6 +100,14 @@ export function CitationElement(
     openLink: t('citationNode.openLink'),
     openDoi: t('citationNode.openDoi'),
     deleteCitation: t('citationNode.deleteCitation'),
+    edition: t('citationNode.edition'),
+    publisherPlace: t('citationNode.publisherPlace'),
+    accessedAt: t('citationNode.accessedAt'),
+    abstract: t('citationNode.abstract'),
+    note: t('citationNode.note'),
+    shortTitle: t('citationNode.shortTitle'),
+    showMore: t('library.showMore'),
+    showLess: t('library.showLess'),
   }), [t, language]);
 
   // --------------------------------------------------------------------------
@@ -112,7 +120,9 @@ export function CitationElement(
 
   const citationData = React.useMemo(() => ({
     sourceId: element.sourceId || '',
-    authors: Array.isArray(element.authors) ? element.authors : [],
+    authors: Array.isArray(element.authors)
+      ? element.authors.map((a: any) => (typeof a === 'string' ? { fullName: a } : a))
+      : [],
     year: element.year,
     title,
     doi,
@@ -128,6 +138,11 @@ export function CitationElement(
     issn: typeof element.issn === 'string' ? element.issn : undefined,
     note: typeof element.note === 'string' ? element.note : undefined,
     accessedAt: typeof element.accessedAt === 'string' ? element.accessedAt : undefined,
+    shortTitle: typeof element.shortTitle === 'string' ? element.shortTitle : undefined,
+    edition: typeof element.edition === 'string' ? element.edition : undefined,
+    publisherPlace: typeof element.publisherPlace === 'string' ? element.publisherPlace : undefined,
+    abstract: typeof element.abstract === 'string' ? element.abstract : typeof element.description === 'string' ? element.description : undefined,
+    imageUrl: typeof element.imageUrl === 'string' ? element.imageUrl : typeof element.image === 'string' ? element.image : undefined,
   }), [element, title, doi, url]);
 
   // --------------------------------------------------------------------------
@@ -534,8 +549,8 @@ export function CitationElement(
           </span>
         </HoverCardTrigger>
 
-        <HoverCardContent align="start" className="w-96 max-h-72 overflow-auto">
-          <div className="space-y-3">
+        <HoverCardContent align="start" className="w-[400px] max-h-[500px] overflow-y-auto p-0 scrollbar-thin">
+          <div className="flex flex-col">
             {uniqueEntries.length > 1 ? (
               <MergedCitationsView
                 entries={uniqueEntries}
@@ -545,15 +560,17 @@ export function CitationElement(
                 onDeleteEntry={handleDeleteEntry}
               />
             ) : (
-              <SingleCitationView
-                title={title}
-                citationData={citationData}
-                element={element}
-                translations={translations}
-                url={url}
-                doi={doi}
-                onDelete={handleDeleteCurrent}
-              />
+              <div className="p-4">
+                <SingleCitationView
+                  title={title}
+                  citationData={citationData}
+                  element={element}
+                  translations={translations}
+                  url={url}
+                  doi={doi}
+                  onDelete={handleDeleteCurrent}
+                />
+              </div>
             )}
           </div>
         </HoverCardContent>
@@ -577,24 +594,26 @@ interface MergedCitationsViewProps {
 
 function MergedCitationsView({ entries, numbers, translations, url, onDeleteEntry }: MergedCitationsViewProps) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between text-xs text-muted-foreground sticky top-0 bg-popover z-20 px-4 py-2.5 border-b shadow-sm">
         <span className="font-medium">{translations.mergedCitations}</span>
         <span className="text-[11px] rounded bg-muted px-2 py-0.5">
           {entries.length} {translations.entries}
         </span>
       </div>
 
-      {entries.map((entry, idx) => (
-        <CitationEntryCard
-          key={idx}
-          entry={entry}
-          number={numbers[idx] ?? idx + 1}
-          translations={translations}
-          fallbackUrl={url}
-          onDelete={() => onDeleteEntry(entry.node, entry.path as number[])}
-        />
-      ))}
+      <div className="p-4 space-y-4">
+        {entries.map((entry, idx) => (
+          <CitationEntryCard
+            key={idx}
+            entry={entry}
+            number={numbers[idx] ?? idx + 1}
+            translations={translations}
+            fallbackUrl={url}
+            onDelete={() => onDeleteEntry(entry.node, entry.path as number[])}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -608,6 +627,7 @@ interface CitationEntryCardProps {
 }
 
 function CitationEntryCard({ entry, number, translations, fallbackUrl, onDelete }: CitationEntryCardProps) {
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const { node } = entry;
 
   const entryTitle = typeof node.title === 'string' ? node.title : String(node.title || '');
@@ -618,7 +638,7 @@ function CitationEntryCard({ entry, number, translations, fallbackUrl, onDelete 
   const entryAuthors = Array.isArray(node.authors) ? node.authors : [];
 
   const authorsFull = entryAuthors
-    .map((a) => a.fullName || `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim())
+    .map((a: any) => (typeof a === 'string' ? a : a.fullName || `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim()))
     .filter(Boolean)
     .join(', ');
 
@@ -627,38 +647,78 @@ function CitationEntryCard({ entry, number, translations, fallbackUrl, onDelete 
     (node as any)?.volume && `${translations.volume} ${(node as any).volume}`,
     (node as any)?.issue && `${translations.issue} ${(node as any).issue}`,
     (node as any)?.pages && `${translations.pages} ${(node as any).pages}`,
-    (node as any)?.language,
+    (node as any)?.language && `${translations.languageLabel} ${(node as any).language}`,
     (node as any)?.isbn && `ISBN ${(node as any).isbn}`,
     (node as any)?.issn && `ISSN ${(node as any).issn}`,
+    (node as any)?.sourceType && `${translations.type} ${(node as any).sourceType}`,
+    (node as any)?.shortTitle && `${translations.shortTitle} ${(node as any).shortTitle}`,
+    (node as any)?.edition && `${translations.edition} ${(node as any).edition}`,
+    (node as any)?.publisherPlace && `${translations.publisherPlace} ${(node as any).publisherPlace}`,
+    (node as any)?.accessedAt && `${translations.accessedAt} ${(node as any).accessedAt}`,
     entryDoi && `DOI ${entryDoi}`,
   ].filter(Boolean);
 
+  const entryAbstract = (node as any)?.abstract || (node as any)?.description;
+  const entryImageUrl = (node as any)?.imageUrl || (node as any)?.image;
+
   return (
-    <div className="group rounded-md border border-border/60 bg-muted/30 hover:bg-muted/50 px-3 py-2.5 transition space-y-1.5">
-      <div className="flex items-start gap-2 text-sm leading-snug text-foreground">
-        <span className="text-xs font-semibold text-primary shrink-0">[{number}]</span>
-        <div className="space-y-1.5">
-          <div className="text-sm font-semibold leading-tight line-clamp-2">{entryTitle}</div>
-          <div className="text-xs text-muted-foreground space-x-1">
-            {entryVenue && <span>{entryVenue}</span>}
-            {entryYear && <span>• {entryYear}</span>}
-          </div>
-          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-            {metadata.map((part, i, arr) => (
-              <span key={i} className="flex items-center gap-1">
-                {part}{i !== arr.length - 1 && ' •'}
-              </span>
-            ))}
-            {entryUrl && (
-              <span className="flex items-center gap-1">
-                • <span className="text-emerald-600">{entryUrl}</span>
-              </span>
-            )}
+    <div className="group rounded-md border border-border/60 bg-muted/30 hover:bg-muted/50 px-3 py-2.5 transition space-y-2">
+      <div className="flex items-start gap-3">
+        <div className="flex-1 flex items-start gap-2 text-sm leading-snug text-foreground">
+          <span className="text-xs font-semibold text-primary shrink-0 select-none">[{number}]</span>
+          <div className="space-y-1.5 min-w-0">
+            <div className="text-sm font-semibold leading-tight line-clamp-2">{entryTitle}</div>
+            <div className="text-xs text-muted-foreground space-x-1">
+              {entryVenue && <span>{entryVenue}</span>}
+              {entryYear && <span>• {entryYear}</span>}
+            </div>
+            <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+              {metadata.map((part, i, arr) => (
+                <span key={i} className="flex items-center gap-1">
+                  {part}{i !== arr.length - 1 && ' •'}
+                </span>
+              ))}
+              {entryUrl && (
+                <span className="flex items-center gap-1">
+                  • <span className="text-emerald-600 truncate max-w-[200px]">{entryUrl}</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
+
+        {entryImageUrl && (
+          <img
+            src={entryImageUrl}
+            alt="Cover"
+            className="w-12 h-16 object-cover rounded-sm border border-border/50 bg-background shrink-0"
+          />
+        )}
       </div>
 
-      <div className="mt-2 flex items-center gap-0">
+      {entryAbstract && (
+        <div className="text-xs text-muted-foreground mt-1 border-t border-border/50 pt-2">
+          <span className="font-semibold text-foreground/80">{translations.abstract}</span>
+          <span className="ml-1">
+            {isExpanded ? entryAbstract : (entryAbstract.length > 150 ? entryAbstract.slice(0, 150) + '...' : entryAbstract)}
+          </span>
+          {entryAbstract.length > 150 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mt-1 text-[10px] text-primary cursor-pointer hover:underline block focus:outline-none"
+            >
+              {isExpanded ? translations.showLess : translations.showMore}
+            </button>
+          )}
+        </div>
+      )}
+      {(node as any)?.note && (
+        <div className="text-xs text-muted-foreground mt-1 border-t border-border/50 pt-2">
+          <span className="font-semibold text-foreground/80">{translations.note}</span> {(node as any).note}
+        </div>
+      )}
+
+      <div className="flex items-center gap-1 pt-1 border-t border-border/40">
         <ActionButton
           icon={<ExternalLink className="size-3" />}
           label={translations.openLink}
@@ -694,41 +754,92 @@ interface SingleCitationViewProps {
 }
 
 function SingleCitationView({ title, citationData, element, translations, url, doi, onDelete }: SingleCitationViewProps) {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const venue = (citationData as any)?.journal || (citationData as any)?.publisher || (element as any)?.journal || (element as any)?.publisher;
+
+  const metadata = [
+    venue && `${translations.journalPublisher} ${venue}`,
+    (element as any)?.volume && `${translations.volume} ${(element as any).volume}`,
+    (element as any)?.issue && `${translations.issue} ${(element as any).issue}`,
+    (element as any)?.pages && `${translations.pagesLabel} ${(element as any).pages}`,
+    (element as any)?.language && `${translations.languageLabel} ${(element as any).language}`,
+    (element as any)?.isbn && `ISBN ${(element as any).isbn}`,
+    (element as any)?.issn && `ISSN ${(element as any).issn}`,
+    (element as any)?.sourceType && `${translations.type} ${(element as any).sourceType}`,
+    (element as any)?.shortTitle && `${translations.shortTitle} ${(element as any).shortTitle}`,
+    (element as any)?.edition && `${translations.edition} ${(element as any).edition}`,
+    (element as any)?.publisherPlace && `${translations.publisherPlace} ${(element as any).publisherPlace}`,
+    (element as any)?.accessedAt && `${translations.accessedAt} ${(element as any).accessedAt}`,
+    doi && `DOI ${doi}`,
+    url && `URL ${url}`,
+  ].filter(Boolean);
+
+  const abstractText = citationData.abstract || (element as any).abstract || (element as any).description;
+
   return (
-    <div className="space-y-2 rounded-md border border-border/60 bg-muted/30 px-3 py-2.5">
-      <h4 className="text-sm font-semibold leading-tight line-clamp-2">{title}</h4>
+    <div className="group rounded-md border border-border/60 bg-muted/30 hover:bg-muted/50 px-3 py-2.5 transition space-y-2">
+      <div className="flex items-start gap-3">
+        <div className="flex-1 space-y-1.5 min-w-0">
+          <h4 className="text-sm font-semibold leading-tight line-clamp-3">{title}</h4>
 
-      {citationData.authors?.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          {translations.authors}{' '}
-          {citationData.authors
-            .map((a: any) => a.fullName || `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim())
-            .filter(Boolean)
-            .join(', ')}
-        </p>
+          {citationData.authors?.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground/80">{translations.authors}</span>{' '}
+              {citationData.authors
+                .map((a: any) => a.fullName || `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim())
+                .filter(Boolean)
+                .join(', ')}
+            </p>
+          )}
+
+          {element.year && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground/80">{translations.year}</span> {element.year}
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
+            {metadata.map((part, i) => (
+              <span key={i} className="inline-block bg-background/50 px-1.5 py-0.5 rounded border border-border/50">
+                {part}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {(citationData.imageUrl || (element as any).imageUrl || (element as any).image) && (
+          <img
+            src={citationData.imageUrl || (element as any).imageUrl || (element as any).image}
+            alt="Cover"
+            className="w-12 h-16 object-cover rounded-sm border border-border/50 bg-background shrink-0"
+          />
+        )}
+      </div>
+
+      {abstractText && (
+        <div className="text-xs text-muted-foreground mt-1 border-t border-border/50 pt-2">
+          <span className="font-semibold text-foreground/80">{translations.abstract}</span>
+          <span className="ml-1">
+            {isExpanded ? abstractText : (abstractText.length > 250 ? abstractText.slice(0, 250) + '...' : abstractText)}
+          </span>
+          {abstractText.length > 250 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mt-1 text-[10px] text-primary cursor-pointer hover:underline block focus:outline-none"
+            >
+              {isExpanded ? translations.showLess : translations.showMore}
+            </button>
+          )}
+        </div>
       )}
 
-      {(element as any)?.journal && (
-        <p className="text-[11px] text-muted-foreground break-words">
-          {translations.journalPublisher} {(element as any).journal}
-        </p>
+      {(citationData.note || (element as any).note) && (
+        <div className="text-xs text-muted-foreground mt-1 border-t border-border/50 pt-2">
+          <span className="font-semibold text-foreground/80">{translations.note}</span> {citationData.note || (element as any).note}
+        </div>
       )}
-      {(element as any)?.pages && (
-        <p className="text-[11px] text-muted-foreground">{translations.pagesLabel} {(element as any).pages}</p>
-      )}
-      {(element as any)?.volume && (
-        <p className="text-[11px] text-muted-foreground">{translations.volumeLabel} {(element as any).volume}</p>
-      )}
-      {(element as any)?.issue && (
-        <p className="text-[11px] text-muted-foreground">{translations.issueLabel} {(element as any).issue}</p>
-      )}
-      {element.year && (
-        <p className="text-xs text-muted-foreground">{translations.year} {element.year}</p>
-      )}
-      {url && <p className="text-xs text-emerald-600 break-words">URL: {url}</p>}
-      {doi && <p className="text-xs text-muted-foreground break-words">DOI: {doi}</p>}
 
-      <div className="mt-2 flex items-center gap-0">
+      <div className="flex items-center gap-1 pt-1 border-t border-border/40">
         <ActionButton
           icon={<ExternalLink className="size-3" />}
           label={translations.openLink}

@@ -645,6 +645,16 @@ export function PlateEditor({
       accessedAt: pendingCitation.externalUrl
         ? new Date().toISOString()
         : undefined,
+      abstract: pendingCitation.abstract,
+      imageUrl: pendingCitation.imageUrl,
+      publisher: pendingCitation.publisher,
+      edition: pendingCitation.edition,
+      publisherPlace: pendingCitation.publisherPlace,
+      volume: pendingCitation.volume ? String(pendingCitation.volume) : undefined,
+      issue: pendingCitation.issue ? String(pendingCitation.issue) : undefined,
+      pages: pendingCitation.pages ? String(pendingCitation.pages) : undefined,
+      issn: pendingCitation.issn,
+      sourceType: pendingCitation.type,
       children: [{ text: '' }],
     });
 

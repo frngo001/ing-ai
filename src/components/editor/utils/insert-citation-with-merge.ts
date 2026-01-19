@@ -149,6 +149,13 @@ export const insertCitationWithMerge = (
     issn: typeof data.issn === 'string' ? data.issn : undefined,
     note: typeof data.note === 'string' ? data.note : undefined,
     accessedAt: typeof data.accessedAt === 'string' ? data.accessedAt : undefined,
+    edition: typeof (data as any).edition === 'string' ? (data as any).edition : undefined,
+    publisherPlace: typeof (data as any).publisherPlace === 'string' ? (data as any).publisherPlace : undefined,
+    shortTitle: typeof (data as any).shortTitle === 'string' ? (data as any).shortTitle : undefined,
+    abstract: typeof (data as any).abstract === 'string' ? (data as any).abstract : undefined,
+    imageUrl: typeof (data as any).imageUrl === 'string' ? (data as any).imageUrl :
+      typeof (data as any).image === 'string' ? (data as any).image : undefined,
+    description: typeof (data as any).description === 'string' ? (data as any).description : undefined,
   };
 
   // Insert the citation
