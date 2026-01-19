@@ -205,6 +205,15 @@ export function ImportCitationsDialog({
       const authors = authorsRaw
         ? authorsRaw.split(/\s+and\s+/i).map((a) => a.trim()).filter(Boolean)
         : []
+
+      // Extended Metadata
+      const abstract = getField("abstract")
+      const imageUrl = getField("image")
+      const isbn = getField("isbn")
+      const edition = getField("edition")
+      const publisher = getField("publisher")
+      const publisherPlace = getField("address")
+
       const nowText = `Importier am ${new Date().toLocaleDateString(language, { dateStyle: "short" })}`
       parsed.push({
         id,
@@ -217,6 +226,12 @@ export function ImportCitationsDialog({
         doi: doi || undefined,
         authors,
         type,
+        abstract,
+        imageUrl,
+        isbn,
+        edition,
+        publisher,
+        publisherPlace,
       })
     }
     return parsed

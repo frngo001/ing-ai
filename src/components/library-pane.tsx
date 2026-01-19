@@ -179,11 +179,21 @@ export function LibraryPane({
         if (c.doi) fields.push(`doi={${c.doi}}`)
         if (c.externalUrl || c.href) fields.push(`url={${c.externalUrl || c.href}}`)
 
+        // Metadata fields
+        if (c.abstract) fields.push(`abstract={${c.abstract}}`)
+        if (c.imageUrl) fields.push(`image={${c.imageUrl}}`)
+        if (c.isbn) fields.push(`isbn={${c.isbn}}`)
+        if (c.edition) fields.push(`edition={${c.edition}}`)
+        if (c.publisherPlace) fields.push(`address={${c.publisherPlace}}`)
+
         // Add source/journal/publisher based on type
-        if (c.source) {
+        // Use explicit publisher if available, otherwise fallback to source for books
+        if (c.publisher && type === 'book') {
+          fields.push(`publisher={${c.publisher}}`)
+        } else if (c.source) {
           if (type === 'article') {
             fields.push(`journal={${c.source}}`)
-          } else if (type === 'book') {
+          } else if (type === 'book' && !c.publisher) {
             fields.push(`publisher={${c.source}}`)
           } else {
             fields.push(`howpublished={${c.source}}`)

@@ -1004,7 +1004,14 @@ export const useCitationStore = create<CitationState>()(
             citation_style: 'vancouver' as const,
             in_text_citation: citation.title || '',
             full_citation: citation.title || '',
-            metadata: {},
+            metadata: {
+              type: citation.type,
+              imageUrl: citation.imageUrl || (citation as any).thumbnail || (citation as any).image,
+              isbn: (citation as any).isbn || (citation as any).ISBN,
+              publisher: (citation as any).publisher,
+              edition: (citation as any).edition,
+              publisherPlace: (citation as any).publisherPlace || (citation as any).address,
+            },
           }
         })
 
