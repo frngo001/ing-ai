@@ -19,10 +19,11 @@ export class CrossRefClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             query: title,
             rows: limit.toString(),
+            offset: offset.toString(),
         })
 
         if (this.config.apiKey) {
@@ -34,10 +35,11 @@ export class CrossRefClient extends BaseApiClient {
         )
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             'query.author': author,
             rows: limit.toString(),
+            offset: offset.toString(),
         })
 
         if (this.config.apiKey) {
@@ -65,8 +67,8 @@ export class CrossRefClient extends BaseApiClient {
         )
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.searchByTitle(keyword, limit)
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.searchByTitle(keyword, limit, offset)
     }
 
     /**

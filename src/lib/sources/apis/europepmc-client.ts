@@ -18,12 +18,12 @@ export class EuropePmcClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(`TITLE:"${title}"`, limit)
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(`TITLE:"${title}"`, limit, offset)
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(`AUTH:"${author}"`, limit)
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(`AUTH:"${author}"`, limit, offset)
     }
 
     async searchByDoi(doi: string): Promise<ApiResponse<any>> {
@@ -31,14 +31,15 @@ export class EuropePmcClient extends BaseApiClient {
         return this.search(`DOI:"${cleanDoi}"`, 1)
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(keyword, limit)
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(keyword, limit, offset)
     }
 
-    private async search(query: string, limit: number): Promise<ApiResponse<any>> {
+    private async search(query: string, limit: number, offset = 0): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             query,
             pageSize: limit.toString(),
+            offSet: offset.toString(),
             format: 'json',
         })
 

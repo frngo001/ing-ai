@@ -367,7 +367,7 @@ ${t('aiMenu.startNewParagraph')}`
         return;
       }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        prompt: 'Emojify',
+        prompt: t('aiMenu.promptEmojify'),
         toolName: 'edit',
       });
     },
@@ -400,19 +400,19 @@ ${t('aiMenu.startNewParagraph')}`
         return;
       }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        prompt: 'Fix spelling and grammar',
+        prompt: t('aiMenu.promptFixSpelling'),
         toolName: 'edit',
       });
     },
   },
-  
+
   improveWriting: {
     icon: <Wand />,
     label: t('aiMenu.refineStyle'),
     value: 'improveWriting',
     onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        prompt: 'Improve the writing',
+        prompt: t('aiMenu.promptImproveWriting'),
         toolName: 'edit',
       });
     },
@@ -434,7 +434,7 @@ ${t('aiMenu.startNewParagraph')}`
     value: 'makeLonger',
     onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        prompt: 'Make longer',
+        prompt: t('aiMenu.promptMakeLonger'),
         toolName: 'edit',
       });
     },
@@ -445,7 +445,7 @@ ${t('aiMenu.startNewParagraph')}`
     value: 'makeShorter',
     onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        prompt: 'Make shorter',
+        prompt: t('aiMenu.promptMakeShorter'),
         toolName: 'edit',
       });
     },
@@ -464,7 +464,7 @@ ${t('aiMenu.startNewParagraph')}`
     value: 'simplifyLanguage',
     onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        prompt: 'Simplify the language',
+        prompt: t('aiMenu.promptSimplifyLanguage'),
         toolName: 'edit',
       });
     },
@@ -651,9 +651,6 @@ export function AILoadingBar() {
 
   useHotkeys('esc', () => {
     api.aiChat.stop();
-
-    // remove when you implement the route /api/ai/command
-    (chat as any)._abortFakeStream();
   });
 
   if (

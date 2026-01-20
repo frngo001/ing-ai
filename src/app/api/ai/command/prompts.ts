@@ -156,6 +156,7 @@ export function getCommentPrompt(
         - Do NOT default to using the entire block—use the smallest relevant span instead.
       - At least one comment must be provided.
       - If a <Selection> exists, Your comments should come from the <Selection>, and if the <Selection> is too long, there should be more than one comment.
+      - CRITICAL: LANGUAGE - You MUST respond in the same language as the text in backgroundData, <Selection>, or the user's message. Analyze the language of the input text and match it exactly in your response. If the text is in German, respond in German. If the text is in English, respond in English. If the text is in French, respond in French, etc.
     `,
     task: dedent`
       You are a document review assistant.
@@ -164,6 +165,7 @@ export function getCommentPrompt(
 
       Your task:
       - Read the content of all blocks and provide comments.
+      - IMPORTANT: Always respond in the same language as the text in backgroundData, <Selection>, or the user's message. Match the language exactly.
       - For each comment, generate a JSON object:
         - blockId: the id of the block being commented on.
         - content: the original document fragment that needs commenting.
@@ -235,6 +237,7 @@ export function getGeneratePrompt(
         * Headings should form a semantic hierarchy where each level provides more specific detail about the level above it.
         * When creating new headings, ensure they fit naturally into the existing heading structure and maintain thematic coherence.
         * Related topics should be grouped under the same parent heading level.
+      - CRITICAL: DO NOT include any meta-talk, explanations, or structural tags (like <Block>, <Document>, or id markers) in your response. Output only the requested content.
       - CRITICAL: DO NOT remove or alter custom MDX tags such as <u>, <callout>, <kbd>, <toc>, <sub>, <sup>, <mark>, <del>, <date>, <span>, <column>, <column_group>, <file>, <audio>, <video> unless explicitly requested.
       - CRITICAL: when writing Markdown or MDX, do NOT wrap output in code fences.
       - Preserve indentation and line breaks when editing within columns or structured layouts.
@@ -364,7 +367,7 @@ export function getEditPrompt(
     history: formatTextFromMessages(messages),
     outputFormatting: 'markdown',
     prefilledResponse,
-      rules: dedent`
+    rules: dedent`
       - <Selection> contains the text segment selected by the user and allowed to be modified.
       - Your response will be directly concatenated with the prefilledResponse, so please make sure the result is smooth and coherent.
       - You may only edit the content inside <Selection> and must not reference or retain any external context.

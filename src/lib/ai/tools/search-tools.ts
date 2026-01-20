@@ -529,10 +529,11 @@ Bewerte JEDE Quelle mit:
       )
 
       // Ergebnisse zusammenführen
-      const analyzed = sourcesForEvaluation.map((source) => {
-        const evaluation = evaluations.find((e) => e.id === source.id)
+      const analyzed = (sources as unknown as NormalizedSource[]).map((source) => {
+        const evaluation = evaluations.find((e) => e.id === source.id || e.id === (source as any).doi)
         return {
           ...source,
+          id: source.id || generateSourceId(),
           relevanceScore: evaluation?.relevanceScore || 0,
           isRelevant: evaluation?.isRelevant || false,
           reason: evaluation?.reason || 'Keine Bewertung',

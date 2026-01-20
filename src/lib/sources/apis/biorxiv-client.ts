@@ -17,7 +17,7 @@ export class BiorxivClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         // bioRxiv API doesn't support title search directly
         // Would need to fetch recent papers and filter
         return {
@@ -28,7 +28,7 @@ export class BiorxivClient extends BaseApiClient {
         }
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const today = new Date().toISOString().split('T')[0]
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
@@ -43,7 +43,7 @@ export class BiorxivClient extends BaseApiClient {
         )
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         return {
             success: false,
             error: 'bioRxiv API does not support keyword search',

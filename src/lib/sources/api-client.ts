@@ -50,6 +50,8 @@ export abstract class BaseApiClient {
                 ),
             ])
 
+
+
             this.metrics.totalRequests++
 
             if (!response.ok) {
@@ -180,10 +182,22 @@ export abstract class BaseApiClient {
     }
 
     /**
-     * Abstract methods to be implemented by specific API clients
+     * Get common headers for all requests
      */
-    abstract searchByTitle(title: string, limit?: number): Promise<ApiResponse<any>>
-    abstract searchByAuthor(author: string, limit?: number): Promise<ApiResponse<any>>
+    protected getCommonHeaders(): Record<string, string> {
+        return {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+        }
+    }
+
+
+    /**
+     * Abstract methods to be implemented by specific API clients
+
+     */
+    abstract searchByTitle(title: string, limit?: number, offset?: number): Promise<ApiResponse<any>>
+    abstract searchByAuthor(author: string, limit?: number, offset?: number): Promise<ApiResponse<any>>
     abstract searchByDoi(doi: string): Promise<ApiResponse<any>>
-    abstract searchByKeyword(keyword: string, limit?: number): Promise<ApiResponse<any>>
+    abstract searchByKeyword(keyword: string, limit?: number, offset?: number): Promise<ApiResponse<any>>
 }

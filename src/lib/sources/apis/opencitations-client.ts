@@ -49,8 +49,11 @@ export class OpenCitationsClient extends BaseApiClient {
         }
 
         return this.executeRequest(
-            () => fetch(`${this.config.baseUrl}/metadata/${cleanDoi}`)
+            () => fetch(`${this.config.baseUrl}/metadata/${cleanDoi}`, {
+                headers: this.getCommonHeaders()
+            })
         )
+
     }
 
     async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
@@ -77,23 +80,31 @@ export class OpenCitationsClient extends BaseApiClient {
         }
 
         return this.executeRequest(
-            () => fetch(`${this.config.baseUrl}/citations/${cleanDoi}`)
+            () => fetch(`${this.config.baseUrl}/citations/${cleanDoi}`, {
+                headers: this.getCommonHeaders()
+            })
         )
+
     }
 
     transformResponse(response: any): any[] {
         if (!response || !Array.isArray(response)) return []
 
-        return response.map((item: any) => ({
-            doi: item.citing || item.cited,
-            title: item.title,
-            authors: item.author?.split('; ').map((name: string) => ({ fullName: name.trim() })),
-            year: item.year ? parseInt(item.year) : undefined,
-            type: 'journal',
-            journal: item.source_title,
-            volume: item.volume,
-            issue: item.issue,
-            pages: item.page,
-        }))
+        return response.map((item: any) => {
+            const doi = item.citing || item.cited
+            return {
+                doi: doi,
+                title: item.title,
+                authors: item.author?.split('; ').map((name: string) => ({ fullName: name.trim() })),
+                year: item.year ? parseInt(item.year) : undefined,
+                type: 'journal',
+                journal: item.source_title,
+                volume: item.volume,
+                issue: item.issue,
+                pages: item.page,
+                url: doi ? `https://doi.org/${doi}` : undefined,
+            }
+        })
+
     }
 }

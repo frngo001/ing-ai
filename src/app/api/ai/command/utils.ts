@@ -40,9 +40,9 @@ export const sections = (sections: (boolean | string | null | undefined)[]) =>
 export const list = (items: string[] | undefined) =>
   items
     ? items
-        .filter(Boolean)
-        .map((item) => `- ${item}`)
-        .join('\n')
+      .filter(Boolean)
+      .map((item) => `- ${item}`)
+      .join('\n')
     : '';
 
 export type StructuredPromptSections = {
@@ -109,32 +109,32 @@ export const buildStructuredPrompt = ({
     tone,
 
     backgroundData &&
-      dedent`
+    dedent`
         Here is the background data you should reference when answering the user:
         <backgroundData>
               ${backgroundData}
         </backgroundData>
       `,
     rules &&
-      dedent`
+    dedent`
         Here are some important rules for the interaction:
             ${rules}
       `,
 
     formattedExamples &&
-      dedent`
+    dedent`
         Here are some examples of how to respond in a standard interaction:
               ${tag('examples', formattedExamples)}
       `,
 
     history &&
-      dedent`
+    dedent`
         Here is the conversation history (between the user and you) prior to the question:
               ${tag('history', history)}
       `,
 
     question &&
-      dedent`
+    dedent`
         Here is the user's question:
               ${tag('question', question)}
       `,
@@ -149,7 +149,7 @@ export const buildStructuredPrompt = ({
     outputFormatting && tag('outputFormatting', outputFormatting),
     // Not needed with structured output
     (prefilledResponse ?? null) !== null &&
-      tag('prefilledResponse', prefilledResponse ?? ''),
+    tag('prefilledResponse', prefilledResponse ?? ''),
   ]);
 };
 

@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('query')
     const type = searchParams.get('type') || 'keyword'
+    const offset = parseInt(searchParams.get('offset') || '0')
 
     if (!query) {
         return new Response('Query parameter is required', { status: 400 })
@@ -70,14 +71,14 @@ export async function GET(request: NextRequest) {
                             response = await client.searchByDoi(query)
                             break
                         case 'title':
-                            response = await client.searchByTitle(query, LIMIT_PER_API)
+                            response = await client.searchByTitle(query, LIMIT_PER_API, offset)
                             break
                         case 'author':
-                            response = await client.searchByAuthor(query, LIMIT_PER_API)
+                            response = await client.searchByAuthor(query, LIMIT_PER_API, offset)
                             break
                         case 'keyword':
                         default:
-                            response = await client.searchByKeyword(query, LIMIT_PER_API)
+                            response = await client.searchByKeyword(query, LIMIT_PER_API, offset)
                             break
                     }
 

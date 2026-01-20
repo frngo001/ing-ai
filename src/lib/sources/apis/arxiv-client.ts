@@ -17,14 +17,14 @@ export class ArxivClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const query = `ti:"${title}"`
-        return this.search(query, limit)
+        return this.search(query, limit, offset)
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const query = `au:"${author}"`
-        return this.search(query, limit)
+        return this.search(query, limit, offset)
     }
 
     async searchByDoi(doi: string): Promise<ApiResponse<any>> {
@@ -37,18 +37,18 @@ export class ArxivClient extends BaseApiClient {
         }
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const query = `all:"${keyword}"`
-        return this.search(query, limit)
+        return this.search(query, limit, offset)
     }
 
     /**
      * Search arXiv with custom query
      */
-    private async search(query: string, limit: number): Promise<ApiResponse<any>> {
+    private async search(query: string, limit: number, offset = 0): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             search_query: query,
-            start: '0',
+            start: offset.toString(),
             max_results: limit.toString(),
             sortBy: 'relevance',
             sortOrder: 'descending',

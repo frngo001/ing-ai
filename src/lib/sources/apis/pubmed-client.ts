@@ -19,16 +19,16 @@ export class PubMedClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
-        const ids = await this.searchIds(title, limit)
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        const ids = await this.searchIds(title, limit, offset)
         if (!ids.success || !ids.data?.length) return ids
 
         return this.fetchSummaries(ids.data)
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const query = `${author}[Author]`
-        const ids = await this.searchIds(query, limit)
+        const ids = await this.searchIds(query, limit, offset)
         if (!ids.success || !ids.data?.length) return ids
 
         return this.fetchSummaries(ids.data)
@@ -52,18 +52,19 @@ export class PubMedClient extends BaseApiClient {
         return this.fetchSummaries(ids.data)
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.searchByTitle(keyword, limit)
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.searchByTitle(keyword, limit, offset)
     }
 
     /**
      * Search for PubMed IDs (PMIDs) using ESearch
      */
-    private async searchIds(query: string, limit: number): Promise<ApiResponse<string[]>> {
+    private async searchIds(query: string, limit: number, offset = 0): Promise<ApiResponse<string[]>> {
         const params = new URLSearchParams({
             db: 'pubmed',
             term: query,
             retmax: limit.toString(),
+            retstart: offset.toString(),
             retmode: 'json',
         })
 

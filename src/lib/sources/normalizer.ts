@@ -113,13 +113,14 @@ export class SourceNormalizer {
             doi: 0.15,
             abstract: 0.1,
             journal: 0.1,
-            url: 0.05,
+            url: 0.1,
             type: 0.05,
             volume: 0.025,
             issue: 0.025,
             pages: 0.025,
             publisher: 0.025,
         }
+
 
         if (source.title) score += weights.title
         if (source.authors && source.authors.length > 0) score += weights.authors
@@ -199,7 +200,11 @@ export class SourceNormalizer {
             pages: rawSource.pages || rawSource.page,
             publisher: rawSource.publisher || rawSource.Publisher,
 
-            url: this.normalizeUrl(rawSource.url || rawSource.URL || rawSource.link),
+            url: this.normalizeUrl(rawSource.url || rawSource.URL || rawSource.link)
+                || (this.extractDoi(rawSource.doi || rawSource.DOI)
+                    ? `https://doi.org/${this.extractDoi(rawSource.doi || rawSource.DOI)}`
+                    : undefined),
+
             pdfUrl: rawSource.pdfUrl || rawSource.pdf_url,
             isOpenAccess: rawSource.is_oa || rawSource.isOpenAccess || rawSource.open_access || false,
 

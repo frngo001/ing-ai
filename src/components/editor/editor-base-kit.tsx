@@ -1,4 +1,5 @@
 import { BaseAlignKit } from './plugins/align-base-kit';
+import { BaseCitationKit } from './plugins/citation-base-kit';
 import { BaseBasicBlocksKit } from './plugins/basic-blocks-base-kit';
 import { BaseBasicMarksKit } from './plugins/basic-marks-base-kit';
 import { BaseCalloutKit } from './plugins/callout-base-kit';
@@ -22,6 +23,7 @@ import { BaseBlockPlaceholderKit } from './plugins/block-placeholder-base-kit';
 import { BaseDocxKit } from './plugins/docx-base-kit';
 
 export const BaseEditorKit = [
+  ...BaseCitationKit,
   ...BaseBasicBlocksKit,
   ...BaseCodeBlockKit,
   ...BaseTableKit,

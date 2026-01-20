@@ -42,8 +42,11 @@ export class BaseClient extends BaseApiClient {
         })
 
         return this.executeRequest(
-            () => fetch(`${this.config.baseUrl}?${params}`)
+            () => fetch(`${this.config.baseUrl}?${params}`, {
+                headers: this.getCommonHeaders()
+            })
         )
+
     }
 
     transformResponse(response: any): any[] {

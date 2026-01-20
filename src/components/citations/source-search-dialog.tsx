@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, Loader2, BookOpen, ExternalLink, Bookmark, Quote } from 'lucide-react'
+import { Search, Loader2, BookOpen, ExternalLink, Bookmark, Quote, SlidersHorizontal } from 'lucide-react'
 import { useEditorRef } from 'platejs/react'
 import {
     Dialog,
@@ -32,6 +32,9 @@ import { insertCitationWithMerge } from '@/components/editor/utils/insert-citati
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/lib/i18n/use-language'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Separator } from '@/components/ui/separator'
 
 export interface Source {
     id: string
@@ -129,6 +132,20 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
         sourceAddedToCitationManager: t('library.sourceAddedToCitationManager'),
         citationInsertedFromLibrary: t('library.citationInsertedFromLibrary'),
         unnamedWebsite: t('library.unnamedWebsite'),
+        sortBy: t('library.sortBy'),
+        sortRelevance: t('library.sortRelevance'),
+        sortDateNewest: t('library.sortDateNewest'),
+        sortDateOldest: t('library.sortDateOldest'),
+        sortCitations: t('library.sortCitations'),
+        filters: t('library.filters'),
+        filterYear: t('library.filterYear'),
+        filterType: t('library.filterType'),
+        filterOpenAccess: t('library.filterOpenAccess'),
+        allTypes: t('library.allTypes'),
+        yearPlaceholder: t('library.yearPlaceholder'),
+        filterDescription: t('library.filterDescription'),
+        resetFilters: t('library.resetFilters'),
+        loadMore: t('library.loadMore'),
     }), [t, language])
 
     // Sync with global store
@@ -141,9 +158,60 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
     const [searchType, setSearchType] = useState<'keyword' | 'title' | 'author' | 'doi' | 'url' | 'book'>('keyword')
     const [isSearching, setIsSearching] = useState(false)
     const [results, setResults] = useState<Source[]>([])
+    const [offset, setOffset] = useState(0)
     const [currentApi, setCurrentApi] = useState<string>('')
     const [progress, setProgress] = useState({ current: 0, total: 0 })
     const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({})
+
+    // Filter und Sortierung
+    const [sortBy, setSortBy] = useState<'relevance' | 'newest' | 'oldest' | 'citations'>('relevance')
+    const [filterYearFrom, setFilterYearFrom] = useState<string>('')
+    const [filterYearTo, setFilterYearTo] = useState<string>('')
+    const [filterSourceType, setFilterSourceType] = useState<string>('all')
+    const [filterOpenAccess, setFilterOpenAccess] = useState<boolean>(false)
+
+    // Berechnete Ergebnisse basierend auf Filtern und Sortierung
+    const displayResults = useMemo(() => {
+        let filtered = [...results]
+
+        // 1. Filtern
+        if (filterYearFrom) {
+            const from = parseInt(filterYearFrom)
+            if (!isNaN(from)) {
+                filtered = filtered.filter(s => s.publicationYear && s.publicationYear >= from)
+            }
+        }
+        if (filterYearTo) {
+            const to = parseInt(filterYearTo)
+            if (!isNaN(to)) {
+                filtered = filtered.filter(s => s.publicationYear && s.publicationYear <= to)
+            }
+        }
+        if (filterSourceType !== 'all') {
+            filtered = filtered.filter(s => s.type?.toLowerCase() === filterSourceType.toLowerCase())
+        }
+        if (filterOpenAccess) {
+            filtered = filtered.filter(s => s.isOpenAccess)
+        }
+
+        // 2. Sortieren
+        filtered.sort((a, b) => {
+            switch (sortBy) {
+                case 'newest':
+                    return (b.publicationYear || 0) - (a.publicationYear || 0)
+                case 'oldest':
+                    return (a.publicationYear || 0) - (b.publicationYear || 0)
+                case 'citations':
+                    return (b.citationCount || 0) - (a.citationCount || 0)
+                case 'relevance':
+                default:
+                    // Standardmäßig nach Completeness sortieren (als Proxy für Relevanz wenn vom API nicht explizit geliefert)
+                    return (b.completeness || 0) - (a.completeness || 0)
+            }
+        })
+
+        return filtered
+    }, [results, sortBy, filterYearFrom, filterYearTo, filterSourceType, filterOpenAccess])
 
     const normalizeTitle = (title: Source['title']): string => {
         if (typeof title === 'string') return title
@@ -247,19 +315,24 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
         }
     }
 
-    const handleSearch = async () => {
+    const handleSearch = async (isLoadMore = false) => {
         if (!searchQuery.trim()) {
             toast.error(translations.pleaseEnterSearchTerm)
             return
         }
 
+        const newOffset = isLoadMore ? offset + 25 : 0
+        setOffset(newOffset)
+
         setIsSearching(true)
-        setResults([])
+        if (!isLoadMore) {
+            setResults([])
+        }
         setCurrentApi('')
         setProgress({ current: 0, total: 0 })
 
-        // Direkte URL-Suche über Bibify
-        if (searchType === 'url' || isLikelyUrl(searchQuery.trim())) {
+        // Direkte URL-Suche über Bibify (nur bei Initialsuche)
+        if (!isLoadMore && (searchType === 'url' || isLikelyUrl(searchQuery.trim()))) {
             try {
                 const info = await fetchWebsiteInfo(searchQuery.trim())
                 const source = websiteInfoToSource(info)
@@ -274,12 +347,16 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
             return
         }
 
-        // Buchsuche über Google Books API (ersetzt Bibify)
+        // Buchsuche über Google Books API
         if (searchType === 'book') {
             try {
-                const response = await searchGoogleBooks(searchQuery.trim(), 40)
+                const response = await searchGoogleBooks(searchQuery.trim(), 40, newOffset)
                 const mapped = (response.items ?? []).map(mapGoogleBookToSource)
-                setResults(mapped)
+                if (isLoadMore) {
+                    setResults(prev => [...prev, ...mapped])
+                } else {
+                    setResults(mapped)
+                }
             } catch (error) {
                 console.error('Book lookup failed', error)
                 toast.error(translations.couldNotLoadBookInfo)
@@ -293,6 +370,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
         const params = new URLSearchParams({
             query: searchQuery,
             type: searchType,
+            offset: newOffset.toString(),
         })
 
         const eventSource = new EventSource(`/api/sources/search/stream?${params}`)
@@ -314,17 +392,10 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                     case 'results':
                         setResults(prev => {
                             const normalized = (data.sources as Source[]).map(toSafeSource)
-                            const newResults = [...prev, ...normalized]
-                            // Sort by citation count, then by year
-                            return newResults.sort((a, b) => {
-                                if (b.citationCount && a.citationCount) {
-                                    return b.citationCount - a.citationCount
-                                }
-                                if (b.publicationYear && a.publicationYear) {
-                                    return b.publicationYear - a.publicationYear
-                                }
-                                return 0
-                            })
+                            // Deduplicate just in case
+                            const existingIds = new Set(prev.map(s => s.id))
+                            const uniqueNew = normalized.filter(s => !existingIds.has(s.id))
+                            return [...prev, ...uniqueNew]
                         })
                         break
 
@@ -422,7 +493,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                 </DialogTrigger>
             )}
             <DialogContent
-                className="max-w-4xl h-[80vh] overflow-hidden flex flex-col gap-4 border-0 shadow-none ring-0 outline-none focus-visible:outline-none"
+                className="max-w-4xl h-[90vh] overflow-hidden flex flex-col gap-4 border-1 shadow-none ring-0 outline-none focus-visible:outline-none"
                 data-onboarding="citation-dialog"
                 onInteractOutside={(e) => {
                     if (isOnboardingOpen) {
@@ -435,7 +506,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                         <div className="space-y-1 flex-1">
                             <DialogTitle className="text-lg font-semibold">{translations.addSources}</DialogTitle>
                         </div>
-                        <div className="sm:w-[260px] w-full">
+                        <div className="sm:w-[120px] w-full">
                             <Select
                                 value={activeLibraryId ?? undefined}
                                 onValueChange={(value) => setActiveLibrary(value)}
@@ -576,7 +647,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                     </SelectContent>
                                 </Select>
                                 <Button
-                                    onClick={handleSearch}
+                                    onClick={() => handleSearch()}
                                     disabled={isSearching}
                                     className="gap-2 rounded-md px-4 border border-primary/70 bg-gradient-to-r from-primary/90 via-primary to-primary/80 text-primary-foreground shadow-md hover:from-primary hover:via-primary/90 hover:to-primary/70 hover:border-primary/80 hover:shadow-lg"
                                 >
@@ -599,6 +670,116 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                     <span>
                                         {currentApi ? `${currentApi}` : translations.searchRunning} ({progress.current}/{progress.total})
                                     </span>
+                                </div>
+                            )}
+
+                            {/* Filters and Sorting UI */}
+                            {results.length > 0 && (
+                                <div className="flex items-center justify-between gap-2 mt-1">
+                                    <div className="flex items-center gap-2">
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" size="sm" className="h-8 gap-2">
+                                                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                                                    {translations.filters}
+                                                    {(filterYearFrom || filterYearTo || filterSourceType !== 'all' || filterOpenAccess) && (
+                                                        <Badge variant="secondary" className="h-4 w-4 p-0 flex items-center justify-center rounded-full text-[10px]">
+                                                            {[filterYearFrom, filterYearTo, filterSourceType !== 'all', filterOpenAccess].filter(Boolean).length}
+                                                        </Badge>
+                                                    )}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-80 p-4 space-y-4" align="start">
+                                                <div className="space-y-2">
+                                                    <h4 className="font-medium text-sm leading-none">{translations.filters}</h4>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {translations.filterDescription}
+                                                    </p>
+                                                </div>
+                                                <Separator />
+                                                <div className="grid gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs">{translations.filterYear}</Label>
+                                                        <div className="flex items-center gap-2">
+                                                            <Input
+                                                                placeholder={translations.yearPlaceholder}
+                                                                className="h-8 text-xs"
+                                                                value={filterYearFrom}
+                                                                onChange={(e) => setFilterYearFrom(e.target.value)}
+                                                            />
+                                                            <span className="text-muted-foreground">-</span>
+                                                            <Input
+                                                                placeholder={translations.yearPlaceholder}
+                                                                className="h-8 text-xs"
+                                                                value={filterYearTo}
+                                                                onChange={(e) => setFilterYearTo(e.target.value)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs">{translations.filterType}</Label>
+                                                        <Select value={filterSourceType} onValueChange={setFilterSourceType}>
+                                                            <SelectTrigger className="h-8 text-xs">
+                                                                <SelectValue placeholder={translations.allTypes} />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="all">{translations.allTypes}</SelectItem>
+                                                                <SelectItem value="journal">{t('library.searchTypeTitle')}</SelectItem>
+                                                                <SelectItem value="book">{t('library.searchTypeBook')}</SelectItem>
+                                                                <SelectItem value="preprint">Preprint</SelectItem>
+                                                                <SelectItem value="conference">Conference</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <Checkbox
+                                                            id="open-access"
+                                                            checked={filterOpenAccess}
+                                                            onCheckedChange={(checked) => setFilterOpenAccess(!!checked)}
+                                                        />
+                                                        <label
+                                                            htmlFor="open-access"
+                                                            className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                        >
+                                                            {translations.filterOpenAccess}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-end pt-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 text-xs font-normal"
+                                                        onClick={() => {
+                                                            setFilterYearFrom('')
+                                                            setFilterYearTo('')
+                                                            setFilterSourceType('all')
+                                                            setFilterOpenAccess(false)
+                                                        }}
+                                                    >
+                                                        {translations.resetFilters}
+                                                    </Button>
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                            {translations.sortBy}:
+                                        </span>
+                                        <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                                            <SelectTrigger className="h-8 w-[140px] text-xs">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="relevance">{translations.sortRelevance}</SelectItem>
+                                                <SelectItem value="newest">{translations.sortDateNewest}</SelectItem>
+                                                <SelectItem value="oldest">{translations.sortDateOldest}</SelectItem>
+                                                <SelectItem value="citations">{translations.sortCitations}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -627,7 +808,7 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                             )}
 
                             <div className="space-y-2 pr-2">
-                                {results.map((source) => {
+                                {displayResults.map((source) => {
                                     const journal = normalizeJournal(source.journal)
                                     const container = source.containerTitle || journal
                                     const publisher = source.publisher
@@ -814,6 +995,28 @@ export function SourceSearchDialog({ onImport, showTrigger = true }: SourceSearc
                                         </div>
                                     )
                                 })}
+
+                                {results.length > 0 && !isSearching && displayResults.length > 0 && (
+                                    <div className="flex justify-center py-4">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleSearch(true)}
+                                            className="h-8"
+                                        >
+                                            {translations.loadMore}
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {isSearching && results.length > 0 && (
+                                    <div className="flex justify-center py-4">
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            <span>{translations.loadMore}...</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </TabsContent>

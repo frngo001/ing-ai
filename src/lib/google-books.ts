@@ -37,10 +37,11 @@ export interface GoogleBooksResponse {
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY || '';
 const BASE_URL = 'https://www.googleapis.com/books/v1/volumes';
 
-export async function searchGoogleBooks(query: string, maxResults: number = 20): Promise<GoogleBooksResponse> {
+export async function searchGoogleBooks(query: string, maxResults: number = 20, startIndex: number = 0): Promise<GoogleBooksResponse> {
     const params = new URLSearchParams({
         q: query,
         maxResults: maxResults.toString(),
+        startIndex: startIndex.toString(),
         printType: 'books',
         orderBy: 'relevance',
     });

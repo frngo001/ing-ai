@@ -7,7 +7,9 @@ export class DoajClient extends BaseApiClient {
     constructor() {
         const config: ApiConfig = {
             name: 'DOAJ',
-            baseUrl: 'https://doaj.org/api/search',
+            baseUrl: 'https://doaj.org/api/v2/search',
+
+
             rateLimit: {
                 requestsPerSecond: 2,
             },
@@ -17,32 +19,32 @@ export class DoajClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(`bibjson.title:"${title}"`, limit)
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(`bibjson.title:"${title}"`, limit, offset)
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(`bibjson.author.name:"${author}"`, limit)
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(`bibjson.author.name:"${author}"`, limit, offset)
     }
 
     async searchByDoi(doi: string): Promise<ApiResponse<any>> {
         return this.search(`bibjson.identifier.id:"${doi}"`, 1)
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(keyword, limit)
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(keyword, limit, offset)
     }
 
-    private async search(query: string, limit: number): Promise<ApiResponse<any>> {
-        const params = new URLSearchParams({
-            q: query,
-            pageSize: limit.toString(),
-        })
-
+    private async search(query: string, limit: number, offset = 0): Promise<ApiResponse<any>> {
+        const encodedQuery = encodeURIComponent(query)
+        const page = Math.floor(offset / limit) + 1
         return this.executeRequest(
-            () => fetch(`${this.config.baseUrl}/articles/${params}`)
+            () => fetch(`${this.config.baseUrl}/articles/${encodedQuery}?pageSize=${limit}&page=${page}`, {
+                headers: this.getCommonHeaders()
+            })
         )
     }
+
 
     transformResponse(response: any): any[] {
         if (!response?.results) return []

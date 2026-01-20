@@ -18,12 +18,12 @@ export class DataCiteClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(`titles.title:${title}`, limit)
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(`titles.title:${title}`, limit, offset)
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(`creators.name:${author}`, limit)
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(`creators.name:${author}`, limit, offset)
     }
 
     async searchByDoi(doi: string): Promise<ApiResponse<any>> {
@@ -42,14 +42,16 @@ export class DataCiteClient extends BaseApiClient {
         )
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(keyword, limit)
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(keyword, limit, offset)
     }
 
-    private async search(query: string, limit: number): Promise<ApiResponse<any>> {
+    private async search(query: string, limit: number, offset = 0): Promise<ApiResponse<any>> {
+        const pageNumber = Math.floor(offset / limit) + 1
         const params = new URLSearchParams({
             query,
             'page[size]': limit.toString(),
+            'page[number]': pageNumber.toString(),
         })
 
         return this.executeRequest(

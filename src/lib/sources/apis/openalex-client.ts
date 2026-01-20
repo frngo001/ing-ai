@@ -20,10 +20,11 @@ export class OpenAlexClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             filter: `title.search:${title}`,
             per_page: limit.toString(),
+            offset: offset.toString(),
         })
 
         if (this.config.apiKey) {
@@ -35,10 +36,11 @@ export class OpenAlexClient extends BaseApiClient {
         )
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             filter: `author.search:${author}`,
             per_page: limit.toString(),
+            offset: offset.toString(),
         })
 
         if (this.config.apiKey) {
@@ -71,10 +73,11 @@ export class OpenAlexClient extends BaseApiClient {
         )
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             search: keyword,
             per_page: limit.toString(),
+            offset: offset.toString(),
         })
 
         if (this.config.apiKey) {

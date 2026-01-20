@@ -19,10 +19,11 @@ export class SemanticScholarClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         const params = new URLSearchParams({
             query: title,
             limit: limit.toString(),
+            offset: offset.toString(),
             fields: 'title,authors,year,abstract,citationCount,referenceCount,s2FieldsOfStudy,publicationTypes,publicationVenue,journal,externalIds,url,isOpenAccess,openAccessPdf',
         })
 
@@ -36,10 +37,10 @@ export class SemanticScholarClient extends BaseApiClient {
         )
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
         // Semantic Scholar doesn't have author-specific search in this endpoint
         // Fall back to title/keyword search
-        return this.searchByKeyword(author, limit)
+        return this.searchByKeyword(author, limit, offset)
     }
 
     async searchByDoi(doi: string): Promise<ApiResponse<any>> {
@@ -67,8 +68,8 @@ export class SemanticScholarClient extends BaseApiClient {
         )
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.searchByTitle(keyword, limit)
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.searchByTitle(keyword, limit, offset)
     }
 
     /**

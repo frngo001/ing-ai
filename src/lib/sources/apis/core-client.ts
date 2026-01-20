@@ -18,23 +18,23 @@ export class CoreClient extends BaseApiClient {
         super(config)
     }
 
-    async searchByTitle(title: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(title, limit)
+    async searchByTitle(title: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(title, limit, offset)
     }
 
-    async searchByAuthor(author: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(`authors:"${author}"`, limit)
+    async searchByAuthor(author: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(`authors:"${author}"`, limit, offset)
     }
 
     async searchByDoi(doi: string): Promise<ApiResponse<any>> {
         return this.search(`doi:"${doi}"`, 1)
     }
 
-    async searchByKeyword(keyword: string, limit = 10): Promise<ApiResponse<any>> {
-        return this.search(keyword, limit)
+    async searchByKeyword(keyword: string, limit = 10, offset = 0): Promise<ApiResponse<any>> {
+        return this.search(keyword, limit, offset)
     }
 
-    private async search(query: string, limit: number): Promise<ApiResponse<any>> {
+    private async search(query: string, limit: number, offset = 0): Promise<ApiResponse<any>> {
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
         }
@@ -46,6 +46,7 @@ export class CoreClient extends BaseApiClient {
         const body = JSON.stringify({
             q: query,
             limit,
+            offset,
         })
 
         return this.executeRequest(
