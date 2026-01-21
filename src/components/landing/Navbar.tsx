@@ -88,15 +88,10 @@ function Logo() {
 
 function MobileDrawer() {
   const [open, setOpen] = React.useState(false)
-  const [mounted, setMounted] = React.useState(false)
   const ctaHref = useCTAHref()
-  const { t, language } = useLanguage()
+  const { t } = useLanguage()
 
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const navItems = React.useMemo(() => ({
+  const navItems = {
     produkt: {
       label: t('landing.navbar.product.label'),
       links: [
@@ -131,11 +126,11 @@ function MobileDrawer() {
       { label: t('landing.navbar.directLinks.pricing'), href: "/#pricing" },
       { label: t('landing.navbar.directLinks.about'), href: "/about" },
     ],
-  }), [t, language])
+  }
 
   return (
     <div className="md:hidden">
-      <Sheet key={`sheet-${open}-${language}`} open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="relative h-10 w-10 shrink-0">
             <Menu className={cn("h-6 w-6 transition-all", open ? "scale-0 opacity-0" : "scale-100 opacity-100")} />
@@ -166,12 +161,7 @@ function MobileDrawer() {
             </SheetClose>
           </div>
 
-          {!mounted ? (
-            <div className="flex flex-1 items-center justify-center">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : (
-            <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex flex-1 flex-col overflow-hidden">
               <div className="flex-1 overflow-y-auto px-6">
                 <nav className="flex flex-col py-8">
                   <Accordion type="single" collapsible className="w-full">
@@ -268,17 +258,15 @@ function MobileDrawer() {
                 </div>
               </div>
             </div>
-          )}
         </SheetContent>
       </Sheet>
     </div>
   )
 }
 function DesktopNav() {
-  const [mounted, setMounted] = React.useState(false)
-  const { t, language } = useLanguage()
+  const { t } = useLanguage()
 
-  const navItems = React.useMemo(() => ({
+  const navItems = {
     produkt: {
       label: t('landing.navbar.product.label'),
       featured: {
@@ -318,18 +306,6 @@ function DesktopNav() {
       { label: t('landing.navbar.directLinks.pricing'), href: "/#pricing" },
       { label: t('landing.navbar.directLinks.about'), href: "/about" },
     ],
-  }), [t, language])
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <nav className="hidden flex-1 px-8 md:flex">
-        <div className="flex items-center justify-center gap-1" />
-      </nav>
-    )
   }
 
   return (
@@ -408,21 +384,7 @@ function DesktopNav() {
 
 function AuthButtons() {
   const ctaHref = useCTAHref()
-  const { t, language } = useLanguage()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <div className="hidden items-center gap-3 md:flex">
-        <div className="h-6 w-12 animate-pulse rounded bg-muted"></div>
-        <div className="h-9 w-24 animate-pulse rounded-full bg-muted"></div>
-      </div>
-    )
-  }
+  const { t } = useLanguage()
 
   return (
     <div className="hidden items-center gap-3 md:flex">
