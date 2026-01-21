@@ -30,6 +30,13 @@ const germanUniversities = [
 
 export default function SocialProof() {
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted) return null
 
     return (
         <section className="py-16 border-y border-neutral-100 dark:border-neutral-900/50 bg-gradient-to-b from-neutral-50/50 to-transparent dark:from-neutral-950/50 overflow-hidden">

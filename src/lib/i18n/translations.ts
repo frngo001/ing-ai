@@ -7899,6 +7899,7 @@ export const translations = {
                     },
                 },
                 free: 'Kostenlos',
+                features: 'Funktionen',
                 perMonth: '/Monat',
                 saved: 'gespart bei jährlicher Zahlung',
                 monthlyBilling: 'Bei monatlicher Abrechnung',

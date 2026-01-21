@@ -23,9 +23,11 @@ import {
 import { Shine } from "@/components/animate-ui/primitives/effects/shine"
 import {
   Sheet,
-  SheetContent,
-  SheetTrigger,
   SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet"
 import {
   Accordion,
@@ -86,8 +88,13 @@ function Logo() {
 
 function MobileDrawer() {
   const [open, setOpen] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
   const ctaHref = useCTAHref()
   const { t, language } = useLanguage()
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const navItems = React.useMemo(() => ({
     produkt: {
@@ -128,7 +135,7 @@ function MobileDrawer() {
 
   return (
     <div className="md:hidden">
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet key={`sheet-${open}-${language}`} open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="relative h-10 w-10 shrink-0">
             <Menu className={cn("h-6 w-6 transition-all", open ? "scale-0 opacity-0" : "scale-100 opacity-100")} />
@@ -136,8 +143,13 @@ function MobileDrawer() {
             <span className="sr-only">Toggle menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-sm">
-          <div className="flex items-center justify-between border-b px-6 py-4">
+        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-sm [&>button]:hidden h-[100dvh]">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+          <SheetDescription className="sr-only">
+            Access our product, features, resources, and pricing.
+          </SheetDescription>
+
+          <div className="flex flex-shrink-0 items-center justify-between border-b px-6 py-4">
             <div className="h-10 w-10">
               <Image
                 src="/logos/logosApp/ing_AI.png"
@@ -154,111 +166,114 @@ function MobileDrawer() {
             </SheetClose>
           </div>
 
-          <ScrollArea className="flex-1 px-6">
-            <nav className="flex flex-col gap-6 py-8">
-              <Accordion type="single" collapsible className="w-full">
-                {/* Produkt */}
-                <AccordionItem value="produkt" className="border-none">
-                  <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                    {navItems.produkt.label}
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="flex flex-col gap-3 pl-4 pt-2">
-                      {navItems.produkt.links.map((link) => (
-                        <Link
-                          key={link.title}
-                          href={link.href}
-                          onClick={() => setOpen(false)}
-                          className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          {link.title}
-                        </Link>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* Features */}
-                <AccordionItem value="features" className="border-none">
-                  <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                    {navItems.features.label}
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="flex flex-col gap-3 pl-4 pt-2">
-                      {navItems.features.links.map((link) => (
-                        <Link
-                          key={link.title}
-                          href={link.href}
-                          onClick={() => setOpen(false)}
-                          className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          {link.title}
-                        </Link>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* Ressourcen */}
-                <AccordionItem value="ressourcen" className="border-none">
-                  <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                    {navItems.ressourcen.label}
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="flex flex-col gap-3 pl-4 pt-2">
-                      {navItems.ressourcen.links.map((link) => (
-                        <Link
-                          key={link.title}
-                          href={link.href}
-                          onClick={() => setOpen(false)}
-                          className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          {link.title}
-                        </Link>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              {/* Direct Links */}
-              <div className="flex flex-col gap-4 border-t pt-6">
-                {navItems.directLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="text-lg font-medium transition-colors hover:text-primary"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </nav>
-          </ScrollArea>
-
-          <div className="mt-auto border-t bg-muted/30 p-6 backdrop-blur-lg">
-            <div className="flex flex-col gap-3">
-              <Link
-                href="/auth/login"
-                onClick={() => setOpen(false)}
-                className="flex h-11 items-center justify-center rounded-xl border bg-background text-sm font-semibold transition-colors hover:bg-muted"
-              >
-                {t('landing.navbar.login')}
-              </Link>
-              <Button asChild size="lg" className="h-11 rounded-xl font-semibold shadow-lg shadow-primary/20">
-                <Link href={ctaHref} onClick={() => setOpen(false)}>
-                  {t('landing.navbar.startFree')}
-                </Link>
-              </Button>
+          {!mounted ? (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto px-6">
+                <nav className="flex flex-col py-8">
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="produkt" className="border-none">
+                      <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                        {navItems.produkt.label}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="flex flex-col gap-3 pl-4 pt-2">
+                          {navItems.produkt.links.map((link) => (
+                            <Link
+                              key={link.title}
+                              href={link.href}
+                              onClick={() => setOpen(false)}
+                              className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              {link.title}
+                            </Link>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="features" className="border-none">
+                      <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                        {navItems.features.label}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="flex flex-col gap-3 pl-4 pt-2">
+                          {navItems.features.links.map((link) => (
+                            <Link
+                              key={link.title}
+                              href={link.href}
+                              onClick={() => setOpen(false)}
+                              className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              {link.title}
+                            </Link>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="ressourcen" className="border-none">
+                      <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                        {navItems.ressourcen.label}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="flex flex-col gap-3 pl-4 pt-2">
+                          {navItems.ressourcen.links.map((link) => (
+                            <Link
+                              key={link.title}
+                              href={link.href}
+                              onClick={() => setOpen(false)}
+                              className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              {link.title}
+                            </Link>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+
+                  <div className="flex flex-col gap-4 border-t pt-6">
+                    {navItems.directLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setOpen(false)}
+                        className="text-lg font-medium transition-colors hover:text-primary"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </nav>
+              </div>
+
+              <div className="flex-shrink-0 border-t bg-muted/30 p-6 backdrop-blur-lg">
+                <div className="flex flex-col gap-3">
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setOpen(false)}
+                    className="flex h-11 items-center justify-center rounded-xl border bg-background text-sm font-semibold transition-colors hover:bg-muted"
+                  >
+                    {t('landing.navbar.login')}
+                  </Link>
+                  <Button asChild size="lg" className="h-11 rounded-xl font-semibold shadow-lg shadow-primary/20">
+                    <Link href={ctaHref} onClick={() => setOpen(false)}>
+                      {t('landing.navbar.startFree')}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
     </div>
   )
 }
-
 function DesktopNav() {
   const [mounted, setMounted] = React.useState(false)
   const { t, language } = useLanguage()
@@ -394,6 +409,20 @@ function DesktopNav() {
 function AuthButtons() {
   const ctaHref = useCTAHref()
   const { t, language } = useLanguage()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="hidden items-center gap-3 md:flex">
+        <div className="h-6 w-12 animate-pulse rounded bg-muted"></div>
+        <div className="h-9 w-24 animate-pulse rounded-full bg-muted"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="hidden items-center gap-3 md:flex">

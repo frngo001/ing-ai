@@ -60,6 +60,11 @@ const blogMetadata: Record<string, Omit<BentoItem, 'id' | 'title' | 'description
 
 export function BlogSection() {
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const items = React.useMemo(() => {
         const blogItems = translations[language as keyof typeof translations].landing.blog.items;
@@ -71,6 +76,8 @@ export function BlogSection() {
             ...blogMetadata[item.id],
         })) as BentoItem[];
     }, [language])
+
+    if (!mounted) return null
 
     return (
         <section id="blog" className="py-24 bg-background relative overflow-hidden">

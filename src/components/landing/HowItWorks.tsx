@@ -48,7 +48,7 @@ function useTypingEffect(text: string, isInView: boolean, delay: number = 0) {
 // Upload Visual with drag animation
 function UploadVisual({ isInView }: { isInView: boolean }) {
     const { language } = useLanguage()
-    
+
     const visuals = React.useMemo(() => {
         const lang = language as keyof typeof translations;
         return translations[lang].landing.howItWorks.visuals.upload as unknown as { dragFiles: string; files: { name: string; size: string }[] };
@@ -110,7 +110,7 @@ function UploadVisual({ isInView }: { isInView: boolean }) {
 // Outline Visual with expanding animation
 function OutlineVisual({ isInView }: { isInView: boolean }) {
     const { language } = useLanguage()
-    
+
     const sections = React.useMemo(() => {
         const lang = language as keyof typeof translations;
         return translations[lang].landing.howItWorks.visuals.outline.sections as unknown as { title: string; subsections: string[] }[];
@@ -178,7 +178,7 @@ function OutlineVisual({ isInView }: { isInView: boolean }) {
 // Writing Visual with typing effect
 function WriteVisual({ isInView }: { isInView: boolean }) {
     const { t, language } = useLanguage()
-    
+
     const visuals = React.useMemo(() => ({
         baseText: t('landing.howItWorks.visuals.write.baseText'),
         aiSuggestion: t('landing.howItWorks.visuals.write.aiSuggestion'),
@@ -249,7 +249,7 @@ function WriteVisual({ isInView }: { isInView: boolean }) {
 function ExportVisual({ isInView }: { isInView: boolean }) {
     const { t, language } = useLanguage()
     const [selected, setSelected] = useState<string | null>(null);
-    
+
     const visuals = React.useMemo(() => {
         const lang = language as keyof typeof translations;
         return {
@@ -446,6 +446,11 @@ function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: strin
 export function HowItWorks() {
     const ctaHref = useCTAHref()
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const steps = React.useMemo(() => [
         {
@@ -473,6 +478,8 @@ export function HowItWorks() {
             visual: "export",
         },
     ], [t, language])
+
+    if (!mounted) return null
 
     return (
         <section id="how-it-works" className="py-24 bg-white dark:bg-neutral-950 relative overflow-hidden">

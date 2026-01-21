@@ -39,53 +39,61 @@ export default function WhyIng({
     className,
 }: WhyIngProps) {
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const defaultItems = React.useMemo<ItemProps[]>(() => [
-    {
+        {
             title: t('landing.whyIng.items.aiCompletion.title'),
             description: t('landing.whyIng.items.aiCompletion.description'),
-        icon: <BrainCircuitIcon className="size-5 stroke-1 text-primary" />,
-    },
-    {
+            icon: <BrainCircuitIcon className="size-5 stroke-1 text-primary" />,
+        },
+        {
             title: t('landing.whyIng.items.fastPerformance.title'),
             description: t('landing.whyIng.items.fastPerformance.description'),
-        icon: <ZapIcon className="size-5 stroke-1 text-primary" />,
-    },
-    {
+            icon: <ZapIcon className="size-5 stroke-1 text-primary" />,
+        },
+        {
             title: t('landing.whyIng.items.academicQuality.title'),
             description: t('landing.whyIng.items.academicQuality.description'),
-        icon: <CheckCircleIcon className="size-5 stroke-1 text-primary" />,
-    },
-    {
+            icon: <CheckCircleIcon className="size-5 stroke-1 text-primary" />,
+        },
+        {
             title: t('landing.whyIng.items.gdprCompliant.title'),
             description: t('landing.whyIng.items.gdprCompliant.description'),
-        icon: <ShieldCheckIcon className="size-5 stroke-1 text-primary" />,
-    },
-    {
+            icon: <ShieldCheckIcon className="size-5 stroke-1 text-primary" />,
+        },
+        {
             title: t('landing.whyIng.items.multilingual.title'),
             description: t('landing.whyIng.items.multilingual.description'),
-        icon: <GlobeIcon className="size-5 stroke-1 text-primary" />,
-    },
-    {
+            icon: <GlobeIcon className="size-5 stroke-1 text-primary" />,
+        },
+        {
             title: t('landing.whyIng.items.fullyCustomizable.title'),
             description: t('landing.whyIng.items.fullyCustomizable.description'),
-        icon: <PaletteIcon className="size-5 stroke-1 text-primary" />,
-    },
-    {
+            icon: <PaletteIcon className="size-5 stroke-1 text-primary" />,
+        },
+        {
             title: t('landing.whyIng.items.productionReady.title'),
             description: t('landing.whyIng.items.productionReady.description'),
-        icon: <RocketIcon className="size-5 stroke-1 text-primary" />,
-    },
-    {
+            icon: <RocketIcon className="size-5 stroke-1 text-primary" />,
+        },
+        {
             title: t('landing.whyIng.items.constantImprovement.title'),
             description: t('landing.whyIng.items.constantImprovement.description'),
-        icon: <SparklesIcon className="size-5 stroke-1 text-primary" />,
-    },
+            icon: <SparklesIcon className="size-5 stroke-1 text-primary" />,
+        },
     ], [t, language])
 
     const finalTitle = title ?? t('landing.whyIng.title')
     const finalDescription = description ?? t('landing.whyIng.description')
     const finalItems = items ?? defaultItems
+
+    if (!mounted) return null
+
     return (
         <Section className={`py-12 md:py-16 relative overflow-hidden bg-background ${className || ''}`} id="why-ing">
             {/* Background */}

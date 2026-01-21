@@ -18,6 +18,11 @@ const socialLinks = [
 
 export function Footer() {
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const footerLinks = React.useMemo(() => ({
         produkt: {
@@ -57,6 +62,8 @@ export function Footer() {
             ],
         },
     }), [t, language])
+
+    if (!mounted) return null
 
     return (
         <footer className="border-t border-border bg-background/50 backdrop-blur-xl">

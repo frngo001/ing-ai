@@ -17,33 +17,40 @@ import { useLanguage } from "@/lib/i18n/use-language";
 
 export function FAQ() {
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const faqs = React.useMemo(() => [
-    {
+        {
             question: t('landing.faq.questions.citationGeneration.question'),
             answer: t('landing.faq.questions.citationGeneration.answer'),
-    },
-    {
+        },
+        {
             question: t('landing.faq.questions.plagiarismFree.question'),
             answer: t('landing.faq.questions.plagiarismFree.answer'),
-    },
-    {
+        },
+        {
             question: t('landing.faq.questions.exportFormats.question'),
             answer: t('landing.faq.questions.exportFormats.answer'),
-    },
-    {
+        },
+        {
             question: t('landing.faq.questions.dataSecurity.question'),
             answer: t('landing.faq.questions.dataSecurity.answer'),
-    },
-    {
+        },
+        {
             question: t('landing.faq.questions.otherLanguages.question'),
             answer: t('landing.faq.questions.otherLanguages.answer'),
-    },
-    {
+        },
+        {
             question: t('landing.faq.questions.cancelSubscription.question'),
             answer: t('landing.faq.questions.cancelSubscription.answer'),
-    },
+        },
     ], [t, language])
+
+    if (!mounted) return null
 
     return (
         <section id="faq" className="min-h-screen flex items-center justify-center px-6 py-12 bg-muted/40 relative overflow-hidden">

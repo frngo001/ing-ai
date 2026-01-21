@@ -29,8 +29,6 @@ interface FeatureCardProps {
     children?: React.ReactNode;
 }
 
-
-
 function FeatureCard({ title, description, badge, className, video, showCTA, children }: FeatureCardProps) {
     const [isHovered, setIsHovered] = useState(false);
     const [showVideo, setShowVideo] = useState(false);
@@ -219,6 +217,31 @@ function FeatureCard({ title, description, badge, className, video, showCTA, chi
 
 export default function BentoGrid() {
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const grammarAnalysisItems = React.useMemo(() => [
+        { label: t('landing.bentoGrid.features.grammarAnalysis.grammarScore'), score: 98 },
+        { label: t('landing.bentoGrid.features.grammarAnalysis.academicTone'), score: 92 },
+        { label: t('landing.bentoGrid.features.grammarAnalysis.readability'), score: 95 },
+    ], [t, language]);
+
+    const exportOptionItems = React.useMemo(() => [
+        { format: "DOCX", desc: t('landing.bentoGrid.features.exportOptions.formats.docx'), icon: FileType },
+        { format: "LaTeX", desc: t('landing.bentoGrid.features.exportOptions.formats.latex'), icon: Code },
+        { format: "HTML", desc: t('landing.bentoGrid.features.exportOptions.formats.html'), icon: Code2 },
+        { format: "PDF", desc: t('landing.bentoGrid.features.exportOptions.formats.pdf'), icon: FileText },
+    ], [t, language]);
+
+    const importItems = React.useMemo(() => [
+        { format: "HTML", desc: t('landing.bentoGrid.features.editorImport.formats.html'), icon: Code2 },
+        { format: "Markdown", desc: t('landing.bentoGrid.features.editorImport.formats.markdown'), icon: FileText },
+    ], [t, language]);
+
+    if (!mounted) return null
 
     return (
         <Section className="py-24 bg-muted dark:bg-neutral-900" id="bento-features">
@@ -358,11 +381,7 @@ export default function BentoGrid() {
                                 badge={t('landing.bentoGrid.featureBadges.quality')}
                             >
                                 <div className="space-y-2">
-                                    {React.useMemo(() => [
-                                        { label: t('landing.bentoGrid.features.grammarAnalysis.grammarScore'), score: 98 },
-                                        { label: t('landing.bentoGrid.features.grammarAnalysis.academicTone'), score: 92 },
-                                        { label: t('landing.bentoGrid.features.grammarAnalysis.readability'), score: 95 },
-                                    ], [t, language]).map((item, i) => (
+                                    {grammarAnalysisItems.map((item, i) => (
                                         <motion.div
                                             key={item.label}
                                             initial={{ opacity: 0, x: -10 }}
@@ -433,12 +452,7 @@ export default function BentoGrid() {
                                 badge={t('landing.bentoGrid.featureBadges.export')}
                             >
                                 <div className="grid grid-cols-2 gap-3">
-                                    {React.useMemo(() => [
-                                        { format: "DOCX", desc: t('landing.bentoGrid.features.exportOptions.formats.docx'), icon: FileType },
-                                        { format: "LaTeX", desc: t('landing.bentoGrid.features.exportOptions.formats.latex'), icon: Code },
-                                        { format: "HTML", desc: t('landing.bentoGrid.features.exportOptions.formats.html'), icon: Code2 },
-                                        { format: "PDF", desc: t('landing.bentoGrid.features.exportOptions.formats.pdf'), icon: FileText },
-                                    ], [t, language]).map((item, i) => {
+                                    {exportOptionItems.map((item, i) => {
                                         const IconComponent = item.icon;
                                         return (
                                             <motion.button
@@ -490,10 +504,7 @@ export default function BentoGrid() {
                                 badge={t('landing.bentoGrid.featureBadges.import')}
                             >
                                 <div className="space-y-3">
-                                    {React.useMemo(() => [
-                                        { format: "HTML", desc: t('landing.bentoGrid.features.editorImport.formats.html'), icon: Code2 },
-                                        { format: "Markdown", desc: t('landing.bentoGrid.features.editorImport.formats.markdown'), icon: FileText },
-                                    ], [t, language]).map((item, i) => {
+                                    {importItems.map((item, i) => {
                                         const IconComponent = item.icon;
                                         return (
                                             <motion.div

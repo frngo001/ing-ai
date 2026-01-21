@@ -16,12 +16,19 @@ import { useLanguage } from "@/lib/i18n/use-language";
 export function CTASection() {
     const ctaHref = useCTAHref()
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const stats = React.useMemo(() => [
         { value: 2, suffix: "M+", label: t('landing.cta.statsTitle') },
         { value: 50, suffix: "M+", label: t('landing.cta.statsTitle') },
         { value: 4.9, suffix: "", label: t('landing.cta.statsTitle') },
     ], [t, language])
+
+    if (!mounted) return null
 
     return (
         <Section className="py-24 md:py-32 bg-muted dark:bg-neutral-900 relative overflow-hidden">

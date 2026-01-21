@@ -82,7 +82,7 @@ function TutorialCard({
                         "relative block cursor-pointer bg-neutral-200 dark:bg-neutral-900 bg-center bg-cover [contain:content]",
                         "after:block after:pb-[56.25%] after:content-['']",
                         "[&_>_iframe]:absolute [&_>_iframe]:top-0 [&_>_iframe]:left-0 [&_>_iframe]:size-full",
-"[&_>_.lty-playbtn]:absolute [&_>_.lty-playbtn]:top-1/2 [&_>_.lty-playbtn]:left-1/2 [&_>_.lty-playbtn]:[transform:translate3d(-50%,-50%,0)]",
+                        "[&_>_.lty-playbtn]:absolute [&_>_.lty-playbtn]:top-1/2 [&_>_.lty-playbtn]:left-1/2 [&_>_.lty-playbtn]:[transform:translate3d(-50%,-50%,0)]",
                         "[&.lyt-activated]:before:hidden"
                     )}
                 />
@@ -115,6 +115,11 @@ export function TutorialsSection() {
     const [isLoading, setIsLoading] = useState(true);
     const ctaHref = useCTAHref();
     const { t, language } = useLanguage();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Lade YouTube-Metadaten beim Mount
     useEffect(() => {
@@ -184,6 +189,8 @@ export function TutorialsSection() {
             setTimeout(checkScrollButtons, 500);
         }
     };
+
+    if (!mounted) return null
 
     return (
         <Section id="tutorials" className="relative py-24 bg-background overflow-hidden">

@@ -68,6 +68,11 @@ function UseCaseCard({ useCase }: { useCase: UseCase }) {
 
 export function UseCases() {
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const useCases = React.useMemo<UseCase[]>(() => [
         {
@@ -111,6 +116,8 @@ export function UseCases() {
             icon: Code2,
         },
     ], [t, language])
+
+    if (!mounted) return null
 
     return (
         <Section id="use-cases" className="py-24 bg-background">

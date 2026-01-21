@@ -182,6 +182,11 @@ function PricingCard({
 export default function Pricing() {
   const [isYearly, setIsYearly] = useState(true);
   const { t, language } = useLanguage();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const pricingPlans = React.useMemo<PricingPlan[]>(() => {
     const langTranslations = translations[language as keyof typeof translations] as any
@@ -233,6 +238,8 @@ export default function Pricing() {
       },
     ]
   }, [t, language]);
+
+  if (!mounted) return null;
 
   return (
     <section id="pricing" className="relative py-16 px-4 md:py-24 overflow-hidden bg-background">

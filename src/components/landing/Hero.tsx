@@ -25,6 +25,11 @@ import {
 
 export default function Hero() {
   const { t, language } = useLanguage()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const heroContent = React.useMemo(() => ({
     badge: t('landing.hero.badge'),
@@ -37,6 +42,8 @@ export default function Hero() {
       trust: t('landing.hero.socialProof.trust'),
     },
   }), [t, language])
+
+  if (!mounted) return null
 
   return (
     <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0 sm:py-0 md:py-0">

@@ -79,6 +79,11 @@ function TestimonialCard({
 export function Testimonials() {
     const ctaHref = useCTAHref()
     const { t, language } = useLanguage()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const testimonials = React.useMemo(() => {
         const lang = language as keyof typeof translations;
@@ -92,6 +97,8 @@ export function Testimonials() {
 
     const firstRow = React.useMemo(() => testimonials.slice(0, Math.ceil(testimonials.length / 2)), [testimonials]);
     const secondRow = React.useMemo(() => testimonials.slice(Math.ceil(testimonials.length / 2)), [testimonials]);
+
+    if (!mounted) return null
 
     return (
         <section
