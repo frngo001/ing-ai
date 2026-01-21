@@ -23,32 +23,33 @@ export const ProjectInvitationEmail = ({
 
     return (
         <EmailLayout preview={previewText}>
-            <Heading className="text-foreground text-[24px] font-bold p-0 my-[30px] mx-0">
+            <Heading className="text-foreground text-[24px] font-bold p-0 my-[30px] mx-0 text-center">
                 Project Invitation
             </Heading>
             <Text className="text-foreground text-[16px] leading-[26px]">
-                Hello,
+                Hello there!
             </Text>
             <Text className="text-foreground text-[16px] leading-[26px]">
-                <strong>{inviterName}</strong> has invited you to collaborate on the project <strong>{projectName}</strong>.
+                <strong>{inviterName}</strong> has invited you to collaborate on the project <strong>{projectName}</strong>. Join the team and start working together on Ing AI.
             </Text>
-            <Section className="text-center py-[20px]">
+            <Section className="text-center py-[32px]">
                 <Button
-                    className="bg-primary text-white text-[16px] rounded-[4px] px-[24px] py-[12px] no-underline block w-full max-w-[200px] mx-auto text-center"
+                    className="bg-primary text-white rounded-lg font-bold px-[24px] py-[12px] text-[16px] decoration-none inline-block"
                     href={actionUrl}
                 >
                     Join Project
                 </Button>
             </Section>
-            <Text className="text-foreground text-[16px] leading-[26px] mt-[10px]">
-                or copy and paste this link into your browser:
-                <br />
-                <Link href={actionUrl} className="text-primary underline">
+            <Section className="mb-[24px]">
+                <Text className="text-foreground text-[14px] leading-[24px]">
+                    Or copy and paste this link into your browser:
+                </Text>
+                <Link href={actionUrl} className="text-primary underline text-[14px] break-all">
                     {actionUrl}
                 </Link>
-            </Text>
+            </Section>
             <Text className="text-muted text-[14px] leading-[24px] mt-[20px]">
-                This invitation was sent from Ing AI.
+                This invitation was sent from Ing AI - Your AI Research Assistant.
             </Text>
         </EmailLayout>
     );

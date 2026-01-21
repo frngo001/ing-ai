@@ -3,6 +3,8 @@ import {
     Heading,
     Section,
     Text,
+    Hr,
+    Link,
 } from '@react-email/components';
 import * as React from 'react';
 import { EmailLayout } from './EmailLayout';
@@ -13,29 +15,66 @@ interface WelcomeEmailProps {
 
 export const WelcomeEmail = ({ userName = 'User' }: WelcomeEmailProps) => {
     const previewText = `Welcome to Ing AI - Your Research & Writing Assistant`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
     return (
         <EmailLayout preview={previewText}>
-            <Heading className="text-foreground text-[24px] font-bold p-0 my-[30px] mx-0">
-                Welcome, {userName}!
+            <Heading className="text-foreground text-[24px] font-bold p-0 my-[30px] mx-0 text-center">
+                Welcome, <span className="text-primary">{userName}</span>!
             </Heading>
             <Text className="text-foreground text-[16px] leading-[26px]">
-                We're excited to have you on board. Ing AI is here to help you write better,
-                faster, and with more confidence.
+                We're thrilled to have you here! Ing AI is your ultimate companion for academic and professional writing.
+                Get ready to supercharge your productivity and take your research to the next level.
             </Text>
-            <Section className="py-[24px]">
-                <Text className="text-foreground text-[16px] leading-[26px]">
-                    Here's what you can do next:
-                </Text>
-                <ul className="text-foreground text-[16px] leading-[26px] pl-[26px]">
-                    <li>Create your first project</li>
-                    <li>Import research papers (PDF, BibTeX)</li>
-                    <li>Use AI Commands to generate content</li>
-                </ul>
+
+            <Section className="my-[32px]">
+                <Section className="mb-[24px]">
+                    <Heading as="h2" className="text-foreground text-[18px] font-semibold mb-[12px]">
+                        What you can do with Ing AI:
+                    </Heading>
+
+                    <Section className="mb-[16px]">
+                        <Text className="m-0 font-bold text-primary">Context-Aware Autocomplete</Text>
+                        <Text className="m-0 text-muted text-[14px]">Experience next-gen writing where AI understands your context and continues your sentences logically.</Text>
+                    </Section>
+
+                    <Section className="mb-[16px]">
+                        <Text className="m-0 font-bold text-primary">Specialized AI Agents</Text>
+                        <Text className="m-0 text-muted text-[14px]">Guided workflows for your essays, bachelor or master thesis, from topic finding to the final writing phase.</Text>
+                    </Section>
+
+                    <Section className="mb-[16px]">
+                        <Text className="m-0 font-bold text-primary">Research Library</Text>
+                        <Text className="m-0 text-muted text-[14px]">Search over 250 million scientific articles and manage your citations with support for &gt;9000 styles.</Text>
+                    </Section>
+
+                    <Section className="mb-[16px]">
+                        <Text className="m-0 font-bold text-primary">Professional Editor</Text>
+                        <Text className="m-0 text-muted text-[14px]">Real-time collaboration, native math support (LaTeX), and flexible exports to Word, PDF, and more.</Text>
+                    </Section>
+                </Section>
+
+                <Section className="text-center mt-[32px]">
+                    <Button
+                        className="bg-primary text-white rounded-lg font-bold px-[24px] py-[12px] text-[16px] decoration-none inline-block"
+                        href={`${baseUrl}/editor`}
+                    >
+                        Create Your First Project
+                    </Button>
+                </Section>
             </Section>
-            <Text className="text-muted text-[16px] leading-[26px]">
-                If you have any questions, just reply to this email. Happy writing!
-            </Text>
+
+            <Hr className="border-border mx-0 my-[26px]" />
+
+            <Section>
+                <Text className="text-muted text-[14px] leading-[24px]">
+                    Need help getting started? Check out our <Link href={`${baseUrl}/docs`} className="text-primary underline">Documentation</Link> or just reply to this email our support team is always here for you.
+                </Text>
+                <Text className="text-muted text-[14px] leading-[24px] mt-[16px]">
+                    Happy writing,<br />
+                    The Ing AI Team
+                </Text>
+            </Section>
         </EmailLayout>
     );
 };

@@ -30,10 +30,15 @@ export async function GET(request: Request) {
             .eq('id', user.id)
             .single()
 
+          const userName = profile?.full_name ||
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            'User';
+
           await sendEmail({
             to: user.email,
             subject: 'Welcome to Ing AI',
-            react: WelcomeEmail({ userName: profile?.full_name || 'User' }),
+            react: WelcomeEmail({ userName }),
           })
         }
       }

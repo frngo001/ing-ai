@@ -19,7 +19,7 @@ interface EmailLayoutProps {
     children: React.ReactNode;
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ingai-editor.vercel.app";
 
 const colors = {
     primary: "#3ECF8E",
