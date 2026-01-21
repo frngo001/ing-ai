@@ -113,7 +113,9 @@ export function Mockup({
                                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                 />
                             </svg>
-                            <span className="text-xs text-white/50 font-medium">app.ingai.ai/editor</span>
+                            <span className="text-xs text-white/50 font-medium">
+                                {process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "") || "ingai-editor.xyz/editor"}
+                            </span>
                         </div>
                     </div>
 

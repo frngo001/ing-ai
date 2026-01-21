@@ -21,35 +21,40 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import { Shine } from "@/components/animate-ui/primitives/effects/shine"
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 // =============================================================================
 // MAIN NAVBAR COMPONENT
 // =============================================================================
 
 export default function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
-
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3">
+    <header className="sticky top-0 z-[100] border-b bg-background/60 backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo */}
         <Logo />
 
         {/* Desktop Navigation */}
         <DesktopNav />
 
-        {/* Auth Buttons */}
+        {/* Desktop Auth Buttons */}
         <AuthButtons />
 
-        {/* Mobile Menu Toggle */}
-        <MobileMenuToggle
-          isOpen={mobileMenuOpen}
-          onToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-        />
+        {/* Mobile Menu Toggle & Drawer */}
+        <MobileDrawer />
       </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && <MobileMenu onClose={() => setMobileMenuOpen(false)} />}
     </header>
   )
 }
@@ -62,20 +67,195 @@ function Logo() {
   return (
     <Link
       href="/"
-      className="flex shrink-0 items-center gap-2 text-lg font-semibold"
+      className="group relative flex shrink-0 items-center gap-2 text-lg font-semibold transition-transform hover:scale-105"
       aria-label="Ing AI Home"
     >
-      <div className="relative h-20 w-20">
+      <div className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20">
         <Image
           src="/logos/logosApp/ing_AI.png"
           alt="Ing AI"
           fill
-          sizes="80px"
+          sizes="(max-width: 640px) 56px, (max-width: 768px) 64px, 80px"
           className="object-contain"
           priority
         />
       </div>
     </Link>
+  )
+}
+
+function MobileDrawer() {
+  const [open, setOpen] = React.useState(false)
+  const ctaHref = useCTAHref()
+  const { t, language } = useLanguage()
+
+  const navItems = React.useMemo(() => ({
+    produkt: {
+      label: t('landing.navbar.product.label'),
+      links: [
+        { title: t('landing.navbar.product.links.functions.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.product.links.useCases.title'), href: "/#use-cases" },
+        { title: t('landing.navbar.product.links.workflow.title'), href: "/#how-it-works" },
+        { title: t('landing.navbar.product.links.advantages.title'), href: "/#why-ing" },
+      ],
+    },
+    features: {
+      label: t('landing.navbar.features.label'),
+      links: [
+        { title: t('landing.navbar.features.links.autocomplete.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.citations.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.pdfChat.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.library.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.multilingual.title'), href: "/#bento-features" },
+        { title: t('landing.navbar.features.links.plagiarism.title'), href: "/#why-ing" },
+      ],
+    },
+    ressourcen: {
+      label: t('landing.navbar.resources.label'),
+      links: [
+        { title: t('landing.navbar.resources.links.blog.title'), href: "/blog" },
+        { title: t('landing.navbar.resources.links.tutorials.title'), href: "/#tutorials" },
+        { title: t('landing.navbar.resources.links.changelog.title'), href: "/changelog" },
+        { title: t('landing.navbar.resources.links.testimonials.title'), href: "/#testimonials" },
+        { title: t('landing.navbar.resources.links.faq.title'), href: "/#faq" },
+      ],
+    },
+    directLinks: [
+      { label: t('landing.navbar.directLinks.pricing'), href: "/#pricing" },
+      { label: t('landing.navbar.directLinks.about'), href: "/about" },
+    ],
+  }), [t, language])
+
+  return (
+    <div className="md:hidden">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative h-10 w-10 shrink-0">
+            <Menu className={cn("h-6 w-6 transition-all", open ? "scale-0 opacity-0" : "scale-100 opacity-100")} />
+            <X className={cn("absolute h-6 w-6 transition-all", open ? "scale-100 opacity-100" : "scale-0 opacity-0")} />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-sm">
+          <div className="flex items-center justify-between border-b px-6 py-4">
+            <div className="h-10 w-10">
+              <Image
+                src="/logos/logosApp/ing_AI.png"
+                alt="Ing AI"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+            </div>
+            <SheetClose asChild>
+              <Button variant="ghost" size="icon">
+                <X className="h-6 w-6" />
+              </Button>
+            </SheetClose>
+          </div>
+
+          <ScrollArea className="flex-1 px-6">
+            <nav className="flex flex-col gap-6 py-8">
+              <Accordion type="single" collapsible className="w-full">
+                {/* Produkt */}
+                <AccordionItem value="produkt" className="border-none">
+                  <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                    {navItems.produkt.label}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-col gap-3 pl-4 pt-2">
+                      {navItems.produkt.links.map((link) => (
+                        <Link
+                          key={link.title}
+                          href={link.href}
+                          onClick={() => setOpen(false)}
+                          className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {link.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Features */}
+                <AccordionItem value="features" className="border-none">
+                  <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                    {navItems.features.label}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-col gap-3 pl-4 pt-2">
+                      {navItems.features.links.map((link) => (
+                        <Link
+                          key={link.title}
+                          href={link.href}
+                          onClick={() => setOpen(false)}
+                          className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {link.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Ressourcen */}
+                <AccordionItem value="ressourcen" className="border-none">
+                  <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                    {navItems.ressourcen.label}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-col gap-3 pl-4 pt-2">
+                      {navItems.ressourcen.links.map((link) => (
+                        <Link
+                          key={link.title}
+                          href={link.href}
+                          onClick={() => setOpen(false)}
+                          className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {link.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Direct Links */}
+              <div className="flex flex-col gap-4 border-t pt-6">
+                {navItems.directLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="text-lg font-medium transition-colors hover:text-primary"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          </ScrollArea>
+
+          <div className="mt-auto border-t bg-muted/30 p-6 backdrop-blur-lg">
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/auth/login"
+                onClick={() => setOpen(false)}
+                className="flex h-11 items-center justify-center rounded-xl border bg-background text-sm font-semibold transition-colors hover:bg-muted"
+              >
+                {t('landing.navbar.login')}
+              </Link>
+              <Button asChild size="lg" className="h-11 rounded-xl font-semibold shadow-lg shadow-primary/20">
+                <Link href={ctaHref} onClick={() => setOpen(false)}>
+                  {t('landing.navbar.startFree')}
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
   )
 }
 
@@ -131,14 +311,14 @@ function DesktopNav() {
 
   if (!mounted) {
     return (
-      <nav className="hidden flex-1 md:flex">
+      <nav className="hidden flex-1 px-8 md:flex">
         <div className="flex items-center justify-center gap-1" />
       </nav>
     )
   }
 
   return (
-    <NavigationMenu className="hidden flex-1 md:flex">
+    <NavigationMenu className="hidden flex-1 px-8 md:flex">
       <NavigationMenuList className="flex items-center justify-center gap-1">
         {/* Produkt Dropdown */}
         <NavigationMenuItem>
@@ -148,7 +328,7 @@ function DesktopNav() {
               <li className="row-span-4">
                 <NavigationMenuLink asChild>
                   <Link
-                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none transition-colors hover:bg-muted focus:shadow-md"
+                    className="flex h-full w-full select-none flex-col justify-end rounded-xl bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none transition-colors hover:bg-muted focus:shadow-md"
                     href={navItems.produkt.featured.href}
                   >
                     <CircleCheckIcon className="h-6 w-6 text-primary" />
@@ -219,166 +399,15 @@ function AuthButtons() {
     <div className="hidden items-center gap-3 md:flex">
       <Link
         href="/auth/login"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="text-sm font-medium text-muted-foreground transition-all hover:text-foreground"
       >
         {t('landing.navbar.login')}
       </Link>
-      <Button asChild size="sm" className="rounded-full px-4">
+      <Button asChild size="sm" className="rounded-full px-5 font-semibold">
         <Shine asChild duration={1500} loop delay={2000} color="rgba(255, 255, 255, 0.4)">
           <Link href={ctaHref}>{t('landing.navbar.startFree')}</Link>
         </Shine>
       </Button>
-    </div>
-  )
-}
-
-function MobileMenuToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
-  const { t, language } = useLanguage()
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="md:hidden"
-      onClick={onToggle}
-      aria-label={isOpen ? t('landing.navbar.menuClose') : t('landing.navbar.menuOpen')}
-    >
-      {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-    </Button>
-  )
-}
-
-function MobileMenu({ onClose }: { onClose: () => void }) {
-  const ctaHref = useCTAHref()
-  const { t, language } = useLanguage()
-
-  const navItems = React.useMemo(() => ({
-    produkt: {
-      label: t('landing.navbar.product.label'),
-      links: [
-        { title: t('landing.navbar.product.links.functions.title'), href: "/#bento-features" },
-        { title: t('landing.navbar.product.links.useCases.title'), href: "/#use-cases" },
-        { title: t('landing.navbar.product.links.workflow.title'), href: "/#how-it-works" },
-        { title: t('landing.navbar.product.links.advantages.title'), href: "/#why-ing" },
-      ],
-    },
-    features: {
-      label: t('landing.navbar.features.label'),
-      links: [
-        { title: t('landing.navbar.features.links.autocomplete.title'), href: "/#bento-features" },
-        { title: t('landing.navbar.features.links.citations.title'), href: "/#bento-features" },
-        { title: t('landing.navbar.features.links.pdfChat.title'), href: "/#bento-features" },
-        { title: t('landing.navbar.features.links.library.title'), href: "/#bento-features" },
-        { title: t('landing.navbar.features.links.multilingual.title'), href: "/#bento-features" },
-        { title: t('landing.navbar.features.links.plagiarism.title'), href: "/#why-ing" },
-      ],
-    },
-    ressourcen: {
-      label: t('landing.navbar.resources.label'),
-      links: [
-        { title: t('landing.navbar.resources.links.blog.title'), href: "/blog" },
-        { title: t('landing.navbar.resources.links.tutorials.title'), href: "/#tutorials" },
-        { title: t('landing.navbar.resources.links.changelog.title'), href: "/changelog" },
-        { title: t('landing.navbar.resources.links.testimonials.title'), href: "/#testimonials" },
-        { title: t('landing.navbar.resources.links.faq.title'), href: "/#faq" },
-      ],
-    },
-    directLinks: [
-      { label: t('landing.navbar.directLinks.pricing'), href: "/#pricing" },
-      { label: t('landing.navbar.directLinks.about'), href: "/about" },
-    ],
-  }), [t, language])
-
-  return (
-    <div className="border-t bg-background px-4 py-4 md:hidden">
-      <nav className="flex flex-col gap-4">
-        {/* Produkt Section */}
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {navItems.produkt.label}
-          </p>
-          <div className="flex flex-col gap-2">
-            {navItems.produkt.links.map((link) => (
-              <Link
-                key={link.title}
-                href={link.href}
-                onClick={onClose}
-                className="text-sm text-foreground/80 transition-colors hover:text-foreground"
-              >
-                {link.title}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Features Section */}
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {navItems.features.label}
-          </p>
-          <div className="flex flex-col gap-2">
-            {navItems.features.links.map((link) => (
-              <Link
-                key={link.title}
-                href={link.href}
-                onClick={onClose}
-                className="text-sm text-foreground/80 transition-colors hover:text-foreground"
-              >
-                {link.title}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Ressourcen Section */}
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {navItems.ressourcen.label}
-          </p>
-          <div className="flex flex-col gap-2">
-            {navItems.ressourcen.links.map((link) => (
-              <Link
-                key={link.title}
-                href={link.href}
-                onClick={onClose}
-                className="text-sm text-foreground/80 transition-colors hover:text-foreground"
-              >
-                {link.title}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Direct Links */}
-        <div className="flex flex-col gap-2">
-          {navItems.directLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onClose}
-              className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Auth */}
-        <div className="mt-2 flex flex-col gap-2 border-t pt-4">
-          <Link
-            href="/auth/login"
-            onClick={onClose}
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {t('landing.navbar.login')}
-          </Link>
-          <Button asChild size="sm" className="rounded-full">
-            <Link href={ctaHref} onClick={onClose}>
-              {t('landing.navbar.startFree')}
-            </Link>
-          </Button>
-        </div>
-      </nav>
     </div>
   )
 }
@@ -400,7 +429,7 @@ function NavListItem({
         <Link
           href={href}
           className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            "block select-none space-y-1 rounded-xl p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className
           )}
         >

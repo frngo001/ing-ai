@@ -66,43 +66,40 @@ function TutorialCard({
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
-            className="flex-shrink-0 w-[320px] md:w-[380px]"
+            transition={{ delay: index * 0.1, duration: 0.4 }}
+            className="flex flex-col w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 group cursor-default"
         >
-            <div className="block text-left w-full">
-                {/* Video Embed */}
-                <div className="relative aspect-video rounded-xl overflow-hidden mb-4 border border-neutral-200 dark:border-neutral-800">
-                    <LiteYouTubeEmbed
-                        id={tutorial.youtubeId}
-                        title={tutorial.title}
-                        wrapperClass={cn(
-                            "rounded-xl overflow-hidden",
-                            "relative block cursor-pointer bg-black bg-center bg-cover [contain:content]",
-                            "after:block after:pb-[56.25%] after:content-['']",
-                            "[&_>_iframe]:absolute [&_>_iframe]:top-0 [&_>_iframe]:left-0 [&_>_iframe]:size-full",
-                            "[&_>_.lty-playbtn]:z-1 [&_>_.lty-playbtn]:h-[46px] [&_>_.lty-playbtn]:w-[70px] [&_>_.lty-playbtn]:rounded-[14%] [&_>_.lty-playbtn]:bg-[#212121] [&_>_.lty-playbtn]:opacity-80 [&_>_.lty-playbtn]:[transition:all_0.2s_cubic-bezier(0,_0,_0.2,_1)]",
-                            "[&:hover_>_.lty-playbtn]:bg-[#ff0000] [&:hover_>_.lty-playbtn]:opacity-100",
-                            "[&_>_.lty-playbtn]:before:border-[transparent_transparent_transparent_#fff] [&_>_.lty-playbtn]:before:border-y-[11px] [&_>_.lty-playbtn]:before:border-r-0 [&_>_.lty-playbtn]:before:border-l-[19px] [&_>_.lty-playbtn]:before:content-['']",
-                            "[&_>_.lty-playbtn]:absolute [&_>_.lty-playbtn]:top-1/2 [&_>_.lty-playbtn]:left-1/2 [&_>_.lty-playbtn]:[transform:translate3d(-50%,-50%,0)]",
-                            "[&.lyt-activated]:before:hidden"
-                        )}
-                    />
-                    {/* Duration Badge */}
-                    {tutorial.duration !== "N/A" && (
-                        <div className="absolute bottom-3 right-3 px-2 py-1 bg-neutral-900/80 rounded text-xs font-medium text-white pointer-events-none">
-                            {tutorial.duration}
-                        </div>
+            {/* Video Embed */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 bg-neutral-100 dark:bg-neutral-800 shadow-sm transition-transform duration-300 group-hover:scale-[1.02]">
+                <LiteYouTubeEmbed
+                    id={tutorial.youtubeId}
+                    title={tutorial.title}
+                    wrapperClass={cn(
+                        "rounded-2xl overflow-hidden",
+                        "relative block cursor-pointer bg-neutral-200 dark:bg-neutral-900 bg-center bg-cover [contain:content]",
+                        "after:block after:pb-[56.25%] after:content-['']",
+                        "[&_>_iframe]:absolute [&_>_iframe]:top-0 [&_>_iframe]:left-0 [&_>_iframe]:size-full",
+"[&_>_.lty-playbtn]:absolute [&_>_.lty-playbtn]:top-1/2 [&_>_.lty-playbtn]:left-1/2 [&_>_.lty-playbtn]:[transform:translate3d(-50%,-50%,0)]",
+                        "[&.lyt-activated]:before:hidden"
                     )}
-                </div>
+                />
+                {/* Duration Badge */}
+                {tutorial.duration !== "N/A" && (
+                    <div className="absolute bottom-3 right-3 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded-md text-[10px] font-medium text-white pointer-events-none">
+                        {tutorial.duration}
+                    </div>
+                )}
+            </div>
 
-                {/* Content */}
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
+            {/* Content */}
+            <div className="flex flex-col pr-2">
+                <h3 className="text-base font-semibold tracking-tight text-foreground mb-1 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                     {tutorial.title}
                 </h3>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                <p className="text-sm text-muted-foreground line-clamp-1">
                     {displayDescription}
                 </p>
             </div>
@@ -172,131 +169,148 @@ export function TutorialsSection() {
     const checkScrollButtons = () => {
         if (scrollContainerRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-            setCanScrollLeft(scrollLeft > 0);
+            setCanScrollLeft(scrollLeft > 10);
             setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
         }
     };
 
     const scroll = (direction: "left" | "right") => {
         if (scrollContainerRef.current) {
-            const scrollAmount = 400;
+            const scrollAmount = Math.min(scrollContainerRef.current.clientWidth - 80, 450);
             scrollContainerRef.current.scrollBy({
                 left: direction === "left" ? -scrollAmount : scrollAmount,
                 behavior: "smooth",
             });
-            setTimeout(checkScrollButtons, 300);
+            setTimeout(checkScrollButtons, 500);
         }
     };
 
     return (
-        <>
-            <Section id="tutorials" className="py-24 bg-muted dark:bg-neutral-900 relative overflow-hidden">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Header */}
-                    <ScrollReveal className="mb-12">
-                        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                            <div className="max-w-2xl">
-                                <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
-                                    {t('landing.tutorials.badge')}
-                                </Badge>
-                                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-neutral-900 dark:text-neutral-100 mb-4">
-                                    {t('landing.tutorials.title')}
-                                </h2>
-                                <p className="text-neutral-500 dark:text-neutral-400 text-lg">
-                                    {t('landing.tutorials.description')}
-                                </p>
-                            </div>
+        <Section id="tutorials" className="relative py-24 bg-background overflow-hidden">
+            <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-10 mb-12">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="max-w-2xl"
+                    >
+                        <Badge variant="secondary" className="mb-4 text-[10px] uppercase tracking-wider font-semibold">
+                            {t('landing.tutorials.badge')}
+                        </Badge>
+                        <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground">
+                            {t('landing.tutorials.title')}
+                        </h2>
+                        <p className="text-muted-foreground text-lg leading-relaxed">
+                            {t('landing.tutorials.description')}
+                        </p>
+                    </motion.div>
 
-                            {/* Navigation Buttons */}
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="rounded-full h-10 w-10 border-neutral-200 dark:border-neutral-800 disabled:opacity-30"
-                                    onClick={() => scroll("left")}
-                                    disabled={!canScrollLeft}
-                                    aria-label="Previous"
-                                >
-                                    <ChevronLeft className="h-5 w-5" />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="rounded-full h-10 w-10 border-neutral-200 dark:border-neutral-800 disabled:opacity-30"
-                                    onClick={() => scroll("right")}
-                                    disabled={!canScrollRight}
-                                    aria-label="Next"
-                                >
-                                    <ChevronRight className="h-5 w-5" />
-                                </Button>
-                            </div>
-                        </div>
-                    </ScrollReveal>
+                    {/* Navigation Buttons */}
+                    <div className="hidden md:flex gap-3">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full h-12 w-12 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-20 transition-colors"
+                            onClick={() => scroll("left")}
+                            disabled={!canScrollLeft}
+                            aria-label="Previous"
+                        >
+                            <ChevronLeft className="h-6 w-6" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full h-12 w-12 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-20 transition-colors"
+                            onClick={() => scroll("right")}
+                            disabled={!canScrollRight}
+                            aria-label="Next"
+                        >
+                            <ChevronRight className="h-6 w-6" />
+                        </Button>
+                    </div>
+                </div>
 
-                    {/* Carousel */}
-                    <div className="relative">
-                        {/* Gradient Overlays */}
-                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-muted dark:from-neutral-900 to-transparent" />
-                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-muted dark:from-neutral-900 to-transparent" />
+                {/* Carousel Container */}
+                <div className="relative -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+                    {/* Minimalist Masking */}
+                    <div className="pointer-events-none absolute left-0 top-0 bottom-10 w-20 z-10 bg-gradient-to-r from-background to-transparent hidden sm:block" />
+                    <div className="pointer-events-none absolute right-0 top-0 bottom-10 w-20 z-10 bg-gradient-to-l from-background to-transparent hidden sm:block" />
 
-                        {/* Loading State */}
-                        {isLoading && (
-                            <div className="flex items-center justify-center py-12">
-                                <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
-                            </div>
-                        )}
-
-                        {/* Scrollable Container */}
-                        {!isLoading && tutorials.length > 0 && (
-                            <div
-                                ref={scrollContainerRef}
-                                onScroll={checkScrollButtons}
-                                className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4"
-                                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                    {/* Loading State */}
+                    {isLoading && (
+                        <div className="flex items-center justify-center py-20">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                             >
-                                {tutorials.map((tutorial, index) => (
+                                <Loader2 className="w-8 h-8 text-muted-foreground" />
+                            </motion.div>
+                        </div>
+                    )}
+
+                    {/* Scrollable Container */}
+                    {!isLoading && tutorials.length > 0 && (
+                        <div
+                            ref={scrollContainerRef}
+                            onScroll={checkScrollButtons}
+                            className="flex gap-6 overflow-x-auto scrollbar-hide pb-8 pt-2 snap-x"
+                            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                        >
+                            {tutorials.map((tutorial, index) => (
+                                <div key={tutorial.id} className="snap-start first:pl-4 last:pr-4 sm:first:pl-0 sm:last:pr-0">
                                     <TutorialCard
-                                        key={tutorial.id}
                                         tutorial={tutorial}
                                         index={index}
                                     />
-                                ))}
-                            </div>
-                        )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                        {/* Empty State */}
-                        {!isLoading && tutorials.length === 0 && (
-                            <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
-                                {t('landing.tutorials.noTutorials')}
-                            </div>
-                        )}
-                    </div>
+                    {/* Empty State */}
+                    {!isLoading && tutorials.length === 0 && (
+                        <div className="text-center py-20 text-muted-foreground">
+                            {t('landing.tutorials.noTutorials')}
+                        </div>
+                    )}
+                </div>
 
-                    {/* CTA Section */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.4 }}
-                        className="mt-16 flex flex-col items-center gap-6"
-                    >
+                {/* CTA & Footer Context */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-8 flex flex-col items-center"
+                >
+                    <div className="flex flex-col sm:flex-row items-center gap-8">
                         <Link href={ctaHref}>
-                            <MorphyButton size="lg">
+                            <Button size="lg" className="rounded-full px-8 text-base font-semibold shadow-none">
                                 {t('landing.tutorials.tryNow')}
-                            </MorphyButton>
+                            </Button>
                         </Link>
+
                         <a
                             href="https://youtube.com/@ingai"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+                            className="group inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {t('landing.tutorials.watchAll')}
-                            <ChevronRight className="ml-1 h-4 w-4" />
+                            <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </a>
-                    </motion.div>
-                </div>
-            </Section>
-        </>
+                    </div>
+
+                    {/* Mobile Navigation (Swipe Indicator fallback) */}
+                    <div className="mt-8 flex md:hidden items-center gap-2">
+                        {tutorials.slice(0, 3).map((_, i) => (
+                            <div key={i} className="h-1.5 w-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+                        ))}
+                    </div>
+                </motion.div>
+            </div>
+        </Section>
     );
 }
