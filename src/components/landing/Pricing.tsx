@@ -98,7 +98,7 @@ function PricingCard({
               ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
               : "bg-muted text-muted-foreground"
           )}>
-            {React.cloneElement(plan.icon as React.ReactElement, { className: "h-5 w-5" })}
+            {React.cloneElement(plan.icon as React.ReactElement<{ className?: string }>, { className: "h-5 w-5" })}
           </div>
           <div>
             <h3 className="text-lg font-bold tracking-tight">{plan.name}</h3>
