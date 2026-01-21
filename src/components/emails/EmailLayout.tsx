@@ -92,7 +92,7 @@ export const EmailLayout = ({
                                 </Link>
                                 {" • "}
                                 <Link
-                                    href={`${baseUrl}/#blog`}
+                                    href={`${baseUrl}/blog`}
                                     className="text-muted underline"
                                 >
                                     Blog

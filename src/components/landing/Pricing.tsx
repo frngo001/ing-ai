@@ -79,7 +79,6 @@ function PricingCard({
       {plan.popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <Badge className="bg-primary text-primary-foreground shadow-lg shadow-primary/25 px-4 py-1">
-            <Crown className="mr-1 h-3 w-3" />
             {t('landing.pricing.plans.pro.popular')}
           </Badge>
         </div>

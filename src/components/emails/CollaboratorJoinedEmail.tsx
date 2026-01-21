@@ -35,7 +35,7 @@ export const CollaboratorJoinedEmail = ({
             </Text>
             <Section className="text-center py-[32px]">
                 <Button
-                    className="bg-primary text-white rounded-lg font-bold px-[24px] py-[12px] text-[16px] decoration-none inline-block"
+                    className="bg-primary text-foreground rounded-full font-medium px-[32px] py-[12px] text-[16px] decoration-none inline-block"
                     href={projectUrl}
                 >
                     View Project

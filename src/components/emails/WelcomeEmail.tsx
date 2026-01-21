@@ -20,7 +20,7 @@ export const WelcomeEmail = ({ userName = 'User' }: WelcomeEmailProps) => {
     return (
         <EmailLayout preview={previewText}>
             <Heading className="text-foreground text-[24px] font-bold p-0 my-[30px] mx-0 text-center">
-                Welcome, <span className="text-primary">{userName}</span>!
+                Welcome, {userName}!
             </Heading>
             <Text className="text-foreground text-[16px] leading-[26px]">
                 We're thrilled to have you here! Ing AI is your ultimate companion for academic and professional writing.
@@ -56,7 +56,7 @@ export const WelcomeEmail = ({ userName = 'User' }: WelcomeEmailProps) => {
 
                 <Section className="text-center mt-[32px]">
                     <Button
-                        className="bg-primary text-white rounded-lg font-bold px-[24px] py-[12px] text-[16px] decoration-none inline-block"
+                        className="bg-primary text-foreground rounded-full font-medium px-[32px] py-[12px] text-[16px] decoration-none inline-block"
                         href={`${baseUrl}/editor`}
                     >
                         Create Your First Project
@@ -68,7 +68,7 @@ export const WelcomeEmail = ({ userName = 'User' }: WelcomeEmailProps) => {
 
             <Section>
                 <Text className="text-muted text-[14px] leading-[24px]">
-                    Need help getting started? Check out our <Link href={`${baseUrl}/docs`} className="text-primary underline">Documentation</Link> or just reply to this email our support team is always here for you.
+                    Need help getting started? Check out our <Link href={`${baseUrl}/#bento-features`} className="text-primary underline">Documentation</Link>.
                 </Text>
                 <Text className="text-muted text-[14px] leading-[24px] mt-[16px]">
                     Happy writing,<br />
