@@ -54,7 +54,7 @@ function OTPPageContent() {
       toast.success("OTP bestätigt", {
         description: "Du bist nun angemeldet.",
       });
-      router.replace("/dashboard");
+      router.replace("/editor");
       router.refresh();
     } catch (error: any) {
       toast.error("Verifizierung fehlgeschlagen", {

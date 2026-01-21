@@ -29,7 +29,7 @@ type SignupFormProps = React.ComponentProps<"div"> & {
   nextPath?: string;
 };
 
-export function SignupForm({ className, nextPath = "/dashboard", ...props }: SignupFormProps) {
+export function SignupForm({ className, nextPath = "/editor", ...props }: SignupFormProps) {
   const router = useRouter();
   const supabase = createClient();
   const { t } = useLanguage();

@@ -81,14 +81,43 @@ export const EmailLayout = ({
                                     href={`${baseUrl}`}
                                     className="text-muted underline"
                                 >
-                                    Visit Dashboard
+                                    Visit Website
                                 </Link>
                                 {" • "}
                                 <Link
-                                    href={`${baseUrl}/settings`}
+                                    href={`${baseUrl}/#pricing`}
+                                    className="text-muted underline"
+                                >
+                                    Pricing
+                                </Link>
+                                {" • "}
+                                <Link
+                                    href={`${baseUrl}/#blog`}
+                                    className="text-muted underline"
+                                >
+                                    Blog
+                                </Link>
+                                {" • "}
+                                <Link
+                                    href={`${baseUrl}/editor`}
                                     className="text-muted underline"
                                 >
                                     Account Settings
+                                </Link>
+                            </Text>
+                            <Text className="text-muted text-[12px] leading-[20px] mt-2">
+                                <Link
+                                    href={`${baseUrl}/terms`}
+                                    className="text-muted underline"
+                                >
+                                    Terms
+                                </Link>
+                                {" • "}
+                                <Link
+                                    href={`${baseUrl}/privacy`}
+                                    className="text-muted underline"
+                                >
+                                    Privacy
                                 </Link>
                             </Text>
                         </Section>
