@@ -54,7 +54,8 @@ library.bib
 !.claude/settings.local.jsonc
 .mcp.json
 CLAUDE.md
-
+.agent/
+.cursor/
 # plan 
 plan.md
 ENV_TEMPLATE

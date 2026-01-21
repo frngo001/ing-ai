@@ -114,7 +114,7 @@ export function Mockup({
                                 />
                             </svg>
                             <span className="text-xs text-white/50 font-medium">
-                                {process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "") || "ingai-editor.xyz/editor"}
+                                ingai-editor.xyz/editor
                             </span>
                         </div>
                     </div>
