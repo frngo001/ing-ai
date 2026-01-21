@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { projectId, mode, expiresAt } = body
+    const { projectId, mode, expiresAt, email } = body
 
     if (!projectId || !mode) {
       return NextResponse.json(
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('id')
+      .select('id, name')
       .eq('id', projectId)
       .eq('user_id', user.id)
       .single()
@@ -57,6 +57,32 @@ export async function POST(request: NextRequest) {
     )
 
     const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/shared/${share.share_token}`
+
+    if (email) {
+      try {
+        const { sendEmail } = await import('@/lib/resend')
+        const { ProjectInvitationEmail } = await import('@/components/emails/ProjectInvitationEmail')
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single()
+
+        await sendEmail({
+          to: email,
+          subject: `Invitation to collaborate on ${project?.name || 'a project'}`,
+          react: ProjectInvitationEmail({
+            inviterName: profile?.full_name || 'A user',
+            projectName: project?.name || 'Untitled Project',
+            actionUrl: shareUrl
+          })
+        })
+      } catch (emailError) {
+        devError('[API/PROJECT_SHARE] Failed to send invitation email:', emailError)
+        // We don't fail the request if email fails, but we log it
+      }
+    }
 
     devLog('[API/PROJECT_SHARE] Share created:', share.id)
 

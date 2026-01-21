@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/use-language";
+import { sendWelcomeEmailAction } from "@/app/actions/onboarding";
 
 type SignupFormProps = React.ComponentProps<"div"> & {
   nextPath?: string;
@@ -59,6 +60,7 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
       });
 
       if (data.session) {
+        await sendWelcomeEmailAction(email, fullName);
         router.replace(nextPath);
         router.refresh();
       } else {
@@ -80,12 +82,12 @@ export function SignupForm({ className, nextPath = "/dashboard", ...props }: Sig
         typeof window !== "undefined"
           ? window.location.origin
           : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-      
+
       const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(nextPath)}`;
-      
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { 
+        options: {
           redirectTo,
         },
       });

@@ -578,7 +578,7 @@ export function DocumentsPane({
         <div className="flex flex-col">
           {documents.length === 0 || filteredDocs.length === 0 ? (
             <div className="px-3 py-6">
-              <div className="rounded-md border border-dashed border-border/70 bg-muted/30 px-4 py-4 flex flex-col gap-2">
+              <div className="rounded-md border border-2 border-border/70 bg-muted/30 px-4 py-4 flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   {searchQuery.trim()
                     ? `${t('documents.noResults')} „${searchQuery.trim()}"`

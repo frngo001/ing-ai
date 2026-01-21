@@ -38,7 +38,11 @@ export async function createOnboardingRecord(userId: string): Promise<UserOnboar
     .single()
 
   if (error) {
-    console.error('Error creating onboarding record:', error)
+    // If the record already exists, ignoring the error to allow fetching it
+    if (error.code === '23505') {
+      return null
+    }
+    console.error('Error creating onboarding record:', JSON.stringify(error))
     return null
   }
 
@@ -102,11 +106,24 @@ export async function resetOnboarding(userId: string): Promise<UserOnboarding | 
 }
 
 export async function getOrCreateOnboarding(userId: string): Promise<UserOnboarding | null> {
-  let onboarding = await getOnboardingStatus(userId)
+  const supabase = createClient()
 
-  if (!onboarding) {
-    onboarding = await createOnboardingRecord(userId)
+  const { data, error } = await supabase.rpc('get_or_create_user_onboarding', {
+    p_user_id: userId,
+  })
+
+  if (error) {
+    console.error('Error getting/creating onboarding:', error)
+    return null
   }
 
-  return onboarding
+  if (Array.isArray(data) && data.length > 0) {
+    return data[0]
+  }
+
+  if (data && !Array.isArray(data)) {
+    return data as UserOnboarding
+  }
+
+  return null
 }

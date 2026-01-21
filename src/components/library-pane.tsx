@@ -422,9 +422,8 @@ export function LibraryPane({
         <div className="flex flex-col">
           {filteredCitations.length === 0 ? (
             <div className="px-3 py-6">
-              <div className="rounded-md border border-dashed border-border/70 bg-muted/30 px-4 py-4 flex flex-col gap-2">
+              <div className="rounded-md border border-2 border-border/70 bg-muted/30 px-4 py-4 flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Search className="size-4 text-muted-foreground" />
                   {searchQuery.trim()
                     ? `${translations.noResultsFor} „${searchQuery.trim()}"`
                     : translations.noSourcesYetSaved}

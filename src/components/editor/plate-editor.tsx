@@ -40,6 +40,7 @@ import { getCurrentUserId } from '@/lib/supabase/utils/auth';
 import { createClient } from '@/lib/supabase/client';
 import * as documentsUtils from '@/lib/supabase/utils/documents';
 import * as discussionsUtils from '@/lib/supabase/utils/discussions';
+import { logSupabaseError } from '@/lib/supabase/utils/error-handler';
 import {
   type TDiscussion,
   discussionPlugin,
@@ -1866,12 +1867,9 @@ async function persistState(
           } else if (error?.message?.includes('406')) {
             devError('[PLATE EDITOR] 406 Not Acceptable - Möglicherweise RLS-Problem:', error);
           } else {
-            devError('[PLATE EDITOR] Fehler beim Speichern des Dokuments in Supabase:', {
-              message: error?.message,
-              code: error?.code,
-              details: error?.details,
-              hint: error?.hint,
-              error: JSON.stringify(error),
+            logSupabaseError('PLATE EDITOR', error, {
+              documentId,
+              updatedAt
             });
           }
         }

@@ -138,13 +138,24 @@ export function ProjectSwitcher() {
     [addInteractionLock, removeInteractionLock, setOpen, isMobile]
   )
 
+  // Force sidebar closed when share dialog is open
+  React.useEffect(() => {
+    if (shareDialogOpen && !isMobile) {
+      setOpen(false)
+    }
+  }, [shareDialogOpen, isMobile, setOpen])
+
+  const closeDropdown = React.useCallback(() => {
+    handleOpenChange(false)
+  }, [handleOpenChange])
+
   React.useEffect(() => {
     const handleOpenShare = () => {
       if (currentProject) {
         setProjectToShare({ id: currentProject.id, name: currentProject.name })
         // Don't close dropdown if we are in onboarding, it might cause displacement
         if (!isOnboardingOpen) {
-          setDropdownOpen(false)
+          closeDropdown()
         }
         setShareDialogOpen(true)
       }
@@ -154,13 +165,17 @@ export function ProjectSwitcher() {
     return () => {
       window.removeEventListener("projects:open-share", handleOpenShare)
       if (dropdownOpen) {
+        // We can just rely on the effect cleanup or handleOpenChange logic
+        // But if the component unmounts we might need to be careful.
+        // The original code did: removeInteractionLock(); if(!isMobile) setOpen(false);
+        // We'll keep the original cleanup logic here to be safe and avoid recreating handleOpenChange dependency loop if used here
         removeInteractionLock()
         if (!isMobile) {
           setOpen(false)
         }
       }
     }
-  }, [dropdownOpen, removeInteractionLock, isMobile, setOpen, currentProject])
+  }, [dropdownOpen, removeInteractionLock, isMobile, setOpen, currentProject, isOnboardingOpen, closeDropdown])
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return
@@ -180,7 +195,7 @@ export function ProjectSwitcher() {
 
   const handleSelectProject = (projectId: string) => {
     setCurrentProject(projectId)
-    setDropdownOpen(false)
+    closeDropdown()
   }
 
   const handleOpenRenameDialog = (project: { id: string; name: string; description: string | null }, e: React.MouseEvent) => {
@@ -188,7 +203,7 @@ export function ProjectSwitcher() {
     setEditingProject(project)
     setEditProjectName(project.name)
     setEditProjectDescription(project.description || "")
-    setDropdownOpen(false)
+    closeDropdown()
     setRenameDialogOpen(true)
   }
 
@@ -215,7 +230,7 @@ export function ProjectSwitcher() {
   const handleOpenDeleteDialog = (project: { id: string; name: string; isDefault: boolean }, e: React.MouseEvent) => {
     e.stopPropagation()
     setProjectToDelete(project)
-    setDropdownOpen(false)
+    closeDropdown()
     setDeleteDialogOpen(true)
   }
 
@@ -406,7 +421,7 @@ export function ProjectSwitcher() {
                           e.stopPropagation()
                           setProjectToShare({ id: project.id, name: project.name })
                           if (!isOnboardingOpen) {
-                            setDropdownOpen(false)
+                            closeDropdown()
                           }
                           setShareDialogOpen(true)
                         }}
@@ -448,7 +463,7 @@ export function ProjectSwitcher() {
               <DropdownMenuItem
                 className="gap-2 p-2"
                 onClick={() => {
-                  setDropdownOpen(false)
+                  closeDropdown()
                   setCreateDialogOpen(true)
                 }}
                 data-onboarding="new-project-btn"

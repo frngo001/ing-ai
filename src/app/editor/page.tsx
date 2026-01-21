@@ -146,21 +146,36 @@ function PageContent({
 
     const seen = new Set<string>()
     let latestId: string | null = null
-    let latestTs = -Infinity
+    let latestTs = -1
+
+    let latestNonEmptyId: string | null = null
+    let latestNonEmptyTs = -1
 
     try {
       const userId = await getCurrentUserId()
       if (userId) {
-        const docs = await documentsUtils.getDocuments(userId, projectId || undefined)
+        // Find documents in Supabase
+        const docs = projectId
+          ? await documentsUtils.getDocumentsByProject(projectId)
+          : await documentsUtils.getDocuments(userId)
+
         for (const doc of docs) {
           if (seen.has(doc.id)) continue
           seen.add(doc.id)
 
+          const ts = doc.updated_at ? new Date(doc.updated_at).getTime() : 0
+
+          // Track overall latest
+          if (ts >= latestTs) {
+            latestTs = ts
+            latestId = doc.id
+          }
+
+          // Track latest with content
           if (doc.content && hasContentText({ content: doc.content })) {
-            const ts = doc.updated_at ? new Date(doc.updated_at).getTime() : 0
-            if (ts >= latestTs) {
-              latestTs = ts
-              latestId = doc.id
+            if (ts >= latestNonEmptyTs) {
+              latestNonEmptyTs = ts
+              latestNonEmptyId = doc.id
             }
           }
         }
@@ -169,6 +184,7 @@ function PageContent({
       devError("Fehler beim Laden der Dokumente aus Supabase:", error)
     }
 
+    // LocalStorage only if no project (local-only mode)
     if (!projectId) {
       for (let i = 0; i < window.localStorage.length; i += 1) {
         const key = window.localStorage.key(i)
@@ -190,12 +206,18 @@ function PageContent({
           const hydrated = parsedState ?? (parsedContent ? { content: parsedContent } : null)
           if (!hydrated) continue
 
-          if (!hasContentText(hydrated)) continue
-
           const ts = hydrated?.updatedAt ? new Date(hydrated.updatedAt).getTime() : 0
+
           if (ts >= latestTs) {
             latestTs = ts
             latestId = id
+          }
+
+          if (hasContentText(hydrated)) {
+            if (ts >= latestNonEmptyTs) {
+              latestNonEmptyTs = ts
+              latestNonEmptyId = id
+            }
           }
           seen.add(id)
         } catch {
@@ -204,7 +226,7 @@ function PageContent({
       }
     }
 
-    return latestId
+    return latestNonEmptyId || latestId
   }, [])
   const [storageId, setStorageId] = useState<string | null>(null)
   const [hasDocuments, setHasDocuments] = useState<boolean | null>(null)
