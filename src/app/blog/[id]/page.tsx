@@ -107,56 +107,56 @@ export default function BlogPostPage() {
         {/* Blog Content - Left Column */}
         <main className="flex-1 overflow-y-auto">
           <article className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
-          {/* Blog Header */}
-          <header className="mb-12">
-            {/* Author and Date */}
-            <div className="text-sm text-muted-foreground mb-6">
-              {translations.by} {blogContent.author.name} - {formatBlogDate(blogContent.date, language)}
-            </div>
-            
-            {/* Title */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-10 leading-tight tracking-tight">
-              {blogContent.title}
-            </h1>
-
-            {/* Author Information Card */}
-            <div className="flex items-start gap-4 p-4 rounded-lg border border-border bg-card/50 mb-8">
-              <Avatar className="h-14 w-14 flex-shrink-0 border border-border">
-                <AvatarImage src={blogContent.author.image} alt={blogContent.author.name} />
-                <AvatarFallback className="text-sm">
-                  {blogContent.author.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 pt-0.5">
-                <h3 className="font-semibold text-base mb-1">{blogContent.author.name}</h3>
-                <p className="text-xs text-muted-foreground mb-1.5">{blogContent.author.title}</p>
-                <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
-                  {blogContent.author.education}
-                </p>
-                <Link 
-                  href={blogContent.author.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline font-medium"
-                >
-                  {translations.linkedin}
-                </Link>
+            {/* Blog Header */}
+            <header className="mb-8 md:mb-12">
+              {/* Author and Date */}
+              <div className="text-xs md:text-sm text-muted-foreground mb-4 md:mb-6">
+                {translations.by} {blogContent.author.name} - {formatBlogDate(blogContent.date, language)}
               </div>
-            </div>
-          </header>
 
-          {/* Blog Content */}
-          <div 
-            className="blog-content max-w-none prose-lg"
-            dangerouslySetInnerHTML={{ __html: blogContent.content }}
-          />
+              {/* Title */}
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-10 leading-snug tracking-tight">
+                {blogContent.title}
+              </h1>
+
+              {/* Author Information Card */}
+              <div className="flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border border-border bg-card/50 mb-6 md:mb-8">
+                <Avatar className="h-10 w-10 md:h-14 md:w-14 flex-shrink-0 border border-border">
+                  <AvatarImage src={blogContent.author.image} alt={blogContent.author.name} />
+                  <AvatarFallback className="text-xs md:text-sm">
+                    {blogContent.author.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <h3 className="font-semibold text-sm md:text-base mb-0.5 md:mb-1">{blogContent.author.name}</h3>
+                  <p className="text-[10px] md:text-xs text-muted-foreground mb-1 md:mb-1.5">{blogContent.author.title}</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground mb-1.5 md:mb-2 leading-relaxed line-clamp-2 md:line-clamp-none">
+                    {blogContent.author.education}
+                  </p>
+                  <Link
+                    href={blogContent.author.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] md:text-xs text-primary hover:underline font-medium"
+                  >
+                    {translations.linkedin}
+                  </Link>
+                </div>
+              </div>
+            </header>
+
+            {/* Blog Content */}
+            <div
+              className="blog-content max-w-none prose prose-neutral dark:prose-invert prose-sm sm:prose-base md:prose-lg"
+              dangerouslySetInnerHTML={{ __html: blogContent.content }}
+            />
           </article>
         </main>
-        
+
         {/* TOC - Right Column (Fixed) */}
         <BlogTableOfContents content={blogContent.content} />
       </div>
-      
+
       {/* Call to Action Section - Full Width */}
       <section className="w-full mt-0 mb-12 bg-muted/30 dark:bg-muted/20">
         <div className="container mx-auto px-4">
@@ -187,20 +187,20 @@ export default function BlogPostPage() {
               {/* Base gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5" />
             </div>
-            
-            <div className="relative max-w-2xl mx-auto text-center space-y-6">
-              <Badge variant="outline" className="text-xs uppercase tracking-wider font-medium">
+
+            <div className="relative max-w-2xl mx-auto text-center space-y-4 md:space-y-6">
+              <Badge variant="outline" className="text-[10px] md:text-xs uppercase tracking-wider font-medium">
                 {translations.cta.badge}
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              <h2 className="text-xl md:text-4xl font-bold tracking-tight">
                 {translations.cta.title}
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-sm md:text-lg text-muted-foreground">
                 {translations.cta.description}
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 pt-2">
                 <Link href="/auth/signup">
-                  <MorphyButton size="lg">
+                  <MorphyButton size="lg" className="scale-90 md:scale-100">
                     {translations.cta.startFree}
                   </MorphyButton>
                 </Link>
@@ -208,13 +208,13 @@ export default function BlogPostPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="rounded-full"
+                    className="rounded-full h-10 md:h-12 px-6 md:px-8 text-sm md:text-base"
                   >
                     {translations.cta.viewDemo}
                   </Button>
                 </Link>
               </div>
-              <p className="text-sm text-muted-foreground pt-2">
+              <p className="text-[10px] md:text-sm text-muted-foreground pt-2">
                 {translations.cta.trustSignals}
               </p>
             </div>
@@ -226,21 +226,21 @@ export default function BlogPostPage() {
       <section className="w-full mt-12 mb-8">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <div className="p-6 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors">
-              <h3 className="font-semibold text-lg mb-2">{translations.related.learnMore.title}</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+            <div className="p-4 md:p-6 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors">
+              <h3 className="font-semibold text-base md:text-lg mb-1.5 md:mb-2">{translations.related.learnMore.title}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">
                 {translations.related.learnMore.description}
               </p>
-              <Link href="/blog" className="text-sm text-primary hover:underline font-medium">
+              <Link href="/blog" className="text-xs md:text-sm text-primary hover:underline font-medium">
                 {translations.related.learnMore.link}
               </Link>
             </div>
-            <div className="p-6 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors">
-              <h3 className="font-semibold text-lg mb-2">{translations.related.discoverFeatures.title}</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+            <div className="p-4 md:p-6 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors">
+              <h3 className="font-semibold text-base md:text-lg mb-1.5 md:mb-2">{translations.related.discoverFeatures.title}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">
                 {translations.related.discoverFeatures.description}
               </p>
-              <Link href="/#bento-features" className="text-sm text-primary hover:underline font-medium">
+              <Link href="/#bento-features" className="text-xs md:text-sm text-primary hover:underline font-medium">
                 {translations.related.discoverFeatures.link}
               </Link>
             </div>

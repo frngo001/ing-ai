@@ -69,7 +69,7 @@ function PricingCard({
       viewport={{ once: true }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
       className={cn(
-        "group relative flex flex-col rounded-3xl border p-6 sm:p-7 transition-all duration-500",
+        "group relative flex flex-col rounded-3xl border p-4 sm:p-7 transition-all duration-500",
         plan.highlight
           ? "border-primary/50 bg-background shadow-2xl shadow-primary/10 dark:shadow-primary/20"
           : "border-border bg-background/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-xl dark:bg-neutral-900/40"
@@ -101,11 +101,11 @@ function PricingCard({
             {React.cloneElement(plan.icon as React.ReactElement<{ className?: string }>, { className: "h-5 w-5" })}
           </div>
           <div>
-            <h3 className="text-lg font-bold tracking-tight">{plan.name}</h3>
+            <h3 className="text-sm md:text-lg font-bold tracking-tight">{plan.name}</h3>
             {plan.highlight && <p className="text-[9px] uppercase tracking-widest text-primary font-bold">{t('landing.pricing.badge')}</p>}
           </div>
         </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-[11px] md:text-sm text-muted-foreground leading-relaxed">
           {plan.description}
         </p>
       </div>
@@ -113,11 +113,11 @@ function PricingCard({
       {/* Price */}
       <div className="mb-6">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl sm:text-4xl font-bold tracking-tight">
+          <span className="text-2xl md:text-4xl font-bold tracking-tight">
             {price === 0 ? t('landing.pricing.free') : `€${price}`}
           </span>
           {price > 0 && (
-            <span className="text-muted-foreground font-medium text-xs">{t('landing.pricing.perMonth')}</span>
+            <span className="text-muted-foreground font-medium text-[10px] md:text-xs">{t('landing.pricing.perMonth')}</span>
           )}
         </div>
         <div className="mt-1.5 h-6">
@@ -140,7 +140,7 @@ function PricingCard({
         size="lg"
         variant={plan.highlight ? "default" : "outline"}
         className={cn(
-          "mb-6 w-full group/btn h-11 rounded-2xl font-bold text-sm transition-all duration-300",
+          "mb-6 w-full group/btn h-10 md:h-11 rounded-2xl font-bold text-xs md:text-sm transition-all duration-300",
           plan.highlight
             ? "shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5"
             : "hover:bg-primary/5 hover:border-primary/30"
@@ -148,7 +148,7 @@ function PricingCard({
       >
         <Link href={href}>
           {plan.cta.label}
-          <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+          <ArrowRight className="ml-2 h-3 w-3 md:h-4 md:w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
         </Link>
       </Button>
 
@@ -242,7 +242,7 @@ export default function Pricing() {
   if (!mounted) return null;
 
   return (
-    <section id="pricing" className="relative py-16 px-4 md:py-24 overflow-hidden bg-background">
+    <section id="pricing" className="relative py-8 px-4 md:py-16 overflow-hidden bg-background">
       {/* Ambient Background Lights */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-[10%] top-[10%] h-[500px] w-[500px] bg-primary/10 blur-[120px] rounded-full opacity-50" />
@@ -251,19 +251,19 @@ export default function Pricing() {
 
       <div className="container mx-auto max-w-7xl">
         {/* Header Section */}
-        <div className="text-center mb-12 md:mb-16 space-y-5">
+        <div className="text-center mb-8 md:mb-16 space-y-3">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <Badge variant="outline" className="px-4 py-1.5 rounded-full border-primary/20 bg-primary/5 text-[10px] uppercase tracking-[0.2em] font-bold text-primary mb-5">
+            <Badge variant="outline" className="px-2.5 py-1 md:px-4 md:py-1.5 rounded-full border-primary/20 bg-primary/5 text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold text-primary mb-3">
               {t('landing.pricing.badge')}
             </Badge>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight mb-6 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h2 className="text-lg md:text-4xl lg:text-5xl font-extrabold tracking-tight mb-2 md:mb-6 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
               {t('landing.pricing.title')}
             </h2>
-            <p className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+            <p className="text-muted-foreground text-xs md:text-lg max-w-xl mx-auto leading-relaxed px-4">
               {t('landing.pricing.description')}
             </p>
           </motion.div>

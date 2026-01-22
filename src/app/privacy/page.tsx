@@ -28,7 +28,7 @@ export default function PrivacyPage() {
       <Navbar />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative py-20 md:py-32 overflow-hidden">
+        <section className="relative py-12 md:py-32 overflow-hidden">
           <div className="absolute inset-0 -z-10">
             <Glow variant="top" className="opacity-30" />
           </div>
@@ -37,10 +37,10 @@ export default function PrivacyPage() {
               <Badge variant="outline" className="mb-6 text-[10px] uppercase tracking-wider">
                 {t('pages.privacy.badge')}
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
                 {t('pages.privacy.title')}
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground">
+              <p className="text-base md:text-xl text-muted-foreground">
                 {t('pages.privacy.lastUpdated')} {new Date().toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </ScrollReveal>

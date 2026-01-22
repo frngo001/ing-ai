@@ -115,11 +115,11 @@ function BentoGridItem({ item }: { item: BentoItem }) {
   if (item.size === "large") {
     return (
       <CardCurtainReveal className="h-full w-full border bg-neutral-900 text-neutral-50 shadow-md dark:bg-neutral-50 dark:text-neutral-900">
-        <CardCurtainRevealBody>
-          <CardCurtainRevealTitle className="text-3xl font-medium tracking-tight">
+        <CardCurtainRevealBody className="p-4 sm:p-6">
+          <CardCurtainRevealTitle className="text-xl md:text-3xl font-medium tracking-tight leading-tight">
             {title}
           </CardCurtainRevealTitle>
-          <CardCurtainRevealDescription className="my-4 text-neutral-300 dark:text-neutral-600">
+          <CardCurtainRevealDescription className="my-2 md:my-4 text-xs md:text-base text-neutral-300 dark:text-neutral-600 line-clamp-2 md:line-clamp-none">
             <p>{description}</p>
           </CardCurtainRevealDescription>
           {link && (
@@ -130,11 +130,11 @@ function BentoGridItem({ item }: { item: BentoItem }) {
               <Button
                 variant="secondary"
                 size="icon"
-                className="aspect-square rounded-full"
+                className="size-8 md:size-10 rounded-full"
                 asChild
               >
                 <span>
-                  <ArrowUpRight className="h-5 w-5" />
+                  <ArrowUpRight className="h-4 w-4 md:h-5 md:w-5" />
                 </span>
               </Button>
             </Link>
@@ -143,7 +143,7 @@ function BentoGridItem({ item }: { item: BentoItem }) {
           <CardCurtain className="bg-background" />
         </CardCurtainRevealBody>
 
-        <CardCurtainRevealFooter className="mt-auto h-[200px]">
+        <CardCurtainRevealFooter className="mt-auto h-[140px] md:h-[200px]">
           {image && (
             <img
               alt={title}
@@ -177,29 +177,29 @@ function BentoGridItem({ item }: { item: BentoItem }) {
         />
       )}
 
-      <CardContent>
+      <CardContent className="p-4 sm:p-6">
         {tag && (
-          <span className="inline-block rounded-md px-2 py-0.5 text-xs font-semibold mb-2 bg-muted text-muted-foreground w-fit">
+          <span className="inline-block rounded-md px-1.5 py-0.5 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 bg-muted text-muted-foreground w-fit">
             {tag}
           </span>
         )}
-        <CardTitle className="m-0 max-sm:text-[1.125rem] max-sm:leading-[1.3]">
+        <CardTitle className="m-0 text-base md:text-xl font-semibold leading-snug">
           {title}
         </CardTitle>
         {description && (
-          <CardDescription className="mt-0">
+          <CardDescription className="mt-1 text-xs md:text-base line-clamp-2">
             {description}
           </CardDescription>
         )}
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="p-4 sm:p-6 pt-0">
         {link && (
           <Link href={link} aria-label={`${t('landing.blog.learnMore')}: ${title}`}>
             <span className="sr-only">
               {t('landing.blog.learnMore')}: {title}
             </span>
-            <LiftButton showArrow size="sm" variant="outline" render={<span />}>
+            <LiftButton showArrow size="xs" variant="outline" render={<span />} className="text-[10px] md:text-sm px-2 py-1 h-7">
               {t('landing.blog.learnMore')}
             </LiftButton>
           </Link>

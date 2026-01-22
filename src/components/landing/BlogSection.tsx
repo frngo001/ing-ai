@@ -14,45 +14,45 @@ import { translations } from "@/lib/i18n/translations";
 // Statische Metadaten für die Blog-Items (Bilder, Links, Varianten, Größen)
 const blogMetadata: Record<string, Omit<BentoItem, 'id' | 'title' | 'description' | 'tag'>> = {
     "1": {
-        image: "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg",
+        image: "/assets/blog/guide-bachelorarbeit.png",
         size: "large",
         priority: 1,
         variant: "glass",
         link: "/blog/ultimativer-guide-bachelorarbeit",
     },
     "2": {
-        image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2532&ixlib=rb-4.0.3",
+        image: "/assets/blog/ai-im-studium-original.png",
         variant: "highlight",
         link: "/blog/ki-im-studium",
     },
     "3": {
-        image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=2546&ixlib=rb-4.0.3",
+        image: "/assets/blog/zitieren-leicht-gemacht.png",
         variant: "solid",
         link: "/blog/zitieren-leicht-gemacht",
     },
     "4": {
-        image: "https://images.pexels.com/photos/2582937/pexels-photo-2582937.jpeg",
+        image: "/assets/blog/schreibblockaden-ueberwinden.png",
         variant: "default",
         size: "wide",
         link: "/blog/schreibblockaden-ueberwinden",
     },
     "5": {
-        image: "https://images.unsplash.com/photo-1555421689-491a97ff2040?auto=format&fit=crop&q=80&w=2670&ixlib=rb-4.0.3",
+        image: "/assets/blog/plagiatspruefung.png",
         variant: "solid",
         link: "/blog/plagiatspruefung",
     },
     "6": {
-        image: "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg",
+        image: "/assets/blog/forschungsmethoden.png",
         variant: "glass",
         link: "/blog/forschungsmethoden",
     },
     "7": {
-        image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=2428&ixlib=rb-4.0.3",
+        image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=2546",
         variant: "solid",
         link: "/blog/literaturverwaltung",
     },
     "8": {
-        image: "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg",
+        image: "/assets/blog/community-stories-original.png",
         variant: "default",
         link: "/blog/community-stories",
     },
@@ -80,30 +80,30 @@ export function BlogSection() {
     if (!mounted) return null
 
     return (
-        <section id="blog" className="py-24 bg-background relative overflow-hidden">
+        <section id="blog" className="py-8 md:py-16 bg-background relative overflow-hidden">
             <div className="container mx-auto px-6">
-                <div className="mb-12 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                <div className="mb-8 text-center space-y-3">
+                    <h2 className="text-lg md:text-4xl font-bold tracking-tight px-4">
                         {t('landing.blog.title')}
                     </h2>
-                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                    <p className="text-muted-foreground text-xs md:text-lg max-w-2xl mx-auto px-4">
                         {t('landing.blog.description')}
                     </p>
                 </div>
-                <BentoGridTemplateTwo items={items} gap={6} animate={true} />
+                <BentoGridTemplateTwo items={items} gap={3} animate={true} />
 
                 {/* View All Blog Posts Button */}
-                <div className="mt-12 text-center">
+                <div className="mt-10 md:mt-12 text-center">
                     <Link href="/blog">
                         <Button
                             size="lg"
                             variant="outline"
-                            className="rounded-full group"
+                            className="rounded-full group scale-90 md:scale-100 origin-center"
                             asChild
                         >
                             <span>
                                 {t('landing.blog.viewAll')}
-                                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                <ArrowRight className="ml-2 h-3 w-3 md:h-4 md:w-4 transition-transform group-hover:translate-x-1" />
                             </span>
                         </Button>
                     </Link>

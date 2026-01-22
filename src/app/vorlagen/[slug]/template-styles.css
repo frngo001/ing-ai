@@ -15,12 +15,28 @@
   letter-spacing: -0.025em;
 }
 
+@media (max-width: 768px) {
+  .template-content h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+}
+
 .template-content h3 {
   font-size: 1.5rem;
   font-weight: 700;
   margin-top: 2.5rem;
   margin-bottom: 1rem;
   color: hsl(var(--foreground));
+}
+
+@media (max-width: 768px) {
+  .template-content h3 {
+    font-size: 1.25rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
 }
 
 .template-content h4 {
@@ -31,10 +47,27 @@
   color: hsl(var(--foreground));
 }
 
+@media (max-width: 768px) {
+  .template-content h4 {
+    font-size: 1rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
 /* Paragraphs */
 .template-content p {
   margin-bottom: 1.25rem;
   color: hsl(var(--muted-foreground));
+}
+
+@media (max-width: 768px) {
+  .template-content p {
+    margin-bottom: 1rem;
+    font-size: 0.9375rem;
+    /* slightly larger than small for readability */
+    line-height: 1.7;
+  }
 }
 
 /* Lists */
@@ -99,6 +132,13 @@
   padding: 1.25rem;
   margin: 1.5rem 0;
   overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .template-content pre {
+    padding: 1rem;
+    font-size: 0.8125rem;
+  }
 }
 
 .template-content pre code {
@@ -199,15 +239,19 @@
 /* Responsive tables */
 @media (max-width: 768px) {
   .template-content table {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     display: block;
+    width: 100%;
     overflow-x: auto;
     white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    margin: 1.5rem 0;
+    border: 1px solid hsl(var(--border) / 0.5);
   }
 
   .template-content th,
   .template-content td {
-    padding: 0.75rem 1rem;
+    padding: 0.625rem 0.875rem;
     min-width: 120px;
   }
 
@@ -217,12 +261,14 @@
     position: sticky;
     left: 0;
     background: hsl(var(--card));
-    z-index: 1;
-    min-width: 140px;
+    z-index: 10;
+    border-right: 1px solid hsl(var(--border));
+    box-shadow: 2px 0 5px -2px hsl(var(--foreground) / 0.05);
   }
 
   .template-content th:first-child {
     background: hsl(var(--muted));
+    z-index: 11;
   }
 }
 

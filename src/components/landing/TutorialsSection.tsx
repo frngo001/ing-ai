@@ -96,10 +96,10 @@ function TutorialCard({
 
             {/* Content */}
             <div className="flex flex-col pr-2">
-                <h3 className="text-base font-semibold tracking-tight text-foreground mb-1 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                <h3 className="text-[13px] md:text-base font-semibold tracking-tight text-foreground mb-0.5 md:mb-1 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                     {tutorial.title}
                 </h3>
-                <p className="text-sm text-muted-foreground line-clamp-1">
+                <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
                     {displayDescription}
                 </p>
             </div>
@@ -193,23 +193,23 @@ export function TutorialsSection() {
     if (!mounted) return null
 
     return (
-        <Section id="tutorials" className="relative py-24 bg-background overflow-hidden">
+        <Section id="tutorials" className="relative py-10 md:py-24 bg-background overflow-hidden">
             <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-10 mb-12">
+                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 md:gap-10 mb-8 md:mb-12">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         className="max-w-2xl"
                     >
-                        <Badge variant="secondary" className="mb-4 text-[10px] uppercase tracking-wider font-semibold">
+                        <Badge variant="secondary" className="mb-3 md:mb-4 text-[8px] md:text-[10px] uppercase tracking-wider font-semibold">
                             {t('landing.tutorials.badge')}
                         </Badge>
-                        <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground">
+                        <h2 className="text-xl md:text-4xl font-bold tracking-tight mb-3 md:mb-4 text-foreground">
                             {t('landing.tutorials.title')}
                         </h2>
-                        <p className="text-muted-foreground text-lg leading-relaxed">
+                        <p className="text-muted-foreground text-xs md:text-lg leading-relaxed">
                             {t('landing.tutorials.description')}
                         </p>
                     </motion.div>
@@ -290,11 +290,11 @@ export function TutorialsSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.2 }}
-                    className="mt-8 flex flex-col items-center"
+                    className="mt-6 md:mt-8 flex flex-col items-center"
                 >
-                    <div className="flex flex-col sm:flex-row items-center gap-8">
+                    <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-8">
                         <Link href={ctaHref}>
-                            <Button size="lg" className="rounded-full px-8 text-base font-semibold shadow-none">
+                            <Button size="lg" className="rounded-full px-6 md:px-8 text-sm md:text-base font-semibold shadow-none scale-90 md:scale-100">
                                 {t('landing.tutorials.tryNow')}
                             </Button>
                         </Link>
@@ -303,10 +303,10 @@ export function TutorialsSection() {
                             href="https://youtube.com/@ingai"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            className="group inline-flex items-center text-[10px] md:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {t('landing.tutorials.watchAll')}
-                            <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            <ChevronRight className="ml-0.5 md:ml-1 h-3 w-3 md:h-4 md:w-4 transition-transform group-hover:translate-x-1" />
                         </a>
                     </div>
 

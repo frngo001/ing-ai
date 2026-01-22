@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react"
+import Image from "next/image"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MorphyButton } from "@/components/ui/morphy-button";
@@ -43,7 +44,7 @@ function TestimonialCard({
     return (
         <figure
             className={cn(
-                "relative w-80 cursor-pointer overflow-hidden rounded-xl border p-5 mx-3",
+                "relative w-56 sm:w-72 md:w-80 cursor-pointer overflow-hidden rounded-xl border p-2.5 sm:p-4 md:p-5 mx-2 sm:mx-3",
                 // Light mode styles
                 "border-neutral-200 bg-white/80 backdrop-blur-sm hover:bg-neutral-50",
                 // Dark mode styles
@@ -53,23 +54,29 @@ function TestimonialCard({
             )}
         >
             {/* Content */}
-            <blockquote className="text-sm text-foreground/90 leading-relaxed mb-4">
+            <blockquote className="text-[11px] sm:text-sm text-foreground/90 leading-relaxed mb-2.5 sm:mb-4">
                 {content}
             </blockquote>
 
             {/* Author */}
-            <div className="flex items-center gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800/50">
-                <Avatar className="h-10 w-10 border-2 border-white dark:border-neutral-900 shadow-sm">
-                    {image && <AvatarImage src={image} alt={name} />}
-                    <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-semibold">
+            <div className="flex items-center gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-neutral-100 dark:border-neutral-800/50">
+                <Avatar className="h-7 w-7 sm:h-10 sm:w-10 border-2 border-white dark:border-neutral-900 shadow-sm">
+                    {image && (
+                        <AvatarImage
+                            src={image}
+                            alt={name}
+                            loading="lazy"
+                        />
+                    )}
+                    <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-[9px] sm:text-xs font-semibold">
                         {avatar}
                     </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                    <figcaption className="text-sm font-semibold text-foreground">
+                    <figcaption className="text-[11px] sm:text-sm font-semibold text-foreground">
                         {name}
                     </figcaption>
-                    <p className="text-xs text-muted-foreground">{handle}</p>
+                    <p className="text-[9px] sm:text-xs text-muted-foreground">{handle}</p>
                 </div>
             </div>
         </figure>
@@ -103,35 +110,35 @@ export function Testimonials() {
     return (
         <section
             id="testimonials"
-            className="py-24 bg-background relative overflow-hidden"
+            className="py-8 md:py-24 bg-muted dark:bg-neutral-900 relative overflow-hidden"
         >
             {/* Background decoration */}
             <div className="absolute inset-0 -z-10">
                 <Glow variant="top" className="opacity-20" />
-                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
-                <div className="absolute top-1/2 right-0 w-[300px] h-[300px] bg-cyan-500/5 rounded-full blur-[100px]" />
+                <div className="absolute bottom-0 left-0 w-[200px] sm:w-[300px] md:w-[400px] h-[200px] sm:h-[300px] md:h-[400px] bg-primary/5 rounded-full blur-[100px]" />
+                <div className="absolute top-1/2 right-0 w-[150px] sm:w-[200px] md:w-[300px] h-[150px] sm:h-[200px] md:h-[300px] bg-cyan-500/5 rounded-full blur-[100px]" />
             </div>
 
             <div className="container px-4 mx-auto">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
-                    <ScrollReveal className="text-center mb-12 md:mb-16 space-y-4">
-                        <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                    <ScrollReveal className="text-center mb-6 md:mb-16 space-y-2 md:space-y-4">
+                        <Badge variant="outline" className="mb-2 md:mb-4 text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                             {t('landing.testimonials.badge')}
                         </Badge>
-                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
+                        <h2 className="text-xl md:text-5xl font-bold tracking-tight mb-2 md:mb-4">
                             {t('landing.testimonials.title')}
                         </h2>
-                        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                        <p className="text-muted-foreground text-xs md:text-lg max-w-2xl mx-auto px-2">
                             {t('landing.testimonials.description')}
                         </p>
                     </ScrollReveal>
 
                     {/* Marquee Rows */}
-                    <div className="relative flex flex-col gap-6">
+                    <div className="relative flex flex-col gap-4 sm:gap-5 md:gap-6">
                         {/* Gradient overlays */}
-                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-r from-background to-transparent" />
-                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-l from-background to-transparent" />
+                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 z-10 bg-gradient-to-r from-background to-transparent" />
+                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 z-10 bg-gradient-to-l from-background to-transparent" />
 
                         {/* First row - scrolls left */}
                         <Marquee pauseOnHover duration="50s">
@@ -148,9 +155,9 @@ export function Testimonials() {
                         </Marquee>
                     </div>
 
-                    <div className="flex justify-center mt-12 relative z-20">
+                    <div className="flex justify-center mt-8 sm:mt-10 md:mt-12 relative z-20">
                         <Link href={ctaHref}>
-                            <MorphyButton size="lg">
+                            <MorphyButton size="lg" className="text-sm sm:text-base">
                                 {t('landing.testimonials.cta')}
                             </MorphyButton>
                         </Link>

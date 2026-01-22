@@ -211,12 +211,12 @@ export default function ChangelogPage() {
       <Navbar />
       <main className="flex-1">
         {/* Header */}
-        <section className="pt-16 pb-8 md:pt-24 md:pb-12">
-          <div className="container px-4 mx-auto">
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
+        <section className="pt-8 pb-6 md:pt-24 md:pb-12">
+          <div className="container px-4 mx-auto text-center md:text-left">
+            <h1 className="text-2xl md:text-5xl font-bold tracking-tight mb-2">
               Changelog
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-xs md:text-base text-muted-foreground max-w-lg mx-auto md:mx-0">
               Neue Updates und Verbesserungen bei {siteConfig.name}.
             </p>
           </div>
@@ -249,97 +249,106 @@ export default function ChangelogPage() {
 
 function ChangelogEntryRow({ entry, isFirst, isLast }: { entry: ChangelogEntry; isFirst?: boolean; isLast?: boolean }) {
   return (
-    <div className={cn("grid grid-cols-1 lg:grid-cols-[280px_1fr] lg:gap-12", !isLast && "pb-16 md:pb-20")}>
-      {/* Left Column - Timeline + Title + Date */}
-      <div className="relative pl-6 lg:pl-8">
-        {/* Title + Date + Dot - Sticky */}
-        <div className="lg:sticky lg:top-32 z-20 bg-background">
-          {/* Dot - direkt auf der Linie, zentriert */}
-          <div className="hidden lg:block absolute left-0 top-0 w-[14px] h-[14px] -translate-x-1/2 z-10">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground"
-            >
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </div>
+    <div className={cn("relative grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 lg:gap-10", !isLast && "pb-12 lg:pb-16")}>
 
-          <div className="pl-4">
-            <h2 className="text-[15px] font-medium text-foreground mb-1 leading-snug">
-              {entry.title}
-            </h2>
-            <time className="text-sm text-muted-foreground">
-              {entry.date}
-            </time>
-          </div>
+      {/* Mobile Timeline Line */}
+      <div className={cn(
+        "absolute left-[5px] top-3 bottom-0 w-px bg-border/50 lg:hidden",
+        isLast && "h-full bottom-auto bg-gradient-to-b from-border/50 to-transparent"
+      )} />
+
+      {/* Left Column - Meta (Date/Title) */}
+      <div className="relative pl-8 lg:pl-0 lg:text-right">
+        {/* Mobile Dot */}
+        <div className="absolute left-[1px] top-2 w-[9px] h-[9px] rounded-full bg-primary ring-4 ring-background lg:hidden z-10 shadow-sm" />
+
+        <div className="lg:sticky lg:top-32">
+          <time className="text-[10px] md:text-xs font-semibold text-primary uppercase tracking-wider mb-1 block">
+            {entry.date}
+          </time>
+          <h2 className="text-base md:text-lg font-bold text-foreground leading-snug">
+            {entry.title}
+          </h2>
         </div>
       </div>
 
       {/* Right Column - Content */}
-      <div className="space-y-10 pt-4 lg:pt-0">
-        {entry.content.map((section, index) => (
-          <div key={index} className="space-y-4">
-            {/* Section Heading */}
-            <h3 className="text-2xl md:text-3xl font-semibold text-foreground">
-              {section.heading}
-            </h3>
+      <div className="relative pl-8 lg:pl-10 lg:border-l lg:border-border/50">
+        {/* Desktop Dot */}
+        <div className="absolute -left-[5px] top-[5px] w-[9px] h-[9px] rounded-full bg-primary ring-4 ring-background hidden lg:block z-10 shadow-sm" />
 
-            {/* Image */}
-            {section.image && (
-              <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden border border-border bg-muted">
-                <Image
-                  src={section.image}
-                  alt={section.heading}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
+        <div className="space-y-8 md:space-y-12">
+          {entry.content.map((section, index) => (
+            <div key={index} className="space-y-4 md:space-y-5 animate-appear">
+              {/* Section Heading */}
+              <h3 className="text-lg md:text-2xl font-bold text-foreground tracking-tight">
+                {section.heading}
+              </h3>
 
-            {/* Description */}
-            <p className="text-muted-foreground leading-relaxed">
-              {section.description}
-            </p>
+              {/* Image */}
+              {section.image && (
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border/50 bg-muted/30 shadow-sm">
+                  <Image
+                    src={section.image}
+                    alt={section.heading}
+                    fill
+                    className="object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                </div>
+              )}
 
-            {/* Details List */}
-            {section.details && section.details.length > 0 && (
-              <ul className="space-y-2 pt-2">
-                {section.details.map((detail, detailIndex) => (
-                  <li
-                    key={detailIndex}
-                    className="text-sm text-muted-foreground leading-relaxed flex items-start gap-2"
-                  >
-                    <span className="text-muted-foreground/50 mt-1">•</span>
-                    <span>{detail}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+              {/* Description */}
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                {section.description}
+              </p>
 
-            {/* Links */}
-            {section.links && section.links.length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
-                {section.links.map((link, linkIndex) => (
-                  <Link
-                    key={linkIndex}
-                    href={link.href}
-                    className="text-sm text-foreground underline decoration-muted-foreground/50 hover:decoration-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+              {/* Details List */}
+              {section.details && section.details.length > 0 && (
+                <ul className="grid sm:grid-cols-1 gap-2 pt-2">
+                  {section.details.map((detail, detailIndex) => (
+                    <li
+                      key={detailIndex}
+                      className="text-xs md:text-sm text-muted-foreground leading-relaxed flex items-start gap-2.5"
+                    >
+                      <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+                      <span>{detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Links */}
+              {section.links && section.links.length > 0 && (
+                <div className="flex flex-wrap gap-3 pt-2">
+                  {section.links.map((link, linkIndex) => (
+                    <Link
+                      key={linkIndex}
+                      href={link.href}
+                      className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors bg-primary/5 px-3 py-1.5 rounded-md hover:bg-primary/10"
+                    >
+                      {link.label}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="ml-1.5 w-3.5 h-3.5"
+                      >
+                        <path d="M5 12h14" />
+                        <path d="m12 5 7 7-7 7" />
+                      </svg>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

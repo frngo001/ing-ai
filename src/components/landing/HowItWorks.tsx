@@ -367,16 +367,16 @@ function StepCard({ step, index }: { step: Step; index: number }) {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, ease: "easeOut" }}
             whileHover={{ scale: 1.01 }}
-            className="group grid grid-cols-1 md:grid-cols-12 gap-6 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-all duration-300"
+            className="group grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6 p-3.5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-all duration-300"
         >
             {/* Number & Content */}
             <div className={cn(
-                "md:col-span-6 flex gap-5",
+                "md:col-span-6 flex gap-3 md:gap-5",
                 index % 2 === 1 && "md:order-2"
             )}>
                 {/* Step Number - Mobile only */}
                 <div className="flex-shrink-0 md:hidden">
-                    <div className="w-12 h-12 rounded-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-center font-bold text-lg">
+                    <div className="w-8 h-8 rounded-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-center font-bold text-sm">
                         {step.number}
                     </div>
                 </div>
@@ -387,7 +387,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
                         initial={{ opacity: 0, x: -20 }}
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
                         transition={{ delay: 0.1 }}
-                        className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2"
+                        className="text-base md:text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-1.5 md:mb-2"
                     >
                         {step.title}
                     </motion.h3>
@@ -395,7 +395,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
                         initial={{ opacity: 0 }}
                         animate={isInView ? { opacity: 1 } : {}}
                         transition={{ delay: 0.2 }}
-                        className="text-neutral-500 dark:text-neutral-400 leading-relaxed"
+                        className="text-xs md:text-base text-neutral-500 dark:text-neutral-400 leading-relaxed"
                     >
                         {step.description}
                     </motion.p>
@@ -482,19 +482,19 @@ export function HowItWorks() {
     if (!mounted) return null
 
     return (
-        <section id="how-it-works" className="py-24 bg-white dark:bg-neutral-950 relative overflow-hidden">
+        <section id="how-it-works" className="py-8 md:py-16 bg-background relative overflow-hidden">
             {/* Subtle background grid */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#8882_1px,transparent_1px),linear-gradient(to_bottom,#8882_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] -z-10" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#8882_1px,transparent_1px),linear-gradient(to_bottom,#8882_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse:60%_50%_at_50%_0%,#000_70%,transparent_110%)] -z-10" />
 
             <div className="container px-4 mx-auto">
-                <ScrollReveal className="text-center max-w-2xl mx-auto mb-20 space-y-4">
-                    <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                <ScrollReveal className="text-center max-w-2xl mx-auto mb-8 md:mb-16 space-y-3">
+                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         {t('landing.howItWorks.badge')}
                     </Badge>
-                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                    <h2 className="text-lg md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 px-4">
                         {t('landing.howItWorks.title')}
                     </h2>
-                    <p className="text-neutral-500 dark:text-neutral-400">
+                    <p className="text-xs md:text-base text-neutral-500 dark:text-neutral-400 px-4">
                         {t('landing.howItWorks.description')}
                     </p>
                 </ScrollReveal>
@@ -539,9 +539,9 @@ export function HowItWorks() {
                         />
                     </div>
 
-                    <div className="flex justify-center mt-12">
+                    <div className="flex justify-center mt-10 md:mt-12">
                         <Link href={ctaHref}>
-                            <MorphyButton size="lg">
+                            <MorphyButton size="lg" className="scale-90 md:scale-100">
                                 {t('landing.howItWorks.cta')}
                             </MorphyButton>
                         </Link>

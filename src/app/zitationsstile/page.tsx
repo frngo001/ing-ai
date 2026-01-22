@@ -94,19 +94,19 @@ export default function ZitationsstilePage() {
                   Referenz
                 </span>
               </div>
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1]">
+              <h1 className="text-4xl md:text-7xl font-bold tracking-tight leading-[1.1]">
                 Zitationsstile
               </h1>
               <div className="flex items-center justify-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-primary/60" />
-                <div className="w-2 h-2 rounded-full bg-primary/40" />
-                <div className="w-2 h-2 rounded-full bg-primary/20" />
+                <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary/60" />
+                <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary/40" />
+                <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary/20" />
               </div>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              <p className="text-base md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
                 Ein umfassender Leitfaden zu allen wichtigen Zitierstilen –
                 mit Beispielen, Regeln und Best Practices.
               </p>
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground pt-4">
+              <div className="flex items-center justify-center gap-2 text-xs md:text-sm text-muted-foreground pt-4">
                 <div className="w-8 h-[1px] bg-border" />
                 <span>{stile.length} Zitierstile</span>
                 <div className="w-8 h-[1px] bg-border" />
@@ -116,8 +116,8 @@ export default function ZitationsstilePage() {
         </div>
 
         {/* Citation Styles Grid */}
-        <div className="container mx-auto px-6 py-16 md:py-20 max-w-7xl">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+        <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-7xl">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-16 md:mb-20">
             {stile.map((stil, index) => (
               <Link
                 key={stil.id}
@@ -245,8 +245,8 @@ export default function ZitationsstilePage() {
 
         {/* CTA Section */}
         <div className="border-t border-border bg-gradient-to-b from-muted/20 to-background">
-          <div className="container mx-auto px-6 py-20 max-w-4xl">
-            <div className="relative bg-card border border-border rounded-lg p-10 md:p-14 text-center shadow-sm overflow-hidden">
+          <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-4xl">
+            <div className="relative bg-card border border-border rounded-lg p-6 md:p-14 text-center shadow-sm overflow-hidden">
               {/* Decorative quotation mark */}
               <div className="absolute top-6 right-6 text-border text-7xl font-serif leading-none opacity-30">
                 "
@@ -258,10 +258,10 @@ export default function ZitationsstilePage() {
                     AUTOMATISCHE ZITATION
                   </span>
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold leading-tight">
+                <h3 className="text-xl md:text-4xl font-bold leading-tight">
                   Nie wieder manuell<br />zitieren
                 </h3>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                <p className="text-sm md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                   Ing AI formatiert deine Quellen automatisch in APA, MLA, Chicago, Harvard, IEEE, Vancouver und vielen weiteren Stilen – präzise und fehlerfrei.
                 </p>
                 <div className="pt-4">

@@ -2006,6 +2006,7 @@ export const translations = {
                     title: 'Blog',
                     description: 'Discover articles, tips and best practices for academic writing',
                     readMore: 'Read more →',
+                    allPosts: 'All Posts',
                 },
                 post: {
                     by: 'By',
@@ -4009,6 +4010,7 @@ export const translations = {
                     title: 'Blog',
                     description: 'Descubre artículos, consejos y mejores prácticas para la escritura académica',
                     readMore: 'Leer más →',
+                    allPosts: 'Todos los artículos',
                 },
                 post: {
                     by: 'Por',
@@ -6012,6 +6014,7 @@ export const translations = {
                     title: 'Blog',
                     description: 'Découvrez des articles, conseils et meilleures pratiques pour la rédaction académique',
                     readMore: 'Lire la suite →',
+                    allPosts: 'Tous les articles',
                 },
                 post: {
                     by: 'Par',
@@ -7515,6 +7518,7 @@ export const translations = {
                     title: 'Blog',
                     description: 'Entdecken Sie Artikel, Tipps und Best Practices zum wissenschaftlichen Schreiben',
                     readMore: 'Weiterlesen →',
+                    allPosts: 'Alle Beiträge',
                 },
                 post: {
                     by: 'Von',

@@ -31,7 +31,7 @@ export function CTASection() {
     if (!mounted) return null
 
     return (
-        <Section className="py-24 md:py-32 bg-muted dark:bg-neutral-900 relative overflow-hidden">
+        <Section className="py-8 md:py-24 bg-muted dark:bg-neutral-900 relative overflow-hidden">
             {/* Background */}
             <div className="absolute inset-0 -z-10">
                 <Glow variant="center" className="opacity-10" />
@@ -41,8 +41,8 @@ export function CTASection() {
                 <ScrollReveal>
                     <div className="max-w-4xl mx-auto">
                         {/* Main CTA Card */}
-                        <div className="relative rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-8 md:p-12 lg:p-16">
-                            <div className="text-center space-y-8">
+                        <div className="relative rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-5 md:p-12 lg:p-16">
+                            <div className="text-center space-y-4 md:space-y-8">
                                 {/* Badge */}
                                 <motion.div
                                     initial={{ opacity: 0, y: 10 }}
@@ -50,7 +50,7 @@ export function CTASection() {
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.1 }}
                                 >
-                                    <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                                         {t('landing.cta.badge')}
                                     </Badge>
                                 </motion.div>
@@ -61,7 +61,7 @@ export function CTASection() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.2 }}
-                                    className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-neutral-900 dark:text-neutral-100"
+                                    className="text-xl font-bold tracking-tight md:text-5xl text-neutral-900 dark:text-neutral-100"
                                 >
                                     {t('landing.cta.title')}
                                     <br />
@@ -74,7 +74,7 @@ export function CTASection() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.3 }}
-                                    className="text-lg text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto"
+                                    className="text-xs md:text-lg text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto"
                                 >
                                     {t('landing.cta.description')}
                                 </motion.p>
@@ -85,10 +85,10 @@ export function CTASection() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.4 }}
-                                    className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
+                                    className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 pt-1 md:pt-2"
                                 >
                                     <Link href={ctaHref}>
-                                        <MorphyButton size="lg">
+                                        <MorphyButton size="lg" className="scale-90 md:scale-100">
                                             {t('landing.cta.startFree')}
                                         </MorphyButton>
                                     </Link>
@@ -96,7 +96,7 @@ export function CTASection() {
                                         <Button
                                             size="lg"
                                             variant="outline"
-                                            className="rounded-full"
+                                            className="rounded-full h-10 md:h-12 px-6 md:px-8 text-sm md:text-base font-medium"
                                         >
                                             {t('landing.cta.viewPricing')}
                                         </Button>
@@ -109,9 +109,9 @@ export function CTASection() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.5 }}
-                                    className="pt-4"
+                                    className="pt-2 md:pt-4"
                                 >
-                                    <p className="text-sm text-neutral-400 dark:text-neutral-500">
+                                    <p className="text-[10px] md:text-sm text-neutral-400 dark:text-neutral-500">
                                         {t('landing.cta.trustSignals')}
                                     </p>
                                 </motion.div>
@@ -119,7 +119,7 @@ export function CTASection() {
                         </div>
 
                         {/* Stats with animated counters */}
-                        <div className="mt-12">
+                        <div className="mt-8 md:mt-12">
                             <StatsCount
                                 stats={stats}
                                 title={t('landing.cta.statsTitle')}
@@ -133,10 +133,10 @@ export function CTASection() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.6 }}
-                            className="mt-8 flex justify-center"
+                            className="mt-6 md:mt-8 flex justify-center"
                         >
                             <Link href={ctaHref}>
-                                <MorphyButton size="lg">
+                                <MorphyButton size="lg" className="scale-90 md:scale-100">
                                     {t('landing.cta.startNow')}
                                 </MorphyButton>
                             </Link>

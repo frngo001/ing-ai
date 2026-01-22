@@ -13,13 +13,13 @@ const cardVariants = cva(
         default: "",
         lift: [
           "gap-0 overflow-hidden pb-0",
-          "[&_.card-content]:px-6 [&_.card-content]:pt-6 [&_.card-content]:pb-8",
+          "[&_.card-content]:px-4 md:[&_.card-content]:px-6 [&_.card-content]:pt-4 md:[&_.card-content]:pt-6 [&_.card-content]:pb-6 md:[&_.card-content]:pb-8",
           "[&_.card-content]:transition-all [&_.card-content]:duration-[250ms] [&_.card-content]:ease-in-out",
-          "[&_.card-content]:-mx-6 [&_.card-content]:w-[calc(100%+3rem)] [&_.card-content]:bg-card",
-          "max-md:[&_.card-image]:-mx-6 max-md:[&_.card-image]:w-[calc(100%+3rem)]",
+          "[&_.card-content]:-mx-4 md:[&_.card-content]:-mx-6 [&_.card-content]:w-[calc(100%+2rem)] md:[&_.card-content]:w-[calc(100%+3rem)] [&_.card-content]:bg-card",
+          "max-md:[&_.card-image]:-mx-4 max-md:[&_.card-image]:w-[calc(100%+2rem)]",
           "[&_.card-footer]:opacity-0 [&_.card-footer]:transition-all",
           "[&_.card-footer]:!duration-[250ms] [&_.card-footer]:!ease-in-out",
-          "[&_.card-footer]:absolute [&_.card-footer]:right-6 [&_.card-footer]:bottom-0 [&_.card-footer]:left-6",
+          "[&_.card-footer]:absolute [&_.card-footer]:right-4 md:[&_.card-footer]:right-6 [&_.card-footer]:bottom-0 [&_.card-footer]:left-4 md:[&_.card-footer]:left-6",
           "[&_.card-image]:transition-all [&_.card-image]:duration-[250ms] [&_.card-image]:ease-in-out",
           "hover:[&_.card-content]:-translate-y-8",
           "hover:[&_.card-footer]:-translate-y-4 hover:[&_.card-footer]:opacity-100",
@@ -68,7 +68,7 @@ function Card({
 }: React.ComponentProps<"div"> & VariantProps<typeof cardVariants>) {
   return (
     <div
-      className={cn(cardVariants({ variant }), className)}
+      className={cn(cardVariants({ variant }), "p-4 sm:p-6", className)}
       data-slot="card"
       {...props}
     />
@@ -92,8 +92,8 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "m-0 font-medium text-xl leading-none tracking-tight",
-        "max-sm:text-lg",
+        "m-0 font-semibold text-lg leading-tight tracking-tight",
+        "max-sm:text-base",
         className
       )}
       data-slot="card-title"
@@ -106,8 +106,8 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "col-span-full m-0 whitespace-normal text-muted-foreground text-sm leading-5",
-        "max-sm:text-[0.9375rem] max-sm:leading-[1.5]",
+        "col-span-full m-0 whitespace-normal text-muted-foreground text-sm leading-relaxed",
+        "max-sm:text-[0.8125rem] max-sm:leading-relaxed",
         className
       )}
       data-slot="card-description"

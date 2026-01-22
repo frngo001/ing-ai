@@ -120,23 +120,23 @@ export function UseCases() {
     if (!mounted) return null
 
     return (
-        <Section id="use-cases" className="py-24 bg-background">
+        <Section id="use-cases" className="py-8 md:py-16 bg-muted dark:bg-neutral-900">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <ScrollReveal className="mb-16 text-center max-w-2xl mx-auto">
-                    <Badge variant="outline" className="mb-4 text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                <ScrollReveal className="mb-8 md:mb-16 text-center max-w-2xl mx-auto space-y-3">
+                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         {t('landing.useCases.badge')}
                     </Badge>
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-neutral-900 dark:text-neutral-100 mb-4">
+                    <h2 className="text-lg font-bold tracking-tight sm:text-4xl text-neutral-900 dark:text-neutral-100">
                         {t('landing.useCases.title')}
                     </h2>
-                    <p className="text-neutral-500 dark:text-neutral-400">
+                    <p className="text-xs md:text-base text-neutral-500 dark:text-neutral-400 px-4">
                         {t('landing.useCases.description')}
                     </p>
                 </ScrollReveal>
 
                 {/* Grid */}
-                <StaggerContainer staggerDelay={0.06} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+                <StaggerContainer staggerDelay={0.06} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4 max-w-6xl mx-auto">
                     {useCases.map((useCase) => (
                         <StaggerItem key={useCase.title}>
                             <UseCaseCard useCase={useCase} />

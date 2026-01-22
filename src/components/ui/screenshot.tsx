@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 interface ScreenshotProps extends Omit<ImageProps, 'src'> {
     srcLight: string;
     srcDark: string;
+    priority?: boolean;
 }
 
 export default function Screenshot({
@@ -17,6 +18,7 @@ export default function Screenshot({
     width,
     height,
     className,
+    priority = false,
     ...props
 }: ScreenshotProps) {
     const { theme, systemTheme } = useTheme();
@@ -34,6 +36,7 @@ export default function Screenshot({
                 width={width}
                 height={height}
                 className={cn("block dark:hidden", className)}
+                priority={priority}
                 {...props}
             />
         );
@@ -49,6 +52,7 @@ export default function Screenshot({
             width={width}
             height={height}
             className={className}
+            priority={priority}
             {...props}
         />
     );

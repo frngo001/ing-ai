@@ -3,6 +3,7 @@
 import * as React from "react"
 import { ArrowRight, Sparkles, Zap, FileText, Quote } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 import { siteConfig } from "@/config/site"
 import { useLanguage } from "@/lib/i18n/use-language"
@@ -46,59 +47,57 @@ export default function Hero() {
   if (!mounted) return null
 
   return (
-    <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0 sm:py-0 md:py-0">
-      <div className="max-w-7xl line-y line-dashed relative mx-auto flex flex-col gap-0 pt-12 sm:pt-32 md:pt-10">
+    <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0">
+      <div className="max-w-7xl line-y line-dashed relative mx-auto flex flex-col gap-0 pt-10 sm:pt-32 md:pt-10">
         <div className="relative z-10 flex flex-col items-center text-center gap-2 sm:gap-3">
 
           {/* Badge */}
           <div className="animate-appear bg-background/50 backdrop-blur-sm rounded-full">
             <Link href="/auth/login" aria-label={heroContent.badge}>
-              <Announcement movingBorder className="px-2.5 py-0 h-6">
-                <AnnouncementTitle className="gap-1 text-[11px] font-medium">
+              <Announcement movingBorder className="px-2 py-0 h-5 md:h-6">
+                <AnnouncementTitle className="gap-1 text-[10px] md:text-[11px] font-medium">
                   <span className="text-muted-foreground">{heroContent.badge}</span>
-                  <ArrowRight className="size-2.5 text-muted-foreground" aria-hidden="true" />
+                  <ArrowRight className="size-2 text-muted-foreground" aria-hidden="true" />
                 </AnnouncementTitle>
               </Announcement>
             </Link>
           </div>
 
           {/* H1 */}
-          <h1 className="animate-appear inline-block max-w-[840px] text-4xl leading-tight font-semibold text-balance drop-shadow-2xl sm:text-5xl sm:leading-tight lg:text-6xl lg:leading-tight text-foreground dark:text-white">
+          <h1 className="animate-appear inline-block max-w-[840px] text-2xl leading-snug font-semibold text-balance drop-shadow-2xl sm:text-5xl sm:leading-tight lg:text-6xl lg:leading-tight text-foreground dark:text-white">
             {heroContent.title} <br />
             <span className="text-foreground dark:text-white">
               {heroContent.titleHighlight}
             </span>
           </h1>
           {/* Subtext */}
-          <p className="text-md animate-appear text-muted-foreground max-w-[840px] font-medium text-balance opacity-0 delay-100 lg:text-xl">
+          <p className="text-xs animate-appear text-muted-foreground max-w-[840px] font-medium text-balance opacity-0 delay-100 sm:text-base lg:text-xl">
             {heroContent.subtitle}
           </p>
 
           {/* Social Proof */}
-          <div className="animate-appear opacity-0 delay-300 flex justify-center items-center mt-8">
-            <div className="group relative flex items-center gap-3 px-4 py-2.5 rounded-full bg-background/60 backdrop-blur-md border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 hover:border-border/80">
-              <div className="flex -space-x-3">
+          <div className="animate-appear opacity-0 delay-300 flex justify-center items-center mt-4 sm:mt-8">
+            <div className="group relative flex items-center gap-2.5 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-full bg-background/60 backdrop-blur-md border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 hover:border-border/80">
+              <div className="flex -space-x-2.5 sm:-space-x-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div
+                  <Avatar
                     key={i}
-                    className="relative w-10 h-10 rounded-full border-2 border-background overflow-hidden bg-muted shadow-sm hover:scale-110 transition-transform duration-200 z-0 hover:z-10"
+                    className="w-7 h-7 sm:w-10 sm:h-10 border-2 border-background shadow-sm hover:scale-110 transition-transform duration-200 z-0 hover:z-10"
                   >
-                    <img
+                    <AvatarImage
                       src={`https://i.pravatar.cc/100?img=${i + 10}`}
                       alt={`User ${i}`}
-                      width={40}
-                      height={40}
                       loading="lazy"
-                      className="w-full h-full object-cover"
                     />
-                  </div>
+                    <AvatarFallback className="bg-muted text-[9px] sm:text-xs">U{i}</AvatarFallback>
+                  </Avatar>
                 ))}
               </div>
               <div className="flex flex-col">
-                <p className="text-xs font-semibold text-foreground leading-tight">
+                <p className="text-[9px] sm:text-xs font-semibold text-foreground leading-tight">
                   <span className="text-primary font-bold">{heroContent.socialProof.users}</span> {heroContent.socialProof.label}
                 </p>
-                <p className="text-[10px] text-muted-foreground leading-tight">
+                <p className="text-[8px] sm:text-[10px] text-muted-foreground leading-tight">
                   {heroContent.socialProof.trust}
                 </p>
               </div>
@@ -113,7 +112,7 @@ export default function Hero() {
         </div>
 
         {/* 3D Mockup Section */}
-        <div className="group relative sm:px-24 h-[600px] sm:h-[700px] md:h-[800px] flex justify-center items-center perspective-[2000px] z-10 -mt-8 sm:-mt-12">
+        <div className="group relative sm:px-24 h-[350px] sm:h-[700px] md:h-[800px] flex justify-center items-center perspective-[2000px] z-10 -mt-2 sm:-mt-12">
 
           <div className="absolute left-[5%] sm:left-[10%] z-10 w-[80%] sm:w-[60%] md:w-[55%] transition-all delay-200 duration-1000 ease-in-out group-hover:left-[5%] sm:group-hover:left-[5%] group-hover:-translate-x-10">
             <PerspectiveWrapper intensity="subtle">

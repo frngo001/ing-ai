@@ -39,33 +39,33 @@ export default function SocialProof() {
     if (!mounted) return null
 
     return (
-        <section className="py-16 border-y border-neutral-100 dark:border-neutral-900/50 bg-gradient-to-b from-neutral-50/50 to-transparent dark:from-neutral-950/50 overflow-hidden">
+        <section className="py-8 md:py-16 border-y border-neutral-100 dark:border-neutral-900/50 bg-muted dark:bg-neutral-900 overflow-hidden">
             <div className="container mx-auto px-4">
                 <ScrollReveal>
-                    <p className="text-sm font-medium text-muted-foreground mb-10 uppercase tracking-widest text-center">
+                    <p className="text-[10px] md:text-sm font-medium text-muted-foreground mb-6 md:mb-10 uppercase tracking-widest text-center">
                         {t('landing.socialProof.title')}
                     </p>
                 </ScrollReveal>
 
                 {/* Infinite scrolling marquee - 80% width centered */}
-                <div className="relative w-[80%] mx-auto overflow-hidden">
+                <div className="relative w-full md:w-[80%] mx-auto overflow-hidden">
                     {/* Gradient masks for smooth edges */}
                     <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-neutral-50 dark:from-neutral-950 to-transparent z-10 pointer-events-none" />
                     <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-neutral-50 dark:from-neutral-950 to-transparent z-10 pointer-events-none" />
 
-                    <div className="flex gap-6 md:gap-8 animate-marquee">
+                    <div className="flex gap-4 md:gap-8 animate-marquee">
                         {/* First set of logos */}
                         {germanUniversities.map((uni) => (
                             <div
                                 key={uni.name}
                                 className="flex-shrink-0 flex items-center justify-center"
                             >
-                                <div className="w-32 h-14 md:w-40 md:h-16 relative grayscale hover:grayscale-0 opacity-50 hover:opacity-100 transition-all duration-300 dark:invert">
+                                <div className="w-24 h-10 md:w-40 md:h-16 relative grayscale hover:grayscale-0 opacity-50 hover:opacity-100 transition-all duration-300 dark:invert">
                                     <Image
                                         src={uni.logo}
                                         alt={uni.name}
                                         fill
-                                        sizes="(max-width: 768px) 128px, 160px"
+                                        sizes="(max-width: 768px) 96px, 160px"
                                         loading="lazy"
                                         className="object-contain"
                                     />
@@ -78,11 +78,13 @@ export default function SocialProof() {
                                 key={`${uni.name}-duplicate`}
                                 className="flex-shrink-0 flex items-center justify-center"
                             >
-                                <div className="w-32 h-14 md:w-40 md:h-16 relative grayscale hover:grayscale-0 opacity-50 hover:opacity-100 transition-all duration-300 dark:invert">
+                                <div className="w-24 h-10 md:w-40 md:h-16 relative grayscale hover:grayscale-0 opacity-50 hover:opacity-100 transition-all duration-300 dark:invert">
                                     <Image
                                         src={uni.logo}
                                         alt={uni.name}
                                         fill
+                                        sizes="(max-width: 768px) 96px, 160px"
+                                        loading="lazy"
                                         className="object-contain"
                                     />
                                 </div>

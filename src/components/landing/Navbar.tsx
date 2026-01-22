@@ -22,20 +22,11 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Shine } from "@/components/animate-ui/primitives/effects/shine"
 import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { ScrollArea } from "@/components/ui/scroll-area"
 
 // =============================================================================
 // MAIN NAVBAR COMPONENT
@@ -72,12 +63,12 @@ function Logo() {
       className="group relative flex shrink-0 items-center gap-2 text-lg font-semibold transition-transform hover:scale-105"
       aria-label="Ing AI Home"
     >
-      <div className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20">
+      <div className="relative h-10 w-10 sm:h-16 sm:w-16 md:h-20 md:w-20">
         <Image
           src="/logos/logosApp/ing_AI.png"
           alt="Ing AI"
           fill
-          sizes="(max-width: 640px) 56px, (max-width: 768px) 64px, 80px"
+          sizes="(max-width: 640px) 40px, (max-width: 768px) 64px, 80px"
           className="object-contain"
           priority
         />
@@ -133,21 +124,16 @@ function MobileDrawer() {
 
   return (
     <div className="md:hidden">
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative h-10 w-10 shrink-0">
-            <Menu className={cn("h-6 w-6 transition-all", open ? "scale-0 opacity-0" : "scale-100 opacity-100")} />
-            <X className={cn("absolute h-6 w-6 transition-all", open ? "scale-100 opacity-100" : "scale-0 opacity-0")} />
-            <span className="sr-only">Toggle menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-sm [&>button]:hidden h-[100dvh]">
-          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-          <SheetDescription className="sr-only">
-            Access our product, features, resources, and pricing.
-          </SheetDescription>
+      <Button variant="ghost" size="icon" onClick={() => setOpen(true)} className="h-10 w-10">
+        <Menu className="h-6 w-6" />
+        <span className="sr-only">Open menu</span>
+      </Button>
 
-          <div className="flex flex-shrink-0 items-center justify-between border-b px-6 py-4">
+      {/* Fullscreen Mobile Menu */}
+      {open && (
+        <div className="fixed inset-0 z-[200] bg-white dark:bg-neutral-950">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 bg-white dark:bg-neutral-950">
             <div className="h-10 w-10">
               <Image
                 src="/logos/logosApp/ing_AI.png"
@@ -157,112 +143,109 @@ function MobileDrawer() {
                 className="object-contain"
               />
             </div>
-            <SheetClose asChild>
-              <Button variant="ghost" size="icon">
-                <X className="h-6 w-6" />
-              </Button>
-            </SheetClose>
+            <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
+              <X className="h-6 w-6" />
+            </Button>
           </div>
 
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-6">
-              <nav className="flex flex-col py-8">
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="produkt" className="border-none">
-                    <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                      {navItems.produkt.label}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="flex flex-col gap-3 pl-4 pt-2">
-                        {navItems.produkt.links.map((link) => (
-                          <Link
-                            key={link.title}
-                            href={link.href}
-                            onClick={() => setOpen(false)}
-                            className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            {link.title}
-                          </Link>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
+          {/* Content */}
+          <div className="h-[calc(100vh-80px)] overflow-y-auto bg-white dark:bg-neutral-950">
+            <nav className="px-6 py-6">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="produkt" className="border-none">
+                  <AccordionTrigger className="py-2.5 text-base font-medium hover:no-underline">
+                    {navItems.produkt.label}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-col gap-2.5 pl-4 pb-2">
+                      {navItems.produkt.links.map((link) => (
+                        <Link
+                          key={link.title}
+                          href={link.href}
+                          onClick={() => setOpen(false)}
+                          className="text-sm text-muted-foreground transition-colors hover:text-foreground py-0.5"
+                        >
+                          {link.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
 
-                  <AccordionItem value="features" className="border-none">
-                    <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                      {navItems.features.label}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="flex flex-col gap-3 pl-4 pt-2">
-                        {navItems.features.links.map((link) => (
-                          <Link
-                            key={link.title}
-                            href={link.href}
-                            onClick={() => setOpen(false)}
-                            className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            {link.title}
-                          </Link>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
+                <AccordionItem value="features" className="border-none">
+                  <AccordionTrigger className="py-2.5 text-base font-medium hover:no-underline">
+                    {navItems.features.label}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-col gap-2.5 pl-4 pb-2">
+                      {navItems.features.links.map((link) => (
+                        <Link
+                          key={link.title}
+                          href={link.href}
+                          onClick={() => setOpen(false)}
+                          className="text-sm text-muted-foreground transition-colors hover:text-foreground py-0.5"
+                        >
+                          {link.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
 
-                  <AccordionItem value="ressourcen" className="border-none">
-                    <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                      {navItems.ressourcen.label}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="flex flex-col gap-3 pl-4 pt-2">
-                        {navItems.ressourcen.links.map((link) => (
-                          <Link
-                            key={link.title}
-                            href={link.href}
-                            onClick={() => setOpen(false)}
-                            className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            {link.title}
-                          </Link>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                <AccordionItem value="ressourcen" className="border-none">
+                  <AccordionTrigger className="py-2.5 text-base font-medium hover:no-underline">
+                    {navItems.ressourcen.label}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-col gap-2.5 pl-4 pb-2">
+                      {navItems.ressourcen.links.map((link) => (
+                        <Link
+                          key={link.title}
+                          href={link.href}
+                          onClick={() => setOpen(false)}
+                          className="text-sm text-muted-foreground transition-colors hover:text-foreground py-0.5"
+                        >
+                          {link.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
-                <div className="flex flex-col gap-4 border-t pt-6">
-                  {navItems.directLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setOpen(false)}
-                      className="text-lg font-medium transition-colors hover:text-primary"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </nav>
-            </div>
+              {/* Direct Links */}
+              <div className="flex flex-col gap-4 border-t border-neutral-200 dark:border-neutral-800 mt-4 pt-6">
+                {navItems.directLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="text-base font-medium transition-colors hover:text-primary py-0.5"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
 
-            <div className="flex-shrink-0 border-t bg-muted/30 p-6 backdrop-blur-lg">
-              <div className="flex flex-col gap-3">
+              {/* Auth Buttons */}
+              <div className="flex flex-col gap-3 border-t border-neutral-200 dark:border-neutral-800 mt-6 pt-6">
                 <Link
                   href="/auth/login"
                   onClick={() => setOpen(false)}
-                  className="flex h-11 items-center justify-center rounded-xl border bg-background text-sm font-semibold transition-colors hover:bg-muted"
+                  className="flex h-12 items-center justify-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-sm font-semibold transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900"
                 >
                   {t('landing.navbar.login')}
                 </Link>
-                <Button asChild size="lg" className="h-11 rounded-xl font-semibold shadow-lg shadow-primary/20">
+                <Button asChild size="lg" className="h-12 rounded-xl font-semibold">
                   <Link href={ctaHref} onClick={() => setOpen(false)}>
                     {t('landing.navbar.startFree')}
                   </Link>
                 </Button>
               </div>
-            </div>
+            </nav>
           </div>
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
     </div>
   )
 }

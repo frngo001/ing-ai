@@ -80,7 +80,7 @@ export default function ZitationsStilPage() {
         <div className="container mx-auto px-6 py-12 md:py-16 max-w-6xl">
           {/* Header */}
           <header className="mb-12 pb-8 border-b border-border">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl md:text-6xl font-bold mb-6 leading-tight">
               {stil.fullName}
             </h1>
             <p className="text-xl text-muted-foreground mb-6 leading-relaxed max-w-3xl">

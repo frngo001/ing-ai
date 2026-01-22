@@ -86,31 +86,31 @@ export default function VorlagePage() {
 
         <div className="container mx-auto px-6 py-12 md:py-16 max-w-5xl">
           {/* Header */}
-          <header className="mb-12 pb-8 border-b border-border">
-            <div className="mb-6">
+          <header className="mb-8 md:mb-12 pb-6 md:pb-8 border-b border-border">
+            <div className="mb-4 md:mb-6">
               <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
                 {template.category}
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 leading-tight">
               {template.title}
             </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl">
+            <p className="text-base md:text-xl text-muted-foreground leading-relaxed max-w-3xl">
               {template.description}
             </p>
           </header>
 
           {/* Top CTA */}
-          <aside className="mb-12 bg-muted/50 border border-border rounded-lg p-6 md:p-8">
-            <h2 className="text-lg font-bold mb-2">
+          <aside className="mb-8 md:mb-12 bg-muted/50 border border-border rounded-lg p-4 md:p-8">
+            <h2 className="text-base md:text-lg font-bold mb-2">
               Mit Ing AI automatisch erstellen
             </h2>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-4">
               Nutze Ing AI, um deine {template.category === 'bachelorarbeit' ? 'Bachelorarbeit' : template.category} automatisch zu strukturieren und zu schreiben. KI-gestützte Vorschläge, Zitierverwaltung und mehr.
             </p>
             <Link
               href="/auth/signup"
-              className="inline-block px-6 py-3 bg-foreground text-background font-medium rounded hover:bg-foreground/90 transition-colors text-sm"
+              className="inline-block px-5 py-2.5 md:px-6 md:py-3 bg-foreground text-background font-medium rounded hover:bg-foreground/90 transition-colors text-xs md:text-sm"
             >
               Kostenlos starten
             </Link>
@@ -118,7 +118,7 @@ export default function VorlagePage() {
 
           {/* Content */}
           <article
-            className="template-content mb-16"
+            className="template-content mb-12 md:mb-16 prose prose-neutral dark:prose-invert prose-sm sm:prose-base md:prose-lg max-w-none"
             dangerouslySetInnerHTML={{ __html: template.content }}
           />
 
@@ -150,16 +150,16 @@ export default function VorlagePage() {
 
           {/* Bottom CTA */}
           <section className="pt-12 border-t border-border">
-            <div className="bg-muted/50 border border-border rounded-lg p-8 md:p-10 text-center">
-              <h3 className="text-2xl font-bold mb-3">
+            <div className="bg-muted/50 border border-border rounded-lg p-6 md:p-10 text-center">
+              <h3 className="text-xl md:text-2xl font-bold mb-3">
                 Bereit, deine {template.category === 'bachelorarbeit' ? 'Bachelorarbeit' : template.category} zu schreiben?
               </h3>
-              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              <p className="text-sm md:text-base text-muted-foreground mb-6 max-w-2xl mx-auto">
                 Starte jetzt kostenlos mit Ing AI und nutze KI-Unterstützung für bessere Texte.
               </p>
               <Link
                 href="/auth/signup"
-                className="inline-block px-8 py-4 bg-foreground text-background font-medium rounded hover:bg-foreground/90 transition-colors"
+                className="inline-block px-6 py-3 md:px-8 md:py-4 bg-foreground text-background font-medium rounded hover:bg-foreground/90 transition-colors text-sm md:text-base"
               >
                 Jetzt kostenlos starten
               </Link>

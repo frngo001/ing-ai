@@ -4,16 +4,16 @@ import SocialProof from '@/components/landing/SocialProof'
 import BentoGrid from '@/components/landing/BentoGrid'
 import dynamic from 'next/dynamic'
 
-const UseCases = dynamic(() => import('@/components/landing/UseCases').then(mod => mod.UseCases))
-const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks').then(mod => mod.HowItWorks))
-const Testimonials = dynamic(() => import('@/components/landing/Testimonials').then(mod => mod.Testimonials))
-const Pricing = dynamic(() => import('@/components/landing/Pricing'))
-const WhyIng = dynamic(() => import('@/components/landing/WhyIng'))
-const BlogSection = dynamic(() => import('@/components/landing/BlogSection').then(mod => mod.BlogSection))
-const TutorialsSection = dynamic(() => import('@/components/landing/TutorialsSection').then(mod => mod.TutorialsSection))
-const FAQ = dynamic(() => import('@/components/landing/FAQ').then(mod => mod.FAQ))
-const CTASection = dynamic(() => import('@/components/landing/CTASection').then(mod => mod.CTASection))
-const Footer = dynamic(() => import('@/components/landing/Footer').then(mod => mod.Footer))
+const UseCases = dynamic(() => import('@/components/landing/UseCases').then(mod => mod.UseCases), { loading: () => null })
+const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks').then(mod => mod.HowItWorks), { loading: () => null })
+const Testimonials = dynamic(() => import('@/components/landing/Testimonials').then(mod => mod.Testimonials), { loading: () => null })
+const Pricing = dynamic(() => import('@/components/landing/Pricing'), { loading: () => null })
+const WhyIng = dynamic(() => import('@/components/landing/WhyIng'), { loading: () => null })
+const BlogSection = dynamic(() => import('@/components/landing/BlogSection').then(mod => mod.BlogSection), { loading: () => null })
+const TutorialsSection = dynamic(() => import('@/components/landing/TutorialsSection').then(mod => mod.TutorialsSection), { loading: () => null })
+const FAQ = dynamic(() => import('@/components/landing/FAQ').then(mod => mod.FAQ), { loading: () => null })
+const CTASection = dynamic(() => import('@/components/landing/CTASection').then(mod => mod.CTASection), { loading: () => null })
+const Footer = dynamic(() => import('@/components/landing/Footer').then(mod => mod.Footer), { loading: () => null })
 
 export default function HomePage() {
   return (

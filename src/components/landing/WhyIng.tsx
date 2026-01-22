@@ -95,7 +95,7 @@ export default function WhyIng({
     if (!mounted) return null
 
     return (
-        <Section className={`py-12 md:py-16 relative overflow-hidden bg-background ${className || ''}`} id="why-ing">
+        <Section className={`py-8 md:py-16 relative overflow-hidden bg-muted dark:bg-neutral-900 ${className || ''}`} id="why-ing">
             {/* Background */}
             <div className="absolute inset-0 -z-10">
                 <Glow variant="center" className="opacity-15" />
@@ -105,35 +105,35 @@ export default function WhyIng({
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
                 {/* Header */}
-                <div className="text-center space-y-4 mb-12">
-                    <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                <div className="text-center space-y-3 mb-8 md:mb-12">
+                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         {t('landing.whyIng.badge')}
                     </Badge>
-                    <h2 className="max-w-[560px] mx-auto text-center text-2xl leading-tight font-semibold sm:text-3xl sm:leading-tight">
+                    <h2 className="max-w-[560px] mx-auto text-center text-lg leading-snug font-semibold sm:text-3xl sm:leading-tight px-4">
                         {finalTitle}
                     </h2>
-                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                    <p className="text-muted-foreground text-xs md:text-lg max-w-2xl mx-auto">
                         {finalDescription}
                     </p>
                 </div>
 
                 {/* Items Grid */}
                 {finalItems !== false && finalItems.length > 0 && (
-                    <div className="grid auto-rows-fr grid-cols-2 gap-0 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 max-w-6xl mx-auto">
+                    <div className="grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 max-w-6xl mx-auto">
                         {finalItems.map((item, index) => (
                             <Item
                                 key={index}
                                 className="group transition-all duration-300 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 dark:hover:border-primary/20 dark:hover:shadow-[0_0_20px_-12px_rgba(62,207,142,0.3)]"
                             >
-                                <ItemTitle className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/5 dark:group-hover:bg-primary/10 transition-colors">
+                                <ItemTitle className="flex items-center gap-2.5">
+                                    <div className="p-1 md:p-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/5 dark:group-hover:bg-primary/10 transition-colors">
                                         <div className="group-hover:scale-110 transition-transform duration-300">
                                             {item.icon}
                                         </div>
                                     </div>
-                                    <span className="group-hover:text-primary transition-colors duration-300">{item.title}</span>
+                                    <span className="text-xs md:text-base group-hover:text-primary transition-colors duration-300">{item.title}</span>
                                 </ItemTitle>
-                                <ItemDescription className="mt-2 text-muted-foreground group-hover:text-foreground/80 transition-colors">
+                                <ItemDescription className="mt-1.5 text-[11px] md:text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors">
                                     {item.description}
                                 </ItemDescription>
                             </Item>
