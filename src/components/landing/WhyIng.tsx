@@ -15,7 +15,6 @@ import { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import Glow from "@/components/ui/glow";
-import { Item, ItemDescription, ItemIcon, ItemTitle } from "@/components/ui/item";
 import { Section } from "@/components/ui/section";
 import { useLanguage } from "@/lib/i18n/use-language";
 
@@ -95,7 +94,7 @@ export default function WhyIng({
     if (!mounted) return null
 
     return (
-        <Section className={`py-8 md:py-16 relative overflow-hidden bg-muted dark:bg-neutral-900 ${className || ''}`} id="why-ing">
+        <Section className={`py-6 md:py-16 relative overflow-hidden bg-muted dark:bg-neutral-900 ${className || ''}`} id="why-ing">
             {/* Background */}
             <div className="absolute inset-0 -z-10">
                 <Glow variant="center" className="opacity-15" />
@@ -103,40 +102,54 @@ export default function WhyIng({
                 <div className="absolute bottom-0 left-1/4 w-[250px] h-[250px] bg-primary/5 rounded-full blur-[80px]" />
             </div>
 
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="container mx-auto px-3 sm:px-6 lg:px-8 relative">
                 {/* Header */}
-                <div className="text-center space-y-3 mb-8 md:mb-12">
+                <div className="text-center space-y-2 md:space-y-3 mb-5 md:mb-12">
                     <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         {t('landing.whyIng.badge')}
                     </Badge>
-                    <h2 className="max-w-[560px] mx-auto text-center text-lg leading-snug font-semibold sm:text-3xl sm:leading-tight px-4">
+                    <h2 className="max-w-[560px] mx-auto text-center text-base leading-snug font-semibold sm:text-3xl sm:leading-tight px-2">
                         {finalTitle}
                     </h2>
-                    <p className="text-muted-foreground text-xs md:text-lg max-w-2xl mx-auto">
+                    <p className="text-muted-foreground text-[11px] md:text-lg max-w-2xl mx-auto px-2">
                         {finalDescription}
                     </p>
                 </div>
 
-                {/* Items Grid */}
+                {/* Items Grid - 2 columns on mobile for compact layout */}
                 {finalItems !== false && finalItems.length > 0 && (
-                    <div className="grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-3 lg:gap-4 max-w-6xl mx-auto">
                         {finalItems.map((item, index) => (
-                            <Item
+                            <div
                                 key={index}
-                                className="group transition-all duration-300 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 dark:hover:border-primary/20 dark:hover:shadow-[0_0_20px_-12px_rgba(62,207,142,0.3)]"
+                                className="group p-2.5 sm:p-4 rounded-lg border border-transparent bg-background/50 dark:bg-neutral-800/30 
+                                    transition-all duration-300 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 
+                                    dark:hover:border-primary/20 dark:hover:shadow-[0_0_20px_-12px_rgba(62,207,142,0.3)]
+                                    backdrop-blur-sm"
                             >
-                                <ItemTitle className="flex items-center gap-2.5">
-                                    <div className="p-1 md:p-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/5 dark:group-hover:bg-primary/10 transition-colors">
-                                        <div className="group-hover:scale-110 transition-transform duration-300">
-                                            {item.icon}
+                                {/* Mobile: Compact stacked layout, Desktop: More spacious */}
+                                <div className="flex flex-col gap-1.5 sm:gap-3">
+                                    {/* Icon + Title */}
+                                    <div className="flex items-start gap-2">
+                                        <div className="shrink-0 p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-primary/10 text-primary dark:bg-primary/5 dark:group-hover:bg-primary/10 transition-colors">
+                                            <div className="group-hover:scale-110 transition-transform duration-300 [&>svg]:size-3.5 sm:[&>svg]:size-5">
+                                                {item.icon}
+                                            </div>
                                         </div>
+                                        <h3 className="text-[10px] sm:text-sm font-semibold leading-tight group-hover:text-primary transition-colors duration-300 pt-0.5">
+                                            {item.title}
+                                        </h3>
                                     </div>
-                                    <span className="text-xs md:text-base group-hover:text-primary transition-colors duration-300">{item.title}</span>
-                                </ItemTitle>
-                                <ItemDescription className="mt-1.5 text-[11px] md:text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors">
-                                    {item.description}
-                                </ItemDescription>
-                            </Item>
+                                    {/* Description - Hidden on very small screens, shown on sm+ */}
+                                    <p className="hidden sm:block text-[11px] sm:text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors leading-relaxed">
+                                        {item.description}
+                                    </p>
+                                    {/* Truncated description on mobile */}
+                                    <p className="sm:hidden text-[9px] text-muted-foreground group-hover:text-foreground/80 transition-colors leading-snug line-clamp-2">
+                                        {item.description}
+                                    </p>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}

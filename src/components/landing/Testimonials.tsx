@@ -157,7 +157,7 @@ export function Testimonials() {
 
                     <div className="flex justify-center mt-8 sm:mt-10 md:mt-12 relative z-20">
                         <Link href={ctaHref}>
-                            <MorphyButton size="lg" className="text-sm sm:text-base">
+                            <MorphyButton size="lg" className="text-sm sm:text-base text-black">
                                 {t('landing.testimonials.cta')}
                             </MorphyButton>
                         </Link>

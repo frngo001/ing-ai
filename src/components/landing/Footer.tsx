@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { FooterThemeToggle } from "@/components/footer-theme-toggle"
 import { Twitter, Github, Linkedin, Youtube } from "lucide-react"
-import { MovingLinesBackground } from "@/components/ui/movinglines-background"
+import { DottedGlowBackground } from "@/components/ui/dotted-glow-background"
 import { siteConfig } from "@/config/site"
 import { useLanguage } from "@/lib/i18n/use-language"
 
@@ -66,8 +66,22 @@ export function Footer() {
     if (!mounted) return null
 
     return (
-        <footer className="border-t border-border bg-background/50 backdrop-blur-xl">
-            <MovingLinesBackground className="pt-8 pb-6 md:pt-16 md:pb-12">
+        <footer className="border-t border-border bg-background/50 backdrop-blur-xl relative overflow-hidden">
+            {/* Dotted Glow Background */}
+            <DottedGlowBackground
+                className="z-0"
+                gap={16}
+                radius={1.5}
+                color="rgba(100, 100, 120, 0.4)"
+                darkColor="rgba(200, 200, 220, 0.3)"
+                glowColor="rgba(139, 92, 246, 0.8)"
+                darkGlowColor="rgba(139, 92, 246, 0.9)"
+                opacity={0.7}
+                speedMin={0.3}
+                speedMax={0.8}
+                speedScale={0.8}
+            />
+            <div className="relative z-10 pt-8 pb-6 md:pt-16 md:pb-12">
                 <div className="container px-4 mx-auto">
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-8 md:gap-8 mb-10 md:mb-12">
                         {/* Brand */}
@@ -158,6 +172,17 @@ export function Footer() {
                         </div>
                     </div>
 
+                    {/* Big Brand Text */}
+                    <div className="w-full flex justify-center items-center -my-4 md:-my-8 py-4 md:py-8 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+                        <h1 className="text-[24vw] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground/10 via-foreground to-transparent opacity-50 dark:opacity-70 mix-blend-overlay blur-[1px]"
+                            style={{
+                                maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+                                WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)'
+                            }}>
+                            ING AI
+                        </h1>
+                    </div>
+
                     {/* Bottom Bar */}
                     <div className="border-t border-border pt-6 md:pt-8 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4 text-[10px] md:text-sm text-muted-foreground">
                         <p>© {new Date().getFullYear()} {siteConfig.name}. {t('landing.footer.copyright')}</p>
@@ -172,7 +197,8 @@ export function Footer() {
                         </div>
                     </div>
                 </div>
-            </MovingLinesBackground>
+            </div>
         </footer>
     )
 }
+
