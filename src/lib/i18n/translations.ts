@@ -1,8 +1,8 @@
 export const translations = {
     en: {
         metadata: {
-            title: 'Ing AI - AI-Powered Writing Assistant',
-            description: 'Ing AI is your AI co-pilot for academic writing and research. Get intelligent suggestions, manage citations, and write with confidence.',
+            title: 'Ing AI - AI Writing Assistant for Thesis, Research Papers & Academic Writing',
+            description: 'Write your thesis, research paper, or academic essay with AI assistance. Automatic citation management, literature research & plagiarism check. Start free!',
         },
         common: {
             save: 'Save',
@@ -6036,8 +6036,8 @@ export const translations = {
     },
     de: {
         metadata: {
-            title: 'Ing AI - KI-gestützter Schreibassistent',
-            description: 'Ing AI ist dein KI-Co-Pilot für wissenschaftliches Schreiben und Forschung. Erhalte intelligente Vorschläge, verwalte Zitate und schreibe mit Selbstvertrauen.',
+            title: 'Ing AI - KI Schreibassistent für Bachelorarbeit & Wissenschaftliches Schreiben',
+            description: 'Schreibe deine Bachelorarbeit, Hausarbeit oder wissenschaftliche Arbeit mit KI-Unterstützung. Automatische Zitiervorschläge, Literaturrecherche & Plagiatsprüfung. Kostenlos starten!',
         },
         common: {
             save: 'Speichern',

@@ -14,6 +14,7 @@ import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/scr
 import { MorphyButton } from "@/components/ui/morphy-button";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/use-language";
+import { FAQSchema } from "@/components/seo/faq-schema";
 
 export function FAQ() {
     const { t, language } = useLanguage()
@@ -54,6 +55,9 @@ export function FAQ() {
 
     return (
         <section id="faq" className="min-h-screen flex items-center justify-center px-6 py-12 bg-muted/40 relative overflow-hidden">
+            {/* SEO: FAQPage Schema */}
+            <FAQSchema />
+
             {/* Background decoration */}
             <div className="absolute inset-0 -z-10">
                 <Glow variant="above" className="opacity-15 left-1/2 -translate-x-1/2" />

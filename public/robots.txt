@@ -1,3 +1,20 @@
 User-agent: *
 Allow: /
+
+# Block private/authenticated routes from search engines
+Disallow: /api/
+Disallow: /auth/
+Disallow: /editor/
+Disallow: /settings/
+Disallow: /shared/
+
+# Allow public routes explicitly
+Allow: /about
+Allow: /blog
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /changelog
+
+# Sitemap
 Sitemap: https://ingai-editor.vercel.app/sitemap.xml

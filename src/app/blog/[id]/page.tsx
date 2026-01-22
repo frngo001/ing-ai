@@ -13,6 +13,9 @@ import { Badge } from '@/components/ui/badge'
 import { getBlogPost, formatBlogDate } from '@/lib/blog/data'
 import { BlogTableOfContents } from '@/components/blog/blog-table-of-contents'
 import { useLanguage } from '@/lib/i18n/use-language'
+import { BlogPostSchema } from '@/components/seo/blog-post-schema'
+import { BreadcrumbSchema } from '@/components/seo/breadcrumb-schema'
+import { siteConfig } from '@/config/site'
 
 export default function BlogPostPage() {
   const params = useParams()
@@ -89,6 +92,16 @@ export default function BlogPostPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {/* SEO: BlogPosting Schema */}
+      <BlogPostSchema post={blogContent} />
+
+      {/* SEO: Breadcrumb Schema */}
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: siteConfig.url },
+        { name: 'Blog', url: `${siteConfig.url}/blog` },
+        { name: blogContent.title, url: `${siteConfig.url}/blog/${blogContent.id}` }
+      ]} />
+
       <Navbar />
       <div className="flex-1 flex relative" style={{ marginTop: 0 }}>
         {/* Blog Content - Left Column */}

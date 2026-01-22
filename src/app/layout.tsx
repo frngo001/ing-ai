@@ -14,11 +14,13 @@ import { StructuredData } from '@/components/seo/structured-data'
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
+  display: 'swap',
 })
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+  display: 'swap',
 })
 
 /**
@@ -41,15 +43,41 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t.title,
     description: t.description,
     keywords: [
+      // Primary Keywords (DE)
+      'KI Schreibassistent',
+      'Bachelorarbeit schreiben',
+      'Hausarbeit schreiben',
+      'Wissenschaftliches Schreiben',
+      'KI Schreiben',
+      'Akademisches Schreiben KI',
+
+      // Primary Keywords (EN)
+      'AI Writing Assistant',
+      'Academic Writing AI',
+      'Thesis Writing Tool',
+      'Research Paper AI',
+
+      // Feature Keywords
+      'Zitierverwaltung',
+      'Citation Management',
+      'Literaturrecherche',
+      'Literature Research',
+      'Plagiatsprüfung',
+      'Plagiarism Check',
+
+      // Long-Tail Keywords (DE)
+      'Bachelorarbeit mit KI schreiben',
+      'Hausarbeit KI Hilfe',
+      'Wissenschaftliche Texte verbessern',
+      'Automatische Quellenangabe',
+      'KI Tool für akademisches Schreiben',
+
+      // Product & Brand
+      'Ing AI',
       'AI Editor',
       'Text Editor',
-      'KI Schreiben',
-      'Ing AI',
-      'Academic Writing',
-      'Citation Management',
-      'AI Writing Assistant',
-      'Research Tool',
       'Document Editor',
+      'Research Tool',
     ],
     robots: {
       index: true,
@@ -86,6 +114,16 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     alternates: {
       canonical: siteConfig.url,
+      languages: {
+        'de': `${siteConfig.url}`,
+        'en': `${siteConfig.url}?lang=en`,
+        'es': `${siteConfig.url}?lang=es`,
+        'fr': `${siteConfig.url}?lang=fr`,
+        'it': `${siteConfig.url}?lang=it`,
+        'pt': `${siteConfig.url}?lang=pt`,
+        'nl': `${siteConfig.url}?lang=nl`,
+        'x-default': `${siteConfig.url}`,
+      },
     },
     icons: {
       icon: '/logos/logosApp/ing_AI.png',

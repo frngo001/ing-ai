@@ -121,7 +121,7 @@ export default function Hero() {
                 <Screenshot
                   srcLight="/dashboard-light-1.png"
                   srcDark="/dashboard-dark-1.png"
-                  alt="Ing AI Editor Dashboard"
+                  alt="Ing AI Texteditor - KI-gestützte Textverarbeitung für akademisches Schreiben mit Zitierverwaltung"
                   width={1248}
                   height={1065}
                   sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
@@ -138,7 +138,7 @@ export default function Hero() {
                 <Screenshot
                   srcLight="/dashboard-light-2.png"
                   srcDark="/dashboard-dark-2.png"
-                  alt="Ing AI Dashboard 2"
+                  alt="Ing AI Literaturverwaltung - Automatische Quellenangaben und Zitierstile (APA, MLA, Chicago)"
                   width={1248}
                   height={1065}
                   sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
@@ -155,7 +155,7 @@ export default function Hero() {
                 <Screenshot
                   srcLight="/dashboard-light-3.png"
                   srcDark="/dashboard-dark-3.png"
-                  alt="Ing AI Dashboard 3"
+                  alt="Ing AI Schreibassistent - KI-gestützte Textvorschläge für Bachelorarbeit und wissenschaftliche Arbeiten"
                   width={1248}
                   height={1065}
                   sizes="(max-width: 768px) 90vw, (max-width: 1200px) 75vw, 70vw"
