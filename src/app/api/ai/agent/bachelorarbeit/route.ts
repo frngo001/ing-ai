@@ -7,6 +7,10 @@ import { getLanguageForServer } from '@/lib/i18n/server-language'
 import { createAgent, runAgentStream } from '@/lib/ai/create-agent'
 import { createAgentStreamHandler, createStreamResponse } from '@/lib/ai/agent-stream-handler'
 import { BACHELORARBEIT_AGENT_PROMPT } from './prompts'
+import { logAIUsage, updateAIUsageTokens, logAgentExecution } from '@/lib/monitoring/ai-usage-tracker'
+import { ensureActiveSession, trackEndpointUsage } from '@/lib/monitoring/session-tracker'
+import { updateTodayStats } from '@/lib/monitoring/daily-stats-aggregator'
+import { DEEPSEEK_CHAT_MODEL } from '@/lib/ai/deepseek'
 
 export const runtime = 'nodejs'
 
@@ -20,6 +24,7 @@ const queryLanguage = async () => {
 
 export async function POST(req: NextRequest) {
   const requestStartTime = Date.now()
+  let usageLogId: string | null = null
 
   try {
     const supabase = await createClient()
@@ -84,6 +89,27 @@ export async function POST(req: NextRequest) {
       devLog('[BACHELORARBEIT AGENT] Editor-Kontext hinzugefügt:', { wordCount })
     }
 
+    // Start usage logging
+    usageLogId = await logAIUsage({
+      userId: user.id,
+      endpoint: 'agent/bachelorarbeit',
+      model: DEEPSEEK_CHAT_MODEL,
+      status: 'success',
+      metadata: {
+        thema,
+        arbeitType: agentState.arbeitType,
+        currentStep: agentState.currentStep,
+        hasFiles: fileContents?.length > 0,
+        documentContextEnabled,
+      },
+    })
+
+    // Track session activity
+    const sessionId = await ensureActiveSession(user.id)
+    if (sessionId) {
+      await trackEndpointUsage(sessionId, 'agent/bachelorarbeit')
+    }
+
     // Agent erstellen
     const agent = createAgent('bachelorarbeit', {
       userId: user.id,
@@ -97,10 +123,57 @@ export async function POST(req: NextRequest) {
     // Agent Stream starten
     const agentStream = await runAgentStream(agent, messages)
 
+    // Track tool calls and token usage
+    let totalInputTokens = 0
+    let totalOutputTokens = 0
+    const toolCallsLog: Array<{ toolName: string; timestamp: number }> = []
+
     // Stream Response erstellen
     const customStream = createAgentStreamHandler(agentStream, {
       onToolCall: (toolName, input) => {
         devLog(`[BACHELORARBEIT AGENT] Tool called: ${toolName}`)
+        toolCallsLog.push({ toolName, timestamp: Date.now() })
+      },
+      onStepFinish: (step: any) => {
+        // Accumulate token usage from each step
+        if (step.usage) {
+          totalInputTokens += step.usage.inputTokens || 0
+          totalOutputTokens += step.usage.outputTokens || 0
+        }
+      },
+      onFinish: async () => {
+        const duration = Date.now() - requestStartTime
+
+        // Update token counts
+        if (usageLogId && (totalInputTokens > 0 || totalOutputTokens > 0)) {
+          await updateAIUsageTokens(usageLogId, {
+            inputTokens: totalInputTokens,
+            outputTokens: totalOutputTokens,
+          })
+
+          // Update duration
+          const supabase = await createClient()
+          await supabase
+            .from('ai_usage_logs')
+            .update({ duration_ms: duration })
+            .eq('id', usageLogId)
+        }
+
+        // Log agent execution details
+        if (usageLogId && toolCallsLog.length > 0) {
+          await logAgentExecution({
+            usageLogId,
+            userId: user.id,
+            agentType: 'bachelorarbeit',
+            toolCalls: toolCallsLog,
+            stepDurationMs: duration,
+          })
+        }
+
+        // Update daily stats (async, non-blocking)
+        updateTodayStats(user.id).catch((err) => {
+          devError('[Bachelorarbeit Agent] Failed to update daily stats:', err)
+        })
       },
       onError: (error) => {
         devError('[BACHELORARBEIT AGENT] Error:', error.message)
@@ -111,6 +184,26 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const requestTime = Date.now() - requestStartTime
     devError('❌ [BACHELORARBEIT AGENT] Error nach', requestTime + 'ms:', error)
+
+    // Log error (try to get user.id if available)
+    try {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        await logAIUsage({
+          userId: user.id,
+          endpoint: 'agent/bachelorarbeit',
+          model: DEEPSEEK_CHAT_MODEL,
+          status: 'error',
+          error: error instanceof Error ? error.message : String(error),
+          durationMs: requestTime,
+        })
+      }
+    } catch (logError) {
+      devError('[BACHELORARBEIT AGENT] Failed to log error:', logError)
+    }
+
     return NextResponse.json({ error: 'Failed to process agent request' }, { status: 500 })
   }
 }

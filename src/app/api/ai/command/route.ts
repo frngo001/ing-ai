@@ -18,7 +18,11 @@ import { z } from 'zod';
 import { BaseEditorKit } from '@/components/editor/editor-base-kit';
 import { DEEPSEEK_CHAT_MODEL, deepseek } from '@/lib/ai/deepseek';
 import { markdownJoinerTransform } from '@/lib/markdown-joiner-transform';
-import { devInfo } from '@/lib/utils/logger';
+import { devInfo, devError } from '@/lib/utils/logger';
+import { createClient } from '@/lib/supabase/server';
+import { logAIUsage, updateAIUsageTokens } from '@/lib/monitoring/ai-usage-tracker';
+import { ensureActiveSession, trackEndpointUsage } from '@/lib/monitoring/session-tracker';
+import { updateTodayStats } from '@/lib/monitoring/daily-stats-aggregator';
 
 import {
   getChooseToolPrompt,
@@ -46,6 +50,10 @@ const isRateLimited = (key: string) => {
 };
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now()
+  let usageLogId: string | null = null
+  let userId: string | null = null
+
   const {
     apiKey: key,
     ctx,
@@ -63,6 +71,16 @@ export async function POST(req: NextRequest) {
       { error: 'Zu viele Anfragen. Bitte kurz warten.' },
       { status: 429 }
     );
+  }
+
+  // Get authenticated user
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    userId = user?.id || null
+  } catch (error) {
+    // Auth optional for command endpoint
+    devError('[Command] Auth check failed:', error)
   }
 
   const editor = createSlateEditor({
@@ -95,19 +113,40 @@ export async function POST(req: NextRequest) {
   });
 
   try {
+    // Start usage logging
+    usageLogId = await logAIUsage({
+      userId,
+      endpoint: 'command',
+      model: modelName,
+      status: 'success',
+      metadata: {
+        toolName: toolNameParam,
+        isSelecting,
+        messagesCount: messagesRaw.length,
+      },
+    })
+
+    // Track session activity
+    if (userId) {
+      const sessionId = await ensureActiveSession(userId)
+      if (sessionId) {
+        await trackEndpointUsage(sessionId, 'command')
+      }
+    }
+
     const stream = createUIMessageStream<ChatMessage>({
       execute: async ({ writer }) => {
         let toolName = toolNameParam;
 
-    // Default: wenn kein Tool gewählt wurde, wähle basierend auf Auswahl
-    if (!toolName) {
-      const hasSelection = editor.api.isExpanded();
-      toolName = hasSelection ? 'edit' : 'generate';
-      writer.write({
-        data: toolName as ToolName,
-        type: 'data-toolName',
-      });
-    }
+        // Default: wenn kein Tool gewählt wurde, wähle basierend auf Auswahl
+        if (!toolName) {
+          const hasSelection = editor.api.isExpanded();
+          toolName = hasSelection ? 'edit' : 'generate';
+          writer.write({
+            data: toolName as ToolName,
+            type: 'data-toolName',
+          });
+        }
 
         const stream = streamText({
           experimental_transform: markdownJoinerTransform(),
@@ -119,6 +158,31 @@ export async function POST(req: NextRequest) {
               model: getModel(),
               writer,
             }),
+          },
+          onFinish: async (completion) => {
+            const duration = Date.now() - startTime
+
+            // Update token counts if available
+            if (usageLogId && completion.usage) {
+              await updateAIUsageTokens(usageLogId, {
+                inputTokens: completion.usage.inputTokens ?? 0,
+                outputTokens: completion.usage.outputTokens ?? 0,
+              })
+
+              // Update duration
+              const supabase = await createClient()
+              await supabase
+                .from('ai_usage_logs')
+                .update({ duration_ms: duration })
+                .eq('id', usageLogId)
+            }
+
+            // Update daily stats (async, non-blocking)
+            if (userId) {
+              updateTodayStats(userId).catch((err) => {
+                devError('[Command] Failed to update daily stats:', err)
+              })
+            }
           },
           prepareStep: async (step) => {
             if (toolName === 'comment') {
@@ -171,7 +235,22 @@ export async function POST(req: NextRequest) {
     });
 
     return createUIMessageStreamResponse({ stream });
-  } catch {
+  } catch (error) {
+    const duration = Date.now() - startTime
+    devError('[Command] Error:', error)
+
+    // Log error
+    if (userId) {
+      await logAIUsage({
+        userId,
+        endpoint: 'command',
+        model: modelName,
+        status: 'error',
+        error: error instanceof Error ? error.message : String(error),
+        durationMs: duration,
+      })
+    }
+
     return NextResponse.json(
       { error: 'Failed to process AI request' },
       { status: 500 }

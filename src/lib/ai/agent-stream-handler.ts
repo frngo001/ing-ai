@@ -5,6 +5,7 @@ export interface StreamHandlerOptions {
   onToolCall?: (toolName: string, input: Record<string, unknown>) => void
   onToolResult?: (toolName: string, output: unknown) => void
   onText?: (text: string) => void
+  onStepFinish?: (step: any) => void
   onError?: (error: Error) => void
   onFinish?: () => void
 }
@@ -132,6 +133,9 @@ export function createAgentStreamHandler(
               options.onText?.(textContent)
               controller.enqueue(encoder.encode(textContent))
             }
+          } else if (eventType === 'step-finish') {
+            // Call onStepFinish with the step event
+            options.onStepFinish?.(event)
           } else if (eventType === 'finish') {
             options.onFinish?.()
           } else if (eventType === 'error') {
