@@ -1,0 +1,276 @@
+/* Enhanced Glossary Content Styling */
+
+.glossar-content {
+  line-height: 1.8;
+}
+
+/* Headings */
+.glossar-content h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid hsl(var(--border));
+  letter-spacing: -0.025em;
+}
+
+.glossar-content h3 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: hsl(var(--foreground));
+}
+
+.glossar-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: hsl(var(--foreground));
+}
+
+/* Paragraphs */
+.glossar-content p {
+  margin-bottom: 1.25rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Lists */
+.glossar-content ul,
+.glossar-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 0;
+}
+
+.glossar-content ul {
+  list-style-type: none;
+}
+
+.glossar-content ul li {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.7;
+}
+
+.glossar-content ul li::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 0.65rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  background: hsl(var(--foreground) / 0.4);
+  border-radius: 50%;
+}
+
+.glossar-content ol {
+  counter-reset: item;
+}
+
+.glossar-content ol li {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  counter-increment: item;
+}
+
+.glossar-content ol li::before {
+  content: counter(item) ".";
+  position: absolute;
+  left: 0;
+  font-weight: 600;
+  color: hsl(var(--foreground) / 0.6);
+}
+
+/* Nested lists */
+.glossar-content ul ul,
+.glossar-content ol ul,
+.glossar-content ul ol,
+.glossar-content ol ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.glossar-content ul ul li::before {
+  width: 0.25rem;
+  height: 0.25rem;
+  top: 0.7rem;
+  left: 0.625rem;
+}
+
+/* Strong/Bold */
+.glossar-content strong {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+/* Emphasis */
+.glossar-content em {
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Code */
+.glossar-content code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.9em;
+  background: hsl(var(--muted));
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  border: 1px solid hsl(var(--border));
+}
+
+.glossar-content pre {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+.glossar-content pre code {
+  background: transparent;
+  padding: 0;
+  border: none;
+  font-size: 0.875rem;
+}
+
+/* Blockquotes */
+.glossar-content blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background: hsl(var(--muted) / 0.5);
+  border-left: 3px solid hsl(var(--foreground) / 0.3);
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Links */
+.glossar-content a {
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--border));
+  text-underline-offset: 2px;
+  transition: all 0.2s;
+}
+
+.glossar-content a:hover {
+  text-decoration-color: hsl(var(--foreground));
+}
+
+/* Special list styling for items with strong tags */
+.glossar-content li > strong:first-child {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Tables */
+.glossar-content table {
+  width: 100%;
+  margin: 2rem 0;
+  border-collapse: collapse;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  overflow: hidden;
+  font-size: 0.9375rem;
+}
+
+.glossar-content thead {
+  background: hsl(var(--muted));
+}
+
+.glossar-content th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  border-bottom: 2px solid hsl(var(--border));
+  border-right: 1px solid hsl(var(--border) / 0.5);
+  letter-spacing: -0.01em;
+}
+
+.glossar-content th:last-child {
+  border-right: none;
+}
+
+.glossar-content tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.glossar-content tbody tr:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+.glossar-content tbody tr:nth-child(even) {
+  background: hsl(var(--muted) / 0.2);
+}
+
+.glossar-content tbody tr:nth-child(even):hover {
+  background: hsl(var(--muted) / 0.6);
+}
+
+.glossar-content td {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  border-right: 1px solid hsl(var(--border) / 0.3);
+  vertical-align: top;
+  color: hsl(var(--muted-foreground));
+}
+
+.glossar-content td:last-child {
+  border-right: none;
+}
+
+.glossar-content tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+  .glossar-content table {
+    font-size: 0.875rem;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .glossar-content th,
+  .glossar-content td {
+    padding: 0.75rem 1rem;
+    min-width: 120px;
+  }
+
+  /* First column sticky on mobile for better readability */
+  .glossar-content th:first-child,
+  .glossar-content td:first-child {
+    position: sticky;
+    left: 0;
+    background: hsl(var(--card));
+    z-index: 1;
+    min-width: 140px;
+  }
+
+  .glossar-content th:first-child {
+    background: hsl(var(--muted));
+  }
+}
+
+/* Enhanced table styling */
+.glossar-content table thead th {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.glossar-content table tbody td:first-child {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}

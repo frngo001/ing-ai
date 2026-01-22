@@ -1,0 +1,402 @@
+/* Enhanced Citation Styles Content Styling */
+
+.citation-content {
+  line-height: 1.8;
+}
+
+/* Headings */
+.citation-content h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid hsl(var(--border));
+  letter-spacing: -0.025em;
+}
+
+.citation-content h3 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: hsl(var(--foreground));
+}
+
+.citation-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: hsl(var(--foreground));
+}
+
+/* Paragraphs */
+.citation-content p {
+  margin-bottom: 1.25rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Lists */
+.citation-content ul,
+.citation-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 0;
+}
+
+.citation-content ul {
+  list-style-type: none;
+}
+
+.citation-content ul li {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.7;
+}
+
+.citation-content ul li::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 0.65rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  background: hsl(var(--foreground) / 0.4);
+  border-radius: 50%;
+}
+
+.citation-content ol {
+  counter-reset: item;
+}
+
+.citation-content ol li {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  counter-increment: item;
+}
+
+.citation-content ol li::before {
+  content: counter(item) ".";
+  position: absolute;
+  left: 0;
+  font-weight: 600;
+  color: hsl(var(--foreground) / 0.6);
+}
+
+/* Nested lists */
+.citation-content ul ul,
+.citation-content ol ul,
+.citation-content ul ol,
+.citation-content ol ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.citation-content ul ul li::before {
+  width: 0.25rem;
+  height: 0.25rem;
+  top: 0.7rem;
+  left: 0.625rem;
+}
+
+/* Strong/Bold */
+.citation-content strong {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+/* Emphasis */
+.citation-content em {
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Code - Important for citation examples */
+.citation-content code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875em;
+  background: hsl(var(--muted));
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.citation-content pre {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+.citation-content pre code {
+  background: transparent;
+  padding: 0;
+  border: none;
+  font-size: 0.875rem;
+}
+
+/* Blockquotes */
+.citation-content blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background: hsl(var(--muted) / 0.5);
+  border-left: 3px solid hsl(var(--foreground) / 0.3);
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Links */
+.citation-content a {
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--border));
+  text-underline-offset: 2px;
+  transition: all 0.2s;
+}
+
+.citation-content a:hover {
+  text-decoration-color: hsl(var(--foreground));
+}
+
+/* Special list styling for citation rules */
+.citation-content li > strong:first-child {
+  display: inline;
+  margin-right: 0.5rem;
+}
+
+/* Tables */
+.citation-content table {
+  width: 100%;
+  margin: 2rem 0;
+  border-collapse: collapse;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  overflow: hidden;
+  font-size: 0.9375rem;
+}
+
+.citation-content thead {
+  background: hsl(var(--muted));
+}
+
+.citation-content th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  border-bottom: 2px solid hsl(var(--border));
+  border-right: 1px solid hsl(var(--border) / 0.5);
+  letter-spacing: -0.01em;
+}
+
+.citation-content th:last-child {
+  border-right: none;
+}
+
+.citation-content tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.citation-content tbody tr:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+.citation-content tbody tr:nth-child(even) {
+  background: hsl(var(--muted) / 0.2);
+}
+
+.citation-content tbody tr:nth-child(even):hover {
+  background: hsl(var(--muted) / 0.6);
+}
+
+.citation-content td {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  border-right: 1px solid hsl(var(--border) / 0.3);
+  vertical-align: top;
+  color: hsl(var(--muted-foreground));
+}
+
+.citation-content td:last-child {
+  border-right: none;
+}
+
+.citation-content tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.citation-content td code {
+  font-size: 0.8125rem;
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+  .citation-content table {
+    font-size: 0.875rem;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .citation-content th,
+  .citation-content td {
+    padding: 0.75rem 1rem;
+    min-width: 120px;
+  }
+
+  /* First column sticky on mobile for better readability */
+  .citation-content th:first-child,
+  .citation-content td:first-child {
+    position: sticky;
+    left: 0;
+    background: hsl(var(--card));
+    z-index: 1;
+    min-width: 140px;
+  }
+
+  .citation-content th:first-child {
+    background: hsl(var(--muted));
+  }
+}
+
+/* Enhanced comparison table styling */
+.citation-content table thead th {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.citation-content table tbody td:first-child {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+/* Special styling for code/examples in tables */
+.citation-content table td code {
+  display: inline-block;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Special formatting for citation examples */
+.citation-content p:has(> code:only-child) {
+  background: hsl(var(--muted) / 0.5);
+  padding: 0.75rem 1rem;
+  border-left: 2px solid hsl(var(--border));
+  margin: 1rem 0;
+}
+
+/* Global table styling for all tables on citation style pages */
+main table {
+  width: 100%;
+  margin: 2rem 0;
+  border-collapse: collapse;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  overflow: hidden;
+  font-size: 0.9375rem;
+}
+
+main thead {
+  background: hsl(var(--muted));
+}
+
+main th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  border-bottom: 2px solid hsl(var(--border));
+  border-right: 1px solid hsl(var(--border) / 0.5);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+main th:last-child {
+  border-right: none;
+}
+
+main tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+main tbody tr:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+main tbody tr:nth-child(even) {
+  background: hsl(var(--muted) / 0.2);
+}
+
+main tbody tr:nth-child(even):hover {
+  background: hsl(var(--muted) / 0.6);
+}
+
+main td {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  border-right: 1px solid hsl(var(--border) / 0.3);
+  vertical-align: top;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.6;
+}
+
+main td:last-child {
+  border-right: none;
+}
+
+main tbody tr:last-child td {
+  border-bottom: none;
+}
+
+main tbody td:first-child {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+main td code {
+  font-size: 0.8125rem;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+  main table {
+    font-size: 0.875rem;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  main th,
+  main td {
+    padding: 0.75rem 1rem;
+    min-width: 120px;
+  }
+
+  main th:first-child,
+  main td:first-child {
+    position: sticky;
+    left: 0;
+    background: hsl(var(--card));
+    z-index: 1;
+    min-width: 140px;
+  }
+
+  main th:first-child {
+    background: hsl(var(--muted));
+  }
+}

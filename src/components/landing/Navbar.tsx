@@ -116,6 +116,9 @@ function MobileDrawer() {
       label: t('landing.navbar.resources.label'),
       links: [
         { title: t('landing.navbar.resources.links.blog.title'), href: "/blog" },
+        { title: t('landing.navbar.resources.links.templates.title'), href: "/vorlagen" },
+        { title: t('landing.navbar.resources.links.glossary.title'), href: "/glossar" },
+        { title: t('landing.navbar.resources.links.citationStyles.title'), href: "/zitationsstile" },
         { title: t('landing.navbar.resources.links.tutorials.title'), href: "/#tutorials" },
         { title: t('landing.navbar.resources.links.changelog.title'), href: "/changelog" },
         { title: t('landing.navbar.resources.links.testimonials.title'), href: "/#testimonials" },
@@ -162,102 +165,102 @@ function MobileDrawer() {
           </div>
 
           <div className="flex flex-1 flex-col overflow-hidden">
-              <div className="flex-1 overflow-y-auto px-6">
-                <nav className="flex flex-col py-8">
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="produkt" className="border-none">
-                      <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                        {navItems.produkt.label}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="flex flex-col gap-3 pl-4 pt-2">
-                          {navItems.produkt.links.map((link) => (
-                            <Link
-                              key={link.title}
-                              href={link.href}
-                              onClick={() => setOpen(false)}
-                              className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                            >
-                              {link.title}
-                            </Link>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+            <div className="flex-1 overflow-y-auto px-6">
+              <nav className="flex flex-col py-8">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="produkt" className="border-none">
+                    <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                      {navItems.produkt.label}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex flex-col gap-3 pl-4 pt-2">
+                        {navItems.produkt.links.map((link) => (
+                          <Link
+                            key={link.title}
+                            href={link.href}
+                            onClick={() => setOpen(false)}
+                            className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                          >
+                            {link.title}
+                          </Link>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                    <AccordionItem value="features" className="border-none">
-                      <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                        {navItems.features.label}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="flex flex-col gap-3 pl-4 pt-2">
-                          {navItems.features.links.map((link) => (
-                            <Link
-                              key={link.title}
-                              href={link.href}
-                              onClick={() => setOpen(false)}
-                              className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                            >
-                              {link.title}
-                            </Link>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                  <AccordionItem value="features" className="border-none">
+                    <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                      {navItems.features.label}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex flex-col gap-3 pl-4 pt-2">
+                        {navItems.features.links.map((link) => (
+                          <Link
+                            key={link.title}
+                            href={link.href}
+                            onClick={() => setOpen(false)}
+                            className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                          >
+                            {link.title}
+                          </Link>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                    <AccordionItem value="ressourcen" className="border-none">
-                      <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
-                        {navItems.ressourcen.label}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="flex flex-col gap-3 pl-4 pt-2">
-                          {navItems.ressourcen.links.map((link) => (
-                            <Link
-                              key={link.title}
-                              href={link.href}
-                              onClick={() => setOpen(false)}
-                              className="text-base text-muted-foreground transition-colors hover:text-foreground"
-                            >
-                              {link.title}
-                            </Link>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                  <AccordionItem value="ressourcen" className="border-none">
+                    <AccordionTrigger className="py-2 text-lg font-medium hover:no-underline">
+                      {navItems.ressourcen.label}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex flex-col gap-3 pl-4 pt-2">
+                        {navItems.ressourcen.links.map((link) => (
+                          <Link
+                            key={link.title}
+                            href={link.href}
+                            onClick={() => setOpen(false)}
+                            className="text-base text-muted-foreground transition-colors hover:text-foreground"
+                          >
+                            {link.title}
+                          </Link>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
 
-                  <div className="flex flex-col gap-4 border-t pt-6">
-                    {navItems.directLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setOpen(false)}
-                        className="text-lg font-medium transition-colors hover:text-primary"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                </nav>
-              </div>
-
-              <div className="flex-shrink-0 border-t bg-muted/30 p-6 backdrop-blur-lg">
-                <div className="flex flex-col gap-3">
-                  <Link
-                    href="/auth/login"
-                    onClick={() => setOpen(false)}
-                    className="flex h-11 items-center justify-center rounded-xl border bg-background text-sm font-semibold transition-colors hover:bg-muted"
-                  >
-                    {t('landing.navbar.login')}
-                  </Link>
-                  <Button asChild size="lg" className="h-11 rounded-xl font-semibold shadow-lg shadow-primary/20">
-                    <Link href={ctaHref} onClick={() => setOpen(false)}>
-                      {t('landing.navbar.startFree')}
+                <div className="flex flex-col gap-4 border-t pt-6">
+                  {navItems.directLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="text-lg font-medium transition-colors hover:text-primary"
+                    >
+                      {link.label}
                     </Link>
-                  </Button>
+                  ))}
                 </div>
+              </nav>
+            </div>
+
+            <div className="flex-shrink-0 border-t bg-muted/30 p-6 backdrop-blur-lg">
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/auth/login"
+                  onClick={() => setOpen(false)}
+                  className="flex h-11 items-center justify-center rounded-xl border bg-background text-sm font-semibold transition-colors hover:bg-muted"
+                >
+                  {t('landing.navbar.login')}
+                </Link>
+                <Button asChild size="lg" className="h-11 rounded-xl font-semibold shadow-lg shadow-primary/20">
+                  <Link href={ctaHref} onClick={() => setOpen(false)}>
+                    {t('landing.navbar.startFree')}
+                  </Link>
+                </Button>
               </div>
             </div>
+          </div>
         </SheetContent>
       </Sheet>
     </div>
@@ -296,6 +299,9 @@ function DesktopNav() {
       label: t('landing.navbar.resources.label'),
       links: [
         { title: t('landing.navbar.resources.links.blog.title'), href: "/blog", description: t('landing.navbar.resources.links.blog.description') },
+        { title: t('landing.navbar.resources.links.templates.title'), href: "/vorlagen", description: t('landing.navbar.resources.links.templates.description') },
+        { title: t('landing.navbar.resources.links.glossary.title'), href: "/glossar", description: t('landing.navbar.resources.links.glossary.description') },
+        { title: t('landing.navbar.resources.links.citationStyles.title'), href: "/zitationsstile", description: t('landing.navbar.resources.links.citationStyles.description') },
         { title: t('landing.navbar.resources.links.tutorials.title'), href: "/#tutorials", description: t('landing.navbar.resources.links.tutorials.description') },
         { title: t('landing.navbar.resources.links.changelog.title'), href: "/changelog", description: t('landing.navbar.resources.links.changelog.description') },
         { title: t('landing.navbar.resources.links.testimonials.title'), href: "/#testimonials", description: t('landing.navbar.resources.links.testimonials.description') },
@@ -359,7 +365,7 @@ function DesktopNav() {
         <NavigationMenuItem>
           <NavigationMenuTrigger>{navItems.ressourcen.label}</NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid gap-3 p-4 md:w-[400px]">
+            <ul className="grid gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
               {navItems.ressourcen.links.map((item) => (
                 <NavListItem key={item.title} href={item.href} title={item.title}>
                   {item.description}

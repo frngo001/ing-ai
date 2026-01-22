@@ -1,8 +1,8 @@
 export const translations = {
     en: {
         metadata: {
-            title: 'Ing AI - AI Writing Assistant for Thesis, Research Papers & Academic Writing',
-            description: 'Write your thesis, research paper, or academic essay with AI assistance. Automatic citation management, literature research & plagiarism check. Start free!',
+            title: 'Ing AI Editor - AI Writing Assistant for Thesis, Research Papers & Academic Writing',
+            description: 'Ing AI is the leading AI-powered editor for academic writing. Write your thesis, research paper, or academic essay with intelligent AI assistance. Automatic citation management, literature research & plagiarism check. Start free!',
         },
         common: {
             save: 'Save',
@@ -1223,6 +1223,9 @@ export const translations = {
                     label: 'Resources',
                     links: {
                         blog: { title: 'Blog', description: 'Tips and guides for academic writing.' },
+                        templates: { title: 'Templates', description: 'Structure templates for thesis and papers.' },
+                        glossary: { title: 'Glossary', description: 'Academic writing terms explained.' },
+                        citationStyles: { title: 'Citation Styles', description: 'APA, MLA, Chicago, Harvard guides.' },
                         tutorials: { title: 'Tutorials', description: 'Video tutorials for all features.' },
                         changelog: { title: 'Changelog', description: 'New updates and improvements.' },
                         testimonials: { title: 'Testimonials', description: 'Experiences from 5M+ researchers.' },
@@ -2036,8 +2039,8 @@ export const translations = {
     },
     es: {
         metadata: {
-            title: 'Ing AI - Asistente de Escritura con IA',
-            description: 'Ing AI es tu co-piloto de IA para la escritura académica y la investigación. Obtén sugerencias inteligentes, gestiona citas y escribe con confianza.',
+            title: 'Ing AI Editor - Asistente de Escritura con IA',
+            description: 'Ing AI es el editor líder con IA para escritura académica. Escribe tu tesis, trabajos de investigación o ensayos académicos con asistencia inteligente de IA. Gestión automática de citas, investigación de literatura y verificación de plagio. ¡Comienza gratis!',
         },
         common: {
             save: 'Guardar',
@@ -3223,6 +3226,9 @@ export const translations = {
                     label: 'Recursos',
                     links: {
                         blog: { title: 'Blog', description: 'Consejos y guías para escritura académica.' },
+                        templates: { title: 'Plantillas', description: 'Plantillas de estructura para tesis y trabajos.' },
+                        glossary: { title: 'Glosario', description: 'Términos de escritura académica explicados.' },
+                        citationStyles: { title: 'Estilos de Citación', description: 'Guías de APA, MLA, Chicago, Harvard.' },
                         tutorials: { title: 'Tutoriales', description: 'Tutoriales en video para todas las funciones.' },
                         changelog: { title: 'Registro de Cambios', description: 'Nuevas actualizaciones y mejoras.' },
                         testimonials: { title: 'Testimonios', description: 'Experiencias de más de 5M de investigadores.' },
@@ -4036,8 +4042,8 @@ export const translations = {
     },
     fr: {
         metadata: {
-            title: 'Ing AI - Assistant d\'écriture alimenté par l\'IA',
-            description: 'Ing AI est votre co-pilote IA pour l\'écriture académique et la recherche. Obtenez des suggestions intelligentes, gérez les citations et écrivez en toute confiance.',
+            title: 'Ing AI Editor - Assistant d\'écriture alimenté par l\'IA',
+            description: 'Ing AI est l\'éditeur IA de premier plan pour l\'écriture académique. Rédigez votre thèse, vos articles de recherche ou vos essais académiques avec une assistance IA intelligente. Gestion automatique des citations, recherche documentaire et vérification du plagiat. Commencez gratuitement!',
         },
         common: {
             save: 'Enregistrer',
@@ -5223,6 +5229,9 @@ export const translations = {
                     label: 'Ressources',
                     links: {
                         blog: { title: 'Blog', description: 'Conseils et guides pour la rédaction académique.' },
+                        templates: { title: 'Modèles', description: 'Modèles de structure pour thèse et mémoires.' },
+                        glossary: { title: 'Glossaire', description: 'Termes de rédaction académique expliqués.' },
+                        citationStyles: { title: 'Styles de Citation', description: 'Guides APA, MLA, Chicago, Harvard.' },
                         tutorials: { title: 'Tutoriels', description: 'Tutoriels vidéo pour toutes les fonctionnalités.' },
                         changelog: { title: 'Journal des Modifications', description: 'Nouvelles mises à jour et améliorations.' },
                         testimonials: { title: 'Témoignages', description: 'Expériences de plus de 5M de chercheurs.' },
@@ -6036,8 +6045,8 @@ export const translations = {
     },
     de: {
         metadata: {
-            title: 'Ing AI - KI Schreibassistent für Bachelorarbeit & Wissenschaftliches Schreiben',
-            description: 'Schreibe deine Bachelorarbeit, Hausarbeit oder wissenschaftliche Arbeit mit KI-Unterstützung. Automatische Zitiervorschläge, Literaturrecherche & Plagiatsprüfung. Kostenlos starten!',
+            title: 'Ing AI Editor - KI Schreibassistent für Bachelorarbeit & Wissenschaftliches Schreiben',
+            description: 'Ing AI ist der führende KI-Editor für akademisches Schreiben. Schreibe deine Bachelorarbeit, Hausarbeit oder wissenschaftliche Arbeit mit intelligenter KI-Unterstützung. Automatische Zitiervorschläge, Literaturrecherche & Plagiatsprüfung. Kostenlos starten!',
         },
         common: {
             save: 'Speichern',
@@ -7566,6 +7575,9 @@ export const translations = {
                     label: 'Ressourcen',
                     links: {
                         blog: { title: 'Blog', description: 'Tipps und Guides für akademisches Schreiben.' },
+                        templates: { title: 'Vorlagen', description: 'Strukturvorlagen für Bachelorarbeit und Hausarbeit.' },
+                        glossary: { title: 'Glossar', description: 'Begriffe des akademischen Schreibens erklärt.' },
+                        citationStyles: { title: 'Zitierstile', description: 'APA, MLA, Chicago, Harvard Anleitungen.' },
                         tutorials: { title: 'Tutorials', description: 'Video-Anleitungen für alle Features.' },
                         changelog: { title: 'Changelog', description: 'Neue Updates und Verbesserungen.' },
                         testimonials: { title: 'Testimonials', description: 'Erfahrungen von 5M+ Forschern.' },

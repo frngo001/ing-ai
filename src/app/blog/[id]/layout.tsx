@@ -4,11 +4,12 @@ import { getBlogPost } from '@/lib/blog/data'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = getBlogPost(params.id)
+  const { id } = await params
+  const post = getBlogPost(id)
   const language = await getLanguageForServer()
 
   if (!post) {
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: post.title,
       description: post.excerpt,
-      url: `${siteConfig.url}/blog/${params.id}`,
+      url: `${siteConfig.url}/blog/${id}`,
       siteName: siteConfig.name,
       images: [
         {
@@ -47,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [post.image || `${siteConfig.url}/opengraph-image`],
     },
     alternates: {
-      canonical: `${siteConfig.url}/blog/${params.id}`,
+      canonical: `${siteConfig.url}/blog/${id}`,
     },
   }
 }

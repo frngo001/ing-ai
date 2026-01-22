@@ -44,6 +44,12 @@ next-env.d.ts
 .cursor/rules/
 .cursor/*
 
+# Gemini 
+.gemini/
+
+# OPENCODE
+
+.opencode/
 #test files
 test.md
 library.bib
@@ -59,3 +65,6 @@ CLAUDE.md
 # plan 
 plan.md
 ENV_TEMPLATE
+
+# Markdown files documentation
+COMPLETED_SEO_IMPROVEMENTS.md

@@ -10,8 +10,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useLanguage } from '@/lib/i18n/use-language'
 
 export default function BlogPage() {
-  const posts = getAllBlogPosts()
   const { t, language } = useLanguage()
+  const posts = getAllBlogPosts(language as 'de' | 'en' | 'es' | 'fr')
 
   const blogContent = React.useMemo(() => ({
     title: t('pages.blog.list.title'),

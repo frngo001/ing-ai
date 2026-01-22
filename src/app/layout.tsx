@@ -72,8 +72,13 @@ export async function generateMetadata(): Promise<Metadata> {
       'Automatische Quellenangabe',
       'KI Tool für akademisches Schreiben',
 
-      // Product & Brand
+      // Product & Brand (CRITICAL for brand searches)
       'Ing AI',
+      'Ing AI Editor',
+      'Ing AI Schreibassistent',
+      'Ing AI Tool',
+      'Ing.AI',
+      'IngAI',
       'AI Editor',
       'Text Editor',
       'Document Editor',

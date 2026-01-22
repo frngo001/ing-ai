@@ -759,6 +759,110 @@ body {
     @apply rounded-lg my-8 w-full;
   }
 
+  /* Table styling for blog posts */
+  .blog-content table {
+    width: 100%;
+    margin: 2rem 0;
+    border-collapse: collapse;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    overflow: hidden;
+    font-size: 0.9375rem;
+  }
+
+  .blog-content thead {
+    background: hsl(var(--muted));
+  }
+
+  .blog-content th {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    border-bottom: 2px solid hsl(var(--border));
+    border-right: 1px solid hsl(var(--border) / 0.5);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .blog-content th:last-child {
+    border-right: none;
+  }
+
+  .blog-content tbody tr {
+    transition: background-color 0.15s ease;
+  }
+
+  .blog-content tbody tr:hover {
+    background: hsl(var(--muted) / 0.5);
+  }
+
+  .blog-content tbody tr:nth-child(even) {
+    background: hsl(var(--muted) / 0.2);
+  }
+
+  .blog-content tbody tr:nth-child(even):hover {
+    background: hsl(var(--muted) / 0.6);
+  }
+
+  .blog-content td {
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+    border-right: 1px solid hsl(var(--border) / 0.3);
+    vertical-align: top;
+    color: hsl(var(--foreground) / 0.9);
+    line-height: 1.6;
+  }
+
+  .blog-content td:last-child {
+    border-right: none;
+  }
+
+  .blog-content tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .blog-content tbody td:first-child {
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .blog-content td code {
+    font-size: 0.8125rem;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  /* Responsive tables for blog */
+  @media (max-width: 768px) {
+    .blog-content table {
+      font-size: 0.875rem;
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .blog-content th,
+    .blog-content td {
+      padding: 0.75rem 1rem;
+      min-width: 120px;
+    }
+
+    .blog-content th:first-child,
+    .blog-content td:first-child {
+      position: sticky;
+      left: 0;
+      background: hsl(var(--card));
+      z-index: 1;
+      min-width: 140px;
+    }
+
+    .blog-content th:first-child {
+      background: hsl(var(--muted));
+    }
+  }
+
   /* Bibliography styling (hanging indent like Zotero/Word) */
   [data-bibliography-heading='true'] {
     margin-top: 1.75rem;

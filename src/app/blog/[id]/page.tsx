@@ -20,9 +20,9 @@ import { siteConfig } from '@/config/site'
 export default function BlogPostPage() {
   const params = useParams()
   const router = useRouter()
-  const postId = params.id as string
-  const blogContent = getBlogPost(postId)
   const { t, language } = useLanguage()
+  const postId = params.id as string
+  const blogContent = getBlogPost(postId, language as 'de' | 'en' | 'es' | 'fr')
 
   const translations = React.useMemo(() => ({
     by: t('pages.blog.post.by'),

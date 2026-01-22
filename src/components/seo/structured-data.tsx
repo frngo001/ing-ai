@@ -8,10 +8,11 @@ export function StructuredData() {
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: siteConfig.name,
+    name: 'Ing AI Editor',
+    alternateName: ['Ing AI', 'IngAI', 'Ing.AI'],
     url: siteConfig.url,
     logo: `${siteConfig.url}/logos/logosApp/ing_AI.png`,
-    description: 'KI-gestützter Schreibassistent für akademisches Schreiben, Bachelorarbeiten und wissenschaftliche Texte',
+    description: 'Ing AI Editor ist der führende KI-gestützte Texteditor für akademisches Schreiben, Bachelorarbeiten und wissenschaftliche Texte',
     sameAs: [
       siteConfig.links.twitter,
       siteConfig.links.github,
@@ -20,20 +21,21 @@ export function StructuredData() {
       '@type': 'ContactPoint',
       contactType: 'Customer Support',
       email: 'support@ing-ai.com',
-      availableLanguage: ['de', 'en', 'es', 'fr', 'it', 'pt', 'nl'],
+      availableLanguage: ['de', 'en', 'es', 'fr'],
     },
   }
 
   const webSiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: siteConfig.name,
+    name: 'Ing AI Editor',
+    alternateName: 'Ing AI',
     url: siteConfig.url,
-    description: 'KI Schreibassistent für akademisches Schreiben - Bachelorarbeit, Hausarbeit & wissenschaftliche Texte mit KI-Unterstützung schreiben',
-    inLanguage: ['de', 'en', 'es', 'fr', 'it', 'pt', 'nl'],
+    description: 'Ing AI Editor - KI Schreibassistent für akademisches Schreiben. Schreibe Bachelorarbeit, Hausarbeit & wissenschaftliche Texte mit intelligenter KI-Unterstützung.',
+    inLanguage: ['de', 'en', 'es', 'fr'],
     publisher: {
       '@type': 'Organization',
-      name: siteConfig.name,
+      name: 'Ing AI Editor',
       logo: {
         '@type': 'ImageObject',
         url: `${siteConfig.url}/logos/logosApp/ing_AI.png`,
@@ -44,12 +46,13 @@ export function StructuredData() {
   const softwareApplicationSchema = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: siteConfig.name,
+    name: 'Ing AI Editor',
+    alternateName: ['Ing AI', 'IngAI'],
     applicationCategory: 'WebApplication',
-    applicationSubCategory: 'Writing Assistant',
+    applicationSubCategory: 'AI Writing Assistant',
     operatingSystem: 'Web',
     url: siteConfig.url,
-    description: 'KI-gestützter Schreibassistent für akademisches Schreiben. Intelligente Textvorschläge, Zitierverwaltung, Literaturrecherche und Plagiatsprüfung für Bachelorarbeiten, Hausarbeiten und wissenschaftliche Texte.',
+    description: 'Ing AI Editor ist der führende KI-gestützte Texteditor für akademisches Schreiben. Intelligente Textvorschläge, Zitierverwaltung, Literaturrecherche und Plagiatsprüfung für Bachelorarbeiten, Hausarbeiten und wissenschaftliche Texte.',
     offers: [
       {
         '@type': 'Offer',
@@ -85,18 +88,18 @@ export function StructuredData() {
       'Literaturrecherche mit Zugriff auf wissenschaftliche Datenbanken',
       'Plagiatsprüfung und Originalitätsprüfung',
       'Dokumenteneditor mit Rich-Text-Formatierung',
-      'Multi-Language Support (7 Sprachen)',
+      'Multi-Language Support (4 Sprachen: Deutsch, Englisch, Spanisch, Französisch)',
       'Export in DOCX, PDF, HTML, Markdown',
       'Kollaborative Projektfreigabe',
     ],
     screenshot: `${siteConfig.url}/dashboard-dark.png`,
     author: {
       '@type': 'Organization',
-      name: siteConfig.name,
+      name: 'Ing AI Editor',
     },
     softwareVersion: '1.0',
     releaseNotes: `${siteConfig.url}/changelog`,
-    keywords: 'KI Schreibassistent, Akademisches Schreiben, Bachelorarbeit schreiben, Hausarbeit KI, Wissenschaftliches Schreiben, Zitierverwaltung, Literaturrecherche, AI Writing Assistant',
+    keywords: 'Ing AI, Ing AI Editor, IngAI, KI Schreibassistent, KI Editor, Akademisches Schreiben, Bachelorarbeit schreiben, Hausarbeit KI, Wissenschaftliches Schreiben, Zitierverwaltung, Literaturrecherche, AI Writing Assistant, AI Text Editor',
   }
 
   return (
