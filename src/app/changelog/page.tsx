@@ -22,6 +22,52 @@ interface ChangelogEntry {
 
 const changelogData: ChangelogEntry[] = [
   {
+    id: 'collaboration-update',
+    date: 'Jan 22, 2026',
+    title: 'Kollaboration & Teilen (220126)',
+    content: [
+      {
+        heading: 'Echtzeit-Zusammenarbeit',
+        description: 'Arbeiten Sie gleichzeitig mit Ihren Kollegen an denselben Dokumenten. Sehen Sie Cursor in Echtzeit und tauschen Sie Feedback sofort aus.',
+        image: '/changelog/collaboration.png',
+        details: [
+          'Live-Cursor-Anzeige aller aktiven Bearbeiter',
+          'Nahtlose Synchronisation von Änderungen',
+          'Verbessertes Kommentarsystem für direktes Feedback',
+        ],
+      },
+      {
+        heading: 'Projekt-Teilen & Berechtigungen',
+        description: 'Teilen Sie ganze Projekte mit nur einem Klick und behalten Sie die volle Kontrolle über den Zugriff.',
+        details: [
+          'Flexible Rollen: Betrachter, Editor oder Vorschlagsmodus',
+          'Teilen via Link oder E-Mail-Einladung',
+          'Optionale Ablaufdaten für geteilte Links',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'word-import',
+    date: 'Jan 15, 2026',
+    title: 'Word Import (150126)',
+    content: [
+      {
+        heading: 'Import aus Microsoft Word',
+        description: 'Bringen Sie Ihre bestehenden Arbeiten mühelos in Ing AI. Importieren Sie .docx Dateien unter Beibehaltung aller Formatierungen.',
+        image: '/changelog/word-import.png',
+        details: [
+          'Beibehaltung von Überschriften, Listen und Tabellen',
+          'Automatische Konvertierung von Word-Kommentaren',
+          'Unterstützung für Fußnoten und Verzeichnisse',
+        ],
+        links: [
+          { label: 'Zum Editor', href: '/editor' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'autocomplete-2',
     date: 'Nov 28, 2024',
     title: 'Editor Updates (281124)',
@@ -225,7 +271,7 @@ function ChangelogEntryRow({ entry, isFirst, isLast }: { entry: ChangelogEntry; 
               <circle cx="12" cy="12" r="3" />
             </svg>
           </div>
-          
+
           <div className="pl-4">
             <h2 className="text-[15px] font-medium text-foreground mb-1 leading-snug">
               {entry.title}
