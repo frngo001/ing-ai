@@ -149,8 +149,8 @@ export async function getLanguageFromGeolocation(headers: Headers): Promise<Lang
     
     // In Entwicklungsumgebung: Verwende Test-IP oder localhost
     if (process.env.NODE_ENV === 'development' && (clientIP === 'unknown' || clientIP === '::1' || clientIP.startsWith('127.'))) {
-        // Für lokale Entwicklung: Standard auf Deutschland setzen
-        return 'de'
+        // For local development: use English as default (language detection happens in agents)
+        return DEFAULT_FALLBACK_LANGUAGE
     }
 
     const countryCode = await getCountryFromIP(clientIP)

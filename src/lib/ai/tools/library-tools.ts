@@ -12,7 +12,7 @@ const queryLanguage = async () => {
   try {
     return await getLanguageForServer()
   } catch {
-    return 'de'
+    return 'en'
   }
 }
 
@@ -169,42 +169,82 @@ export function createAddSourcesToLibraryTool(userId: string) {
 
         const newCitations = sources.map(s => convertSourceToCitation(s as Record<string, unknown>))
         const existingCitations = await citationsUtils.getCitationsByLibrary(libraryId, userId, supabase)
-        const existingIds = new Set(existingCitations.map((c) => c.id))
-        const uniqueCitations = newCitations.filter((c) => !existingIds.has(c.id))
 
-        for (const citation of uniqueCitations) {
-          await citationsUtils.createCitation({
-            id: citation.id,
-            user_id: userId,
-            library_id: libraryId,
-            title: citation.title,
-            source: citation.source,
-            year: citation.year ?? null,
-            last_edited: new Date().toISOString(),
-            href: citation.href,
-            external_url: citation.externalUrl ?? null,
-            authors: citation.authors || null,
-            abstract: citation.abstract || null,
-            doi: citation.doi || null,
-            citation_style: 'vancouver',
-            in_text_citation: citation.title,
-            full_citation: citation.title,
-            metadata: {},
-          }, supabase)
+        // Enhanced deduplication: check by ID, DOI, and normalized title
+        const existingIds = new Set(existingCitations.map((c) => c.id))
+        const existingDois = new Set(existingCitations.map((c) => c.doi?.toLowerCase()).filter(Boolean))
+        const existingTitles = new Set(existingCitations.map((c) => c.title?.toLowerCase().trim()).filter(Boolean))
+
+        const uniqueCitations = newCitations.filter((c) => {
+          // Check if already exists by ID
+          if (existingIds.has(c.id)) return false
+          // Check if already exists by DOI
+          if (c.doi && existingDois.has(c.doi.toLowerCase())) return false
+          // Check if already exists by exact title match
+          if (c.title && existingTitles.has(c.title.toLowerCase().trim())) return false
+          return true
+        })
+
+        // Parallel batch inserts for better performance (batches of 10)
+        const BATCH_SIZE = 10
+        const batches: ConvertedCitation[][] = []
+        for (let i = 0; i < uniqueCitations.length; i += BATCH_SIZE) {
+          batches.push(uniqueCitations.slice(i, i + BATCH_SIZE))
         }
 
-        const messageTemplate = translations[language as Language]?.askAi?.toolAddSourcesToLibraryMessage || 'hinzugefügt'
-        const message = `${uniqueCitations.length} Quelle(n) zur Bibliothek "${library.name}" ${messageTemplate}`
+        let successCount = 0
+        let failCount = 0
+
+        for (const batch of batches) {
+          const results = await Promise.allSettled(
+            batch.map((citation) =>
+              citationsUtils.createCitation({
+                id: citation.id,
+                user_id: userId,
+                library_id: libraryId,
+                title: citation.title,
+                source: citation.source,
+                year: citation.year ?? null,
+                last_edited: new Date().toISOString(),
+                href: citation.href,
+                external_url: citation.externalUrl ?? null,
+                authors: citation.authors || null,
+                abstract: citation.abstract || null,
+                doi: citation.doi || null,
+                citation_style: 'vancouver',
+                in_text_citation: citation.title,
+                full_citation: citation.title,
+                metadata: {},
+              }, supabase)
+            )
+          )
+
+          for (const result of results) {
+            if (result.status === 'fulfilled') {
+              successCount++
+            } else {
+              failCount++
+              console.error('[addSourcesToLibrary] Failed to insert citation:', result.reason)
+            }
+          }
+        }
+
+        const messageTemplate = translations[language as Language]?.askAi?.toolAddSourcesToLibraryMessage || 'added'
+        const failedInfo = failCount > 0 ? ` (${failCount} failed)` : ''
+        const message = `${successCount} source(s) ${messageTemplate} to library "${library.name}"${failedInfo}`
 
         return {
           success: true,
-          added: uniqueCitations.length,
+          added: successCount,
+          failed: failCount,
+          attempted: uniqueCitations.length,
+          skippedDuplicates: newCitations.length - uniqueCitations.length,
           message,
           _toolStep: createToolStepMarker('end', {
             id: stepId,
             toolName,
             status: 'completed',
-            output: { added: uniqueCitations.length, libraryName: library.name },
+            output: { added: successCount, failed: failCount, libraryName: library.name },
           }),
         }
       } catch (error) {

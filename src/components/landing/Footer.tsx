@@ -72,14 +72,14 @@ export function Footer() {
                 className="z-0"
                 gap={16}
                 radius={1.5}
-                color="rgba(100, 100, 120, 0.4)"
+                color="rgba(80, 3, 40, 0.4)"
                 darkColor="rgba(200, 200, 220, 0.3)"
                 glowColor="rgba(139, 92, 246, 0.8)"
-                darkGlowColor="rgba(139, 92, 246, 0.9)"
+                darkGlowColor="rgba(39, 192, 118, 0.9)"
                 opacity={0.7}
-                speedMin={0.3}
-                speedMax={0.8}
-                speedScale={0.8}
+                speedMin={0.9}
+                speedMax={1.6}
+                speedScale={1}
             />
             <div className="relative z-10 pt-8 pb-6 md:pt-16 md:pb-12">
                 <div className="container px-4 mx-auto">

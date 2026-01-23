@@ -10,10 +10,12 @@ export const defaultContext: ContextSelection = {
   agentMode: 'bachelor',
 }
 
+// DEPRECATED: Use translations instead (askAi.streamingThinking, etc.)
+// Kept for backwards compatibility only
 export const STREAMING_PHRASES = [
-  "Agent denkt nach...",
-  "Agent verarbeitet deine Anfrage...",
-  "Agent analysiert die Daten...",
-  "Fast fertig...",
+  "Agent is thinking...",
+  "Agent is processing your request...",
+  "Agent is analyzing data...",
+  "Almost done...",
 ]
 

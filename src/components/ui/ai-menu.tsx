@@ -310,10 +310,6 @@ const createAiChatItems = (t: (key: string) => string) => ({
     label: t('aiMenu.comment'),
     value: 'comment',
     onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
-      if (!input.trim()) {
-        toast.warning(t('aiMenu.pleaseEnterTextBeforeCommenting'));
-        return;
-      }
       editor.getApi(AIChatPlugin).aiChat.submit(input, {
         mode: 'insert',
         prompt: t('aiMenu.pleaseGiveBriefFeedback'),
@@ -362,10 +358,6 @@ ${t('aiMenu.startNewParagraph')}`
     label: t('aiMenu.addEmojis'),
     value: 'emojify',
     onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
-      if (!input.trim()) {
-        toast.warning(t('aiMenu.pleaseEnterTextBeforeAddingEmojis'));
-        return;
-      }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: t('aiMenu.promptEmojify'),
         toolName: 'edit',
@@ -377,10 +369,6 @@ ${t('aiMenu.startNewParagraph')}`
     label: t('aiMenu.explainBriefly'),
     value: 'explain',
     onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
-      if (!input.trim()) {
-        toast.warning(t('aiMenu.pleaseEnterTextBeforeExplaining'));
-        return;
-      }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: {
           default: t('aiMenu.explainTextBriefly'),
@@ -395,10 +383,6 @@ ${t('aiMenu.startNewParagraph')}`
     label: t('aiMenu.fixSpellingGrammar'),
     value: 'fixSpelling',
     onSelect: ({ editor, input }: { editor: PlateEditor; input: string }) => {
-      if (!input.trim()) {
-        toast.warning(t('aiMenu.pleaseEnterTextBeforeFixing'));
-        return;
-      }
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
         prompt: t('aiMenu.promptFixSpelling'),
         toolName: 'edit',

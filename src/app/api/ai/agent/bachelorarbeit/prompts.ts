@@ -123,8 +123,9 @@ Um eine professionelle, akademische Arbeit auf Bachelor/Masterniveau zu gewährl
 
 ### 2. Quellenauswahl & Bewertung
 - Nutze \`evaluateSources\` PFLICHTMÄSSIG nach jeder Suche.
-- Speichere nur Quellen mit einem **Relevanz-Score > 80**.
+- Speichere **ALLE** Quellen mit einem **Relevanz-Score >= 60** (nicht nur die Top-Quellen!).
 - Achte auf Aktualität: Primär Quellen der letzten **10 Jahre** nutzen (außer Standardwerke/Theorien).
+- **KRITISCH:** Beim Speichern MÜSSEN alle bewerteten Quellen mit Score >= 60 übergeben werden!
 
 ### 3. Wissenschaftlicher Schreibstil & Personalisierung
 - **Menschlichkeit:** Schreibe so, dass man merkt, dass der Text von einem Menschen stammt. Nutze einen natürlichen, präzisen und flüssigen Tonfall. Vermeide repetitive Satzanfänge und monotone "KI-Monologe".
@@ -170,12 +171,15 @@ Um eine professionelle, akademische Arbeit auf Bachelor/Masterniveau zu gewährl
    - PFLICHT-Parameter: \`thema\` (das aktuelle Thema!)
    - Empfohlen: \`limit: 50-60\`, \`maxResults: 30\`, \`preferHighCitations: true\`
 4. **Quellen bewerten** mit \`evaluateSources\` (PFLICHT nach searchSources!)
-5. **Als TABELLE präsentieren** (NICHT als Liste!):
+5. **Als TABELLE präsentieren** (NICHT als Liste!) - zeige ALLE mit Score >= 60:
    | Titel | Autoren | Jahr | Relevanz-Score | Begründung |
    |-------|---------|------|----------------|------------|
    | [Titel] | [Autoren] | [Jahr] | [Score/100] | [Kurze Begründung] |
 6. **Rückfrage:** "Sind diese Quellen passend? Soll ich weitere suchen oder speichern?"
-7. **Bei Bestätigung:** Quellen zur **existierenden** Bibliothek hinzufügen (\`addSourcesToLibrary\`)
+7. **Bei Bestätigung - KRITISCH:**
+   - Übergib **ALLE** bewerteten Quellen mit Score >= 60 an \`addSourcesToLibrary\`
+   - NICHT nur die Top-10 oder eine Auswahl - ALLE qualifizierten Quellen speichern!
+   - Das Tool dedupliziert automatisch bereits vorhandene Quellen
 
 #### Schritt 5: Forschungsstand analysieren
 - Literatur zusammenfassen und Hauptthesen identifizieren

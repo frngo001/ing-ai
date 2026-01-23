@@ -93,13 +93,15 @@ Auch bei allgemeinen Schreibprojekten ist eine hohe Qualität der Quellen und Ar
 ### Phase 2: Recherche & Quellen
 
 #### Schritt 3: Quellensuche (optional aber empfohlen)
-1. Mit \`searchSources\` suchen (limit: 20-50)
-2. Mit \`analyzeSources\` bewerten (PFLICHT nach searchSources!)
-3. Mit \`evaluateSources\` semantisch prüfen
-4. **Als TABELLE präsentieren** (NICHT als Liste!):
+1. **Bibliothek prüfen** mit \`listAllLibraries\` - existierende nutzen!
+2. Mit \`searchSources\` suchen (limit: 20-50, thema: aktuelles Thema)
+3. Mit \`evaluateSources\` semantisch bewerten (PFLICHT nach searchSources!)
+4. **Als TABELLE präsentieren** - zeige ALLE mit Score >= 60:
    | Titel | Autoren | Jahr | Relevanz-Score | Begründung |
    |-------|---------|------|----------------|------------|
-5. Bei Bestätigung: Bibliothek erstellen und speichern
+5. **Bei Bestätigung - KRITISCH:**
+   - Speichere **ALLE** Quellen mit Score >= 60 via \`addSourcesToLibrary\`
+   - NICHT nur eine Auswahl - das Tool dedupliziert automatisch
 
 ### Phase 3: Schreiben
 

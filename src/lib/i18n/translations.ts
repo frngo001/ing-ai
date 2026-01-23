@@ -978,6 +978,10 @@ export const translations = {
             editWithAI: 'Edit with AI',
             withAI: 'With AI',
             close: 'Close',
+            streamingThinking: 'Agent is thinking...',
+            streamingProcessing: 'Agent is processing your request...',
+            streamingAnalyzing: 'Agent is analyzing data...',
+            streamingAlmostDone: 'Almost done...',
         },
         mention: {
             noResults: 'No results',
@@ -1254,6 +1258,9 @@ export const translations = {
             },
             socialProof: {
                 title: 'Trusted by researchers at leading universities worldwide',
+                activeUsers: '10,000+ Active Users',
+                institutionsCount: '20+ leading institutions across Germany',
+                gdprCompliance: 'GDPR Compliant • Data hosted in EU',
             },
             bentoGrid: {
                 badge: 'Features',
@@ -2988,6 +2995,10 @@ export const translations = {
             editWithAI: 'Editar con IA',
             withAI: 'Con IA',
             close: 'Cerrar',
+            streamingThinking: 'El agente está pensando...',
+            streamingProcessing: 'El agente está procesando tu solicitud...',
+            streamingAnalyzing: 'El agente está analizando los datos...',
+            streamingAlmostDone: 'Casi listo...',
         },
         mention: {
             noResults: 'Sin resultados',
@@ -3258,6 +3269,9 @@ export const translations = {
             },
             socialProof: {
                 title: 'Confiado por investigadores de universidades líderes en todo el mundo',
+                activeUsers: '10.000+ Usuarios activos',
+                institutionsCount: '20+ instituciones líderes en Alemania',
+                gdprCompliance: 'Conforme al RGPD • Datos alojados en la UE',
             },
             bentoGrid: {
                 badge: 'Características',
@@ -4992,6 +5006,10 @@ export const translations = {
             editWithAI: 'Modifier avec l\'IA',
             withAI: 'Avec l\'IA',
             close: 'Fermer',
+            streamingThinking: 'L\'agent réfléchit...',
+            streamingProcessing: 'L\'agent traite votre demande...',
+            streamingAnalyzing: 'L\'agent analyse les données...',
+            streamingAlmostDone: 'Presque terminé...',
         },
         mention: {
             noResults: 'Aucun résultat',
@@ -5262,6 +5280,9 @@ export const translations = {
             },
             socialProof: {
                 title: 'Approuvé par des chercheurs des meilleures universités mondiales',
+                activeUsers: '10 000+ Utilisateurs actifs',
+                institutionsCount: '20+ institutions leaders en Allemagne',
+                gdprCompliance: 'Conforme RGPD • Données hébergées dans l\'UE',
             },
             bentoGrid: {
                 badge: 'Fonctionnalités',
@@ -7025,6 +7046,10 @@ export const translations = {
             editWithAI: 'Mit AI bearbeiten',
             withAI: 'Mit AI',
             close: 'Schließen',
+            streamingThinking: 'Agent denkt nach...',
+            streamingProcessing: 'Agent verarbeitet deine Anfrage...',
+            streamingAnalyzing: 'Agent analysiert die Daten...',
+            streamingAlmostDone: 'Fast fertig...',
         },
         mention: {
             noResults: 'Keine Ergebnisse',
@@ -7610,6 +7635,9 @@ export const translations = {
             },
             socialProof: {
                 title: 'Vertraut von Forschern an weltweit führenden Universitäten',
+                activeUsers: '10.000+ Aktive Nutzer',
+                institutionsCount: '20+ führende Institutionen in Deutschland',
+                gdprCompliance: 'DSGVO-konform • Daten in der EU gehostet',
             },
             bentoGrid: {
                 badge: 'Funktionen',

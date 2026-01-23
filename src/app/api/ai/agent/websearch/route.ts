@@ -13,6 +13,37 @@ import { DEEPSEEK_CHAT_MODEL } from '@/lib/ai/deepseek'
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
+const LANGUAGE_INSTRUCTION = `
+
+---
+
+## CRITICAL: RESPONSE LANGUAGE (ABSOLUTE PRIORITY!)
+
+**You MUST detect and match the language of the user's input or the editor content.**
+
+1. **Language Detection Priority:**
+   - FIRST: Analyze the language of the user's latest message
+   - SECOND: If the editor content is provided, analyze its language
+   - If both are present and differ, prioritize the user's message language
+
+2. **Matching Rule:**
+   - If user writes in German → respond in German
+   - If user writes in English → respond in English
+   - If user writes in Spanish → respond in Spanish
+   - If user writes in French → respond in French
+
+3. **When Uncertain:**
+   - If you cannot clearly determine the language, ASK the user: "In welcher Sprache soll ich antworten? / In which language should I respond?"
+
+4. **Text Generation:**
+   - When writing text for the editor, use the SAME language as the existing editor content
+   - If the editor is empty, use the language of the user's request
+
+5. **Exception:**
+   - Technical terms, citations, and source titles may remain in their original language
+
+**This language rule overrides ALL other language instructions in this prompt.**`
+
 export async function POST(req: NextRequest) {
   const requestStartTime = Date.now()
   let usageLogId: string | null = null
@@ -34,7 +65,10 @@ export async function POST(req: NextRequest) {
 
     // System Prompt vorbereiten
     let systemPrompt = WEBSEARCH_AGENT_PROMPT
-      .replace('{{CURRENT_DATE}}', new Date().toLocaleDateString('de-DE', { dateStyle: 'full' }))
+      .replace('{{CURRENT_DATE}}', new Date().toLocaleDateString('en-US', { dateStyle: 'full' }))
+
+    // Add language instruction at the end of the system prompt
+    systemPrompt += LANGUAGE_INSTRUCTION
 
     // Datei-Inhalte hinzufügen
     if (fileContents && Array.isArray(fileContents) && fileContents.length > 0) {
