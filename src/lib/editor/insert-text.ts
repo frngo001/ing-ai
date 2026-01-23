@@ -561,6 +561,26 @@ export function insertMarkdownText(
  * Globaler Event-Handler für Editor-Text-Einfügung
  * Wird vom Agent über window.dispatchEvent aufgerufen
  */
+
+// Deduplication: Track recently inserted content to prevent duplicates
+const recentInsertions = new Map<string, number>()
+const DEDUP_WINDOW_MS = 5000 // 5 Sekunden Fenster für Deduplizierung
+
+function generateInsertionHash(markdown: string, position?: string, targetHeading?: string): string {
+  // Erstelle einen einfachen Hash aus den ersten 200 Zeichen + Position + Heading
+  const contentPreview = markdown.substring(0, 200)
+  return `${contentPreview}|${position || 'end'}|${targetHeading || ''}`
+}
+
+function cleanupOldInsertions(): void {
+  const now = Date.now()
+  for (const [hash, timestamp] of recentInsertions.entries()) {
+    if (now - timestamp > DEDUP_WINDOW_MS) {
+      recentInsertions.delete(hash)
+    }
+  }
+}
+
 export function setupEditorTextInsertion(): void {
   if (typeof window === 'undefined') return
 
@@ -573,13 +593,31 @@ export function setupEditorTextInsertion(): void {
       targetHeading: event.detail?.targetHeading,
       nodeId: event.detail?.nodeId,
       sectionHeading: event.detail?.sectionHeading,
+      preventDuplicate: event.detail?.preventDuplicate,
     })
 
-    const { markdown, position, targetText, targetHeading, nodeId, sectionHeading } = event.detail
+    const { markdown, position, targetText, targetHeading, nodeId, sectionHeading, preventDuplicate = true } = event.detail
 
     if (!markdown) {
       devError('❌ [EDITOR] Kein Markdown im Event-Detail')
       return
+    }
+
+    // Deduplizierung: Prüfe ob dieser Text kürzlich eingefügt wurde
+    if (preventDuplicate) {
+      cleanupOldInsertions()
+      const hash = generateInsertionHash(markdown, position, targetHeading)
+
+      if (recentInsertions.has(hash)) {
+        devWarn('⚠️ [EDITOR] Doppelte Einfügung erkannt und verhindert:', {
+          hash: hash.substring(0, 50),
+          lastInserted: Date.now() - (recentInsertions.get(hash) || 0),
+        })
+        return
+      }
+
+      // Markiere diese Einfügung
+      recentInsertions.set(hash, Date.now())
     }
 
     const editorEvent = new CustomEvent('get-editor-instance', {

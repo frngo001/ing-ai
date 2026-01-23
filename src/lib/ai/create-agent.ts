@@ -14,9 +14,13 @@ import {
   createAddSourcesToLibraryTool,
   createListAllLibrariesTool,
   createGetLibrarySourcesTool,
+  // Legacy search tools (für Backwards-Kompatibilität)
   searchSourcesTool,
   analyzeSourcesTool,
   createEvaluateSourcesTool,
+  // Optimierte Cache-basierte Search Tools
+  createSearchSourcesTool,
+  createFindOrSearchSourcesTool,
   addThemaTool,
   saveStepDataTool,
   getCurrentStepTool,
@@ -57,9 +61,15 @@ export function createAgentTools(config: {
     addSourcesToLibrary: createAddSourcesToLibraryTool(config.userId),
     listAllLibraries: createListAllLibrariesTool(config.userId, config.projectId),
     getLibrarySources: createGetLibrarySourcesTool(config.userId),
-    // Search tools
-    searchSources: searchSourcesTool,
+    // Search tools (OPTIMIERT mit Cache)
+    // findOrSearchSources: EMPFOHLEN - prüft Bibliothek zuerst, dann externe Suche
+    findOrSearchSources: config.projectId
+      ? createFindOrSearchSourcesTool(config.userId, config.projectId)
+      : searchSourcesTool, // Fallback wenn keine projectId
+    // searchSources: Optimiert mit Cache - gibt searchId zurück
+    searchSources: createSearchSourcesTool(config.userId),
     analyzeSources: analyzeSourcesTool,
+    // evaluateSources: Akzeptiert searchId ODER sources
     evaluateSources: createEvaluateSourcesTool(config.userId),
     // Utility tools
     addThema: addThemaTool,

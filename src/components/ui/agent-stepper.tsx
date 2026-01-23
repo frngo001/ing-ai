@@ -1,10 +1,10 @@
 'use client'
 
 import * as React from 'react'
-import { 
-  Check, 
-  Loader2, 
-  X, 
+import {
+  Check,
+  Loader2,
+  X,
   ChevronRight,
   Search,
   BookOpen,
@@ -37,6 +37,7 @@ interface AgentStepperViewProps {
 function getToolConfig(toolName: string, t: (key: string) => string) {
   const configs: Record<string, { label: string; icon: React.ElementType }> = {
     searchSources: { label: t('askAi.toolSearchSources'), icon: Search },
+    findOrSearchSources: { label: t('askAi.toolFindOrSearchSources'), icon: Search },
     analyzeSources: { label: t('askAi.toolAnalyzeSources'), icon: Sparkles },
     evaluateSources: { label: t('askAi.toolEvaluateSources'), icon: BookOpen },
     createLibrary: { label: t('askAi.toolCreateLibrary'), icon: Library },
@@ -81,101 +82,120 @@ function translateToolDetailKey(key: string, t: (key: string) => string): string
     extractdepth: t('askAi.toolDetailExtractDepth'),
     'extract depth': t('askAi.toolDetailExtractDepth'),
   }
-  
+
   const lowerKey = key.toLowerCase()
   if (translations[lowerKey]) {
     return translations[lowerKey]
   }
-  
+
   return key.replace(/([A-Z])/g, ' $1').trim()
 }
 
 function translateToolMessage(message: string | undefined, toolName: string, t: (key: string) => string): string {
   if (!message) return ''
-  
+
   const germanPatterns: Array<{
     pattern: RegExp | string
     translationKey: string
     extractParams?: (match: RegExpMatchArray) => Record<string, string> | string
   }> = [
-    {
-      pattern: 'Text bereit für Löschung im Editor',
-      translationKey: 'askAi.toolDeleteTextFromEditorMessage'
-    },
-    {
-      pattern: /Editor-Inhalt abgerufen:\s*(\d+)\s+Wörter,\s+(\d+)\s+Zeichen/,
-      translationKey: 'askAi.toolGetEditorContentMessage',
-      extractParams: (match) => ({ wordCount: match[1], characterCount: match[2] })
-    },
-    {
-      pattern: 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
-      translationKey: 'askAi.toolGetEditorContentEmpty'
-    },
-    {
-      pattern: 'Text bereit für Einfügung im Editor',
-      translationKey: 'askAi.toolInsertTextInEditorMessage'
-    },
-    {
-      pattern: 'Zitat bereit für Einfügung',
-      translationKey: 'askAi.toolAddCitationMessage'
-    },
-    {
-      pattern: /Thema\s+"([^"]+)"\s+wurde gesetzt/,
-      translationKey: 'askAi.toolAddThemaMessage',
-      extractParams: (match) => ({ thema: match[1] })
-    },
-    {
-      pattern: 'Daten sollten im Client-State gespeichert werden',
-      translationKey: 'askAi.toolSaveStepDataMessage'
-    },
-    {
-      pattern: 'Verwende den Agent State Store',
-      translationKey: 'askAi.toolGetCurrentStepMessage'
-    },
-    {
-      pattern: /Ich habe\s+(\d+)\s+Quellen gefunden\.\s+Verwende jetzt das Tool "analyzeSources"/,
-      translationKey: 'askAi.toolSearchSourcesFound',
-      extractParams: (match) => ({ count: match[1] })
-    },
-    {
-      pattern: /Analyse abgeschlossen\.\s+(\d+)\s+Quellen aus\s+(\d+)\s+analysierten Quellen ausgewählt/,
-      translationKey: 'askAi.toolAnalyzeSourcesMessage',
-      extractParams: (match) => ({ totalSelected: match[1], totalAnalyzed: match[2] })
-    },
-    {
-      pattern: 'erfolgreich erstellt',
-      translationKey: 'askAi.toolCreateLibraryMessage'
-    },
-    {
-      pattern: /(\d+)\s+Quelle\(n\) zur Bibliothek\s+"([^"]+)"\s+(hinzugefügt|added|añadidas|ajoutées)/,
-      translationKey: 'askAi.toolAddSourcesToLibraryMessage',
-      extractParams: (match): string => {
-        const count = match[1]
-        const libraryName = match[2]
-        const addedText = t('askAi.toolAddSourcesToLibraryMessage')
-        return `${count} ${t('askAi.sources')} ${t('askAi.toolAddSourcesToLibrary')} "${libraryName}" ${addedText}`
+      {
+        pattern: 'Text bereit für Löschung im Editor',
+        translationKey: 'askAi.toolDeleteTextFromEditorMessage'
+      },
+      {
+        pattern: /Editor-Inhalt abgerufen:\s*(\d+)\s+Wörter,\s+(\d+)\s+Zeichen/,
+        translationKey: 'askAi.toolGetEditorContentMessage',
+        extractParams: (match) => ({ wordCount: match[1], characterCount: match[2] })
+      },
+      {
+        pattern: 'Der Editor ist leer. Es wurde noch kein Text geschrieben.',
+        translationKey: 'askAi.toolGetEditorContentEmpty'
+      },
+      {
+        pattern: 'Text bereit für Einfügung im Editor',
+        translationKey: 'askAi.toolInsertTextInEditorMessage'
+      },
+      {
+        pattern: 'Zitat bereit für Einfügung',
+        translationKey: 'askAi.toolAddCitationMessage'
+      },
+      {
+        pattern: /Thema\s+"([^"]+)"\s+wurde gesetzt/,
+        translationKey: 'askAi.toolAddThemaMessage',
+        extractParams: (match) => ({ thema: match[1] })
+      },
+      {
+        pattern: 'Daten sollten im Client-State gespeichert werden',
+        translationKey: 'askAi.toolSaveStepDataMessage'
+      },
+      {
+        pattern: 'Verwende den Agent State Store',
+        translationKey: 'askAi.toolGetCurrentStepMessage'
+      },
+      {
+        pattern: /Ich habe\s+(\d+)\s+Quellen gefunden\.\s+Verwende jetzt das Tool "analyzeSources"/,
+        translationKey: 'askAi.toolSearchSourcesFound',
+        extractParams: (match) => ({ count: match[1] })
+      },
+      {
+        pattern: /Analyse abgeschlossen\.\s+(\d+)\s+Quellen aus\s+(\d+)\s+analysierten Quellen ausgewählt/,
+        translationKey: 'askAi.toolAnalyzeSourcesMessage',
+        extractParams: (match) => ({ totalSelected: match[1], totalAnalyzed: match[2] })
+      },
+      {
+        pattern: 'erfolgreich erstellt',
+        translationKey: 'askAi.toolCreateLibraryMessage'
+      },
+      {
+        pattern: /(\d+)\s+Quelle\(n\) zur Bibliothek\s+"([^"]+)"\s+(hinzugefügt|added|añadidas|ajoutées)/,
+        translationKey: 'askAi.toolAddSourcesToLibraryMessage',
+        extractParams: (match): string => {
+          const count = match[1]
+          const libraryName = match[2]
+          const addedText = t('askAi.toolAddSourcesToLibraryMessage')
+          return `${count} ${t('askAi.sources')} ${t('askAi.toolAddSourcesToLibrary')} "${libraryName}" ${addedText}`
+        }
+      },
+      {
+        pattern: 'Keine Bibliotheken gefunden. Erstelle zuerst eine Bibliothek mit createLibrary.',
+        translationKey: 'askAi.toolListAllLibrariesNoLibraries'
+      },
+      {
+        pattern: /(\d+)\s+Bibliothek\(en\) gefunden\.\s+Verwende getLibrarySources/,
+        translationKey: 'askAi.toolListAllLibrariesFound',
+        extractParams: (match) => ({ count: match[1] })
+      },
+      {
+        pattern: 'Bibliothek nicht gefunden',
+        translationKey: 'askAi.toolGetLibrarySourcesNotFound'
+      },
+      {
+        pattern: /Bibliothek\s+"([^"]+)"\s+enthält\s+(\d+)\s+Quelle\(n\)/,
+        translationKey: 'askAi.toolGetLibrarySourcesContains',
+        extractParams: (match) => ({ name: match[1], count: match[2] })
+      },
+      {
+        pattern: 'Keine Quellen gefunden. Versuche andere Suchbegriffe.',
+        translationKey: 'askAi.toolFindOrSearchSourcesNoSources'
+      },
+      {
+        pattern: /Neue Bibliothek erstellt\.\s+(\d+)\s+Quellen gefunden und gespeichert/,
+        translationKey: 'askAi.toolFindOrSearchSourcesSearchedAndSaved',
+        extractParams: (match) => ({ count: match[1] })
+      },
+      {
+        pattern: /(\d+)\s+relevante Quellen in deinen Bibliotheken gefunden\. Keine externe Suche nötig/,
+        translationKey: 'askAi.toolFindOrSearchSourcesUsedExisting',
+        extractParams: (match) => ({ count: match[1] })
+      },
+      {
+        pattern: /(\d+)\s+vorhandene \+ (\d+)\s+neue Quellen gefunden und gespeichert/,
+        translationKey: 'askAi.toolFindOrSearchSourcesMixed',
+        extractParams: (match) => ({ existingCount: match[1], newCount: match[2] })
       }
-    },
-    {
-      pattern: 'Keine Bibliotheken gefunden. Erstelle zuerst eine Bibliothek mit createLibrary.',
-      translationKey: 'askAi.toolListAllLibrariesNoLibraries'
-    },
-    {
-      pattern: /(\d+)\s+Bibliothek\(en\) gefunden\.\s+Verwende getLibrarySources/,
-      translationKey: 'askAi.toolListAllLibrariesFound',
-      extractParams: (match) => ({ count: match[1] })
-    },
-    {
-      pattern: 'Bibliothek nicht gefunden',
-      translationKey: 'askAi.toolGetLibrarySourcesNotFound'
-    },
-    {
-      pattern: /Bibliothek\s+"([^"]+)"\s+enthält\s+(\d+)\s+Quelle\(n\)/,
-      translationKey: 'askAi.toolGetLibrarySourcesContains',
-      extractParams: (match) => ({ name: match[1], count: match[2] })
-    }
-  ]
-  
+    ]
+
   for (const { pattern, translationKey, extractParams } of germanPatterns) {
     if (typeof pattern === 'string') {
       if (message.includes(pattern)) {
@@ -199,7 +219,7 @@ function translateToolMessage(message: string | undefined, toolName: string, t: 
       }
     }
   }
-  
+
   return message
 }
 
@@ -219,7 +239,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
 
     return (
       <div className={cn("my-2 w-full min-w-0", className)}>
-        <div 
+        <div
           className={cn(
             "flex flex-col rounded-lg border border-border/50 dark:border-border/30 bg-muted/20 dark:bg-muted/10 transition-all duration-200 min-w-0 w-full",
             step.status === 'running' && "border-blue-500/40 dark:border-blue-500/30 bg-blue-500/10 dark:bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.05)]",
@@ -233,7 +253,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 <div className="relative flex items-center justify-center shrink-0">
                   <Icon className={cn("h-3 w-3", step.status === 'completed' ? "text-emerald-600 dark:text-emerald-500/70" : "text-muted-foreground/40")} />
                   {step.status === 'running' && (
-                    <motion.div 
+                    <motion.div
                       className="absolute -inset-1 rounded-full border border-blue-500/40 dark:border-blue-500/30"
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
@@ -247,7 +267,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 )}>
                   {config.label}
                 </span>
-                
+
                 {step.status === 'completed' && step.output?.message && !isExpanded && (
                   <span className="hidden sm:inline text-[10px] text-muted-foreground/60 truncate font-normal border-l border-border/40 pl-2">
                     {translateToolMessage(step.output.message, step.toolName, t)}
@@ -345,8 +365,8 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 {hasRunning ? (
                   <>
                     <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-500 animate-pulse" />
-                    <motion.div 
-                      className="absolute inset-0 rounded-full border-2 border-primary/20" 
+                    <motion.div
+                      className="absolute inset-0 rounded-full border-2 border-primary/20"
                       style={{ borderTopColor: 'currentColor', borderRightColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: 'transparent' }}
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
@@ -358,7 +378,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                   <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-500" />
                 )}
               </div>
-              
+
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 truncate">
                   {t('askAi.agentActivity')}
@@ -392,7 +412,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
 
               return (
                 <div key={step.id} className="relative group">
-                  <div 
+                  <div
                     className={cn(
                       "flex items-start gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 rounded-lg transition-all duration-200 min-w-0 w-full",
                       step.status === 'running' ? "bg-blue-500/10 dark:bg-blue-500/5 shadow-[inset_0_0_20px_rgba(59,130,246,0.05)]" : "hover:bg-muted/40",
@@ -412,7 +432,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                             {config.label}
                           </span>
                         </div>
-                        
+
                         {step.completedAt && (
                           <span className="text-[9px] sm:text-[10px] font-mono text-zinc-500 dark:text-zinc-400 whitespace-nowrap shrink-0">
                             {formatDuration(step.startedAt, step.completedAt)}
@@ -423,7 +443,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                       {/* Brief Summary / Message */}
                       <AnimatePresence mode="wait">
                         {step.status === 'completed' && step.output?.message && !isExpanded && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -2 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-0.5 truncate leading-tight"

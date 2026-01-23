@@ -7,9 +7,19 @@ import type { NormalizedSource } from '@/lib/sources/types'
 import { translations, type Language } from '@/lib/i18n/translations'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
 import { createClient } from '@/lib/supabase/server'
+import type { Json } from '@/lib/supabase/types'
 import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries'
 import * as citationsUtils from '@/lib/supabase/utils/citations'
 import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
+import {
+  storeSearchResults,
+  getSearchResults,
+  getSearchMetadata,
+  getSearchSummary,
+  updateSearchResults,
+  type CachedSource,
+  type SearchCacheSummary,
+} from './search-cache'
 
 const queryLanguage = async () => {
   try {
@@ -214,7 +224,7 @@ async function saveSourcesDirectlyToLibrary(
     const batch = uniqueCitations.slice(i, i + BATCH_SIZE)
     const results = await Promise.allSettled(
       batch.map((citation) => {
-        const metadata: Record<string, unknown> = {}
+        const metadata: { [key: string]: Json | undefined } = {}
         if (citation.url) metadata.url = citation.url
         if (citation.pdfUrl) metadata.pdfUrl = citation.pdfUrl
         if (citation.pmid) metadata.pmid = citation.pmid
@@ -614,6 +624,171 @@ NUR QUELLEN MIT QUALITY-SCORE >= 50 WERDEN ZURÜCKGEGEBEN!`,
 })
 
 // ============================================================================
+// Search Sources Tool mit Cache (OPTIMIERT für Performance)
+// ============================================================================
+
+/**
+ * Factory für das optimierte searchSources Tool mit Cache.
+ *
+ * PERFORMANCE-OPTIMIERUNG:
+ * - Speichert Ergebnisse im Cache und gibt nur searchId + Summary zurück
+ * - LLM muss keine vollständigen Quellen-Objekte mehr kopieren
+ * - Token-Reduktion: ~8000 → ~200 Tokens pro Aufruf
+ */
+export function createSearchSourcesTool(userId: string) {
+  return tool({
+    description: `Suche nach wissenschaftlichen Quellen für die Literaturrecherche.
+
+DATENBANKEN: OpenAlex, Semantic Scholar, CrossRef, PubMed, CORE, Europe PMC, DOAJ, BASE, PLOS, DataCite
+(14+ Datenbanken werden parallel durchsucht)
+
+QUALITÄTSBEWERTUNG:
+- Peer-Review Status (30%): Journal > Conference > Preprint
+- Journal-Qualität (25%): High-Impact > Low-Impact
+- Zitationen (20%): Mehr = besser
+- Aktualität (15%): Neuer = besser (außer Klassiker)
+- Vollständigkeit (10%): Metadaten-Qualität
+
+WICHTIG: Gibt searchId zurück - verwende diese für evaluateSources!
+NUR QUELLEN MIT QUALITY-SCORE >= 50 WERDEN ZURÜCKGEGEBEN!`,
+    inputSchema: z.object({
+      query: z.string().describe('Suchbegriff oder Thema'),
+      thema: z.string().describe('Thema der Arbeit (für Relevanz-Bewertung)'),
+      type: z.enum(['keyword', 'title', 'author', 'doi']).optional().describe('Suchtyp (Standard: keyword)'),
+      limit: z.number().min(10).max(100).optional().describe('Anzahl der Suchergebnisse pro API (Standard: 40)'),
+      keywords: z.array(z.string()).optional().describe('Zusätzliche Keywords für bessere Relevanz-Bewertung'),
+      preferHighCitations: z.boolean().optional().describe('Bevorzuge viel zitierte Quellen (Standard: true)'),
+      maxResults: z.number().min(5).max(50).optional().describe('Max. zurückgegebene Quellen (Standard: 25)'),
+      minQualityScore: z.number().min(0).max(100).optional().describe('Minimum Quality Score (Standard: 50)'),
+      includePreprints: z.boolean().optional().describe('Preprints einschließen (Standard: false)'),
+    }),
+    execute: async ({
+      query,
+      thema,
+      type = 'keyword',
+      limit = 40,
+      keywords = [],
+      preferHighCitations = true,
+      maxResults = 25,
+      minQualityScore = 50,
+      includePreprints = false,
+    }) => {
+      const language = await queryLanguage()
+      const stepId = generateToolStepId()
+      const toolName = 'searchSources'
+
+      try {
+        const fetcher = new SourceFetcher({
+          maxParallelRequests: 6,
+          useCache: true,
+          excludedApis: includePreprints
+            ? ['opencitations', 'zenodo']
+            : ['opencitations', 'zenodo', 'arxiv', 'biorxiv'],
+        })
+
+        const results = await fetcher.search({ query, type, limit })
+        const validApis = results.apis?.filter((api): api is string => typeof api === 'string' && api.length > 0) || []
+
+        if (results.sources.length === 0) {
+          return {
+            success: true,
+            searchId: null,
+            totalResults: 0,
+            summary: null,
+            apis: validApis,
+            searchTime: results.searchTime,
+            message: 'Keine Quellen gefunden. Versuche andere Suchbegriffe.',
+          }
+        }
+
+        // Qualitätsbewertung und Ranking
+        const analyzed = analyzeAndRankSources(results.sources, thema, keywords, preferHighCitations)
+
+        // Filtern nach Qualität
+        const filtered = analyzed.filter((s) => {
+          if (s.qualityScore < minQualityScore) return false
+          if (!includePreprints && s.qualityTier === 'low' && s.qualityMetrics.peerReviewScore < 10) {
+            return false
+          }
+          return true
+        })
+
+        // Beste Quellen auswählen und IDs generieren
+        const selected: CachedSource[] = filtered.slice(0, maxResults).map(s => ({
+          ...s,
+          id: s.id || generateSourceId(),
+        }))
+
+        // Im Cache speichern
+        const searchId = storeSearchResults(userId, selected, {
+          thema,
+          query,
+          filters: { minQualityScore, includePreprints, preferHighCitations },
+        })
+
+        // Summary für LLM generieren
+        const summary = getSearchSummary(searchId)
+
+        // Statistiken
+        const highQualityCount = selected.filter(s => s.qualityTier === 'high').length
+        const mediumQualityCount = selected.filter(s => s.qualityTier === 'medium').length
+
+        const messageTemplate = translations[language as Language]?.askAi?.toolSearchSourcesFound || '{count} Quellen gefunden und analysiert.'
+        const message = messageTemplate.replace('{count}', selected.length.toString())
+
+        console.log(`[searchSources] Cached ${selected.length} sources with searchId: ${searchId}`)
+
+        return {
+          success: true,
+          searchId,
+          totalResults: results.totalResults,
+          totalAnalyzed: analyzed.length,
+          totalSelected: selected.length,
+          qualityDistribution: {
+            high: highQualityCount,
+            medium: mediumQualityCount,
+            low: selected.length - highQualityCount - mediumQualityCount,
+          },
+          // Kompaktes Summary statt vollständiger Quellen
+          summary: summary ? {
+            count: summary.count,
+            topSources: summary.topSources,
+            averageQualityScore: summary.averageQualityScore,
+            expiresIn: summary.expiresIn,
+          } : null,
+          apis: validApis,
+          searchTime: results.searchTime,
+          message: `${message} (${highQualityCount} hochwertig, ${mediumQualityCount} mittel). Verwende searchId "${searchId}" für evaluateSources.`,
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'completed',
+            output: {
+              searchId,
+              totalResults: results.totalResults,
+              selectedCount: selected.length,
+              highQuality: highQualityCount,
+            },
+          }),
+        }
+      } catch (error) {
+        return {
+          success: false,
+          searchId: null,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }),
+        }
+      }
+    },
+  })
+}
+
+// ============================================================================
 // Analyze Sources Tool (PARALLEL BATCH PROCESSING)
 // ============================================================================
 
@@ -746,33 +921,45 @@ Bewerte JEDE Quelle mit:
 })
 
 // ============================================================================
-// Evaluate Sources Tool (PARALLEL BATCH PROCESSING + DIRECT SAVE)
+// Evaluate Sources Tool (PARALLEL BATCH PROCESSING + DIRECT SAVE + CACHE)
 // ============================================================================
 
 /**
- * Factory für das evaluateSources Tool mit optionalem direktem Speichern.
- * Wenn saveToLibraryId angegeben wird, werden die bewerteten Quellen
- * automatisch in der Bibliothek gespeichert - KEIN separater addSourcesToLibrary Aufruf nötig!
+ * Factory für das optimierte evaluateSources Tool mit Cache-Support.
+ *
+ * PERFORMANCE-OPTIMIERUNG:
+ * - Akzeptiert searchId statt vollständiger Quellen-Objekte
+ * - Holt Quellen direkt aus dem Cache - kein LLM-Kopieren nötig!
+ * - Token-Reduktion: ~8000 → ~50 Tokens für Input
+ *
+ * SPEICHERN:
+ * - Wenn saveToLibraryId angegeben wird, werden relevante Quellen automatisch gespeichert
  */
 export function createEvaluateSourcesTool(userId: string) {
   return tool({
     description: `Schnelle LLM-Bewertung der Relevanz von Quellen mit PARALLELER Batch-Verarbeitung.
+
+PERFORMANCE-OPTIMIERT: Verwende searchId von searchSources - keine Quellen kopieren!
 
 WICHTIG: Wenn saveToLibraryId angegeben wird, werden die relevanten Quellen
 AUTOMATISCH in der Bibliothek gespeichert! Kein separater addSourcesToLibrary Aufruf nötig.
 
 KAPAZITÄT: Bis zu 30 Quellen werden PARALLEL in 5 Batches analysiert!
 
-WORKFLOW (SCHNELL):
-1. searchSources → Quellen finden
-2. evaluateSources mit saveToLibraryId → Bewerten UND Speichern in einem Schritt!`,
+WORKFLOW (SCHNELL - NUR 2 PARAMETER!):
+1. searchSources → gibt searchId zurück
+2. evaluateSources(searchId, saveToLibraryId) → Bewerten UND Speichern!`,
     inputSchema: z.object({
-      sources: z.array(z.object({}).passthrough()).max(30).describe('Vollständige Quellen von searchSources (max. 30) - ALLE Felder übergeben!'),
-      thema: z.string().describe('Thema der Arbeit'),
+      // PRIMÄR: searchId aus dem Cache (EMPFOHLEN - viel schneller!)
+      searchId: z.string().optional().describe('searchId von searchSources (EMPFOHLEN - holt Quellen aus Cache)'),
+      // FALLBACK: Direkte Quellen (für Backwards-Kompatibilität)
+      sources: z.array(z.object({}).passthrough()).max(30).optional().describe('FALLBACK: Vollständige Quellen wenn kein searchId vorhanden'),
+      // Thema wird aus Cache geholt wenn searchId verwendet wird
+      thema: z.string().optional().describe('Thema der Arbeit (optional wenn searchId verwendet wird)'),
       saveToLibraryId: z.string().optional().describe('Library-ID zum direkten Speichern der relevanten Quellen (von listAllLibraries)'),
       minRelevanceScore: z.number().min(0).max(100).optional().describe('Minimum Score zum Speichern (Standard: 60)'),
     }),
-    execute: async ({ sources, thema, saveToLibraryId, minRelevanceScore = 60 }) => {
+    execute: async ({ searchId, sources, thema, saveToLibraryId, minRelevanceScore = 60 }) => {
       const language = await queryLanguage()
       const startTime = Date.now()
       const stepId = generateToolStepId()
@@ -782,8 +969,50 @@ WORKFLOW (SCHNELL):
         const model = deepseek(DEEPSEEK_CHAT_MODEL)
         const noAbstractText = translations[language as Language]?.askAi?.toolNoAbstractAvailable || 'Kein Abstract verfügbar'
 
-        // Cast sources to proper type
-        const fullSources = sources as unknown as (NormalizedSource & { qualityScore?: number })[]
+        // Quellen aus Cache ODER direkt aus Input holen
+        let fullSources: CachedSource[]
+        let effectiveThema: string
+
+        if (searchId) {
+          // OPTIMIERT: Quellen aus Cache holen
+          const cachedSources = getSearchResults(searchId)
+          const cachedMetadata = getSearchMetadata(searchId)
+
+          if (!cachedSources) {
+            return {
+              success: false,
+              error: `searchId "${searchId}" nicht gefunden oder abgelaufen. Bitte searchSources erneut aufrufen.`,
+              _toolStep: createToolStepMarker('end', {
+                id: stepId,
+                toolName,
+                status: 'error',
+                error: 'searchId not found or expired',
+              }),
+            }
+          }
+
+          fullSources = cachedSources
+          effectiveThema = thema || cachedMetadata?.thema || 'Unbekanntes Thema'
+
+          console.log(`[evaluateSourcesTool] Loaded ${fullSources.length} sources from cache (searchId: ${searchId})`)
+        } else if (sources && sources.length > 0) {
+          // FALLBACK: Direkte Quellen (für Backwards-Kompatibilität)
+          fullSources = sources as unknown as CachedSource[]
+          effectiveThema = thema || 'Unbekanntes Thema'
+
+          console.log(`[evaluateSourcesTool] Using ${fullSources.length} sources from direct input (legacy mode)`)
+        } else {
+          return {
+            success: false,
+            error: 'Entweder searchId oder sources muss angegeben werden.',
+            _toolStep: createToolStepMarker('end', {
+              id: stepId,
+              toolName,
+              status: 'error',
+              error: 'No sources provided',
+            }),
+          }
+        }
 
         console.log(`[evaluateSourcesTool] Starting parallel evaluation of ${fullSources.length} sources...`)
 
@@ -796,7 +1025,7 @@ WORKFLOW (SCHNELL):
           async (batch, batchIndex) => {
             console.log(`[evaluateSourcesTool] Processing batch ${batchIndex + 1} (${batch.length} sources)...`)
 
-            const prompt = `Bewerte schnell die Relevanz dieser Quellen für: "${thema}"
+            const prompt = `Bewerte schnell die Relevanz dieser Quellen für: "${effectiveThema}"
 
 ${JSON.stringify(batch.map(s => ({
               id: s.id,
@@ -846,6 +1075,12 @@ Gib für jede Quelle:
         // Filter relevant sources
         const relevantSources = results.filter(s => s.relevanceScore >= minRelevanceScore && s.isRelevant)
 
+        // Update cache with evaluation results (if searchId was used)
+        if (searchId) {
+          updateSearchResults(searchId, () => results)
+          console.log(`[evaluateSourcesTool] Updated cache with evaluation results`)
+        }
+
         // DIRECT SAVE if saveToLibraryId is provided
         let saveResult: { added: number; failed: number; skippedDuplicates: number } | null = null
         if (saveToLibraryId && relevantSources.length > 0) {
@@ -863,13 +1098,27 @@ Gib für jede Quelle:
           ? ` ${saveResult.added} Quellen wurden automatisch gespeichert${saveResult.skippedDuplicates > 0 ? ` (${saveResult.skippedDuplicates} Duplikate übersprungen)` : ''}.`
           : ''
 
+        // OPTIMIERT: Nur Summary zurückgeben, nicht vollständige Quellen
+        const relevantSummary = relevantSources.slice(0, 10).map(s => ({
+          title: s.title,
+          year: s.publicationYear,
+          relevanceScore: s.relevanceScore,
+          reason: s.evaluationReason,
+          authors: s.authors?.slice(0, 2).map(a =>
+            typeof a === 'string' ? a : a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim()
+          ).join(', '),
+        }))
+
         return {
           success: true,
-          sources: results,
-          relevantSources: relevantSources.length,
+          // Kompaktes Summary statt vollständiger Quellen (Performance!)
+          relevantSourcesSummary: relevantSummary,
+          relevantSourcesCount: relevantSources.length,
           totalEvaluated: fullSources.length,
           batchStats: { successCount, failCount },
           processingTimeMs: totalTime,
+          // Cache-Info für weitere Tool-Aufrufe
+          searchId: searchId || null,
           // Save information
           saved: saveResult ? {
             added: saveResult.added,
@@ -892,7 +1141,6 @@ Gib für jede Quelle:
       } catch (error) {
         return {
           success: false,
-          sources: (sources as unknown as NormalizedSource[]).map(s => ({ ...s, evaluationError: true, relevanceScore: 0 })),
           error: error instanceof Error ? error.message : 'Unknown error',
           _toolStep: createToolStepMarker('end', {
             id: stepId,
@@ -967,3 +1215,293 @@ Gib für jede Quelle: relevanceScore (0-100), isRelevant (true wenn >= 60), reas
     }
   }
 })
+
+// ============================================================================
+// Find Or Search Sources Tool (INTELLIGENT - Library First!)
+// ============================================================================
+
+/**
+ * Factory für das intelligente findOrSearchSources Tool.
+ *
+ * LÖST PROBLEM: Agent sucht immer neue Quellen obwohl Bibliothek Quellen hat.
+ *
+ * WORKFLOW:
+ * 1. Lädt automatisch alle Quellen aus den Projekt-Bibliotheken
+ * 2. Prüft Relevanz der vorhandenen Quellen zum Thema
+ * 3. NUR wenn zu wenig relevante Quellen → startet externe Suche
+ * 4. Speichert neue Quellen automatisch in der Bibliothek
+ */
+export function createFindOrSearchSourcesTool(userId: string, projectId: string) {
+  return tool({
+    description: `Intelligente Quellensuche: Prüft AUTOMATISCH erst vorhandene Bibliotheken!
+
+WICHTIG: Dieses Tool prüft IMMER zuerst deine Bibliotheken bevor es extern sucht!
+
+WORKFLOW:
+1. Lädt alle Quellen aus deinen Projekt-Bibliotheken
+2. Prüft welche Quellen für dein Thema relevant sind
+3. NUR wenn zu wenig relevante Quellen → externe Suche (14+ Datenbanken)
+4. Neue Quellen werden automatisch in der Bibliothek gespeichert
+
+VORTEIL: Keine redundanten Suchen, nutzt vorhandene Arbeit, spart Zeit!
+
+EMPFOHLEN: Immer dieses Tool statt searchSources verwenden!`,
+    inputSchema: z.object({
+      thema: z.string().describe('Thema/Fragestellung für die Quellensuche'),
+      minExistingSources: z.number().min(1).max(20).optional().describe('Mindestanzahl relevanter Quellen aus Bibliothek bevor externe Suche startet (Standard: 5)'),
+      searchQuery: z.string().optional().describe('Optionaler spezifischer Suchbegriff (Standard: thema wird verwendet)'),
+      alwaysSearch: z.boolean().optional().describe('Immer externe Suche durchführen, auch wenn genug Quellen vorhanden (Standard: false)'),
+    }),
+    execute: async ({
+      thema,
+      minExistingSources = 5,
+      searchQuery,
+      alwaysSearch = false,
+    }) => {
+      const language = await queryLanguage()
+      const stepId = generateToolStepId()
+      const toolName = 'findOrSearchSources'
+      const startTime = Date.now()
+
+      try {
+        const supabase = await createClient()
+
+        // 1. Alle Bibliotheken des Projekts laden
+        console.log(`[findOrSearchSources] Loading libraries for project ${projectId}...`)
+        const libraries = await citationLibrariesUtils.getCitationLibraries(userId, supabase, projectId)
+
+        if (libraries.length === 0) {
+          console.log(`[findOrSearchSources] No libraries found, creating default and searching...`)
+          // Keine Bibliothek vorhanden → direkt suchen und neue Bibliothek erstellen
+          const newLibrary = await citationLibrariesUtils.createCitationLibrary(
+            { name: 'Literatur', project_id: projectId, user_id: userId },
+            supabase
+          )
+
+          // Externe Suche durchführen
+          const fetcher = new SourceFetcher({ maxParallelRequests: 6, useCache: true })
+          const results = await fetcher.search({ query: searchQuery || thema, type: 'keyword', limit: 40 })
+
+          if (results.sources.length === 0) {
+            return {
+              success: true,
+              action: 'no_sources_found',
+              existingSources: [],
+              newSources: [],
+              libraryId: newLibrary.id,
+              message: 'Keine Quellen gefunden. Versuche andere Suchbegriffe.',
+            }
+          }
+
+          // Qualitätsbewertung
+          const analyzed = analyzeAndRankSources(results.sources, thema, [], true)
+          const selected = analyzed.filter(s => s.qualityScore >= 50).slice(0, 25)
+
+          // Direkt speichern
+          const saveResult = await saveSourcesDirectlyToLibrary(selected, newLibrary.id, userId)
+
+          return {
+            success: true,
+            action: 'searched_and_saved',
+            existingSources: [],
+            newSourcesCount: saveResult.added,
+            libraryId: newLibrary.id,
+            message: `Neue Bibliothek erstellt. ${saveResult.added} Quellen gefunden und gespeichert.`,
+            _toolStep: createToolStepMarker('end', {
+              id: stepId,
+              toolName,
+              status: 'completed',
+              output: { action: 'searched_and_saved', newSources: saveResult.added },
+            }),
+          }
+        }
+
+        // 2. Alle vorhandenen Quellen aus allen Bibliotheken sammeln
+        console.log(`[findOrSearchSources] Loading sources from ${libraries.length} libraries...`)
+        interface ExistingSource {
+          id: string
+          title: string | null
+          year: number | null
+          authors: string[] | null
+          abstract: string | null
+          doi: string | null
+        }
+        const existingSources: ExistingSource[] = []
+        let primaryLibraryId = libraries[0].id
+
+        for (const lib of libraries) {
+          const sources = await citationsUtils.getCitationsByLibrary(lib.id, userId, supabase)
+          existingSources.push(...sources.map(s => ({
+            id: s.id,
+            title: s.title,
+            year: s.year,
+            authors: s.authors,
+            abstract: s.abstract,
+            doi: s.doi,
+          })))
+          // Nutze größte Bibliothek als primäre
+          if (sources.length > existingSources.length - sources.length) {
+            primaryLibraryId = lib.id
+          }
+        }
+
+        console.log(`[findOrSearchSources] Found ${existingSources.length} existing sources`)
+
+        // 3. Schnelle Relevanz-Prüfung der vorhandenen Quellen
+        let relevantExisting: Array<ExistingSource & { relevanceScore: number; relevanceReason: string }> = []
+
+        if (existingSources.length > 0) {
+          console.log(`[findOrSearchSources] Evaluating relevance of ${existingSources.length} existing sources...`)
+
+          const model = deepseek(DEEPSEEK_CHAT_MODEL)
+          const BATCH_SIZE = 10
+
+          // Schnelle Batch-Evaluation
+          const sourcesToEvaluate = existingSources.slice(0, 30) // Max 30 für Schnelligkeit
+          const { results: evaluations } = await processBatchesInParallel(
+            sourcesToEvaluate,
+            BATCH_SIZE,
+            async (batch) => {
+              const prompt = `Bewerte schnell die Relevanz für: "${thema}"
+${JSON.stringify(batch.map(s => ({ id: s.id, title: s.title, abstract: s.abstract?.substring(0, 200) || '' })), null, 2)}
+Gib für jede: relevanceScore (0-100), isRelevant (boolean), reason (1 Satz)`
+
+              const { object } = await generateObject({
+                model,
+                schema: z.object({
+                  evaluations: z.array(z.object({
+                    id: z.string(),
+                    relevanceScore: z.number(),
+                    isRelevant: z.boolean(),
+                    reason: z.string(),
+                  }))
+                }),
+                prompt,
+              })
+              return object.evaluations
+            }
+          )
+
+          relevantExisting = sourcesToEvaluate
+            .map(source => {
+              const evaluation = evaluations.find(e => e.id === source.id)
+              return {
+                ...source,
+                relevanceScore: evaluation?.relevanceScore || 0,
+                relevanceReason: evaluation?.reason || 'Nicht bewertet',
+              }
+            })
+            .filter(s => s.relevanceScore >= 60)
+            .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        }
+
+        console.log(`[findOrSearchSources] Found ${relevantExisting.length} relevant existing sources`)
+
+        // 4. Entscheidung: Genug relevante Quellen vorhanden?
+        if (relevantExisting.length >= minExistingSources && !alwaysSearch) {
+          const totalTime = Date.now() - startTime
+
+          // Summary für LLM
+          const existingSummary = relevantExisting.slice(0, 10).map(s => ({
+            title: s.title,
+            year: s.year,
+            relevanceScore: s.relevanceScore,
+            reason: s.relevanceReason,
+            authors: s.authors?.slice(0, 2).join(', ') || 'Unbekannt',
+          }))
+
+          return {
+            success: true,
+            action: 'used_existing',
+            existingSourcesCount: relevantExisting.length,
+            existingSourcesSummary: existingSummary,
+            libraryId: primaryLibraryId,
+            processingTimeMs: totalTime,
+            message: `${relevantExisting.length} relevante Quellen in deinen Bibliotheken gefunden. Keine externe Suche nötig.`,
+            hint: 'Falls du zusätzliche Quellen möchtest, rufe dieses Tool mit alwaysSearch: true auf.',
+            _toolStep: createToolStepMarker('end', {
+              id: stepId,
+              toolName,
+              status: 'completed',
+              output: { action: 'used_existing', existingSources: relevantExisting.length },
+            }),
+          }
+        }
+
+        // 5. Externe Suche durchführen (zu wenig relevante Quellen)
+        console.log(`[findOrSearchSources] Not enough relevant sources (${relevantExisting.length}/${minExistingSources}), searching externally...`)
+
+        const fetcher = new SourceFetcher({ maxParallelRequests: 6, useCache: true })
+        const results = await fetcher.search({
+          query: searchQuery || thema,
+          type: 'keyword',
+          limit: 50,
+        })
+
+        if (results.sources.length === 0) {
+          return {
+            success: true,
+            action: 'search_no_results',
+            existingSourcesCount: relevantExisting.length,
+            newSourcesCount: 0,
+            libraryId: primaryLibraryId,
+            message: `${relevantExisting.length} vorhandene relevante Quellen. Externe Suche fand keine zusätzlichen Quellen.`,
+          }
+        }
+
+        // Qualitätsbewertung und Filterung
+        const analyzed = analyzeAndRankSources(results.sources, thema, [], true)
+        const filtered = analyzed.filter(s => s.qualityScore >= 50).slice(0, 25)
+
+        // Direkt in Bibliothek speichern
+        const saveResult = await saveSourcesDirectlyToLibrary(filtered, primaryLibraryId, userId)
+
+        const totalTime = Date.now() - startTime
+
+        // Summary für neue Quellen
+        const newSourcesSummary = filtered.slice(0, 5).map(s => ({
+          title: s.title,
+          year: s.publicationYear,
+          qualityScore: s.qualityScore,
+          authors: s.authors?.slice(0, 2).map(a =>
+            typeof a === 'string' ? a : a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim()
+          ).join(', '),
+        }))
+
+        return {
+          success: true,
+          action: 'searched_and_saved',
+          existingSourcesCount: relevantExisting.length,
+          newSourcesCount: saveResult.added,
+          newSourcesSummary,
+          skippedDuplicates: saveResult.skippedDuplicates,
+          libraryId: primaryLibraryId,
+          processingTimeMs: totalTime,
+          message: `${relevantExisting.length} vorhandene + ${saveResult.added} neue Quellen gefunden und gespeichert${saveResult.skippedDuplicates > 0 ? ` (${saveResult.skippedDuplicates} Duplikate übersprungen)` : ''}.`,
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'completed',
+            output: {
+              action: 'searched_and_saved',
+              existingSources: relevantExisting.length,
+              newSources: saveResult.added,
+            },
+          }),
+        }
+      } catch (error) {
+        console.error(`[findOrSearchSources] Error:`, error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }),
+        }
+      }
+    },
+  })
+}

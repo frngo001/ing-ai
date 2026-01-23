@@ -28,9 +28,12 @@ import { PlateMarkdown } from "@/components/ui/plate-markdown"
 import { ChatSelectionToolbar } from "./ask-ai-pane/chat-selection-toolbar"
 import {
   AIChoiceButtons,
+  AIQuestionnaire,
   parseChoicesFromText,
   hasChoices,
+  formatAnswersForMessage,
   type AIChoice,
+  type AIAnswer,
 } from "@/components/ui/ai-choice-buttons"
 
 import { Button } from "@/components/ui/button"
@@ -701,6 +704,29 @@ export function AskAiPane({
   )
 
   /**
+   * Behandelt die Antworten eines Multi-Question Fragebogens.
+   * Formatiert alle Antworten und sendet sie als User-Nachricht.
+   */
+  const handleQuestionsSubmit = useCallback(
+    (answers: AIAnswer[], messageId: string) => {
+      if (isSending) return
+
+      // Formatiere alle Antworten für die Nachricht
+      const formattedMessage = formatAnswersForMessage(answers)
+      setInput(formattedMessage)
+
+      // Kurze Verzögerung für visuelles Feedback
+      setTimeout(() => {
+        const form = document.querySelector('form') as HTMLFormElement
+        if (form) {
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+        }
+      }, 50)
+    },
+    [isSending]
+  )
+
+  /**
    * Speichert oder entfernt eine Nachricht aus den Favoriten.
    * 
    * @param messageId - Die ID der Nachricht, die gespeichert/entfernt werden soll
@@ -1006,6 +1032,17 @@ export function AskAiPane({
                                               />
                                             )
                                           }
+                                          if (segment.type === 'questions') {
+                                            const isLastMessage = message.id === lastAssistantId
+                                            return (
+                                              <AIQuestionnaire
+                                                key={`seg-questions-${segIdx}`}
+                                                questions={segment.questions}
+                                                onSubmit={(answers) => handleQuestionsSubmit(answers, message.id)}
+                                                disabled={isSending || !isLastMessage}
+                                              />
+                                            )
+                                          }
                                           return null
                                         })}
                                       </div>
@@ -1077,6 +1114,17 @@ export function AskAiPane({
                                               key={`fallback-choices-${segIdx}`}
                                               choices={segment.choices}
                                               onSelect={(choice) => handleChoiceSelect(choice, message.id)}
+                                              disabled={isSending || !isLastMessage}
+                                            />
+                                          )
+                                        }
+                                        if (segment.type === 'questions') {
+                                          const isLastMessage = message.id === lastAssistantId
+                                          return (
+                                            <AIQuestionnaire
+                                              key={`fallback-questions-${segIdx}`}
+                                              questions={segment.questions}
+                                              onSubmit={(answers) => handleQuestionsSubmit(answers, message.id)}
                                               disabled={isSending || !isLastMessage}
                                             />
                                           )

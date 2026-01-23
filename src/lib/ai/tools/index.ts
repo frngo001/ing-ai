@@ -22,7 +22,19 @@ export {
   analyzeSourcesTool,
   evaluateSourcesTool,
   createEvaluateSourcesTool,
+  // Optimierte Cache-basierte Tools
+  createSearchSourcesTool,
+  createFindOrSearchSourcesTool,
 } from './search-tools'
+
+// Search Cache (für direkte Cache-Zugriffe)
+export {
+  storeSearchResults,
+  getSearchResults,
+  getSearchSummary,
+  type CachedSource,
+  type SearchCacheSummary,
+} from './search-cache'
 
 // Utility Tools
 export {
