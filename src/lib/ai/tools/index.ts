@@ -21,6 +21,7 @@ export {
   searchSourcesTool,
   analyzeSourcesTool,
   evaluateSourcesTool,
+  createEvaluateSourcesTool,
 } from './search-tools'
 
 // Utility Tools

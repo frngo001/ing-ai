@@ -16,7 +16,7 @@ import {
   createGetLibrarySourcesTool,
   searchSourcesTool,
   analyzeSourcesTool,
-  evaluateSourcesTool,
+  createEvaluateSourcesTool,
   addThemaTool,
   saveStepDataTool,
   getCurrentStepTool,
@@ -60,7 +60,7 @@ export function createAgentTools(config: {
     // Search tools
     searchSources: searchSourcesTool,
     analyzeSources: analyzeSourcesTool,
-    evaluateSources: evaluateSourcesTool,
+    evaluateSources: createEvaluateSourcesTool(config.userId),
     // Utility tools
     addThema: addThemaTool,
     saveStepData: saveStepDataTool,

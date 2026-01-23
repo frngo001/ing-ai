@@ -6,6 +6,10 @@ import { SourceFetcher } from '@/lib/sources/source-fetcher'
 import type { NormalizedSource } from '@/lib/sources/types'
 import { translations, type Language } from '@/lib/i18n/translations'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
+import { createClient } from '@/lib/supabase/server'
+import * as citationLibrariesUtils from '@/lib/supabase/utils/citation-libraries'
+import * as citationsUtils from '@/lib/supabase/utils/citations'
+import { getCitationLink, getNormalizedDoi } from '@/lib/citations/link-utils'
 
 const queryLanguage = async () => {
   try {
@@ -85,6 +89,182 @@ async function processBatchesInParallel<T, R>(
     results: successfulResults,
     successCount: batches.length - failCount,
     failCount
+  }
+}
+
+// ============================================================================
+// Direct Source Saving Helper
+// ============================================================================
+
+interface ConvertedCitation {
+  id: string
+  title: string
+  source: string
+  year: number | undefined
+  lastEdited: string
+  href: string
+  externalUrl: string | undefined
+  doi: string | undefined
+  authors: string[]
+  abstract: string | undefined
+  url: string | undefined
+  pdfUrl: string | undefined
+  pmid: string | undefined
+  pmcid: string | undefined
+  arxivId: string | undefined
+  isbn: string | undefined
+  issn: string | undefined
+  volume: string | undefined
+  issue: string | undefined
+  pages: string | undefined
+  publisher: string | undefined
+  type: string | undefined
+  keywords: string[] | undefined
+  citationCount: number | undefined
+  isOpenAccess: boolean | undefined
+  sourceApi: string | undefined
+  qualityScore: number | undefined
+  relevanceScore: number | undefined
+}
+
+function convertNormalizedSourceToCitation(source: NormalizedSource & { qualityScore?: number; relevanceScore?: number }): ConvertedCitation {
+  const authors = source.authors
+    ? source.authors.map((a) =>
+      typeof a === 'string' ? a : a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim()
+    ).filter(Boolean)
+    : []
+
+  const externalUrl = getCitationLink({
+    url: source.url,
+    doi: source.doi,
+    pdfUrl: source.pdfUrl,
+  })
+  const validDoi = getNormalizedDoi(source.doi)
+
+  // Verwende existierende ID nur wenn sie eine gültige UUID ist
+  const existingId = source.id
+  const isValidUuid = existingId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(existingId)
+  const id = isValidUuid ? existingId : generateSourceId()
+
+  return {
+    id,
+    title: source.title || 'Ohne Titel',
+    source: source.journal || source.publisher || 'Quelle',
+    year: source.publicationYear || undefined,
+    lastEdited: new Date().toLocaleDateString('de-DE', { dateStyle: 'short' }),
+    href: externalUrl || '/editor',
+    externalUrl,
+    doi: validDoi || undefined,
+    authors,
+    abstract: source.abstract || undefined,
+    url: source.url || undefined,
+    pdfUrl: source.pdfUrl || undefined,
+    pmid: source.pmid || undefined,
+    pmcid: source.pmcid || undefined,
+    arxivId: source.arxivId || undefined,
+    isbn: source.isbn || undefined,
+    issn: source.issn || undefined,
+    volume: source.volume || undefined,
+    issue: source.issue || undefined,
+    pages: source.pages || undefined,
+    publisher: source.publisher || undefined,
+    type: source.type || undefined,
+    keywords: source.keywords || undefined,
+    citationCount: source.citationCount || undefined,
+    isOpenAccess: source.isOpenAccess || undefined,
+    sourceApi: source.sourceApi || undefined,
+    qualityScore: source.qualityScore || undefined,
+    relevanceScore: source.relevanceScore || undefined,
+  }
+}
+
+async function saveSourcesDirectlyToLibrary(
+  sources: (NormalizedSource & { qualityScore?: number; relevanceScore?: number })[],
+  libraryId: string,
+  userId: string
+): Promise<{ added: number; failed: number; skippedDuplicates: number }> {
+  const supabase = await createClient()
+
+  const library = await citationLibrariesUtils.getCitationLibraryById(libraryId, userId, supabase)
+  if (!library) {
+    throw new Error('Bibliothek nicht gefunden')
+  }
+
+  const newCitations = sources.map(s => convertNormalizedSourceToCitation(s))
+  const existingCitations = await citationsUtils.getCitationsByLibrary(libraryId, userId, supabase)
+
+  // Deduplizierung
+  const existingIds = new Set(existingCitations.map((c) => c.id))
+  const existingDois = new Set(existingCitations.map((c) => c.doi?.toLowerCase()).filter(Boolean))
+  const existingTitles = new Set(existingCitations.map((c) => c.title?.toLowerCase().trim()).filter(Boolean))
+
+  const uniqueCitations = newCitations.filter((c) => {
+    if (existingIds.has(c.id)) return false
+    if (c.doi && existingDois.has(c.doi.toLowerCase())) return false
+    if (c.title && existingTitles.has(c.title.toLowerCase().trim())) return false
+    return true
+  })
+
+  // Batch-Insert
+  const BATCH_SIZE = 10
+  let successCount = 0
+  let failCount = 0
+
+  for (let i = 0; i < uniqueCitations.length; i += BATCH_SIZE) {
+    const batch = uniqueCitations.slice(i, i + BATCH_SIZE)
+    const results = await Promise.allSettled(
+      batch.map((citation) => {
+        const metadata: Record<string, unknown> = {}
+        if (citation.url) metadata.url = citation.url
+        if (citation.pdfUrl) metadata.pdfUrl = citation.pdfUrl
+        if (citation.pmid) metadata.pmid = citation.pmid
+        if (citation.pmcid) metadata.pmcid = citation.pmcid
+        if (citation.arxivId) metadata.arxivId = citation.arxivId
+        if (citation.isbn) metadata.isbn = citation.isbn
+        if (citation.issn) metadata.issn = citation.issn
+        if (citation.volume) metadata.volume = citation.volume
+        if (citation.issue) metadata.issue = citation.issue
+        if (citation.pages) metadata.pages = citation.pages
+        if (citation.publisher) metadata.publisher = citation.publisher
+        if (citation.type) metadata.type = citation.type
+        if (citation.keywords?.length) metadata.keywords = citation.keywords
+        if (citation.citationCount) metadata.citationCount = citation.citationCount
+        if (citation.isOpenAccess !== undefined) metadata.isOpenAccess = citation.isOpenAccess
+        if (citation.sourceApi) metadata.sourceApi = citation.sourceApi
+        if (citation.qualityScore) metadata.qualityScore = citation.qualityScore
+        if (citation.relevanceScore) metadata.relevanceScore = citation.relevanceScore
+
+        return citationsUtils.createCitation({
+          id: citation.id,
+          user_id: userId,
+          library_id: libraryId,
+          title: citation.title,
+          source: citation.source,
+          year: citation.year ?? null,
+          last_edited: new Date().toISOString(),
+          href: citation.href,
+          external_url: citation.externalUrl ?? null,
+          authors: citation.authors || null,
+          abstract: citation.abstract || null,
+          doi: citation.doi || null,
+          citation_style: 'vancouver',
+          in_text_citation: citation.title,
+          full_citation: citation.title,
+          metadata,
+        }, supabase)
+      })
+    )
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') successCount++
+      else failCount++
+    }
+  }
+
+  return {
+    added: successCount,
+    failed: failCount,
+    skippedDuplicates: newCitations.length - uniqueCitations.length,
   }
 }
 
@@ -566,14 +746,170 @@ Bewerte JEDE Quelle mit:
 })
 
 // ============================================================================
-// Evaluate Sources Tool (PARALLEL BATCH PROCESSING)
+// Evaluate Sources Tool (PARALLEL BATCH PROCESSING + DIRECT SAVE)
 // ============================================================================
 
-export const evaluateSourcesTool = tool({
-  description: `Schnelle LLM-Bewertung der Relevanz von Quellen mit PARALLELER Batch-Verarbeitung.
+/**
+ * Factory für das evaluateSources Tool mit optionalem direktem Speichern.
+ * Wenn saveToLibraryId angegeben wird, werden die bewerteten Quellen
+ * automatisch in der Bibliothek gespeichert - KEIN separater addSourcesToLibrary Aufruf nötig!
+ */
+export function createEvaluateSourcesTool(userId: string) {
+  return tool({
+    description: `Schnelle LLM-Bewertung der Relevanz von Quellen mit PARALLELER Batch-Verarbeitung.
 
-Nutze dieses Tool für eine schnelle semantische Bewertung von bis zu 30 Quellen.
-KAPAZITÄT: Bis zu 30 Quellen werden PARALLEL in 5 Batches analysiert!`,
+WICHTIG: Wenn saveToLibraryId angegeben wird, werden die relevanten Quellen
+AUTOMATISCH in der Bibliothek gespeichert! Kein separater addSourcesToLibrary Aufruf nötig.
+
+KAPAZITÄT: Bis zu 30 Quellen werden PARALLEL in 5 Batches analysiert!
+
+WORKFLOW (SCHNELL):
+1. searchSources → Quellen finden
+2. evaluateSources mit saveToLibraryId → Bewerten UND Speichern in einem Schritt!`,
+    inputSchema: z.object({
+      sources: z.array(z.object({}).passthrough()).max(30).describe('Vollständige Quellen von searchSources (max. 30) - ALLE Felder übergeben!'),
+      thema: z.string().describe('Thema der Arbeit'),
+      saveToLibraryId: z.string().optional().describe('Library-ID zum direkten Speichern der relevanten Quellen (von listAllLibraries)'),
+      minRelevanceScore: z.number().min(0).max(100).optional().describe('Minimum Score zum Speichern (Standard: 60)'),
+    }),
+    execute: async ({ sources, thema, saveToLibraryId, minRelevanceScore = 60 }) => {
+      const language = await queryLanguage()
+      const startTime = Date.now()
+      const stepId = generateToolStepId()
+      const toolName = 'evaluateSources'
+
+      try {
+        const model = deepseek(DEEPSEEK_CHAT_MODEL)
+        const noAbstractText = translations[language as Language]?.askAi?.toolNoAbstractAvailable || 'Kein Abstract verfügbar'
+
+        // Cast sources to proper type
+        const fullSources = sources as unknown as (NormalizedSource & { qualityScore?: number })[]
+
+        console.log(`[evaluateSourcesTool] Starting parallel evaluation of ${fullSources.length} sources...`)
+
+        // Batch-Verarbeitung: 6 Quellen pro Batch = max 5 parallele Anfragen für 30 Quellen
+        const BATCH_SIZE = 6
+
+        const { results: evaluations, successCount, failCount } = await processBatchesInParallel(
+          fullSources,
+          BATCH_SIZE,
+          async (batch, batchIndex) => {
+            console.log(`[evaluateSourcesTool] Processing batch ${batchIndex + 1} (${batch.length} sources)...`)
+
+            const prompt = `Bewerte schnell die Relevanz dieser Quellen für: "${thema}"
+
+${JSON.stringify(batch.map(s => ({
+              id: s.id,
+              title: s.title,
+              abstract: s.abstract?.substring(0, 300) || noAbstractText,
+            })), null, 2)}
+
+Gib für jede Quelle:
+- relevanceScore (0-100)
+- isRelevant (true wenn Score >= 60)
+- reason (1 Satz Begründung)`
+
+            const { object } = await generateObject({
+              model,
+              schema: z.object({
+                evaluations: z.array(z.object({
+                  id: z.string(),
+                  relevanceScore: z.number().min(0).max(100),
+                  isRelevant: z.boolean(),
+                  reason: z.string()
+                }))
+              }),
+              prompt,
+            })
+
+            console.log(`[evaluateSourcesTool] Batch ${batchIndex + 1} completed with ${object.evaluations.length} evaluations`)
+            return object.evaluations
+          }
+        )
+
+        const totalTime = Date.now() - startTime
+        console.log(`[evaluateSourcesTool] Evaluation complete: ${evaluations.length} sources in ${totalTime}ms`)
+
+        // Merge evaluation results with full source data
+        const results = fullSources
+          .map(source => {
+            const evaluation = evaluations.find(e => e.id === source.id)
+            return {
+              ...source,
+              relevanceScore: evaluation?.relevanceScore || 0,
+              isRelevant: evaluation?.isRelevant || false,
+              evaluationReason: evaluation?.reason || 'Keine Bewertung'
+            }
+          })
+          .sort((a, b) => b.relevanceScore - a.relevanceScore)
+
+        // Filter relevant sources
+        const relevantSources = results.filter(s => s.relevanceScore >= minRelevanceScore && s.isRelevant)
+
+        // DIRECT SAVE if saveToLibraryId is provided
+        let saveResult: { added: number; failed: number; skippedDuplicates: number } | null = null
+        if (saveToLibraryId && relevantSources.length > 0) {
+          console.log(`[evaluateSourcesTool] Saving ${relevantSources.length} relevant sources to library ${saveToLibraryId}...`)
+          try {
+            saveResult = await saveSourcesDirectlyToLibrary(relevantSources, saveToLibraryId, userId)
+            console.log(`[evaluateSourcesTool] Saved ${saveResult.added} sources (${saveResult.skippedDuplicates} duplicates skipped)`)
+          } catch (saveError) {
+            console.error(`[evaluateSourcesTool] Failed to save sources:`, saveError)
+          }
+        }
+
+        const baseMessage = `${fullSources.length} Quellen in ${Math.round(totalTime / 1000)}s bewertet. ${relevantSources.length} sind relevant (Score >= ${minRelevanceScore}).`
+        const saveMessage = saveResult
+          ? ` ${saveResult.added} Quellen wurden automatisch gespeichert${saveResult.skippedDuplicates > 0 ? ` (${saveResult.skippedDuplicates} Duplikate übersprungen)` : ''}.`
+          : ''
+
+        return {
+          success: true,
+          sources: results,
+          relevantSources: relevantSources.length,
+          totalEvaluated: fullSources.length,
+          batchStats: { successCount, failCount },
+          processingTimeMs: totalTime,
+          // Save information
+          saved: saveResult ? {
+            added: saveResult.added,
+            failed: saveResult.failed,
+            skippedDuplicates: saveResult.skippedDuplicates,
+            libraryId: saveToLibraryId,
+          } : null,
+          message: baseMessage + saveMessage,
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'completed',
+            output: {
+              evaluated: fullSources.length,
+              relevant: relevantSources.length,
+              saved: saveResult?.added || 0,
+            },
+          }),
+        }
+      } catch (error) {
+        return {
+          success: false,
+          sources: (sources as unknown as NormalizedSource[]).map(s => ({ ...s, evaluationError: true, relevanceScore: 0 })),
+          error: error instanceof Error ? error.message : 'Unknown error',
+          _toolStep: createToolStepMarker('end', {
+            id: stepId,
+            toolName,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }),
+        }
+      }
+    }
+  })
+}
+
+// Legacy export for backwards compatibility (without save capability)
+export const evaluateSourcesTool = tool({
+  description: `Schnelle LLM-Bewertung der Relevanz von Quellen.
+HINWEIS: Verwende createEvaluateSourcesTool(userId) für die Möglichkeit, direkt zu speichern!`,
   inputSchema: z.object({
     sources: z.array(z.object({
       id: z.string(),
@@ -586,82 +922,48 @@ KAPAZITÄT: Bis zu 30 Quellen werden PARALLEL in 5 Batches analysiert!`,
   execute: async ({ sources, thema }) => {
     const language = await queryLanguage()
     const startTime = Date.now()
+    const model = deepseek(DEEPSEEK_CHAT_MODEL)
+    const noAbstractText = translations[language as Language]?.askAi?.toolNoAbstractAvailable || 'Kein Abstract verfügbar'
+    const BATCH_SIZE = 6
 
-    try {
-      const model = deepseek(DEEPSEEK_CHAT_MODEL)
-      const noAbstractText = translations[language as Language]?.askAi?.toolNoAbstractAvailable || 'Kein Abstract verfügbar'
+    const { results: evaluations, successCount, failCount } = await processBatchesInParallel(
+      sources,
+      BATCH_SIZE,
+      async (batch) => {
+        const prompt = `Bewerte schnell die Relevanz dieser Quellen für: "${thema}"
+${JSON.stringify(batch.map(s => ({ id: s.id, title: s.title, abstract: s.abstract?.substring(0, 300) || noAbstractText })), null, 2)}
+Gib für jede Quelle: relevanceScore (0-100), isRelevant (true wenn >= 60), reason (1 Satz)`
 
-      console.log(`[evaluateSourcesTool] Starting parallel evaluation of ${sources.length} sources...`)
-
-      // Batch-Verarbeitung: 6 Quellen pro Batch = max 5 parallele Anfragen für 30 Quellen
-      const BATCH_SIZE = 6
-
-      const { results: evaluations, successCount, failCount } = await processBatchesInParallel(
-        sources,
-        BATCH_SIZE,
-        async (batch, batchIndex) => {
-          console.log(`[evaluateSourcesTool] Processing batch ${batchIndex + 1} (${batch.length} sources)...`)
-
-          const prompt = `Bewerte schnell die Relevanz dieser Quellen für: "${thema}"
-
-${JSON.stringify(batch.map(s => ({
-            id: s.id,
-            title: s.title,
-            abstract: s.abstract?.substring(0, 300) || noAbstractText,
-          })), null, 2)}
-
-Gib für jede Quelle:
-- relevanceScore (0-100)
-- isRelevant (true wenn Score >= 60)
-- reason (1 Satz Begründung)`
-
-          const { object } = await generateObject({
-            model,
-            schema: z.object({
-              evaluations: z.array(z.object({
-                id: z.string(),
-                relevanceScore: z.number().min(0).max(100),
-                isRelevant: z.boolean(),
-                reason: z.string()
-              }))
-            }),
-            prompt,
-          })
-
-          console.log(`[evaluateSourcesTool] Batch ${batchIndex + 1} completed with ${object.evaluations.length} evaluations`)
-          return object.evaluations
-        }
-      )
-
-      const totalTime = Date.now() - startTime
-      console.log(`[evaluateSourcesTool] Evaluation complete: ${evaluations.length} sources in ${totalTime}ms`)
-
-      const results = sources
-        .map(source => {
-          const evaluation = evaluations.find(e => e.id === source.id)
-          return {
-            ...source,
-            relevanceScore: evaluation?.relevanceScore || 0,
-            isRelevant: evaluation?.isRelevant || false,
-            evaluationReason: evaluation?.reason || 'Keine Bewertung'
-          }
+        const { object } = await generateObject({
+          model,
+          schema: z.object({
+            evaluations: z.array(z.object({
+              id: z.string(),
+              relevanceScore: z.number().min(0).max(100),
+              isRelevant: z.boolean(),
+              reason: z.string()
+            }))
+          }),
+          prompt,
         })
-        .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        return object.evaluations
+      }
+    )
 
-      return {
-        success: true,
-        sources: results,
-        totalEvaluated: sources.length,
-        batchStats: { successCount, failCount },
-        processingTimeMs: totalTime,
-        message: `${sources.length} Quellen in ${Math.round(totalTime / 1000)}s bewertet (${successCount} Batches erfolgreich).`
-      }
-    } catch (error) {
-      return {
-        success: false,
-        sources: sources.map(s => ({ ...s, evaluationError: true, relevanceScore: 0 })),
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
+    const results = sources
+      .map(source => {
+        const evaluation = evaluations.find(e => e.id === source.id)
+        return { ...source, relevanceScore: evaluation?.relevanceScore || 0, isRelevant: evaluation?.isRelevant || false, evaluationReason: evaluation?.reason || 'Keine Bewertung' }
+      })
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+
+    return {
+      success: true,
+      sources: results,
+      totalEvaluated: sources.length,
+      batchStats: { successCount, failCount },
+      processingTimeMs: Date.now() - startTime,
+      message: `${sources.length} Quellen in ${Math.round((Date.now() - startTime) / 1000)}s bewertet.`
     }
   }
 })

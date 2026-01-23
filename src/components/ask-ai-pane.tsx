@@ -26,6 +26,12 @@ import {
 } from "lucide-react"
 import { PlateMarkdown } from "@/components/ui/plate-markdown"
 import { ChatSelectionToolbar } from "./ask-ai-pane/chat-selection-toolbar"
+import {
+  AIChoiceButtons,
+  parseChoicesFromText,
+  hasChoices,
+  type AIChoice,
+} from "@/components/ui/ai-choice-buttons"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -672,6 +678,29 @@ export function AskAiPane({
   }
 
   /**
+   * Behandelt die Auswahl einer AI-Choice-Option.
+   * Sendet die gewählte Option als neue User-Nachricht.
+   */
+  const handleChoiceSelect = useCallback(
+    (choice: AIChoice, messageId: string) => {
+      if (isSending) return
+
+      // Setze die Auswahl als Input und sende direkt
+      setInput(choice.label)
+
+      // Kurze Verzögerung für visuelles Feedback
+      setTimeout(() => {
+        // Simuliere form submit
+        const form = document.querySelector('form') as HTMLFormElement
+        if (form) {
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+        }
+      }, 50)
+    },
+    [isSending]
+  )
+
+  /**
    * Speichert oder entfernt eine Nachricht aus den Favoriten.
    * 
    * @param messageId - Die ID der Nachricht, die gespeichert/entfernt werden soll
@@ -948,11 +977,46 @@ export function AskAiPane({
                                 }
 
                                 if (part.type === 'text') {
-                                  return part.text ? (
+                                  if (!part.text) return null
+
+                                  // Prüfe auf Choice-Blöcke
+                                  if (hasChoices(part.text)) {
+                                    const segments = parseChoicesFromText(part.text)
+                                    return (
+                                      <div key={`text-${idx}`} className="space-y-3">
+                                        {segments.map((segment, segIdx) => {
+                                          if (segment.type === 'text') {
+                                            return (
+                                              <PlateMarkdown
+                                                key={`seg-text-${segIdx}`}
+                                                id={`${message.id}-text-${idx}-${segIdx}`}
+                                              >
+                                                {segment.content}
+                                              </PlateMarkdown>
+                                            )
+                                          }
+                                          if (segment.type === 'choices') {
+                                            const isLastMessage = message.id === lastAssistantId
+                                            return (
+                                              <AIChoiceButtons
+                                                key={`seg-choices-${segIdx}`}
+                                                choices={segment.choices}
+                                                onSelect={(choice) => handleChoiceSelect(choice, message.id)}
+                                                disabled={isSending || !isLastMessage}
+                                              />
+                                            )
+                                          }
+                                          return null
+                                        })}
+                                      </div>
+                                    )
+                                  }
+
+                                  return (
                                     <PlateMarkdown key={`text-${idx}`} id={`${message.id}-text-${idx}`}>
                                       {part.text}
                                     </PlateMarkdown>
-                                  ) : null
+                                  )
                                 }
 
                                 if (part.type === 'tool-step') {
@@ -993,9 +1057,38 @@ export function AskAiPane({
                                 )}
 
                                 {message.content ? (
-                                  <PlateMarkdown id={`${message.id}-content-fallback`}>
-                                    {message.content}
-                                  </PlateMarkdown>
+                                  hasChoices(message.content) ? (
+                                    <div className="space-y-3">
+                                      {parseChoicesFromText(message.content).map((segment, segIdx) => {
+                                        if (segment.type === 'text') {
+                                          return (
+                                            <PlateMarkdown
+                                              key={`fallback-text-${segIdx}`}
+                                              id={`${message.id}-content-fallback-${segIdx}`}
+                                            >
+                                              {segment.content}
+                                            </PlateMarkdown>
+                                          )
+                                        }
+                                        if (segment.type === 'choices') {
+                                          const isLastMessage = message.id === lastAssistantId
+                                          return (
+                                            <AIChoiceButtons
+                                              key={`fallback-choices-${segIdx}`}
+                                              choices={segment.choices}
+                                              onSelect={(choice) => handleChoiceSelect(choice, message.id)}
+                                              disabled={isSending || !isLastMessage}
+                                            />
+                                          )
+                                        }
+                                        return null
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <PlateMarkdown id={`${message.id}-content-fallback`}>
+                                      {message.content}
+                                    </PlateMarkdown>
+                                  )
                                 ) : streamingId === message.id ? (
                                   message.toolSteps && message.toolSteps.length > 0 ? null : <StreamingShimmer />
                                 ) : (
