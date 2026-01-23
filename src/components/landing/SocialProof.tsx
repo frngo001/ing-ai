@@ -39,7 +39,7 @@ export default function SocialProof() {
     if (!mounted) return null
 
     return (
-        <section className="py-8 md:py-16 border-y border-neutral-100 dark:border-neutral-900/50 bg-muted dark:bg-background overflow-hidden">
+        <section className="pt-0 pb-8 md:pb-16 border-y border-neutral-100 dark:border-neutral-900/50 bg-muted dark:bg-background overflow-hidden">
             <div className="container mx-auto px-4">
                 <ScrollReveal>
                     <p className="text-[10px] md:text-sm font-medium text-muted-foreground mb-6 md:mb-10 uppercase tracking-widest text-center">

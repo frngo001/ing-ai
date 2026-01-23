@@ -23,7 +23,7 @@ export default function BentoGrid() {
             title: t('landing.bentoGrid.features.aiAutocomplete.title'),
             description: t('landing.bentoGrid.features.aiAutocomplete.description'),
             content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
+                <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
                     <video
                         src="/assets/videos/autocomplete.mp4"
                         className="w-full h-auto"
@@ -41,7 +41,7 @@ export default function BentoGrid() {
             title: t('landing.bentoGrid.features.instantCitations.title'),
             description: t('landing.bentoGrid.features.instantCitations.description'),
             content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
+                <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
                     <video
                         src="/assets/videos/zitationen.mp4"
                         className="w-full h-auto"
@@ -60,7 +60,7 @@ export default function BentoGrid() {
             title: t('landing.bentoGrid.features.chatWithAgent.title'),
             description: t('landing.bentoGrid.features.chatWithAgent.description'),
             content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
+                <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
                     <video
                         src="/assets/videos/chat.mp4"
                         className="w-full h-auto"
@@ -78,7 +78,7 @@ export default function BentoGrid() {
             title: t('landing.bentoGrid.features.researchLibrary.title'),
             description: t('landing.bentoGrid.features.researchLibrary.description'),
             content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
+                <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
                     <video
                         src="/assets/videos/research-library.mp4"
                         className="w-full h-auto"
@@ -97,7 +97,7 @@ export default function BentoGrid() {
         //     title: t('landing.bentoGrid.features.plagiarismCheck.title'),
         //     description: t('landing.bentoGrid.features.plagiarismCheck.description'),
         //     content: (
-        //         <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
+        //         <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
         //             <video
         //                 src="/assets/videos/plagiarism-check.mp4"
         //                 className="w-full h-auto"
@@ -109,42 +109,42 @@ export default function BentoGrid() {
         //         </div>
         //     )
         // },
-        {
-            category: t('landing.bentoGrid.qualityAnalysis.title'),
-            categoryDescription: t('landing.bentoGrid.qualityAnalysis.description'),
-            title: t('landing.bentoGrid.features.grammarAnalysis.title'),
-            description: t('landing.bentoGrid.features.grammarAnalysis.description'),
-            content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
-                    <video
-                        src="/assets/videos/grammar-analysis.mp4"
-                        className="w-full h-auto"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                    />
-                </div>
-            )
-        },
-        {
-            category: t('landing.bentoGrid.qualityAnalysis.title'),
-            categoryDescription: t('landing.bentoGrid.qualityAnalysis.description'),
-            title: t('landing.bentoGrid.features.scientificDatabases.title'),
-            description: t('landing.bentoGrid.features.scientificDatabases.description'),
-            content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
-                    <video
-                        src="/assets/videos/scientific-databases.mp4"
-                        className="w-full h-auto"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                    />
-                </div>
-            )
-        },
+        // {
+        //     category: t('landing.bentoGrid.qualityAnalysis.title'),
+        //     categoryDescription: t('landing.bentoGrid.qualityAnalysis.description'),
+        //     title: t('landing.bentoGrid.features.grammarAnalysis.title'),
+        //     description: t('landing.bentoGrid.features.grammarAnalysis.description'),
+        //     content: (
+        //         <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
+        //             <video
+        //                 src="/assets/videos/grammar-analysis.mp4"
+        //                 className="w-full h-auto"
+        //                 autoPlay
+        //                 loop
+        //                 muted
+        //                 playsInline
+        //             />
+        //         </div>
+        //     )
+        // },
+        // {
+        //     category: t('landing.bentoGrid.qualityAnalysis.title'),
+        //     categoryDescription: t('landing.bentoGrid.qualityAnalysis.description'),
+        //     title: t('landing.bentoGrid.features.scientificDatabases.title'),
+        //     description: t('landing.bentoGrid.features.scientificDatabases.description'),
+        //     content: (
+        //         <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
+        //             <video
+        //                 src="/assets/videos/scientific-databases.mp4"
+        //                 className="w-full h-auto"
+        //                 autoPlay
+        //                 loop
+        //                 muted
+        //                 playsInline
+        //             />
+        //         </div>
+        //     )
+        // },
         // Section 4: Import & Export
         {
             category: t('landing.bentoGrid.importExport.title'),
@@ -152,7 +152,7 @@ export default function BentoGrid() {
             title: t('landing.bentoGrid.features.exportOptions.title'),
             description: t('landing.bentoGrid.features.exportOptions.description'),
             content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
+                <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
                     <video
                         src="/assets/videos/export-options.mp4"
                         className="w-full h-auto"
@@ -170,7 +170,7 @@ export default function BentoGrid() {
             title: t('landing.bentoGrid.features.editorImport.title'),
             description: t('landing.bentoGrid.features.editorImport.description'),
             content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
+                <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
                     <video
                         src="/assets/videos/editor-import.mp4"
                         className="w-full h-auto"
@@ -189,7 +189,7 @@ export default function BentoGrid() {
             title: t('landing.bentoGrid.features.bibtexImportExport.title'),
             description: t('landing.bentoGrid.features.bibtexImportExport.description'),
             content: (
-                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800">
+                <div className="w-full rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg lg:shadow-2xl border border-neutral-200/80 dark:border-neutral-700/50">
                     <video
                         src="/assets/videos/bibtex.mp4"
                         className="w-full h-auto"
@@ -206,13 +206,13 @@ export default function BentoGrid() {
     if (!mounted) return null
 
     return (
-        <Section className="py-20 md:py-32 bg-background" id="bento-features">
+        <Section className="py-8 sm:py-12 md:py-16 lg:py-32 bg-background" id="bento-features">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <ScrollReveal className="mb-4 md:mb-6 text-center max-w-3xl mx-auto space-y-4">
-                    <h2 className="text-4xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                <ScrollReveal className="mb-6 sm:mb-8 md:mb-10 lg:mb-6 text-center max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
+                    <h2 className="text-lg sm:text-xl md:text-2xl lg:text-4xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
                         {t('landing.bentoGrid.title')}
                     </h2>
-                    <p className="text-base md:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-muted-foreground max-w-md sm:max-w-xl md:max-w-2xl mx-auto leading-relaxed">
                         {t('landing.bentoGrid.description')}
                     </p>
                 </ScrollReveal>

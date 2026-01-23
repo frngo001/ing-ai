@@ -165,6 +165,11 @@ export default function Hero() {
             </PerspectiveWrapper>
           </div>
 
+          {/* Bottom blur fade overlay */}
+          <div className="absolute bottom-0 left-0 right-0 h-40 sm:h-56 md:h-72 z-30 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-t from-muted via-muted/60 to-transparent dark:from-background dark:via-background/60" />
+            <div className="absolute inset-0 backdrop-blur-sm [mask-image:linear-gradient(to_top,black_50%,transparent)]" />
+          </div>
         </div>
       </div>
     </section>
