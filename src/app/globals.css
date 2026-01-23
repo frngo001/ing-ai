@@ -60,34 +60,36 @@
   --app-contrast-strength: 1;
   --app-density-scale: 1;
 
-  /* Light Mode */
-  --background: #fafafa;
-  --foreground: #171717;
+  /* Light Mode - Warm Cream Tones */
+  --background: #faf9f7;
+  /* Editor/main content area - clean warm white */
+  --foreground: #1a1a1a;
 
   --card: #ffffff;
-  --card-foreground: #171717;
+  --card-foreground: #1a1a1a;
 
   --popover: #ffffff;
-  --popover-foreground: #171717;
+  --popover-foreground: #1a1a1a;
 
   --primary: #3ECF8E;
   /* Supabase Green */
-  --primary-foreground: #171717;
+  --primary-foreground: #1a1a1a;
 
-  --secondary: #e5e5e5;
-  --secondary-foreground: #171717;
+  --secondary: #f0eeeb;
+  --secondary-foreground: #1a1a1a;
 
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
+  --muted: #f0eeeb;
+  /* Landing page sections - warmer cream */
+  --muted-foreground: #5c5a57;
 
-  --accent: #f0fdf4;
-  --accent-foreground: #171717;
+  --accent: #e8f5ee;
+  --accent-foreground: #1a1a1a;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #e5e5e5;
-  --input: #e5e5e5;
+  --border: #e5e2dd;
+  --input: #e5e2dd;
   --ring: #3ECF8E;
 
   --chart-1: #3ECF8E;
@@ -101,13 +103,14 @@
   --chart-5: #22C55E;
   /* Green */
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #171717;
+  --sidebar: #f5f3f0;
+  /* Sidebar - warmer cream/beige tone */
+  --sidebar-foreground: #1a1a1a;
   --sidebar-primary: #3ECF8E;
-  --sidebar-primary-foreground: #171717;
-  --sidebar-accent: #f0fdf4;
-  --sidebar-accent-foreground: #171717;
-  --sidebar-border: #e5e5e5;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: #ebe8e4;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #e0ddd8;
   --sidebar-ring: #3ECF8E;
   --highlight: oklch(0.852 0.199 91.936);
   --brand: oklch(0.623 0.214 259.815);

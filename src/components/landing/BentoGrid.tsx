@@ -206,7 +206,7 @@ export default function BentoGrid() {
     if (!mounted) return null
 
     return (
-        <Section className="py-8 sm:py-12 md:py-16 lg:py-32 bg-background" id="bento-features">
+        <Section className="py-8 sm:py-12 md:py-16 lg:py-32 bg-gradient-to-b from-muted/60 via-background to-muted/40 dark:from-background dark:via-background dark:to-background" id="bento-features">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <ScrollReveal className="mb-6 sm:mb-8 md:mb-10 lg:mb-6 text-center max-w-3xl mx-auto space-y-1.5 sm:space-y-2">
                     <h2 className="text-lg sm:text-xl md:text-2xl lg:text-4xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">

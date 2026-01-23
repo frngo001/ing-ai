@@ -47,7 +47,7 @@ export default function Hero() {
   if (!mounted) return null
 
   return (
-    <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0">
+    <section className="line-b px-4 fade-bottom w-full overflow-hidden py-0 bg-gradient-to-b from-background via-muted/50 to-muted dark:from-background dark:via-background dark:to-background">
       <div className="max-w-7xl line-y line-dashed relative mx-auto flex flex-col gap-0 pt-10 sm:pt-32 md:pt-10">
         <div className="relative z-10 flex flex-col items-center text-center gap-2 sm:gap-3">
 

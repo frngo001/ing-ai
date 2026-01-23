@@ -39,7 +39,7 @@ export default function SocialProof() {
     if (!mounted) return null
 
     return (
-        <section className="pt-0 pb-8 md:pb-16 border-y border-neutral-100 dark:border-neutral-900/50 bg-muted dark:bg-background overflow-hidden">
+        <section className="pt-0 pb-8 md:pb-16 border-y border-neutral-200/60 dark:border-neutral-900/50 bg-gradient-to-b from-muted to-muted/50 dark:from-background dark:to-background overflow-hidden">
             <div className="container mx-auto px-4">
                 <ScrollReveal>
                     <p className="text-[10px] md:text-sm font-medium text-muted-foreground mb-6 md:mb-10 uppercase tracking-widest text-center">
@@ -50,8 +50,8 @@ export default function SocialProof() {
                 {/* Infinite scrolling marquee - 80% width centered */}
                 <div className="relative w-full md:w-[80%] mx-auto overflow-hidden">
                     {/* Gradient masks for smooth edges */}
-                    <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-neutral-50 dark:from-neutral-950 to-transparent z-10 pointer-events-none" />
-                    <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-neutral-50 dark:from-neutral-950 to-transparent z-10 pointer-events-none" />
+                    <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-muted dark:from-background to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-muted dark:from-background to-transparent z-10 pointer-events-none" />
 
                     <div className="flex gap-4 md:gap-8 animate-marquee">
                         {/* First set of logos */}

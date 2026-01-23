@@ -54,7 +54,7 @@ export function FAQ() {
     if (!mounted) return null
 
     return (
-        <section id="faq" className="md:min-h-screen flex items-center justify-center px-4 py-8 md:py-16 bg-muted/40 relative overflow-hidden">
+        <section id="faq" className="md:min-h-screen flex items-center justify-center px-4 py-8 md:py-16 bg-muted dark:bg-background relative overflow-hidden">
             {/* SEO: FAQPage Schema */}
             <FAQSchema />
 

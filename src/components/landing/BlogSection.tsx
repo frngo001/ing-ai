@@ -80,7 +80,7 @@ export function BlogSection() {
     if (!mounted) return null
 
     return (
-        <section id="blog" className="py-8 md:py-16 bg-background relative overflow-hidden">
+        <section id="blog" className="py-8 md:py-16 bg-gradient-to-b from-muted/80 via-muted/40 to-background dark:from-background dark:via-background dark:to-background relative overflow-hidden">
             <div className="container mx-auto px-6">
                 <div className="mb-8 text-center space-y-3">
                     <h2 className="text-lg md:text-4xl font-bold tracking-tight px-4">

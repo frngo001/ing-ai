@@ -193,7 +193,7 @@ export function TutorialsSection() {
     if (!mounted) return null
 
     return (
-        <Section id="tutorials" className="relative py-10 md:py-24 bg-background overflow-hidden">
+        <Section id="tutorials" className="relative py-10 md:py-24 bg-gradient-to-b from-background via-muted/50 to-muted/80 dark:from-background dark:via-background dark:to-background overflow-hidden">
             <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 md:gap-10 mb-8 md:mb-12">

@@ -242,7 +242,7 @@ export default function Pricing() {
   if (!mounted) return null;
 
   return (
-    <section id="pricing" className="relative py-8 px-4 md:py-16 overflow-hidden bg-background">
+    <section id="pricing" className="relative py-8 px-4 md:py-16 overflow-hidden bg-gradient-to-b from-background via-muted/50 to-muted/70 dark:from-background dark:via-background dark:to-background">
       {/* Ambient Background Lights */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-[10%] top-[10%] h-[500px] w-[500px] bg-primary/10 blur-[120px] rounded-full opacity-50" />
