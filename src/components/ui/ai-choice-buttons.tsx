@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Check, ChevronRight, Send, PenLine, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { useLanguage } from "@/lib/i18n/use-language"
 
 export interface AIChoice {
   label: string
@@ -87,9 +88,9 @@ export function AIChoiceButtons({
                 "hover:shadow-sm",
               ],
               isSelected && [
-                "bg-primary/10 dark:bg-primary/20",
-                "border-primary/50 dark:border-primary/40",
-                "shadow-sm shadow-primary/10",
+                "bg-muted dark:bg-muted/40",
+                "border-border dark:border-border/60",
+                "shadow-sm",
                 "scale-[0.98]",
               ],
               isOtherSelected && [
@@ -112,8 +113,8 @@ export function AIChoiceButtons({
                   "group-hover:border-muted-foreground/50",
                 ],
                 isSelected && [
-                  "border-primary bg-primary",
-                  "text-primary-foreground",
+                  "border-green-600 bg-green-600/10 dark:bg-green-600/20",
+                  "text-green-600 dark:text-green-400",
                 ]
               )}
             >
@@ -144,7 +145,7 @@ export function AIChoiceButtons({
                 "text-muted-foreground/0",
                 "group-hover:text-muted-foreground/60",
                 "group-hover:translate-x-0.5",
-                isSelected && "text-primary/60 translate-x-0.5"
+                isSelected && "text-muted-foreground/60 translate-x-0.5"
               )}
             />
           </button>
@@ -165,6 +166,7 @@ export function AIQuestionnaire({
   disabled = false,
   className,
 }: AIQuestionnaireProps) {
+  const { t } = useLanguage()
   const [answers, setAnswers] = useState<Record<string, { answer: string; isCustom: boolean }>>({})
   const [customInputs, setCustomInputs] = useState<Record<string, string>>({})
   const [showCustomInput, setShowCustomInput] = useState<Record<string, boolean>>({})
@@ -263,16 +265,20 @@ export function AIQuestionnaire({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground font-medium">
-            Frage {Math.min(currentQuestionIndex + 1, questions.length)} von {questions.length}
+            {t('aiChoiceButtons.questionProgress')
+              .replace('{current}', String(Math.min(currentQuestionIndex + 1, questions.length)))
+              .replace('{total}', String(questions.length))}
           </span>
           <span className={cn(
             "font-semibold transition-colors",
-            allAnswered ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+            allAnswered ? "text-green-600 dark:text-green-500" : "text-muted-foreground"
           )}>
-            {answeredCount}/{questions.length} beantwortet
+            {t('aiChoiceButtons.answeredCount')
+              .replace('{count}', String(answeredCount))
+              .replace('{total}', String(questions.length))}
           </span>
         </div>
-        <Progress value={progressPercent} className="h-1.5" />
+        <Progress value={progressPercent} className="h-1.5 [&>div]:bg-green-600 dark:[&>div]:bg-green-500" />
       </div>
 
       {/* Bereits beantwortete Fragen (kompakt) */}
@@ -289,7 +295,7 @@ export function AIQuestionnaire({
                 className={cn(
                   "rounded-lg border transition-all duration-200",
                   isExpanded
-                    ? "border-border/60 bg-muted/20"
+                    ? "border-border/60 bg-muted-for"
                     : "border-border/40 bg-muted/10"
                 )}
               >
@@ -299,12 +305,12 @@ export function AIQuestionnaire({
                   onClick={() => handleEditAnswer(question.id)}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
                 >
-                  <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400">
-                    <Check className="w-3 h-3" strokeWidth={3} />
+                  <div className="flex items-center justify-center w-5 h-5 rounded-full border border-border/60 bg-muted/20">
+                    <Check className="w-3 h-3 text-green-600 dark:text-green-400" strokeWidth={3} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs text-muted-foreground">
-                      {question.title || `Frage ${qIndex + 1}`}
+                      {question.title || t('aiChoiceButtons.defaultQuestionTitle').replace('{index}', String(qIndex + 1))}
                     </span>
                     <p className="text-sm font-medium text-foreground truncate">
                       {answer?.answer}
@@ -340,18 +346,18 @@ export function AIQuestionnaire({
                                 "hover:bg-muted/40",
                               ],
                               isSelected && [
-                                "bg-primary/10",
-                                "border-primary/50",
+                                "bg-muted",
+                                "border-border",
                               ],
                               isCustomMode && "opacity-40 border-transparent"
                             )}
                           >
                             <div className={cn(
-                              "w-3.5 h-3.5 rounded-full border-2 flex-shrink-0",
+                              "w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
                               !isSelected && "border-muted-foreground/30",
-                              isSelected && "border-primary bg-primary"
+                              isSelected && "border-green-600 bg-green-600/10"
                             )}>
-                              {isSelected && <Check className="w-2 h-2 text-primary-foreground" strokeWidth={3} />}
+                              {isSelected && <Check className="w-2 h-2 text-green-600" strokeWidth={3} />}
                             </div>
                             <span className="text-sm">{choice.label}</span>
                           </button>
@@ -366,12 +372,12 @@ export function AIQuestionnaire({
                         className={cn(
                           "flex items-center gap-3 w-full text-left px-3 py-2 rounded-md border border-dashed",
                           !isCustomMode && "border-border/40 hover:bg-muted/30",
-                          isCustomMode && "border-primary/50 bg-primary/5"
+                          isCustomMode && "border-border bg-muted/20"
                         )}
                       >
-                        <PenLine className={cn("w-3.5 h-3.5", isCustomMode ? "text-primary" : "text-muted-foreground/60")} />
-                        <span className={cn("text-sm", isCustomMode ? "text-primary" : "text-muted-foreground")}>
-                          Eigene Antwort
+                        <PenLine className={cn("w-3.5 h-3.5", isCustomMode ? "text-foreground" : "text-muted-foreground/60")} />
+                        <span className={cn("text-sm", isCustomMode ? "text-foreground" : "text-muted-foreground")}>
+                          {t('aiChoiceButtons.ownAnswer')}
                         </span>
                       </button>
 
@@ -379,9 +385,9 @@ export function AIQuestionnaire({
                         <textarea
                           value={customInputs[question.id] || ''}
                           onChange={(e) => handleCustomInputChange(question.id, e.target.value)}
-                          placeholder="Deine Antwort..."
+                          placeholder={t('aiChoiceButtons.ownAnswerPlaceholder')}
                           disabled={disabled || isAnimating}
-                          className="w-full px-3 py-2 rounded-md bg-background border border-border/60 text-sm resize-none min-h-[60px] focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          className="w-full px-3 py-2 rounded-md bg-background border border-border/60 text-sm resize-none min-h-[60px] focus:outline-none focus:ring-2 focus:ring-border/30"
                           autoFocus
                         />
                       )}
@@ -406,11 +412,11 @@ export function AIQuestionnaire({
               <div className="space-y-3">
                 {/* Question Header */}
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/15 text-primary text-sm font-semibold">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-muted border border-border/60 text-foreground text-sm font-semibold">
                     {currentQuestionIndex + 1}
                   </span>
                   <h4 className="text-sm font-medium text-foreground flex-1">
-                    {question.title || `Frage ${currentQuestionIndex + 1}`}
+                    {question.title || t('aiChoiceButtons.defaultQuestionTitle').replace('{index}', String(currentQuestionIndex + 1))}
                   </h4>
                 </div>
 
@@ -438,9 +444,9 @@ export function AIQuestionnaire({
                             "hover:shadow-sm",
                           ],
                           isSelected && [
-                            "bg-primary/10 dark:bg-primary/20",
-                            "border-primary/50 dark:border-primary/40",
-                            "shadow-sm shadow-primary/10",
+                            "bg-muted dark:bg-muted/40",
+                            "border-border dark:border-border/60",
+                            "shadow-sm",
                           ],
                           isCustomMode && [
                             "opacity-40",
@@ -457,7 +463,7 @@ export function AIQuestionnaire({
                             "border-2 transition-all duration-200",
                             "flex-shrink-0",
                             !isSelected && "border-muted-foreground/30",
-                            isSelected && "border-primary bg-primary text-primary-foreground"
+                            isSelected && "border-green-600 bg-green-600/10 dark:bg-green-600/20 text-green-600 dark:text-green-400"
                           )}
                         >
                           {isSelected && (
@@ -490,21 +496,21 @@ export function AIQuestionnaire({
                         "hover:bg-muted/30",
                       ],
                       isCustomMode && [
-                        "border-primary/50 dark:border-primary/40",
-                        "bg-primary/5",
+                        "border-border dark:border-border/60",
+                        "bg-muted/40",
                       ],
                       disabled && "opacity-50 cursor-not-allowed"
                     )}
                   >
                     <PenLine className={cn(
                       "w-5 h-5 flex-shrink-0",
-                      isCustomMode ? "text-primary" : "text-muted-foreground/60"
+                      isCustomMode ? "text-foreground" : "text-muted-foreground/60"
                     )} />
                     <span className={cn(
                       "flex-1 text-sm",
-                      isCustomMode ? "text-primary font-medium" : "text-muted-foreground"
+                      isCustomMode ? "text-foreground font-medium" : "text-muted-foreground"
                     )}>
-                      Eigene Antwort schreiben
+                      {t('aiChoiceButtons.writeOwnAnswer')}
                     </span>
                   </button>
 
@@ -514,13 +520,13 @@ export function AIQuestionnaire({
                       <textarea
                         value={customInputs[question.id] || ''}
                         onChange={(e) => handleCustomInputChange(question.id, e.target.value)}
-                        placeholder="Deine Antwort eingeben..."
+                        placeholder={t('aiChoiceButtons.enterOwnAnswerPlaceholder')}
                         disabled={disabled || isAnimating}
                         className={cn(
                           "w-full px-4 py-3 rounded-xl",
                           "bg-background border border-border/60",
                           "text-sm text-foreground placeholder:text-muted-foreground/60",
-                          "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50",
+                          "focus:outline-none focus:ring-2 focus:ring-border/30 focus:border-border/60",
                           "resize-none min-h-[80px]",
                           "transition-all duration-200"
                         )}
@@ -542,10 +548,10 @@ export function AIQuestionnaire({
             onClick={handleSubmit}
             disabled={disabled || isAnimating}
             size="sm"
-            className="gap-2 bg-primary hover:bg-primary/90"
+            className="gap-2 bg-foreground text-background hover:bg-foreground/90 dark:bg-muted dark:text-foreground dark:hover:bg-muted/80 border border-transparent"
           >
             <Send className="w-3.5 h-3.5" />
-            Antworten senden
+            {t('aiChoiceButtons.sendAnswers')}
           </Button>
         </div>
       )}
