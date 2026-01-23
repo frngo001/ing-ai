@@ -13,6 +13,7 @@ import { exportToDocxAndDownload } from '@/lib/export/docx-exporter';
 import { useCitationStore } from '@/lib/stores/citation-store';
 import { extractTextFromNode, extractTitleFromContent } from '@/lib/supabase/utils/document-title';
 import { useOnboardingStore } from '@/lib/stores/onboarding-store';
+import { useNotifications } from '@/hooks/use-notifications';
 
 import {
   DropdownMenu,
@@ -52,6 +53,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
   const [open, setOpen] = React.useState(false);
   const [isExporting, setIsExporting] = React.useState(false);
   const { t, language } = useLanguage();
+  const { notifyExportComplete } = useNotifications();
 
   // Check if onboarding is showing export step
   const { isOpen: isOnboardingOpen, getCurrentSubStep } = useOnboardingStore();
@@ -348,12 +350,14 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
 
     const filename = `${getDocumentName()}.pdf`;
     await downloadFile(pdfBase64, filename);
+    notifyExportComplete('PDF');
   };
 
   const exportToImage = async () => {
     const canvas = await getCanvas();
     const filename = `${getDocumentName()}.png`;
     await downloadFile(canvas.toDataURL('image/png'), filename);
+    notifyExportComplete('PNG');
   };
 
   const exportToHtml = async () => {
@@ -400,6 +404,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
 
     const filename = `${getDocumentName()}.html`;
     await downloadFile(url, filename);
+    notifyExportComplete('HTML');
   };
 
   const exportToMarkdown = async () => {
@@ -407,20 +412,21 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
     const url = `data:text/markdown;charset=utf-8,${encodeURIComponent(md)}`;
     const filename = `${getDocumentName()}.md`;
     await downloadFile(url, filename);
+    notifyExportComplete('Markdown');
   };
 
   const exportToDocx = async () => {
     if (isExporting) return;
-    
+
     try {
       setIsExporting(true);
       setOpen(false);
       const citationStore = useCitationStore.getState();
       const filename = getDocumentName();
       await exportToDocxAndDownload(editor.children, filename, citationStore);
+      notifyExportComplete('DOCX');
     } catch (error) {
       console.error('Fehler beim DOCX-Export:', error);
-      // Optional: Toast-Benachrichtigung anzeigen
       alert('Fehler beim Export: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'));
     } finally {
       setIsExporting(false);

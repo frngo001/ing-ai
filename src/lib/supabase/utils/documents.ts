@@ -1,6 +1,7 @@
 import { createClient } from '../client'
 import type { Database } from '../types'
 import { ensurePermanentUrls, hasBlobUrls } from '@/lib/editor/convert-blob-urls'
+import { logUserActivity } from '@/lib/supabase/utils/notification-settings'
 import { devLog, devWarn } from '@/lib/utils/logger'
 import type { Value } from 'platejs'
 
@@ -158,6 +159,8 @@ export async function createDocument(document: DocumentInsert): Promise<Document
   // Cache invalidieren für diesen User
   if (document.user_id) {
     invalidateDocumentsCache(document.user_id)
+    // Log activity for summary emails
+    logUserActivity(document.user_id, 'document_created', data.id, data.title || 'Untitled')
   }
 
   return data

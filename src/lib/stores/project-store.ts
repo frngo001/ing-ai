@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { getCurrentUserId } from '@/lib/supabase/utils/auth'
 import * as projectsUtils from '@/lib/supabase/utils/projects'
+import { logUserActivity } from '@/lib/supabase/utils/notification-settings'
 import { devLog, devError, devWarn } from '@/lib/utils/logger'
 
 export interface Project {
@@ -170,6 +171,9 @@ export const useProjectStore = create<ProjectState>()(
           projects: [...state.projects, mapped],
           currentProjectId: mapped.id, // Switch to new project
         }))
+
+        // Log activity for summary emails
+        logUserActivity(userId, 'project_created', mapped.id, name)
 
         devLog('[PROJECT STORE] Project created and switched to:', mapped.id)
         return mapped

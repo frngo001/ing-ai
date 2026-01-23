@@ -41,6 +41,7 @@ import {
 import { useProjectStore } from "@/lib/stores/project-store"
 import { useOnboardingStore } from "@/lib/stores/onboarding-store"
 import { useLanguage } from "@/lib/i18n/use-language"
+import { useNotifications } from "@/hooks/use-notifications"
 import { devError } from "@/lib/utils/logger"
 import { cn } from "@/lib/utils"
 import { ProjectShareDialog } from "@/components/project-share-dialog"
@@ -48,6 +49,7 @@ import { ProjectShareDialog } from "@/components/project-share-dialog"
 export function ProjectSwitcher() {
   const { t } = useLanguage()
   const { isMobile, setOpen, addInteractionLock, removeInteractionLock } = useSidebar()
+  const { notifyProjectCreated } = useNotifications()
 
   const projects = useProjectStore((state) => state.projects)
   const currentProjectId = useProjectStore((state) => state.currentProjectId)
@@ -182,7 +184,13 @@ export function ProjectSwitcher() {
 
     setIsCreating(true)
     try {
-      await createProject(newProjectName.trim(), newProjectDescription.trim() || undefined)
+      const projectName = newProjectName.trim()
+      const projectDescription = newProjectDescription.trim() || undefined
+      await createProject(projectName, projectDescription)
+
+      // Send notification (includes email if enabled)
+      notifyProjectCreated(projectName, projectDescription)
+
       setNewProjectName("")
       setNewProjectDescription("")
       setCreateDialogOpen(false)

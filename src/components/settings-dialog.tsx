@@ -4,6 +4,7 @@ import { useTheme } from "next-themes"
 import { BadgeCheck, Bell, CreditCard, Database, GraduationCap, Paintbrush, Settings, ShieldCheck, User, Camera, Mail, UserCircle, Loader2, X as XIcon, Lock, ArrowRight, Check, Globe, Gift, Users } from "lucide-react"
 import { useLanguage } from "@/lib/i18n/use-language"
 import { useOnboardingStore } from "@/lib/stores/onboarding-store"
+import { useNotifications } from "@/hooks/use-notifications"
 import { useCurrentUserId } from "@/hooks/use-auth"
 import { useUserProfile } from "@/hooks/use-user-profile"
 import { createClient } from "@/lib/supabase/client"
@@ -123,12 +124,14 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
     keyboardShortcuts: true,
     compactMode: false,
   })
-  const [notificationSettings, setNotificationSettings] = React.useState({
-    email: true,
-    push: false,
-    desktop: true,
-    summary: "daily",
-  })
+  // Use the notification hook for persistent settings
+  const {
+    settings: notificationSettings,
+    setEmailNotifications,
+    setPushNotifications,
+    setDesktopNotifications,
+    setSummaryFrequency,
+  } = useNotifications()
   const [dataControlSettings, setDataControlSettings] = React.useState({
     telemetry: true,
     personalization: true,
@@ -244,21 +247,30 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
       title: t('settings.emailNotifications'),
       description: t('settings.emailNotificationsDescription'),
       checked: notificationSettings.email,
-      onChange: (checked) => setNotificationSettings((prev) => ({ ...prev, email: checked })),
+      onChange: (checked) => setEmailNotifications(checked),
     },
     {
       title: t('settings.pushNotifications'),
       description: t('settings.pushNotificationsDescription'),
       checked: notificationSettings.push,
-      onChange: (checked) => setNotificationSettings((prev) => ({ ...prev, push: checked })),
+      onChange: (checked) => setPushNotifications(checked),
     },
     {
       title: t('settings.desktopNotifications'),
-      description: t('settings.desktopNotificationsDescription'),
+      description: notificationSettings.desktopPermission === 'denied'
+        ? t('settings.desktopNotificationsBlocked')
+        : t('settings.desktopNotificationsDescription'),
       checked: notificationSettings.desktop,
-      onChange: (checked) => setNotificationSettings((prev) => ({ ...prev, desktop: checked })),
+      onChange: async (checked) => {
+        const success = await setDesktopNotifications(checked)
+        if (!success && checked) {
+          toast.error(t('settings.desktopNotificationsError'), {
+            description: t('settings.desktopNotificationsErrorDescription'),
+          })
+        }
+      },
     },
-  ], [t, language, notificationSettings])
+  ], [t, language, notificationSettings, setEmailNotifications, setPushNotifications, setDesktopNotifications])
 
   const dataControlToggles: ToggleRowConfig[] = React.useMemo(() => [
     {
@@ -709,8 +721,8 @@ export function SettingsDialog({ open, onOpenChange, initialNav }: SettingsDialo
                       </div>
                       <Select
                         value={notificationSettings.summary}
-                        onValueChange={(value: string) =>
-                          setNotificationSettings((prev) => ({ ...prev, summary: value }))
+                        onValueChange={(value: "realtime" | "daily" | "weekly") =>
+                          setSummaryFrequency(value)
                         }
                       >
                         <SelectTrigger className="min-w-[160px]">
