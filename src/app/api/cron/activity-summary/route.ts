@@ -4,11 +4,13 @@ import { sendEmail } from '@/lib/resend'
 import { devLog, devError } from '@/lib/utils/logger'
 import ActivitySummaryEmail from '@/components/emails/ActivitySummaryEmail'
 
-// Use service role for cron job (bypasses RLS)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy initialization to avoid build-time errors
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 type ActivityType = 'document_created' | 'document_edited' | 'project_created' | 'citation_added' | 'export_completed'
 
@@ -85,6 +87,9 @@ export async function GET(request: NextRequest) {
 
   try {
     // Get all users with email notifications enabled and matching frequency
+    const supabaseAdmin = getSupabaseAdmin()
+
+    // Get all users with email notifications enabled and matching frequency
     const { data: users, error: usersError } = await supabaseAdmin
       .from('profiles')
       .select(`
@@ -108,7 +113,7 @@ export async function GET(request: NextRequest) {
       .filter((user: any) => {
         const prefs = user.user_preferences?.[0] || user.user_preferences
         return prefs?.email_notifications_enabled === true &&
-               prefs?.notification_summary_frequency === frequency
+          prefs?.notification_summary_frequency === frequency
       })
       .map((user: any) => {
         const prefs = user.user_preferences?.[0] || user.user_preferences

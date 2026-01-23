@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/resend'
 import { devLog, devError } from '@/lib/utils/logger'
-import { isEmailNotificationEnabled } from '@/lib/supabase/utils/notification-settings'
+import { isEmailNotificationEnabled } from '@/lib/supabase/utils/notification-settings.server'
 import NewProjectEmail from '@/components/emails/NewProjectEmail'
 import ActivitySummaryEmail from '@/components/emails/ActivitySummaryEmail'
 
