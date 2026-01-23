@@ -121,8 +121,8 @@ export async function GET(request: NextRequest) {
           id: user.id,
           email: user.email,
           full_name: user.full_name,
-          email_notifications_enabled: prefs?.email_notifications_enabled ?? true,
-          notification_summary_frequency: prefs?.notification_summary_frequency ?? 'daily',
+          email_notifications_enabled: prefs?.email_notifications_enabled ?? false,
+          notification_summary_frequency: prefs?.notification_summary_frequency ?? 'weekly',
         }
       })
 

@@ -22,10 +22,10 @@ export async function getNotificationSettingsServer(userId: string): Promise<Not
   if (!data) return null
 
   return {
-    emailNotificationsEnabled: data.email_notifications_enabled ?? true,
+    emailNotificationsEnabled: data.email_notifications_enabled ?? false,
     pushNotificationsEnabled: data.push_notifications_enabled ?? false,
     desktopNotificationsEnabled: data.desktop_notifications_enabled ?? false,
-    notificationSummaryFrequency: data.notification_summary_frequency ?? 'daily',
+    notificationSummaryFrequency: data.notification_summary_frequency ?? 'weekly',
   }
 }
 
