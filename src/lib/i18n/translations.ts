@@ -2060,17 +2060,8 @@ export const translations = {
                 toc: {
                     title: 'Table of Contents',
                 },
-            },
-            aiChoiceButtons: {
-                questionProgress: 'Pregunta {current} de {total}',
-                answeredCount: '{count}/{total} respondidas',
-                defaultQuestionTitle: 'Pregunta {index}',
-                ownAnswer: 'Respuesta propia',
-                ownAnswerPlaceholder: 'Tu respuesta...',
-                writeOwnAnswer: 'Escribir respuesta propia',
-                enterOwnAnswerPlaceholder: 'Introduce tu respuesta...',
-                sendAnswers: 'Enviar respuestas',
-            },
+            }
+
         },
     },
     es: {
@@ -4089,17 +4080,17 @@ export const translations = {
                 toc: {
                     title: 'Tabla de Contenidos',
                 },
-            },
-            aiChoiceButtons: {
-                questionProgress: 'Question {current} sur {total}',
-                answeredCount: '{count}/{total} répondues',
-                defaultQuestionTitle: 'Question {index}',
-                ownAnswer: 'Propre réponse',
-                ownAnswerPlaceholder: 'Votre réponse...',
-                writeOwnAnswer: 'Écrire sa propre réponse',
-                enterOwnAnswerPlaceholder: 'Entrez votre réponse...',
-                sendAnswers: 'Envoyer les réponses',
-            },
+            }
+        },
+        aiChoiceButtons: {
+            questionProgress: 'Pregunta {current} de {total}',
+            answeredCount: '{count}/{total} respondidas',
+            defaultQuestionTitle: 'Pregunta {index}',
+            ownAnswer: 'Respuesta propia',
+            ownAnswerPlaceholder: 'Tu respuesta...',
+            writeOwnAnswer: 'Escribir respuesta propia',
+            enterOwnAnswerPlaceholder: 'Introduce tu respuesta...',
+            sendAnswers: 'Enviar respuestas',
         },
     },
     fr: {
@@ -6120,14 +6111,14 @@ export const translations = {
                 },
             },
             aiChoiceButtons: {
-                questionProgress: 'Frage {current} von {total}',
-                answeredCount: '{count}/{total} beantwortet',
-                defaultQuestionTitle: 'Frage {index}',
-                ownAnswer: 'Eigene Antwort',
-                ownAnswerPlaceholder: 'Deine Antwort...',
-                writeOwnAnswer: 'Eigene Antwort schreiben',
-                enterOwnAnswerPlaceholder: 'Deine Antwort eingeben...',
-                sendAnswers: 'Antworten senden',
+                questionProgress: 'Question {current} sur {total}',
+                answeredCount: '{count}/{total} répondues',
+                defaultQuestionTitle: 'Question {index}',
+                ownAnswer: 'Propre réponse',
+                ownAnswerPlaceholder: 'Votre réponse...',
+                writeOwnAnswer: 'Écrire sa propre réponse',
+                enterOwnAnswerPlaceholder: 'Entrez votre réponse...',
+                sendAnswers: 'Envoyer les réponses',
             },
         },
     },
@@ -8184,6 +8175,16 @@ export const translations = {
                 privacy: 'Datenschutz',
                 terms: 'AGB',
             },
+        },
+        aiChoiceButtons: {
+            questionProgress: 'Frage {current} von {total}',
+            answeredCount: '{count}/{total} beantwortet',
+            defaultQuestionTitle: 'Frage {index}',
+            ownAnswer: 'Eigene Antwort',
+            ownAnswerPlaceholder: 'Deine Antwort...',
+            writeOwnAnswer: 'Eigene Antwort schreiben',
+            enterOwnAnswerPlaceholder: 'Gib deine Antwort ein...',
+            sendAnswers: 'Antworten senden',
         },
     },
 } as const

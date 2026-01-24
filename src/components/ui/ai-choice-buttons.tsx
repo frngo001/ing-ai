@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { Check, ChevronRight, Send, PenLine, ChevronDown } from "lucide-react"
+import { Check, ChevronRight, ArrowUpFromDot, PenLine, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useLanguage } from "@/lib/i18n/use-language"
@@ -77,57 +77,65 @@ export function AIChoiceButtons({
             onClick={() => handleSelect(choice, index)}
             className={cn(
               "group relative flex items-center gap-3 w-full text-left",
-              "px-4 py-3 rounded-xl",
-              "transition-all duration-200 ease-out",
+              "px-4 py-3 rounded-xl overflow-hidden",
+              "transition-all duration-300 ease-in-out",
               "border",
               !isSelected && !isOtherSelected && [
-                "bg-muted/30 dark:bg-muted/20",
-                "border-border/50 dark:border-border/30",
-                "hover:bg-muted/60 dark:hover:bg-muted/40",
-                "hover:border-border dark:hover:border-border/60",
-                "hover:shadow-sm",
+                "bg-card/50 backdrop-blur-sm dark:bg-card/30",
+                "border-border/60 dark:border-border/40",
+                "hover:border-primary/40 dark:hover:border-primary/30",
+                "hover:bg-primary/[0.02] dark:hover:bg-primary/[0.04]",
+                "hover:shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] dark:hover:shadow-none",
+                "hover:-translate-y-0.5",
               ],
               isSelected && [
-                "bg-muted dark:bg-muted/40",
-                "border-border dark:border-border/60",
-                "shadow-sm",
-                "scale-[0.98]",
+                "bg-primary/[0.08] dark:bg-primary/[0.12]",
+                "border-primary/60 dark:border-primary/50",
+                "shadow-[0_0_20px_-5px_rgba(62,207,142,0.15)]",
+                "scale-[0.99]",
               ],
               isOtherSelected && [
-                "opacity-40",
-                "bg-muted/20 dark:bg-muted/10",
+                "opacity-40 grayscale-[0.2]",
+                "bg-muted/10",
                 "border-transparent",
                 "pointer-events-none",
               ],
               disabled && "opacity-50 cursor-not-allowed"
             )}
           >
+            {/* Hover Glow Effect */}
+            {!isSelected && !isOtherSelected && (
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            )}
+
             <div
               className={cn(
                 "flex items-center justify-center",
-                "w-5 h-5 rounded-full",
-                "border-2 transition-all duration-200",
+                "w-5 h-5 rounded-full z-10",
+                "border-2 transition-all duration-300",
                 "flex-shrink-0",
                 !isSelected && [
-                  "border-muted-foreground/30",
-                  "group-hover:border-muted-foreground/50",
+                  "border-muted-foreground/20",
+                  "group-hover:border-primary/40",
                 ],
                 isSelected && [
-                  "border-green-600 bg-green-600/10 dark:bg-green-600/20",
-                  "text-green-600 dark:text-green-400",
+                  "border-primary bg-primary text-primary-foreground",
+                  "shadow-[0_2px_8px_rgba(62,207,142,0.4)]",
                 ]
               )}
             >
-              {isSelected && (
+              {isSelected ? (
                 <Check
-                  className="w-3 h-3 animate-in zoom-in-50 duration-150"
-                  strokeWidth={3}
+                  className="w-3 h-3 animate-in fade-in zoom-in-50 duration-200"
+                  strokeWidth={4}
                 />
+              ) : (
+                <div className="w-1.5 h-1.5 rounded-full bg-transparent group-hover:bg-primary/20 transition-colors" />
               )}
             </div>
             <span
               className={cn(
-                "flex-1 text-sm font-medium",
+                "flex-1 text-sm font-medium z-10",
                 "transition-colors duration-200",
                 !isSelected && [
                   "text-foreground/80",
@@ -140,12 +148,12 @@ export function AIChoiceButtons({
             </span>
             <ChevronRight
               className={cn(
-                "w-4 h-4 flex-shrink-0",
-                "transition-all duration-200",
+                "w-4 h-4 flex-shrink-0 z-10",
+                "transition-all duration-300",
                 "text-muted-foreground/0",
-                "group-hover:text-muted-foreground/60",
-                "group-hover:translate-x-0.5",
-                isSelected && "text-muted-foreground/60 translate-x-0.5"
+                "group-hover:text-primary/60",
+                "group-hover:translate-x-1",
+                isSelected && "text-primary/60 translate-x-1"
               )}
             />
           </button>
@@ -188,14 +196,38 @@ export function AIQuestionnaire({
     return questions.length // Alle beantwortet
   }, [questions, answers])
 
+  const submitAnswers = useCallback((currentAnswers: Record<string, { answer: string; isCustom: boolean }>) => {
+    if (disabled || isSubmitted) return
+    setIsAnimating(true)
+
+    setTimeout(() => {
+      const formattedAnswers: AIAnswer[] = questions.map(q => ({
+        questionId: q.id,
+        questionTitle: q.title,
+        answer: currentAnswers[q.id].answer,
+        isCustom: currentAnswers[q.id].isCustom
+      }))
+
+      setIsSubmitted(true)
+      onSubmit(formattedAnswers)
+    }, 200)
+  }, [disabled, isSubmitted, questions, onSubmit])
+
   const handleSelectChoice = useCallback((questionId: string, choice: AIChoice) => {
     if (disabled || isSubmitted) return
-    setAnswers(prev => ({
-      ...prev,
+    const newAnswers = {
+      ...answers,
       [questionId]: { answer: choice.label, isCustom: false }
-    }))
+    }
+    setAnswers(newAnswers)
     setShowCustomInput(prev => ({ ...prev, [questionId]: false }))
-  }, [disabled, isSubmitted])
+
+    // Auto-submit if this was the last question
+    const newAnsweredCount = Object.keys(newAnswers).filter(k => newAnswers[k]?.answer).length
+    if (newAnsweredCount === questions.length) {
+      submitAnswers(newAnswers)
+    }
+  }, [disabled, isSubmitted, answers, questions.length, submitAnswers])
 
   const handleToggleCustom = useCallback((questionId: string) => {
     if (disabled || isSubmitted) return
@@ -211,19 +243,31 @@ export function AIQuestionnaire({
 
   const handleCustomInputChange = useCallback((questionId: string, value: string) => {
     setCustomInputs(prev => ({ ...prev, [questionId]: value }))
-    if (value.trim()) {
-      setAnswers(prev => ({
-        ...prev,
-        [questionId]: { answer: value.trim(), isCustom: true }
-      }))
-    } else {
-      setAnswers(prev => {
-        const newAnswers = { ...prev }
-        delete newAnswers[questionId]
-        return newAnswers
-      })
-    }
   }, [])
+
+  const handleSubmitCustom = useCallback((questionId: string) => {
+    const value = customInputs[questionId]?.trim()
+    if (disabled || isSubmitted || !value) return
+
+    const newAnswers = {
+      ...answers,
+      [questionId]: { answer: value, isCustom: true }
+    }
+    setAnswers(newAnswers)
+
+    // Collapse if it was an edited question
+    setExpandedAnswered(prev => {
+      const next = new Set(prev)
+      next.delete(questionId)
+      return next
+    })
+
+    // Auto-submit if all questions are answered
+    const totalAnswered = Object.keys(newAnswers).filter(k => newAnswers[k]?.answer).length
+    if (totalAnswered === questions.length) {
+      submitAnswers(newAnswers)
+    }
+  }, [disabled, isSubmitted, customInputs, answers, questions, submitAnswers])
 
   const handleEditAnswer = useCallback((questionId: string) => {
     setExpandedAnswered(prev => {
@@ -236,24 +280,6 @@ export function AIQuestionnaire({
       return next
     })
   }, [])
-
-  const handleSubmit = useCallback(() => {
-    if (!allAnswered || disabled || isSubmitted) return
-
-    setIsAnimating(true)
-
-    setTimeout(() => {
-      const formattedAnswers: AIAnswer[] = questions.map(q => ({
-        questionId: q.id,
-        questionTitle: q.title,
-        answer: answers[q.id].answer,
-        isCustom: answers[q.id].isCustom
-      }))
-
-      setIsSubmitted(true)
-      onSubmit(formattedAnswers)
-    }, 200)
-  }, [allAnswered, disabled, isSubmitted, questions, answers, onSubmit])
 
   if (isSubmitted) {
     return null
@@ -278,7 +304,7 @@ export function AIQuestionnaire({
               .replace('{total}', String(questions.length))}
           </span>
         </div>
-        <Progress value={progressPercent} className="h-1.5 [&>div]:bg-green-600 dark:[&>div]:bg-green-500" />
+        <Progress value={progressPercent} className="h-1.5 [&>div]:bg-primary dark:[&>div]:bg-primary" />
       </div>
 
       {/* Bereits beantwortete Fragen (kompakt) */}
@@ -293,10 +319,10 @@ export function AIQuestionnaire({
               <div
                 key={question.id}
                 className={cn(
-                  "rounded-lg border transition-all duration-200",
+                  "rounded-xl border transition-all duration-300",
                   isExpanded
-                    ? "border-border/60 bg-muted-for"
-                    : "border-border/40 bg-muted/10"
+                    ? "border-primary/40 bg-primary/[0.03] shadow-sm"
+                    : "border-border/40 bg-card/30 backdrop-blur-sm"
                 )}
               >
                 {/* Kompakte Ansicht */}
@@ -305,8 +331,8 @@ export function AIQuestionnaire({
                   onClick={() => handleEditAnswer(question.id)}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
                 >
-                  <div className="flex items-center justify-center w-5 h-5 rounded-full border border-border/60 bg-muted/20">
-                    <Check className="w-3 h-3 text-green-600 dark:text-green-400" strokeWidth={3} />
+                  <div className="flex items-center justify-center w-5 h-5 rounded-full border border-primary/30 bg-primary/5">
+                    <Check className="w-3 h-3 text-primary" strokeWidth={4} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs text-muted-foreground">
@@ -353,13 +379,16 @@ export function AIQuestionnaire({
                             )}
                           >
                             <div className={cn(
-                              "w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
-                              !isSelected && "border-muted-foreground/30",
-                              isSelected && "border-green-600 bg-green-600/10"
+                              "w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-300",
+                              !isSelected && "border-muted-foreground/20 group-hover:border-primary/40",
+                              isSelected && "border-primary bg-primary text-primary-foreground shadow-[0_2px_6px_rgba(62,207,142,0.3)]"
                             )}>
-                              {isSelected && <Check className="w-2 h-2 text-green-600" strokeWidth={3} />}
+                              {isSelected && <Check className="w-2.5 h-2.5" strokeWidth={4} />}
                             </div>
-                            <span className="text-sm">{choice.label}</span>
+                            <span className={cn(
+                              "text-sm transition-colors duration-200",
+                              isSelected ? "text-foreground font-medium" : "text-foreground/80 group-hover:text-foreground"
+                            )}>{choice.label}</span>
                           </button>
                         )
                       })}
@@ -370,26 +399,47 @@ export function AIQuestionnaire({
                         disabled={disabled || isAnimating}
                         onClick={() => handleToggleCustom(question.id)}
                         className={cn(
-                          "flex items-center gap-3 w-full text-left px-3 py-2 rounded-md border border-dashed",
-                          !isCustomMode && "border-border/40 hover:bg-muted/30",
-                          isCustomMode && "border-border bg-muted/20"
+                          "flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl border border-dashed transition-all duration-300",
+                          !isCustomMode && "border-border/60 hover:border-primary/40 hover:bg-primary/[0.02] text-muted-foreground",
+                          isCustomMode && "border-primary/60 bg-primary/5 text-foreground shadow-sm"
                         )}
                       >
-                        <PenLine className={cn("w-3.5 h-3.5", isCustomMode ? "text-foreground" : "text-muted-foreground/60")} />
-                        <span className={cn("text-sm", isCustomMode ? "text-foreground" : "text-muted-foreground")}>
+                        <PenLine className={cn("w-4 h-4 transition-colors", isCustomMode ? "text-primary" : "text-muted-foreground/60")} />
+                        <span className={cn("text-sm font-medium", isCustomMode ? "text-foreground" : "text-muted-foreground")}>
                           {t('aiChoiceButtons.ownAnswer')}
                         </span>
                       </button>
 
                       {isCustomMode && (
-                        <textarea
-                          value={customInputs[question.id] || ''}
-                          onChange={(e) => handleCustomInputChange(question.id, e.target.value)}
-                          placeholder={t('aiChoiceButtons.ownAnswerPlaceholder')}
-                          disabled={disabled || isAnimating}
-                          className="w-full px-3 py-2 rounded-md bg-background border border-border/60 text-sm resize-none min-h-[60px] focus:outline-none focus:ring-2 focus:ring-border/30"
-                          autoFocus
-                        />
+                        <div className="mt-2 relative animate-in slide-in-from-top-2 duration-200">
+                          <textarea
+                            value={customInputs[question.id] || ''}
+                            onChange={(e) => handleCustomInputChange(question.id, e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault()
+                                handleSubmitCustom(question.id)
+                              }
+                            }}
+                            placeholder={t('aiChoiceButtons.ownAnswerPlaceholder')}
+                            disabled={disabled || isAnimating}
+                            className="w-full px-3 py-2.5 pr-10 rounded-xl bg-background/50 border border-primary/20 text-sm resize-none min-h-[70px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            disabled={disabled || isAnimating || !customInputs[question.id]?.trim()}
+                            onClick={() => handleSubmitCustom(question.id)}
+                            className={cn(
+                              "absolute bottom-2 right-2 p-1.5 rounded-lg transition-all duration-300",
+                              customInputs[question.id]?.trim()
+                                ? "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground shadow-sm"
+                                : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                            )}
+                          >
+                            <ArrowUpFromDot className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -433,46 +483,59 @@ export function AIQuestionnaire({
                         onClick={() => handleSelectChoice(question.id, choice)}
                         className={cn(
                           "group relative flex items-center gap-3 w-full text-left",
-                          "px-4 py-3 rounded-xl",
-                          "transition-all duration-200 ease-out",
+                          "px-4 py-3 rounded-xl overflow-hidden",
+                          "transition-all duration-300 ease-in-out",
                           "border",
                           !isSelected && !isCustomMode && [
-                            "bg-muted/30 dark:bg-muted/20",
-                            "border-border/50 dark:border-border/30",
-                            "hover:bg-muted/60 dark:hover:bg-muted/40",
-                            "hover:border-border dark:hover:border-border/60",
-                            "hover:shadow-sm",
+                            "bg-card/50 backdrop-blur-sm dark:bg-card/30",
+                            "border-border/60 dark:border-border/40",
+                            "hover:border-primary/40 dark:hover:border-primary/30",
+                            "hover:bg-primary/[0.02] dark:hover:bg-primary/[0.04]",
+                            "hover:shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)]",
+                            "hover:-translate-y-0.5",
                           ],
                           isSelected && [
-                            "bg-muted dark:bg-muted/40",
-                            "border-border dark:border-border/60",
-                            "shadow-sm",
+                            "bg-primary/[0.08] dark:bg-primary/[0.12]",
+                            "border-primary/60 dark:border-primary/50",
+                            "shadow-[0_0_20px_-5px_rgba(62,207,142,0.15)]",
+                            "scale-[0.99]",
                           ],
                           isCustomMode && [
-                            "opacity-40",
-                            "bg-muted/20 dark:bg-muted/10",
+                            "opacity-40 grayscale-[0.2]",
+                            "bg-muted/10",
                             "border-transparent",
                           ],
                           disabled && "opacity-50 cursor-not-allowed"
                         )}
                       >
+                        {/* Hover Glow Effect */}
+                        {!isSelected && !isCustomMode && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        )}
+
                         <div
                           className={cn(
                             "flex items-center justify-center",
-                            "w-5 h-5 rounded-full",
-                            "border-2 transition-all duration-200",
+                            "w-5 h-5 rounded-full z-10",
+                            "border-2 transition-all duration-300",
                             "flex-shrink-0",
-                            !isSelected && "border-muted-foreground/30",
-                            isSelected && "border-green-600 bg-green-600/10 dark:bg-green-600/20 text-green-600 dark:text-green-400"
+                            !isSelected && [
+                              "border-muted-foreground/20",
+                              "group-hover:border-primary/40",
+                            ],
+                            isSelected && [
+                              "border-primary bg-primary text-primary-foreground",
+                              "shadow-[0_2px_8px_rgba(62,207,142,0.4)]",
+                            ]
                           )}
                         >
                           {isSelected && (
-                            <Check className="w-3 h-3" strokeWidth={3} />
+                            <Check className="w-3 h-3 animate-in fade-in zoom-in-50 duration-200" strokeWidth={4} />
                           )}
                         </div>
                         <span className={cn(
-                          "flex-1 text-sm",
-                          isSelected ? "text-foreground font-medium" : "text-foreground/80"
+                          "flex-1 text-sm z-10 transition-colors duration-200",
+                          isSelected ? "text-foreground font-medium" : "text-foreground/80 group-hover:text-foreground"
                         )}>
                           {choice.label}
                         </span>
@@ -487,51 +550,75 @@ export function AIQuestionnaire({
                     onClick={() => handleToggleCustom(question.id)}
                     className={cn(
                       "group relative flex items-center gap-3 w-full text-left",
-                      "px-4 py-3 rounded-xl",
-                      "transition-all duration-200 ease-out",
+                      "px-4 py-3 rounded-xl overflow-hidden",
+                      "transition-all duration-300 ease-in-out",
                       "border border-dashed",
                       !isCustomMode && [
-                        "border-border/50 dark:border-border/30",
-                        "hover:border-border dark:hover:border-border/60",
-                        "hover:bg-muted/30",
+                        "bg-card/30 dark:bg-card/20",
+                        "border-border/60 dark:border-border/40",
+                        "hover:border-primary/40 dark:hover:border-primary/30",
+                        "hover:bg-primary/[0.02] dark:hover:bg-primary/[0.04]",
+                        "hover:-translate-y-0.5",
                       ],
                       isCustomMode && [
-                        "border-border dark:border-border/60",
-                        "bg-muted/40",
+                        "bg-primary/[0.05] dark:bg-primary/[0.08]",
+                        "border-primary/60 dark:border-primary/50",
+                        "shadow-sm",
                       ],
                       disabled && "opacity-50 cursor-not-allowed"
                     )}
                   >
                     <PenLine className={cn(
-                      "w-5 h-5 flex-shrink-0",
-                      isCustomMode ? "text-foreground" : "text-muted-foreground/60"
+                      "w-5 h-5 flex-shrink-0 transition-colors duration-300",
+                      isCustomMode ? "text-primary" : "text-muted-foreground/60 group-hover:text-primary/60"
                     )} />
                     <span className={cn(
-                      "flex-1 text-sm",
-                      isCustomMode ? "text-foreground font-medium" : "text-muted-foreground"
+                      "flex-1 text-sm transition-colors duration-300",
+                      isCustomMode ? "text-foreground font-semibold" : "text-muted-foreground group-hover:text-foreground"
                     )}>
                       {t('aiChoiceButtons.writeOwnAnswer')}
                     </span>
                   </button>
 
-                  {/* Custom Input Field */}
+                  {/* Custom Input Field with inline Submit for the last question */}
                   {isCustomMode && (
-                    <div className="mt-1 animate-in slide-in-from-top-2 duration-200">
+                    <div className="mt-1 relative animate-in slide-in-from-top-2 duration-200">
                       <textarea
                         value={customInputs[question.id] || ''}
                         onChange={(e) => handleCustomInputChange(question.id, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            handleSubmitCustom(question.id)
+                          }
+                        }}
                         placeholder={t('aiChoiceButtons.enterOwnAnswerPlaceholder')}
                         disabled={disabled || isAnimating}
                         className={cn(
-                          "w-full px-4 py-3 rounded-xl",
-                          "bg-background border border-border/60",
+                          "w-full px-4 py-3 pr-12 rounded-xl",
+                          "bg-background/50 border border-primary/20 backdrop-blur-sm",
                           "text-sm text-foreground placeholder:text-muted-foreground/60",
-                          "focus:outline-none focus:ring-2 focus:ring-border/30 focus:border-border/60",
-                          "resize-none min-h-[80px]",
+                          "focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40",
+                          "resize-none min-h-[100px]",
                           "transition-all duration-200"
                         )}
                         autoFocus
                       />
+
+                      {/* Inline Send Button for local completion or final submission */}
+                      <button
+                        type="button"
+                        disabled={disabled || isAnimating || !customInputs[question.id]?.trim()}
+                        onClick={() => handleSubmitCustom(question.id)}
+                        className={cn(
+                          "absolute bottom-3 right-3 p-2 rounded-lg transition-all duration-300",
+                          customInputs[question.id]?.trim()
+                            ? "bg-primary text-primary-foreground shadow-sm hover:scale-110"
+                            : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        <ArrowUpFromDot className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -541,20 +628,7 @@ export function AIQuestionnaire({
         </div>
       )}
 
-      {/* Submit Button - nur sichtbar wenn alle beantwortet */}
-      {allAnswered && (
-        <div className="flex justify-end pt-2 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
-          <Button
-            onClick={handleSubmit}
-            disabled={disabled || isAnimating}
-            size="sm"
-            className="gap-2 bg-foreground text-background hover:bg-foreground/90 dark:bg-muted dark:text-foreground dark:hover:bg-muted/80 border border-transparent"
-          >
-            <Send className="w-3.5 h-3.5" />
-            {t('aiChoiceButtons.sendAnswers')}
-          </Button>
-        </div>
-      )}
+
     </div>
   )
 }

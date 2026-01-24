@@ -108,9 +108,13 @@ export const createHandlers = (deps: HandlerDependencies) => {
     setAbortController(null)
   }
 
-  const handleSend = async (e?: React.FormEvent) => {
+  const handleSend = async (
+    e?: React.FormEvent,
+    manualInput?: string,
+    options?: { hidden?: boolean }
+  ) => {
     e?.preventDefault()
-    const trimmed = input.trim()
+    const trimmed = (manualInput !== undefined ? manualInput : input).trim()
     if (!trimmed || isSending) return
 
     // Erkenne Bachelor/Masterarbeit
@@ -169,6 +173,7 @@ export const createHandlers = (deps: HandlerDependencies) => {
         : undefined,
       context: contextToInclude, // Context nur für UI-Anzeige
       mentions: userMentions, // Speichere Mentions im Nachrichten-Objekt
+      hidden: options?.hidden,
     }
     const assistantId = crypto.randomUUID()
 

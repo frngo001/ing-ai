@@ -687,20 +687,9 @@ export function AskAiPane({
   const handleChoiceSelect = useCallback(
     (choice: AIChoice, messageId: string) => {
       if (isSending) return
-
-      // Setze die Auswahl als Input und sende direkt
-      setInput(choice.label)
-
-      // Kurze Verzögerung für visuelles Feedback
-      setTimeout(() => {
-        // Simuliere form submit
-        const form = document.querySelector('form') as HTMLFormElement
-        if (form) {
-          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
-        }
-      }, 50)
+      handleSend(undefined, choice.label, { hidden: true })
     },
-    [isSending]
+    [isSending, handleSend]
   )
 
   /**
@@ -713,17 +702,9 @@ export function AskAiPane({
 
       // Formatiere alle Antworten für die Nachricht
       const formattedMessage = formatAnswersForMessage(answers)
-      setInput(formattedMessage)
-
-      // Kurze Verzögerung für visuelles Feedback
-      setTimeout(() => {
-        const form = document.querySelector('form') as HTMLFormElement
-        if (form) {
-          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
-        }
-      }, 50)
+      handleSend(undefined, formattedMessage, { hidden: true })
     },
-    [isSending]
+    [isSending, handleSend]
   )
 
   /**
@@ -962,7 +943,7 @@ export function AskAiPane({
           <Conversation className="h-full [&::-webkit-scrollbar]:!hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <ConversationContent className="pb-4">
               {hasMessages &&
-                messages.map((message) => (
+                messages.filter(m => !m.hidden).map((message) => (
                   <Message from={message.role} key={message.id} data-message-id={message.id}>
                     <MessageContent className={message.role === "assistant" ? "w-full" : "w-full items-end"}>
                       <Response

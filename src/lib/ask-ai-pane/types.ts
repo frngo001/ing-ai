@@ -54,6 +54,7 @@ export type ChatMessage = {
   }>
   context?: MessageContext[]
   mentions?: Mentionable[]
+  hidden?: boolean
 }
 
 export type StoredConversation = {
