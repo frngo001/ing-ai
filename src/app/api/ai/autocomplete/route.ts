@@ -7,32 +7,39 @@ export const runtime = 'edge'
 
 export async function POST(req: Request) {
     try {
-        const { context, currentText, documentType, suffix = '' } = await req.json()
+        const { context, currentText, documentType, suffix = '', title = '' } = await req.json()
 
-        const prefix = `Document Type: ${documentType || 'general'}
+        // 1. Enhanced System Prompt
+        // We move the meta-instructions here to keep the FIM prompt clean.
+        const systemPrompt = `${AUTOCOMPLETE_SYSTEM_PROMPT}
 
-Context from document:
-${context}
+DOCUMENT PROPERTIES:
+- Title: ${title || 'Untitled Document'}
+- Type: ${documentType || 'academic/professional'}
 
-Current sentence/paragraph:
-${currentText}
+BACKGROUND CONTEXT (previous sections):
+${context || 'No additional context.'}
 
-complete the paraph to the next paragraph.
-Deliver one coherent paragraph (no new block breaks, no bullet lists) with at least 200 words and 8-12 sentences; keep elaborating with relevant detail until you reach 200 words.
-Answer in the same language as the current text and do not repeat sentences or paragraphs. (Only french, english and german)
-Write the response in markdown format.
+TECHNICAL INSTRUCTIONS:
+- Continue the writing naturally from the exact end of 'Current Text'.
+- CRITICAL: Never repeat words, phrases, or sentences that are already present at the end of 'Current Text'.
+- Output length: Aim for a high-quality continuation of approx. 150-200 words.
+- Structure: Deliver a single, coherent paragraph. No bullet points or markdown headers.
+- Language: Maintain the same language as 'Current Text'.`
 
-Output limit: up to 800 tokens`
-
-        // DeepSeek FIM: prefix + <|fim_hole|> + suffix. The model fills the hole.
-        const fimPrompt = `<|fim_begin|>${prefix}<|fim_hole|>${suffix}<|fim_end|>`
+        // 2. Focused FIM Prompt
+        // The FIM model predicts based on what's in 'begin' and 'end'.
+        // By putting ONLY the text here, we avoid confusing the model with instructions.
+        const fimPrompt = `<|fim_begin|>${currentText}<|fim_hole|>${suffix}<|fim_end|>`
 
         const result = streamText({
             model: deepseek(DEEPSEEK_CHAT_MODEL),
-            system: AUTOCOMPLETE_SYSTEM_PROMPT,
+            system: systemPrompt,
             prompt: fimPrompt,
-            temperature: DEFAULT_TEMPERATURE,
+            temperature: 0.5, // Reduced for higher consistency
             maxOutputTokens: 800,
+            frequencyPenalty: 0.3, // Subtle penalty to avoid repeating phrases
+            presencePenalty: 0.2, // Encourages new topics
         })
         return result.toTextStreamResponse()
     } catch (error) {
