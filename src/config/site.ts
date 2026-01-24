@@ -1,8 +1,8 @@
 export const siteConfig = {
     name: "Ing AI",
     description: "Dein KI-gestützter Schreibassistent für akademische Arbeiten",
-    url: "https://ingai-editor.vercel.app",
-    ogImage: "https://ingai-editor.vercel.app/opengraph-image",
+    url: "https://ingai-editor.xyz",
+    ogImage: "https://ingai-editor.xyz/opengraph-image",
     links: {
         twitter: "https://twitter.com/ingai",
         github: "https://github.com/ingai/ing-ai",

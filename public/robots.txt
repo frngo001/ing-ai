@@ -17,4 +17,4 @@ Allow: /terms
 Allow: /changelog
 
 # Sitemap
-Sitemap: https://ingai-editor.vercel.app/sitemap.xml
+Sitemap: https://ingai-editor.xyz/sitemap.xml

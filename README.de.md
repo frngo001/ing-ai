@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://ingai-editor.vercel.app/">
+  <a href="https://ingai-editor.xyz/">
     <img src="public/logos/logosApp/ing_AI.png" alt="Ing AI Logo" width="100" height="auto">
   </a>
   <br />
@@ -8,7 +8,7 @@
   <a href="README.md"><img src="https://img.shields.io/badge/Lang-English-grey?style=flat-square" alt="English"></a>
   <br />
   <br />
-    <a href="https://ingai-editor.vercel.app/">
+    <a href="https://ingai-editor.xyz/">
       <img src="https://img.shields.io/badge/Ing_AI-Academic_Writer-000000?style=for-the-badge&logo=openai&logoColor=white" alt="Ing AI Banner">
     </a>
   <br />
@@ -20,7 +20,7 @@
   </p>
 
   <p align="center">
-    <a href="https://ingai-editor.vercel.app/"><strong>Live App</strong></a> •
+    <a href="https://ingai-editor.xyz/"><strong>Live App</strong></a> •
     <a href="#features">Features</a> •
     <a href="#tech-stack">Stack</a> •
     <a href="#getting-started">Setup</a>
@@ -39,13 +39,13 @@
 
 <div align="center">
   <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-    <a href="https://ingai-editor.vercel.app/" target="_blank">
+    <a href="https://ingai-editor.xyz/" target="_blank">
       <img src="public/dashboaed-dark_1.png" alt="Library" width="100%" style="border-radius: 8px; border: 1px solid #333;">
     </a>
-    <a href="https://ingai-editor.vercel.app/" target="_blank">
+    <a href="https://ingai-editor.xyz/" target="_blank">
       <img src="public/dashboard-dark-2.png" alt="Editor" width="100%" style="border-radius: 8px; border: 1px solid #333;">
     </a>
-    <a href="https://ingai-editor.vercel.app/" target="_blank">
+    <a href="https://ingai-editor.xyz/" target="_blank">
       <img src="public/dashboard-dark-3.png" alt="Research" width="100%" style="border-radius: 8px; border: 1px solid #333;">
     </a>
   </div>

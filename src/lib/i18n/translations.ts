@@ -1250,7 +1250,7 @@ export const translations = {
                         citationStyles: { title: 'Citation Styles', description: 'APA, MLA, Chicago, Harvard guides.' },
                         tutorials: { title: 'Tutorials', description: 'Video tutorials for all features.' },
                         changelog: { title: 'Changelog', description: 'New updates and improvements.' },
-                        testimonials: { title: 'Testimonials', description: 'Experiences from 5M+ researchers.' },
+                        testimonials: { title: 'Testimonials', description: 'Experiences from 100+ researchers.' },
                         faq: { title: 'FAQ', description: 'Answers to common questions.' },
                     },
                 },
@@ -1467,7 +1467,7 @@ export const translations = {
             },
             testimonials: {
                 badge: 'Testimonials',
-                title: 'Loved by 5M+ Researchers',
+                title: 'Loved by 100+ Researchers',
                 description: 'Join the community of academics who write better, faster and with more confidence.',
                 cta: 'Join the Community',
                 items: [
@@ -7672,7 +7672,7 @@ export const translations = {
                         citationStyles: { title: 'Zitierstile', description: 'APA, MLA, Chicago, Harvard Anleitungen.' },
                         tutorials: { title: 'Tutorials', description: 'Video-Anleitungen für alle Features.' },
                         changelog: { title: 'Changelog', description: 'Neue Updates und Verbesserungen.' },
-                        testimonials: { title: 'Testimonials', description: 'Erfahrungen von 5M+ Forschern.' },
+                        testimonials: { title: 'Testimonials', description: 'Erfahrungen von 100+ Forschern.' },
                         faq: { title: 'FAQ', description: 'Antworten auf häufige Fragen.' },
                     },
                 },
@@ -7889,7 +7889,7 @@ export const translations = {
             },
             testimonials: {
                 badge: 'Testimonials',
-                title: 'Geliebt von 5M+ Forschern',
+                title: 'Geliebt von 100+ Forschern',
                 description: 'Werde Teil der Community von Akademikern, die besser, schneller und mit mehr Vertrauen schreiben.',
                 cta: 'Werde Teil der Community',
                 items: [

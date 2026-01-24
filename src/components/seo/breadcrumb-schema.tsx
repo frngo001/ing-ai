@@ -15,8 +15,8 @@ interface BreadcrumbSchemaProps {
  *
  * Usage:
  * <BreadcrumbSchema items={[
- *   { name: 'Home', url: 'https://ingai-editor.vercel.app' },
- *   { name: 'Blog', url: 'https://ingai-editor.vercel.app/blog' }
+ *   { name: 'Home', url: 'https://ingai-editor.xyz' },
+ *   { name: 'Blog', url: 'https://ingai-editor.xyz/blog' }
  * ]} />
  */
 export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
