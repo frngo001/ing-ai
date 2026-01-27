@@ -3,9 +3,16 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { LanguageProvider } from "@/components/language-provider"
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import { Toaster } from '@/components/ui/sonner'
-import { CookieConsent } from '@/components/cookie-consent'
+import dynamic from 'next/dynamic'
+
+const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod.Toaster), {
+  ssr: false,
+})
+const CookieConsent = dynamic(() => import('@/components/cookie-consent').then((mod) => mod.CookieConsent), {
+  ssr: false,
+})
 import { AnalyticsProvider } from '@/components/analytics-provider'
+import { FramerMotionProvider } from '@/components/framer-motion-provider'
 import { translations, type Language } from '@/lib/i18n/translations'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
 import { siteConfig } from '@/config/site'
@@ -110,6 +117,9 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://i.pravatar.cc" />
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        {/* LCP Preloads */}
+        <link rel="preload" as="image" href="/dashboard-dark-3.png" fetchPriority="high" />
+        <link rel="preload" as="image" href="/dashboard-light-3.png" fetchPriority="high" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <SoftwareApplicationSchema />
@@ -120,7 +130,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
-            {children}
+            <FramerMotionProvider>
+              {children}
+            </FramerMotionProvider>
           </LanguageProvider>
           <Toaster />
           <AnalyticsProvider />

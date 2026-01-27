@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView, Variants } from "framer-motion";
+import { m, useInView, Variants } from "framer-motion";
 import { useRef, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +61,7 @@ export function ScrollReveal({
     };
 
     return (
-        <motion.div
+        <m.div
             ref={ref}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
@@ -69,7 +69,7 @@ export function ScrollReveal({
             className={cn(className)}
         >
             {children}
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -102,7 +102,7 @@ export function StaggerContainer({
     };
 
     return (
-        <motion.div
+        <m.div
             ref={ref}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
@@ -110,7 +110,7 @@ export function StaggerContainer({
             className={cn(className)}
         >
             {children}
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -154,9 +154,9 @@ export function StaggerItem({ children, className, direction = "up" }: StaggerIt
     };
 
     return (
-        <motion.div variants={itemVariants} className={cn(className)}>
+        <m.div variants={itemVariants} className={cn(className)}>
             {children}
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -175,7 +175,7 @@ export function FloatingElement({
     distance = 10,
 }: FloatingElementProps) {
     return (
-        <motion.div
+        <m.div
             animate={{
                 y: [0, -distance, 0],
             }}
@@ -187,7 +187,7 @@ export function FloatingElement({
             className={cn(className)}
         >
             {children}
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -200,13 +200,13 @@ interface ScaleOnHoverProps {
 
 export function ScaleOnHover({ children, className, scale = 1.02 }: ScaleOnHoverProps) {
     return (
-        <motion.div
+        <m.div
             whileHover={{ scale }}
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className={cn(className)}
         >
             {children}
-        </motion.div>
+        </m.div>
     );
 }

@@ -24,22 +24,28 @@ function useTypingEffect(text: string, isInView: boolean, delay: number = 0) {
         setDisplayText("");
         setIsComplete(false);
 
-        const timeout = setTimeout(() => {
+        let timeoutId: NodeJS.Timeout;
+        let intervalId: NodeJS.Timeout;
+
+        timeoutId = setTimeout(() => {
             let index = 0;
-            const interval = setInterval(() => {
+            intervalId = setInterval(() => {
+                // Break up string slicing and state update
                 if (index <= text.length) {
-                    setDisplayText(text.slice(0, index));
+                    const nextText = text.slice(0, index);
+                    setDisplayText(nextText);
                     index++;
                 } else {
                     setIsComplete(true);
-                    clearInterval(interval);
+                    clearInterval(intervalId);
                 }
-            }, 30);
-
-            return () => clearInterval(interval);
+            }, 40); // Slightly slower to reduce main thread pressure
         }, delay);
 
-        return () => clearTimeout(timeout);
+        return () => {
+            clearTimeout(timeoutId);
+            if (intervalId) clearInterval(intervalId);
+        };
     }, [text, isInView, delay]);
 
     return { displayText, isComplete };
@@ -421,22 +427,28 @@ function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: strin
 
     useEffect(() => {
         if (isInView) {
-            const duration = 2000;
-            const steps = 60;
-            const increment = value / steps;
-            let current = 0;
+            const duration = 1500; // Shorter duration to finish faster
+            const frames = 60;
+            const startTime = performance.now();
+            let animationFrame: number;
 
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= value) {
-                    setCount(value);
-                    clearInterval(timer);
-                } else {
-                    setCount(Math.floor(current));
+            const update = (currentTime: number) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Ease out quadratic
+                const easedProgress = 1 - (1 - progress) * (1 - progress);
+                const currentCount = Math.floor(easedProgress * value);
+
+                setCount(currentCount);
+
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(update);
                 }
-            }, duration / steps);
+            };
 
-            return () => clearInterval(timer);
+            animationFrame = requestAnimationFrame(update);
+            return () => cancelAnimationFrame(animationFrame);
         }
     }, [isInView, value]);
 

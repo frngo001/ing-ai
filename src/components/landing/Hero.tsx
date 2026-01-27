@@ -125,7 +125,7 @@ export default function Hero() {
                   height={1065}
                   sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-contain w-full h-auto"
-                  loading="lazy"
+                  priority
                 />
               </Mockup>
             </PerspectiveWrapper>
@@ -142,7 +142,7 @@ export default function Hero() {
                   height={1065}
                   sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-contain w-full h-auto"
-                  loading="lazy"
+                  priority
                 />
               </Mockup>
             </PerspectiveWrapper>
@@ -159,6 +159,7 @@ export default function Hero() {
                   height={1065}
                   sizes="(max-width: 768px) 90vw, (max-width: 1200px) 75vw, 70vw"
                   priority
+                  fetchPriority="high"
                   className="object-contain w-full h-auto"
                 />
               </Mockup>

@@ -5,20 +5,22 @@ import { HTMLMotionProps, Variants, motion } from 'motion/react';
 
 import { cn } from '@/lib/utils';
 
-const curtainVriants: Variants = {
+const curtainVariants: Variants = {
   visible: {
-    clipPath: 'polygon(0 0,100% 0,100% 100%,0 100%)',
+    opacity: 1,
+    scaleX: 1,
     transition: {
       duration: 0.4,
-      ease: ['easeOut', [0.25, 1.5, 0.5, 1]],
+      ease: [0.25, 0.1, 0.25, 1],
     },
   },
 
   hidden: {
-    clipPath: 'polygon(50% 0,50% 0,50% 100%,50% 100%)',
+    opacity: 0,
+    scaleX: 0,
     transition: {
       duration: 0.3,
-      ease: ['easeOut', [0.25, 1.5, 0.5, 1]],
+      ease: [0.25, 0.1, 0.25, 1],
     },
   },
 };
@@ -76,7 +78,7 @@ const CardCurtainRevealFooter = React.forwardRef<
     <motion.div
       ref={ref}
       className={className}
-      variants={curtainVriants}
+      variants={curtainVariants}
       animate={isMouseIn ? 'visible' : 'hidden'}
       {...props}
     />
@@ -121,7 +123,7 @@ const CardCurtain = React.forwardRef<HTMLDivElement, HTMLMotionProps<'div'>>(
           'pointer-events-none absolute inset-0 size-full mix-blend-difference',
           className,
         )}
-        variants={curtainVriants}
+        variants={curtainVariants}
         animate={isMouseIn ? 'visible' : 'hidden'}
         {...props}
       />
@@ -140,7 +142,7 @@ const CardCurtainRevealDescription = React.forwardRef<
     <motion.div
       ref={ref}
       className={className}
-      variants={curtainVriants}
+      variants={curtainVariants}
       animate={isMouseIn ? 'visible' : 'hidden'}
       {...props}
     />

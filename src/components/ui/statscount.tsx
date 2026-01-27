@@ -102,10 +102,9 @@ function AnimatedCounter({
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{
-        duration: 0.8,
-        delay: delay * 0.2,
-        type: "spring",
-        stiffness: 80,
+        duration: 0.5,
+        delay: delay * 0.1,
+        ease: "easeOut",
       }}
       className={cn(
         "text-center flex-1 min-w-0 flex flex-col justify-center h-full"
@@ -118,10 +117,9 @@ function AnimatedCounter({
         initial={{ scale: 0.8 }}
         animate={isInView ? { scale: 1 } : { scale: 0.8 }}
         transition={{
-          duration: 0.6,
-          delay: delay * 0.2 + 0.3,
-          type: "spring",
-          stiffness: 100,
+          duration: 0.4,
+          delay: delay * 0.1 + 0.2,
+          ease: "easeOut",
         }}
       >
         {displayValue}
@@ -134,7 +132,7 @@ function AnimatedCounter({
         style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ delay: delay * 0.2 + 0.6, duration: 0.6 }}
+        transition={{ delay: delay * 0.1 + 0.4, duration: 0.5, ease: "easeOut" }}
       >
         {label}
       </motion.p>
@@ -149,7 +147,7 @@ export default function StatsCount({
   className = "",
 }: StatsCountProps) {
   const containerRef = useRef<HTMLElement>(null);
-  const isInView = useInView(containerRef, { margin: "-100px" });
+  const isInView = useInView(containerRef, { margin: "-100px", once: true });
 
   return (
     <motion.section
@@ -160,13 +158,13 @@ export default function StatsCount({
       )}
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <motion.div
         className={cn("text-center mb-8 sm:mb-12 lg:mb-16")}
         initial={{ opacity: 0, y: -20 }}
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
+        transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
       >
         <h2
           className={cn(
@@ -242,7 +240,7 @@ export default function StatsCount({
                       ? { opacity: 1, scaleY: 1 }
                       : { opacity: 0, scaleY: 0 }
                   }
-                  transition={{ delay: 1.5 + index * 0.2, duration: 0.6 }}
+                  transition={{ delay: 0.8 + index * 0.1, duration: 0.4, ease: "easeOut" }}
                 />
               )}
             </div>

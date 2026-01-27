@@ -185,5 +185,12 @@
     "got": "^11.8.5",
     "marked": "^4.3.0",
     "jszip": "^3.10.1"
-  }
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Edge versions",
+    "last 2 Safari versions",
+    "not dead"
+  ]
 }

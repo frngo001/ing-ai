@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react"
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
     GraduationCap,
     BookOpen,
@@ -37,7 +37,7 @@ function UseCaseCard({ useCase }: { useCase: UseCase }) {
     const Icon = useCase.icon;
 
     return (
-        <motion.div
+        <m.div
             whileHover={{ y: -2 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="h-full"
@@ -62,7 +62,7 @@ function UseCaseCard({ useCase }: { useCase: UseCase }) {
                     </p>
                 </CardContent>
             </Card>
-        </motion.div>
+        </m.div>
     );
 }
 

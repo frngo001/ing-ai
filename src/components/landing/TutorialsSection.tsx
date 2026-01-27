@@ -77,6 +77,7 @@ function TutorialCard({
                 <LiteYouTubeEmbed
                     id={tutorial.youtubeId}
                     title={tutorial.title}
+                    thumbnail={tutorial.thumbnail}
                     wrapperClass={cn(
                         "rounded-2xl overflow-hidden",
                         "relative block cursor-pointer bg-neutral-200 dark:bg-neutral-900 bg-center bg-cover [contain:content]",

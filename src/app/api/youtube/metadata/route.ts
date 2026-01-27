@@ -51,26 +51,26 @@ async function fetchYouTubeMetadata(urlOrId: string): Promise<YouTubeMetadata> {
     const videoId = extractVideoId(urlOrId);
     // YouTube oEmbed API (kostenlos, keine API-Key benötigt)
     const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-    
+
     const oEmbedResponse = await fetch(oEmbedUrl);
     if (!oEmbedResponse.ok) {
         throw new Error(`YouTube oEmbed API error: ${oEmbedResponse.statusText}`);
     }
-    
+
     const oEmbedData = await oEmbedResponse.json();
-    
-    // Thumbnail URL - nutze maxresdefault wenn verfügbar, sonst hqdefault
-    const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-    
+
+    // Thumbnail URL - use internal proxy for better caching (PSI optimization)
+    const thumbnailUrl = `/api/proxy/yt-thumbnail/${videoId}`;
+
     // Versuche Dauer über YouTube Data API v3 zu holen (wenn API-Key vorhanden)
     let duration = "N/A";
     const youtubeApiKey = process.env.YOUTUBE_API_KEY;
-    
+
     if (youtubeApiKey) {
         try {
             const apiUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=contentDetails&key=${youtubeApiKey}`;
             const apiResponse = await fetch(apiUrl);
-            
+
             if (apiResponse.ok) {
                 const apiData = await apiResponse.json();
                 if (apiData.items && apiData.items.length > 0) {
@@ -83,11 +83,11 @@ async function fetchYouTubeMetadata(urlOrId: string): Promise<YouTubeMetadata> {
             // Fallback: Dauer bleibt "N/A"
         }
     }
-    
+
     // Extrahiere Beschreibung aus oEmbed oder nutze Author als Fallback
     // Wir geben nur den Autor-Namen zurück, die Übersetzung von "Von" erfolgt in der Komponente
     const description = oEmbedData.author_name || 'YouTube Video';
-    
+
     return {
         title: oEmbedData.title || 'Untitled',
         description,
@@ -103,11 +103,11 @@ async function fetchYouTubeMetadata(urlOrId: string): Promise<YouTubeMetadata> {
 function parseDuration(isoDuration: string): string {
     const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
     if (!match) return "N/A";
-    
+
     const hours = parseInt(match[1] || '0', 10);
     const minutes = parseInt(match[2] || '0', 10);
     const seconds = parseInt(match[3] || '0', 10);
-    
+
     if (hours > 0) {
         return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
@@ -117,27 +117,27 @@ function parseDuration(isoDuration: string): string {
 export async function POST(req: NextRequest) {
     try {
         const { videoIds, videoUrls } = await req.json();
-        
+
         // Unterstütze sowohl videoIds als auch videoUrls für Rückwärtskompatibilität
         const urlsOrIds = videoUrls || videoIds;
-        
+
         if (!urlsOrIds || !Array.isArray(urlsOrIds) || urlsOrIds.length === 0) {
             return NextResponse.json(
                 { error: 'videoUrls or videoIds array is required' },
                 { status: 400 }
             );
         }
-        
+
         const cache = CacheService.getInstance();
         const results: YouTubeMetadata[] = [];
-        
+
         // Lade Metadaten für alle Video-URLs oder IDs
         for (const urlOrId of urlsOrIds) {
             try {
                 const videoId = extractVideoId(urlOrId);
                 const cacheKey = `youtube:${videoId}`;
                 const cached = cache.get<YouTubeMetadata>(cacheKey);
-                
+
                 if (cached) {
                     results.push(cached);
                 } else {
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
                         cacheKey,
                         () => fetchYouTubeMetadata(urlOrId)
                     );
-                    
+
                     // Cache für 24 Stunden
                     cache.set(cacheKey, metadata, 1000 * 60 * 60 * 24);
                     results.push(metadata);
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
                 // Überspringe ungültige URLs/IDs und fahre mit den nächsten fort
             }
         }
-        
+
         return NextResponse.json({ videos: results });
     } catch (error) {
         devError('YouTube metadata API error:', error);

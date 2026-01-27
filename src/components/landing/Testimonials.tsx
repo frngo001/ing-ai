@@ -13,19 +13,20 @@ import Link from "next/link";
 import { useCTAHref } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/i18n/use-language";
 import { translations } from "@/lib/i18n/translations";
+import { m } from "framer-motion";
 
 // Static images for testimonials
 const testimonialImages = [
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
-    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150",
+    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=75&w=80&h=80",
+    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=75&w=80&h=80",
 ];
 
 function TestimonialCard({
@@ -34,52 +35,61 @@ function TestimonialCard({
     content,
     avatar,
     image,
+    index,
 }: {
     name: string;
     handle: string;
     content: string;
     avatar: string;
     image: string | null;
+    index: number;
 }) {
     return (
-        <figure
-            className={cn(
-                "relative w-56 sm:w-72 md:w-80 cursor-pointer overflow-hidden rounded-xl border p-2.5 sm:p-4 md:p-5 mx-2 sm:mx-3",
-                // Light mode styles
-                "border-neutral-200 bg-white/80 backdrop-blur-sm hover:bg-neutral-50",
-                // Dark mode styles
-                "dark:border-neutral-800 dark:bg-neutral-950/80 dark:hover:bg-neutral-900/80 dark:hover:border-primary/20 dark:hover:shadow-[0_0_20px_-12px_rgba(62,207,142,0.3)]",
-                // Transition
-                "transition-all duration-300 hover:shadow-lg"
-            )}
+        <m.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: index * 0.1, duration: 0.4 }}
         >
-            {/* Content */}
-            <blockquote className="text-xs sm:text-sm text-foreground/90 leading-relaxed mb-2.5 sm:mb-4">
-                {content}
-            </blockquote>
+            <figure
+                className={cn(
+                    "relative w-56 sm:w-72 md:w-80 cursor-pointer overflow-hidden rounded-xl border p-2.5 sm:p-4 md:p-5 mx-2 sm:mx-3",
+                    // Light mode styles
+                    "border-neutral-200 bg-white/80 backdrop-blur-sm hover:bg-neutral-50",
+                    // Dark mode styles
+                    "dark:border-neutral-800 dark:bg-neutral-950/80 dark:hover:bg-neutral-900/80 dark:hover:border-primary/20 dark:hover:shadow-[0_0_20px_-12px_rgba(62,207,142,0.3)]",
+                    // Transition
+                    "transition-all duration-300 hover:shadow-lg"
+                )}
+            >
+                {/* Content */}
+                <blockquote className="text-xs sm:text-sm text-foreground/90 leading-relaxed mb-2.5 sm:mb-4">
+                    {content}
+                </blockquote>
 
-            {/* Author */}
-            <div className="flex items-center gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-neutral-100 dark:border-neutral-800/50">
-                <Avatar className="h-7 w-7 sm:h-10 sm:w-10 border-2 border-white dark:border-neutral-900 shadow-sm">
-                    {image && (
-                        <AvatarImage
-                            src={image}
-                            alt={name}
-                            loading="lazy"
-                        />
-                    )}
-                    <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-[10px] sm:text-xs font-semibold">
-                        {avatar}
-                    </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                    <figcaption className="text-xs sm:text-sm font-semibold text-foreground">
-                        {name}
-                    </figcaption>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">{handle}</p>
+                {/* Author */}
+                <div className="flex items-center gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-neutral-100 dark:border-neutral-800/50">
+                    <Avatar className="h-7 w-7 sm:h-10 sm:w-10 border-2 border-white dark:border-neutral-900 shadow-sm">
+                        {image && (
+                            <AvatarImage
+                                src={image}
+                                alt={name}
+                                loading="lazy"
+                            />
+                        )}
+                        <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-[10px] sm:text-xs font-semibold">
+                            {avatar}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                        <figcaption className="text-xs sm:text-sm font-semibold text-foreground">
+                            {name}
+                        </figcaption>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{handle}</p>
+                    </div>
                 </div>
-            </div>
-        </figure>
+            </figure>
+        </m.div>
     );
 }
 
@@ -140,19 +150,13 @@ export function Testimonials() {
                         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 z-10 bg-gradient-to-r from-background to-transparent" />
                         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 z-10 bg-gradient-to-l from-background to-transparent" />
 
-                        {/* First row - scrolls left */}
-                        <Marquee pauseOnHover duration="50s">
-                            {firstRow.map((testimonial, index) => (
-                                <TestimonialCard key={index} {...testimonial} />
-                            ))}
-                        </Marquee>
+                        {firstRow.map((testimonial, index) => (
+                            <TestimonialCard key={index} {...testimonial} index={index} />
+                        ))}
 
-                        {/* Second row - scrolls right */}
-                        <Marquee pauseOnHover reverse duration="50s">
-                            {secondRow.map((testimonial, index) => (
-                                <TestimonialCard key={index} {...testimonial} />
-                            ))}
-                        </Marquee>
+                        {secondRow.map((testimonial, index) => (
+                            <TestimonialCard key={index} {...testimonial} index={index + firstRow.length} />
+                        ))}
                     </div>
 
                     <div className="flex justify-center mt-8 sm:mt-10 md:mt-12 relative z-20">

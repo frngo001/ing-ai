@@ -132,11 +132,14 @@ function AnnouncementComponent({
 
   const updatePosition = useCallback(() => {
     if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
+      window.requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+        });
       });
     }
   }, []);
@@ -144,7 +147,19 @@ function AnnouncementComponent({
   useEffect(() => {
     if (!isOpen || !hasExpandable) return;
 
+    // Initial position
     updatePosition();
+
+    let ticking = false;
+    const handleEvent = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updatePosition();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -164,24 +179,16 @@ function AnnouncementComponent({
       }
     };
 
-    const handleScroll = () => {
-      updatePosition();
-    };
-
-    const handleResize = () => {
-      updatePosition();
-    };
-
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
-    window.addEventListener('scroll', handleScroll, true);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleEvent, { passive: true, capture: true });
+    window.addEventListener('resize', handleEvent, { passive: true });
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
-      window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleEvent, { capture: true });
+      window.removeEventListener('resize', handleEvent);
     };
   }, [isOpen, hasExpandable, updatePosition]);
 

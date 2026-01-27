@@ -172,15 +172,14 @@ export function Footer() {
                         </div>
                     </div>
 
-                    {/* Big Brand Text */}
                     <div className="w-full flex justify-center items-center -my-4 md:-my-8 py-4 md:py-8 pointer-events-none select-none overflow-hidden" aria-hidden="true">
-                        <h1 className="text-[24vw] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground/10 via-foreground to-transparent opacity-50 dark:opacity-70 mix-blend-overlay blur-[1px]"
+                        <span className="text-[24vw] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground/10 via-foreground to-transparent opacity-50 dark:opacity-70 mix-blend-overlay blur-[1px]"
                             style={{
                                 maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
                                 WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)'
                             }}>
                             ING AI
-                        </h1>
+                        </span>
                     </div>
 
                     {/* Bottom Bar */}
