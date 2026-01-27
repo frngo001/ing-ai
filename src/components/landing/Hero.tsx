@@ -54,10 +54,10 @@ export default function Hero() {
           {/* Badge */}
           <div className="animate-appear bg-background/50 backdrop-blur-sm rounded-full">
             <Link href="/auth/login" aria-label={heroContent.badge}>
-              <Announcement movingBorder className="px-2 py-0 h-5 md:h-6">
-                <AnnouncementTitle className="gap-1 text-xs md:text-[11px] font-medium">
+              <Announcement movingBorder className="px-3 py-0 h-11 md:h-6">
+                <AnnouncementTitle className="gap-1.5 text-sm md:text-[11px] font-medium">
                   <span className="text-muted-foreground">{heroContent.badge}</span>
-                  <ArrowRight className="size-3 md:size-2 text-muted-foreground" aria-hidden="true" />
+                  <ArrowRight className="size-4 md:size-2 text-muted-foreground" aria-hidden="true" />
                 </AnnouncementTitle>
               </Announcement>
             </Link>
@@ -82,22 +82,22 @@ export default function Hero() {
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Avatar
                     key={i}
-                    className="w-7 h-7 sm:w-10 sm:h-10 border-2 border-background shadow-sm hover:scale-110 transition-transform duration-200 z-0 hover:z-10"
+                    className="w-10 h-10 sm:w-10 sm:h-10 border-2 border-background shadow-sm hover:scale-110 transition-transform duration-200 z-0 hover:z-10"
                   >
                     <AvatarImage
                       src={`https://i.pravatar.cc/100?img=${i + 10}`}
                       alt={`User ${i}`}
                       loading="lazy"
                     />
-                    <AvatarFallback className="bg-muted text-[10px] sm:text-xs">U{i}</AvatarFallback>
+                    <AvatarFallback className="bg-muted text-xs sm:text-xs">U{i}</AvatarFallback>
                   </Avatar>
                 ))}
               </div>
               <div className="flex flex-col">
-                <p className="text-[10px] sm:text-xs font-semibold text-foreground leading-tight">
+                <p className="text-xs sm:text-xs font-semibold text-foreground leading-tight">
                   <span className="text-primary font-bold">{heroContent.socialProof.users}</span> {heroContent.socialProof.label}
                 </p>
-                <p className="text-[10px] sm:text-[10px] text-muted-foreground leading-tight">
+                <p className="text-[11px] sm:text-[10px] text-muted-foreground leading-tight">
                   {heroContent.socialProof.trust}
                 </p>
               </div>

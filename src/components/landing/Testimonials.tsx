@@ -57,19 +57,19 @@ function TestimonialCard({
                     // Light mode styles
                     "border-neutral-200 bg-white/80 backdrop-blur-sm hover:bg-neutral-50",
                     // Dark mode styles
-                    "dark:border-neutral-800 dark:bg-neutral-950/80 dark:hover:bg-neutral-900/80 dark:hover:border-primary/20 dark:hover:shadow-[0_0_20px_-12px_rgba(62,207,142,0.3)]",
+                    "dark:border-neutral-800 dark:bg-neutral-900/50 dark:hover:bg-neutral-800/80 dark:hover:border-primary/20 dark:hover:shadow-[0_0_20px_-12px_rgba(62,207,142,0.3)]",
                     // Transition
                     "transition-all duration-300 hover:shadow-lg"
                 )}
             >
                 {/* Content */}
-                <blockquote className="text-xs sm:text-sm text-foreground/90 leading-relaxed mb-2.5 sm:mb-4">
+                <blockquote className="text-sm sm:text-sm text-foreground/90 leading-relaxed mb-2.5 sm:mb-4">
                     {content}
                 </blockquote>
 
                 {/* Author */}
                 <div className="flex items-center gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-neutral-100 dark:border-neutral-800/50">
-                    <Avatar className="h-7 w-7 sm:h-10 sm:w-10 border-2 border-white dark:border-neutral-900 shadow-sm">
+                    <Avatar className="h-10 w-10 sm:h-10 sm:w-10 border-2 border-white dark:border-neutral-900 shadow-sm">
                         {image && (
                             <AvatarImage
                                 src={image}
@@ -77,15 +77,15 @@ function TestimonialCard({
                                 loading="lazy"
                             />
                         )}
-                        <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-[10px] sm:text-xs font-semibold">
+                        <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs sm:text-xs font-semibold">
                             {avatar}
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                        <figcaption className="text-xs sm:text-sm font-semibold text-foreground">
+                        <figcaption className="text-sm sm:text-sm font-semibold text-foreground">
                             {name}
                         </figcaption>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">{handle}</p>
+                        <p className="text-xs sm:text-xs text-muted-foreground">{handle}</p>
                     </div>
                 </div>
             </figure>
@@ -134,7 +134,7 @@ export function Testimonials() {
                 {/* Header - Constrained */}
                 <div className="container px-4 mx-auto mb-12 md:mb-20">
                     <ScrollReveal className="text-center space-y-2 md:space-y-4">
-                        <Badge variant="outline" className="mb-2 md:mb-4 text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                        <Badge variant="outline" className="mb-2 md:mb-4 text-xs md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                             {t('landing.testimonials.badge')}
                         </Badge>
                         <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-2 md:mb-4">

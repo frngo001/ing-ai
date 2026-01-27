@@ -49,18 +49,18 @@ export const StickyScroll = ({
                     >
                         {/* Category badge */}
                         {item.category && (
-                            <span className="inline-block text-[9px] sm:text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            <span className="inline-block text-xs sm:text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                                 {item.category}
                             </span>
                         )}
 
                         {/* Title */}
-                        <h3 className="text-sm sm:text-base md:text-lg font-semibold text-neutral-900 dark:text-neutral-100 leading-snug">
+                        <h3 className="text-base sm:text-base md:text-lg font-semibold text-neutral-900 dark:text-neutral-100 leading-snug">
                             {item.title}
                         </h3>
 
                         {/* Description */}
-                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+                        <p className="text-sm sm:text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                             {item.description}
                         </p>
 
@@ -99,7 +99,7 @@ export const StickyScroll = ({
                                         )}
                                     </m.div>
                                 )}
-                                <m.h2
+                                <m.h3
                                     initial={{ opacity: 0 }}
                                     animate={{
                                         opacity: activeCard === index ? 1 : 0.3,
@@ -107,7 +107,7 @@ export const StickyScroll = ({
                                     className="text-4xl font-bold text-neutral-900 dark:text-neutral-100 leading-tight tracking-tight"
                                 >
                                     {item.title}
-                                </m.h2>
+                                </m.h3>
                                 <m.p
                                     initial={{ opacity: 0 }}
                                     animate={{

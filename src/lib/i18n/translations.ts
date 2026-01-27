@@ -1,7 +1,7 @@
 export const translations = {
     en: {
         metadata: {
-            title: 'Ing AI Editor - AI Writing Assistant for Thesis, Research Papers & Academic Writing',
+            title: 'Ing AI Editor - AI Writing Assistant for Thesis & Research',
             description: 'Ing AI is the leading AI-powered editor for academic writing. Write your thesis, research paper, or academic essay with intelligent AI assistance. Automatic citation management, literature research & plagiarism check. Start free!',
             keywords: [
                 'AI Writing Assistant',
@@ -1316,9 +1316,9 @@ export const translations = {
             },
             hero: {
                 badge: 'Ing AI v1.0 - Now available',
-                title: 'Academic Writing,',
-                titleHighlight: 'revolutionized',
-                subtitle: 'The smartest AI writing assistant for academic papers. Write faster, cite instantly and overcome any writer\'s block.',
+                title: 'AI Writing Assistant for',
+                titleHighlight: 'Thesis & Research',
+                subtitle: 'The smartest AI for academic writing. Write faster and cite instantly.',
                 socialProof: {
                     users: '100+',
                     label: 'Students and researchers',
@@ -3380,9 +3380,9 @@ export const translations = {
             },
             hero: {
                 badge: 'Ing AI v1.0 - Ya disponible',
-                title: 'Escritura Académica,',
-                titleHighlight: 'revolucionada',
-                subtitle: 'El asistente de escritura con IA más inteligente para trabajos académicos. Escribe más rápido, cita al instante y supera cualquier bloqueo de escritor.',
+                title: 'Asistente IA para',
+                titleHighlight: 'Tesis e Investigación',
+                subtitle: 'La IA más inteligente para el ámbito académico. Escribe y cita al instante.',
                 socialProof: {
                     users: '100+',
                     label: 'Estudiantes e investigadores',
@@ -5453,9 +5453,9 @@ export const translations = {
             },
             hero: {
                 badge: 'Ing AI v1.0 - Maintenant disponible',
-                title: 'Rédaction Académique,',
-                titleHighlight: 'révolutionnée',
-                subtitle: 'L\'assistant de rédaction IA le plus intelligent pour les articles académiques. Écrivez plus vite, citez instantanément et surmontez tout blocage d\'écriture.',
+                title: 'Assistant IA pour',
+                titleHighlight: 'Thèse & Recherche',
+                subtitle: 'L\'IA la plus intelligente pour le milieu académique. Écrivez et citez instantanément.',
                 socialProof: {
                     users: '100+',
                     label: 'Étudiants et chercheurs',
@@ -6265,7 +6265,7 @@ export const translations = {
     },
     de: {
         metadata: {
-            title: 'Ing AI Editor - KI Schreibassistent für Bachelorarbeit & Wissenschaftliches Schreiben',
+            title: 'Ing AI Editor - KI-Schreibhilfe für Studium & Forschung',
             description: 'Ing AI ist der führende KI-Editor für akademisches Schreiben. Schreibe deine Bachelorarbeit, Hausarbeit oder wissenschaftliche Arbeit mit intelligenter KI-Unterstützung. Automatische Zitiervorschläge, Literaturrecherche & Plagiatsprüfung. Kostenlos starten!',
             keywords: [
                 'KI Schreibassistent',
@@ -7884,9 +7884,9 @@ export const translations = {
             },
             hero: {
                 badge: 'Ing AI v1.0 - Jetzt verfügbar',
-                title: 'KI-Schreibassistent für',
-                titleHighlight: 'Bachelorarbeit & Wissenschaft',
-                subtitle: 'Der führende KI-Editor für akademische Arbeiten. Schreibe deine Bachelorarbeit, Hausarbeit oder Dissertation schneller mit intelligenter Unterstützung.',
+                title: 'KI-Assistent für',
+                titleHighlight: 'Studium & Forschung',
+                subtitle: 'Die smarte KI für wissenschaftliche Arbeiten. Schneller schreiben, sofort zitieren.',
                 socialProof: {
                     users: '100+',
                     label: 'Studenten und Forscher',

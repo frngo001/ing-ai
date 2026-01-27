@@ -63,12 +63,12 @@ function Logo() {
       className="group relative flex shrink-0 items-center gap-2 text-lg font-semibold transition-transform hover:scale-105"
       aria-label="Ing AI Home"
     >
-      <div className="relative h-10 w-10 sm:h-16 sm:w-16 md:h-20 md:w-20">
+      <div className="relative h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20">
         <Image
           src="/logos/logosApp/ing_AI.png"
           alt="Ing AI Logo"
           fill
-          sizes="(max-width: 640px) 40px, (max-width: 768px) 64px, 80px"
+          sizes="(max-width: 640px) 48px, (max-width: 768px) 64px, 80px"
           className="object-contain"
           priority
         />
@@ -124,8 +124,8 @@ function MobileDrawer() {
 
   return (
     <div className="md:hidden">
-      <Button variant="ghost" size="icon" onClick={() => setOpen(true)} className="h-10 w-10">
-        <Menu className="h-6 w-6" />
+      <Button variant="ghost" size="icon" onClick={() => setOpen(true)} className="h-11 w-11">
+        <Menu className="h-7 w-7" />
         <span className="sr-only">Open menu</span>
       </Button>
 
@@ -134,17 +134,17 @@ function MobileDrawer() {
         <div className="fixed inset-0 z-[200] bg-white dark:bg-neutral-950">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 bg-white dark:bg-neutral-950">
-            <div className="h-10 w-10">
+            <div className="h-12 w-12">
               <Image
                 src="/logos/logosApp/ing_AI.png"
                 alt="Ing AI"
-                width={40}
-                height={40}
+                width={48}
+                height={48}
                 className="object-contain"
               />
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-              <X className="h-6 w-6" />
+            <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-11 w-11">
+              <X className="h-7 w-7" />
             </Button>
           </div>
 
@@ -163,7 +163,7 @@ function MobileDrawer() {
                           key={link.title}
                           href={link.href}
                           onClick={() => setOpen(false)}
-                          className="text-sm text-muted-foreground transition-colors hover:text-foreground py-0.5"
+                          className="text-[15px] text-muted-foreground transition-colors hover:text-foreground py-3"
                         >
                           {link.title}
                         </Link>
@@ -183,7 +183,7 @@ function MobileDrawer() {
                           key={link.title}
                           href={link.href}
                           onClick={() => setOpen(false)}
-                          className="text-sm text-muted-foreground transition-colors hover:text-foreground py-0.5"
+                          className="text-[15px] text-muted-foreground transition-colors hover:text-foreground py-3"
                         >
                           {link.title}
                         </Link>
@@ -203,7 +203,7 @@ function MobileDrawer() {
                           key={link.title}
                           href={link.href}
                           onClick={() => setOpen(false)}
-                          className="text-sm text-muted-foreground transition-colors hover:text-foreground py-0.5"
+                          className="text-[15px] text-muted-foreground transition-colors hover:text-foreground py-3"
                         >
                           {link.title}
                         </Link>

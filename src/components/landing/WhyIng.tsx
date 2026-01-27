@@ -105,10 +105,10 @@ export default function WhyIng({
             <div className="container mx-auto px-3 sm:px-6 lg:px-8 relative">
                 {/* Header */}
                 <div className="text-center space-y-2 md:space-y-3 mb-5 md:mb-12">
-                    <Badge variant="outline" className="text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                    <Badge variant="outline" className="text-xs md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         {t('landing.whyIng.badge')}
                     </Badge>
-                    <h2 className="max-w-[560px] mx-auto text-center text-base leading-snug font-semibold sm:text-3xl sm:leading-tight px-2">
+                    <h2 className="max-w-[560px] mx-auto text-center text-lg leading-snug font-semibold sm:text-3xl sm:leading-tight px-2">
                         {finalTitle}
                     </h2>
                     <p className="text-muted-foreground text-sm md:text-lg max-w-2xl mx-auto px-2">
@@ -136,7 +136,7 @@ export default function WhyIng({
                                                 {item.icon}
                                             </div>
                                         </div>
-                                        <h3 className="text-xs sm:text-sm font-semibold leading-tight group-hover:text-primary transition-colors duration-300 pt-0.5">
+                                        <h3 className="text-sm sm:text-sm font-semibold leading-tight group-hover:text-primary transition-colors duration-300 pt-0.5">
                                             {item.title}
                                         </h3>
                                     </div>
@@ -145,7 +145,7 @@ export default function WhyIng({
                                         {item.description}
                                     </p>
                                     {/* Truncated description on mobile */}
-                                    <p className="sm:hidden text-[10px] text-muted-foreground group-hover:text-foreground/80 transition-colors leading-snug line-clamp-2">
+                                    <p className="sm:hidden text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors leading-snug line-clamp-2">
                                         {item.description}
                                     </p>
                                 </div>

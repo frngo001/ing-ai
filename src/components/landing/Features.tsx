@@ -96,7 +96,7 @@ export function Features() {
             <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
             <div className="container px-4 mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-8 space-y-3">
-                    <Badge variant="outline" className="text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                    <Badge variant="outline" className="text-xs md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         Funktionen
                     </Badge>
                     <h2 className="text-2xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70 px-4">
