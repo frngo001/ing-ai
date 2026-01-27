@@ -129,39 +129,47 @@ export function Testimonials() {
                 <div className="absolute top-1/2 right-0 w-[150px] sm:w-[200px] md:w-[300px] h-[150px] sm:h-[200px] md:h-[300px] bg-cyan-500/5 rounded-full blur-[100px]" />
             </div>
 
-            <div className="container px-4 mx-auto">
-                <div className="max-w-7xl mx-auto">
-                    {/* Header */}
-                    <ScrollReveal className="text-center mb-6 md:mb-16 space-y-2 md:space-y-4">
+            {/* Content Container */}
+            <div className="relative z-10 w-full">
+                {/* Header - Constrained */}
+                <div className="container px-4 mx-auto mb-12 md:mb-20">
+                    <ScrollReveal className="text-center space-y-2 md:space-y-4">
                         <Badge variant="outline" className="mb-2 md:mb-4 text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                             {t('landing.testimonials.badge')}
                         </Badge>
-                        <h2 className="text-xl md:text-5xl font-bold tracking-tight mb-2 md:mb-4">
+                        <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-2 md:mb-4">
                             {t('landing.testimonials.title')}
                         </h2>
-                        <p className="text-muted-foreground text-sm md:text-lg max-w-2xl mx-auto px-2">
+                        <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto px-2">
                             {t('landing.testimonials.description')}
                         </p>
                     </ScrollReveal>
+                </div>
 
-                    {/* Marquee Rows */}
-                    <div className="relative flex flex-col gap-4 sm:gap-5 md:gap-6">
-                        {/* Gradient overlays */}
-                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 z-10 bg-gradient-to-r from-background to-transparent" />
-                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 z-10 bg-gradient-to-l from-background to-transparent" />
+                {/* Marquee Area - Full Width */}
+                <div className="relative flex flex-col gap-4 sm:gap-6 md:gap-8 w-full">
+                    {/* Seamless Gradient overlays at screen edges */}
+                    <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-[10%] min-w-[40px] md:w-[20%] z-20 bg-gradient-to-r from-muted dark:from-neutral-900 to-transparent" />
+                    <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-[10%] min-w-[40px] md:w-[20%] z-20 bg-gradient-to-l from-muted dark:from-neutral-900 to-transparent" />
 
+                    <Marquee pauseOnHover className="[--duration:50s]">
                         {firstRow.map((testimonial, index) => (
                             <TestimonialCard key={index} {...testimonial} index={index} />
                         ))}
+                    </Marquee>
 
+                    <Marquee reverse pauseOnHover className="[--duration:50s]">
                         {secondRow.map((testimonial, index) => (
                             <TestimonialCard key={index} {...testimonial} index={index + firstRow.length} />
                         ))}
-                    </div>
+                    </Marquee>
+                </div>
 
-                    <div className="flex justify-center mt-8 sm:mt-10 md:mt-12 relative z-20">
+                {/* Footer CTA - Constrained */}
+                <div className="container px-4 mx-auto mt-12 sm:mt-16 md:mt-20">
+                    <div className="flex justify-center">
                         <Link href={ctaHref}>
-                            <MorphyButton size="lg" className="text-sm sm:text-base text-black">
+                            <MorphyButton size="lg" className="text-sm sm:text-base text-black font-semibold">
                                 {t('landing.testimonials.cta')}
                             </MorphyButton>
                         </Link>

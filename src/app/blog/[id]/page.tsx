@@ -124,7 +124,7 @@ export default function BlogPostPage() {
                 <Avatar className="h-10 w-10 md:h-14 md:w-14 flex-shrink-0 border border-border">
                   <AvatarImage src={blogContent.author.image} alt={blogContent.author.name} />
                   <AvatarFallback className="text-xs md:text-sm">
-                    {blogContent.author.name.split(' ').map(n => n[0]).join('')}
+                    {blogContent.author.name.split(' ').map((n: string) => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 pt-0.5">

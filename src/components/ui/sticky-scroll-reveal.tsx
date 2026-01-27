@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef, useState } from "react";
-import { useScroll, motion, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import { useScroll, m, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export const StickyScroll = ({
@@ -39,7 +39,7 @@ export const StickyScroll = ({
             {/* Mobile Layout - Simple vertical cards */}
             <div className="lg:hidden space-y-6 sm:space-y-8">
                 {content.map((item, index) => (
-                    <motion.div
+                    <m.div
                         key={item.title + index}
                         initial={{ opacity: 0, y: 16 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -68,7 +68,7 @@ export const StickyScroll = ({
                         <div className="pt-1.5 sm:pt-2">
                             {item.content}
                         </div>
-                    </motion.div>
+                    </m.div>
                 ))}
             </div>
 
@@ -82,7 +82,7 @@ export const StickyScroll = ({
                         {content.map((item, index) => (
                             <div key={item.title + index} className="my-40 first:mt-32 last:mb-64">
                                 {item.category && (
-                                    <motion.div
+                                    <m.div
                                         initial={{ opacity: 0 }}
                                         animate={{
                                             opacity: activeCard === index ? 1 : 0.3,
@@ -97,9 +97,9 @@ export const StickyScroll = ({
                                                 {item.categoryDescription}
                                             </p>
                                         )}
-                                    </motion.div>
+                                    </m.div>
                                 )}
-                                <motion.h2
+                                <m.h2
                                     initial={{ opacity: 0 }}
                                     animate={{
                                         opacity: activeCard === index ? 1 : 0.3,
@@ -107,8 +107,8 @@ export const StickyScroll = ({
                                     className="text-4xl font-bold text-neutral-900 dark:text-neutral-100 leading-tight tracking-tight"
                                 >
                                     {item.title}
-                                </motion.h2>
-                                <motion.p
+                                </m.h2>
+                                <m.p
                                     initial={{ opacity: 0 }}
                                     animate={{
                                         opacity: activeCard === index ? 1 : 0.3,
@@ -116,7 +116,7 @@ export const StickyScroll = ({
                                     className="text-lg text-neutral-500 dark:text-neutral-400 mt-8 max-w-md leading-relaxed"
                                 >
                                     {item.description}
-                                </motion.p>
+                                </m.p>
                             </div>
                         ))}
                         <div className="h-64" />
@@ -130,7 +130,7 @@ export const StickyScroll = ({
                         )}
                     >
                         <AnimatePresence mode="wait">
-                            <motion.div
+                            <m.div
                                 key={activeCard}
                                 initial={{ opacity: 0, scale: 0.98, y: 5 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -139,7 +139,7 @@ export const StickyScroll = ({
                                 className="w-full h-full flex items-center justify-center"
                             >
                                 {content[activeCard].content ?? null}
-                            </motion.div>
+                            </m.div>
                         </AnimatePresence>
                     </div>
                 </div>

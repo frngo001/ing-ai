@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "motion/react";
+import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
@@ -68,7 +68,7 @@ export function BentoGridTemplateTwo({
       {items.map((item, i) => {
         const isLastSingle = leftover === 1 && i === items.length - 1;
         return (
-          <motion.div
+          <m.div
             key={item.id}
             initial={animate ? { opacity: 0, y: 20 } : undefined}
             animate={animate ? { opacity: 1, y: 0 } : undefined}
@@ -89,7 +89,7 @@ export function BentoGridTemplateTwo({
             )}
           >
             <BentoGridItem item={item} />
-          </motion.div>
+          </m.div>
         );
       })}
     </div>

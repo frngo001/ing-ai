@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
+import { m, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { hasConsentRecord, saveConsent } from "@/lib/cookie-consent"
 import { useLanguage } from "@/lib/i18n/use-language"
@@ -24,7 +24,7 @@ export function CookieConsent() {
   useEffect(() => {
     // Warte bis Client-Side gerendert wird
     setMounted(true)
-    
+
     // Erstelle einen separaten Container außerhalb des body, um das filter-Problem zu umgehen
     if (typeof window !== "undefined") {
       let container = document.getElementById('cookie-consent-portal')
@@ -36,11 +36,11 @@ export function CookieConsent() {
       }
       setPortalContainer(container)
     }
-    
+
     // Prüfe, ob bereits eine gültige Zustimmung vorhanden ist
     const consentStatus = hasConsentRecord()
     setHasConsent(consentStatus)
-    
+
     // Zeige Banner nur, wenn keine Zustimmung vorhanden ist
     if (!consentStatus) {
       setShowBanner(true)
@@ -96,7 +96,7 @@ export function CookieConsent() {
     >
       <AnimatePresence mode="wait">
         {showBanner && (
-          <motion.div
+          <m.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
@@ -165,7 +165,7 @@ export function CookieConsent() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

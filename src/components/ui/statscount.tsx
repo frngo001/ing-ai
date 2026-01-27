@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  motion,
+  m,
   useMotionValue,
   useSpring,
   useTransform,
@@ -97,7 +97,7 @@ function AnimatedCounter({
   }, [isInView, value, motionValue, delay]);
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
@@ -110,7 +110,7 @@ function AnimatedCounter({
         "text-center flex-1 min-w-0 flex flex-col justify-center h-full"
       )}
     >
-      <motion.div
+      <m.div
         className={cn(
           "text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 whitespace-nowrap"
         )}
@@ -124,8 +124,8 @@ function AnimatedCounter({
       >
         {displayValue}
         {suffix}
-      </motion.div>
-      <motion.p
+      </m.div>
+      <m.p
         className={cn(
           "text-gray-600 dark:text-gray-400 text-xs sm:text-sm leading-relaxed px-1 sm:px-2 hyphens-auto break-words"
         )}
@@ -135,8 +135,8 @@ function AnimatedCounter({
         transition={{ delay: delay * 0.1 + 0.4, duration: 0.5, ease: "easeOut" }}
       >
         {label}
-      </motion.p>
-    </motion.div>
+      </m.p>
+    </m.div>
   );
 }
 
@@ -150,7 +150,7 @@ export default function StatsCount({
   const isInView = useInView(containerRef, { margin: "-100px", once: true });
 
   return (
-    <motion.section
+    <m.section
       ref={containerRef}
       className={cn(
         "py-8 sm:py-12 lg:py-20 px-2 sm:px-4 md:px-8 w-full overflow-hidden",
@@ -160,7 +160,7 @@ export default function StatsCount({
       animate={isInView ? { opacity: 1 } : { opacity: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <motion.div
+      <m.div
         className={cn("text-center mb-8 sm:mb-12 lg:mb-16")}
         initial={{ opacity: 0, y: -20 }}
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
@@ -207,7 +207,7 @@ export default function StatsCount({
             )}
           </div>
         </h2>
-      </motion.div>
+      </m.div>
 
       <div className={cn("w-full max-w-6xl mx-auto")}>
         <div
@@ -230,7 +230,7 @@ export default function StatsCount({
                 label={stat.label}
               />
               {index < stats.length - 1 && showDividers && (
-                <motion.div
+                <m.div
                   className={cn(
                     "absolute -right-1 sm:-right-2 lg:-right-4 top-1/2 transform -translate-y-1/2 h-12 sm:h-16 lg:h-20 w-px bg-gray-200 dark:bg-gray-700"
                   )}
@@ -247,6 +247,6 @@ export default function StatsCount({
           ))}
         </div>
       </div>
-    </motion.section>
+    </m.section>
   );
 }

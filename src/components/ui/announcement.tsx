@@ -5,7 +5,7 @@ import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
-  motion,
+  m,
   AnimatePresence,
   useAnimationFrame,
   useMotionTemplate,
@@ -63,11 +63,11 @@ const MovingBorder = ({
           ref={pathRef}
         />
       </svg>
-      <motion.div
+      <m.div
         style={{ position: 'absolute', top: 0, left: 0, display: 'inline-block', transform }}
       >
         {children}
-      </motion.div>
+      </m.div>
     </>
   );
 };
@@ -246,7 +246,7 @@ function AnnouncementComponent({
 
   return (
     <>
-      <motion.div
+      <m.div
         ref={containerRef}
         data-state={isOpen ? 'open' : 'closed'}
         {...animations[animation]}
@@ -270,11 +270,11 @@ function AnnouncementComponent({
         ) : (
           badgeContent
         )}
-      </motion.div>
+      </m.div>
       {isMounted && hasExpandable && createPortal(
         <AnimatePresence>
           {isOpen && (
-            <motion.div
+            <m.div
               ref={dropdownRef}
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -293,7 +293,7 @@ function AnnouncementComponent({
               aria-label="Expanded announcement content"
             >
               {expandedContentRef.current}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>,
         document.body

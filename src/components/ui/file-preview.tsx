@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import { FileIcon, X } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
@@ -31,7 +31,7 @@ const ImageFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
     const [previewOpen, setPreviewOpen] = useState(false)
     return (
       <>
-        <motion.div
+        <m.div
           ref={ref}
           className="relative flex max-w-[200px] cursor-zoom-in rounded-md border p-1.5 pr-2 text-xs"
           layout
@@ -65,13 +65,13 @@ const ImageFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
               <X className="h-2.5 w-2.5" />
             </button>
           ) : null}
-        </motion.div>
+        </m.div>
 
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-3xl">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Bildvorschau: {file.name}</DialogTitle>
-          </DialogHeader>
+            <DialogHeader className="sr-only">
+              <DialogTitle>Bildvorschau: {file.name}</DialogTitle>
+            </DialogHeader>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt={`Attachment ${file.name}`}
@@ -100,7 +100,7 @@ const TextFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
     }, [file])
 
     return (
-      <motion.div
+      <m.div
         ref={ref}
         className="relative flex max-w-[200px] rounded-md border p-1.5 pr-2 text-xs"
         layout
@@ -129,7 +129,7 @@ const TextFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
             <X className="h-2.5 w-2.5" />
           </button>
         ) : null}
-      </motion.div>
+      </m.div>
     )
   }
 )
@@ -138,7 +138,7 @@ TextFilePreview.displayName = "TextFilePreview"
 const GenericFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
   ({ file, onRemove }, ref) => {
     return (
-      <motion.div
+      <m.div
         ref={ref}
         className="relative flex max-w-[200px] rounded-md border p-1.5 pr-2 text-xs"
         layout
@@ -165,7 +165,7 @@ const GenericFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
             <X className="h-2.5 w-2.5" />
           </button>
         ) : null}
-      </motion.div>
+      </m.div>
     )
   }
 )

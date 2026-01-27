@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { HTMLMotionProps, Variants, motion } from 'motion/react';
+import { HTMLMotionProps, Variants, m } from 'framer-motion';
 
 import { cn } from '@/lib/utils';
 
@@ -75,7 +75,7 @@ const CardCurtainRevealFooter = React.forwardRef<
   const { isMouseIn } = useCardCurtainRevealContext();
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       className={className}
       variants={curtainVariants}
@@ -101,7 +101,7 @@ const CardCurtainRevealTitle = React.forwardRef<
   const { isMouseIn } = useCardCurtainRevealContext();
 
   return (
-    <motion.h2
+    <m.h2
       ref={ref}
       className={className}
       animate={isMouseIn ? { y: 0 } : { y: 170 }}
@@ -117,7 +117,7 @@ const CardCurtain = React.forwardRef<HTMLDivElement, HTMLMotionProps<'div'>>(
     const { isMouseIn } = useCardCurtainRevealContext();
 
     return (
-      <motion.div
+      <m.div
         ref={ref}
         className={cn(
           'pointer-events-none absolute inset-0 size-full mix-blend-difference',
@@ -139,7 +139,7 @@ const CardCurtainRevealDescription = React.forwardRef<
   const { isMouseIn } = useCardCurtainRevealContext();
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       className={className}
       variants={curtainVariants}

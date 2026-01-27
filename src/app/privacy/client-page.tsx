@@ -14,7 +14,7 @@ export default function PrivacyPage() {
     const { t, language } = useLanguage()
 
     const langTranslations = React.useMemo(() => {
-        return translations[language as keyof typeof translations] as any
+        return (translations[language as keyof typeof translations] || translations['en']) as any
     }, [language])
 
     const visitItems = langTranslations?.pages?.privacy?.sections?.dataCollection?.visit?.items || []

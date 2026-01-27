@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react"
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ export function CTASection() {
                         <div className="relative rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-5 md:p-12 lg:p-16">
                             <div className="text-center space-y-4 md:space-y-8">
                                 {/* Badge */}
-                                <motion.div
+                                <m.div
                                     initial={{ opacity: 0, y: 10 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -53,10 +53,10 @@ export function CTASection() {
                                     <Badge variant="outline" className="text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                                         {t('landing.cta.badge')}
                                     </Badge>
-                                </motion.div>
+                                </m.div>
 
                                 {/* Headline */}
-                                <motion.h2
+                                <m.h2
                                     initial={{ opacity: 0, y: 10 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -66,10 +66,10 @@ export function CTASection() {
                                     {t('landing.cta.title')}
                                     <br />
                                     {t('landing.cta.titleLine2')}
-                                </motion.h2>
+                                </m.h2>
 
                                 {/* Description */}
-                                <motion.p
+                                <m.p
                                     initial={{ opacity: 0, y: 10 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -77,10 +77,10 @@ export function CTASection() {
                                     className="text-sm md:text-lg text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto"
                                 >
                                     {t('landing.cta.description')}
-                                </motion.p>
+                                </m.p>
 
                                 {/* CTA Buttons */}
-                                <motion.div
+                                <m.div
                                     initial={{ opacity: 0, y: 10 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -101,10 +101,10 @@ export function CTASection() {
                                             {t('landing.cta.viewPricing')}
                                         </Button>
                                     </Link>
-                                </motion.div>
+                                </m.div>
 
                                 {/* Trust Signals */}
-                                <motion.div
+                                <m.div
                                     initial={{ opacity: 0, y: 10 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -114,7 +114,7 @@ export function CTASection() {
                                     <p className="text-xs md:text-sm text-neutral-400 dark:text-neutral-500">
                                         {t('landing.cta.trustSignals')}
                                     </p>
-                                </motion.div>
+                                </m.div>
                             </div>
                         </div>
 
@@ -128,7 +128,7 @@ export function CTASection() {
                         </div>
 
                         {/* Bottom CTA */}
-                        <motion.div
+                        <m.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -140,7 +140,7 @@ export function CTASection() {
                                     {t('landing.cta.startNow')}
                                 </MorphyButton>
                             </Link>
-                        </motion.div>
+                        </m.div>
                     </div>
                 </ScrollReveal>
             </div>

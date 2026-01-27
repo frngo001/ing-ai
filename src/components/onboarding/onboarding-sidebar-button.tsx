@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useOnboardingStore, ONBOARDING_MAIN_STEPS } from '@/lib/stores/onboarding-store'
@@ -52,7 +52,7 @@ export function OnboardingSidebarButton() {
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="mx-1 mb-2"
@@ -102,6 +102,6 @@ export function OnboardingSidebarButton() {
           </Button>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   )
 }

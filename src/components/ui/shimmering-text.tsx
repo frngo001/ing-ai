@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo, useRef } from "react"
-import { motion, useInView, UseInViewOptions } from "motion/react"
+import { m, useInView, UseInViewOptions } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -58,7 +58,7 @@ export function ShimmeringText({
   const shouldAnimate = !startOnView || isInView
 
   return (
-    <motion.span
+    <m.span
       ref={ref}
       className={cn(
         "relative inline-block bg-[length:250%_100%,auto] bg-clip-text text-transparent",
@@ -83,9 +83,9 @@ export function ShimmeringText({
       animate={
         shouldAnimate
           ? {
-              backgroundPosition: "0% center",
-              opacity: 1,
-            }
+            backgroundPosition: "0% center",
+            opacity: 1,
+          }
           : {}
       }
       transition={{
@@ -103,6 +103,6 @@ export function ShimmeringText({
       }}
     >
       {text}
-    </motion.span>
+    </m.span>
   )
 }

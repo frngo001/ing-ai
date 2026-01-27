@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   Dialog,
   DialogContent,
@@ -97,15 +97,15 @@ export function OnboardingDialog() {
           {/* Step indicator */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
             {ONBOARDING_MAIN_STEPS.map((_, index) => (
-              <motion.div
+              <m.div
                 key={index}
                 className={cn(
                   'h-1.5 rounded-full transition-all duration-300',
                   index === currentMainStep
                     ? 'w-6 bg-foreground/70'
                     : completedSteps.includes(index)
-                    ? 'w-1.5 bg-foreground/40'
-                    : 'w-1.5 bg-foreground/20'
+                      ? 'w-1.5 bg-foreground/40'
+                      : 'w-1.5 bg-foreground/20'
                 )}
                 animate={{
                   scale: index === currentMainStep ? 1 : 0.9,
@@ -118,7 +118,7 @@ export function OnboardingDialog() {
         {/* Content */}
         <div className="px-8 py-6">
           <AnimatePresence mode="wait">
-            <motion.div
+            <m.div
               key={currentMainStep}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -150,7 +150,7 @@ export function OnboardingDialog() {
 
               {/* Step-specific content */}
               <OnboardingStepContent step={currentMainStep} />
-            </motion.div>
+            </m.div>
           </AnimatePresence>
         </div>
 
@@ -222,7 +222,7 @@ function OnboardingStepContent({ step }: { step: number }) {
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.2 }}
@@ -239,6 +239,6 @@ function OnboardingStepContent({ step }: { step: number }) {
           ))}
         </ul>
       </div>
-    </motion.div>
+    </m.div>
   )
 }

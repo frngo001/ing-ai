@@ -4,7 +4,7 @@ import { useState } from "react";
 import * as React from "react";
 import Link from "next/link";
 import { Check, User, Users, Crown, ArrowRight, Gift } from "lucide-react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,7 @@ function PricingCard({
   const href = plan.cta.href.includes("plan=") ? plan.cta.href : ctaHref;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -171,7 +171,7 @@ function PricingCard({
           ))}
         </ul>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -252,7 +252,7 @@ export default function Pricing() {
       <div className="container mx-auto max-w-7xl">
         {/* Header Section */}
         <div className="text-center mb-8 md:mb-16 space-y-3">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -266,10 +266,10 @@ export default function Pricing() {
             <p className="text-muted-foreground text-xs md:text-lg max-w-xl mx-auto leading-relaxed px-4">
               {t('landing.pricing.description')}
             </p>
-          </motion.div>
+          </m.div>
 
           {/* Premium Billing Toggle */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -300,7 +300,7 @@ export default function Pricing() {
                 )}
               </button>
             </div>
-          </motion.div>
+          </m.div>
         </div>
 
         {/* Pricing Grid */}
@@ -317,7 +317,7 @@ export default function Pricing() {
         </div>
 
         {/* Footer Info */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -335,7 +335,7 @@ export default function Pricing() {
               {t('landing.pricing.contactUs')}
             </Link>
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </section>
   );

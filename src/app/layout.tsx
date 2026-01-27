@@ -3,19 +3,12 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { LanguageProvider } from "@/components/language-provider"
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import dynamic from 'next/dynamic'
-
-const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod.Toaster), {
-  ssr: false,
-})
-const CookieConsent = dynamic(() => import('@/components/cookie-consent').then((mod) => mod.CookieConsent), {
-  ssr: false,
-})
-import { AnalyticsProvider } from '@/components/analytics-provider'
+import { ClientSideFeatures } from '@/components/providers/client-side-features'
 import { FramerMotionProvider } from '@/components/framer-motion-provider'
 import { translations, type Language } from '@/lib/i18n/translations'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
 import { siteConfig } from '@/config/site'
+
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -129,15 +122,13 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LanguageProvider>
+          <LanguageProvider initialLanguage={language}>
             <FramerMotionProvider>
               {children}
+              <ClientSideFeatures />
             </FramerMotionProvider>
           </LanguageProvider>
-          <Toaster />
-          <AnalyticsProvider />
         </ThemeProvider>
-        <CookieConsent />
       </body>
     </html>
   )

@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { ToolStep } from '@/lib/ask-ai-pane/types'
 import { useLanguage } from '@/lib/i18n/use-language'
-import { motion, AnimatePresence } from 'motion/react'
+import { m, AnimatePresence } from 'framer-motion'
 
 interface AgentStepperViewProps {
   steps: ToolStep[]
@@ -253,7 +253,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 <div className="relative flex items-center justify-center shrink-0">
                   <Icon className={cn("h-3 w-3", step.status === 'completed' ? "text-emerald-600 dark:text-emerald-500/70" : "text-muted-foreground/40")} />
                   {step.status === 'running' && (
-                    <motion.div
+                    <m.div
                       className="absolute -inset-1 rounded-full border border-blue-500/40 dark:border-blue-500/30"
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
@@ -290,7 +290,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
 
           <AnimatePresence>
             {isExpanded && (
-              <motion.div
+              <m.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
@@ -342,7 +342,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>
@@ -365,7 +365,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                 {hasRunning ? (
                   <>
                     <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-500 animate-pulse" />
-                    <motion.div
+                    <m.div
                       className="absolute inset-0 rounded-full border-2 border-primary/20"
                       style={{ borderTopColor: 'currentColor', borderRightColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: 'transparent' }}
                       animate={{ rotate: 360 }}
@@ -443,20 +443,20 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                       {/* Brief Summary / Message */}
                       <AnimatePresence mode="wait">
                         {step.status === 'completed' && step.output?.message && !isExpanded && (
-                          <motion.p
+                          <m.p
                             initial={{ opacity: 0, y: -2 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-0.5 truncate leading-tight"
                           >
                             {translateToolMessage(step.output.message, step.toolName, t)}
-                          </motion.p>
+                          </m.p>
                         )}
                       </AnimatePresence>
 
                       {/* Expanded Details */}
                       <AnimatePresence>
                         {isExpanded && (
-                          <motion.div
+                          <m.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
@@ -506,7 +506,7 @@ export function AgentStepperView({ steps, className, minimal = false }: AgentSte
                                 </div>
                               )}
                             </div>
-                          </motion.div>
+                          </m.div>
                         )}
                       </AnimatePresence>
                     </div>

@@ -26,11 +26,13 @@ export const translations = {
             ],
             login: {
                 title: 'Login - Ing AI',
-                description: 'Login to your Ing AI account and continue writing.'
+                description: 'Login to your Ing AI account and continue writing.',
+                logoAlt: 'Ing AI'
             },
             signup: {
                 title: 'Sign Up - Ing AI',
-                description: 'Create a free Ing AI account and start writing better academic papers.'
+                description: 'Create a free Ing AI account and start writing better academic papers.',
+                logoAlt: 'Ing AI'
             },
             changelog: {
                 title: 'Changelog - Ing AI',
@@ -1806,6 +1808,7 @@ export const translations = {
             login: {
                 title: 'Sign in to Ing AI',
                 description: 'Use Editor, Projects and Citations with your team.',
+                logoAlt: 'Ing AI',
                 email: 'Email',
                 emailPlaceholder: 'name@example.com',
                 password: 'Password',
@@ -1828,6 +1831,7 @@ export const translations = {
             signup: {
                 title: 'Create Ing AI Account',
                 description: 'Activate AI Autocomplete, PDF Chat and instant citations.',
+                logoAlt: 'Ing AI',
                 fullName: 'Full Name',
                 fullNamePlaceholder: 'Alex Sample',
                 email: 'Email',
@@ -3868,6 +3872,7 @@ export const translations = {
             login: {
                 title: 'Iniciar sesión en Ing AI',
                 description: 'Usa Editor, Proyectos y Citas con tu equipo.',
+                logoAlt: 'Ing AI',
                 email: 'Correo Electrónico',
                 emailPlaceholder: 'nombre@ejemplo.com',
                 password: 'Contraseña',
@@ -3890,6 +3895,7 @@ export const translations = {
             signup: {
                 title: 'Crear Cuenta de Ing AI',
                 description: 'Activa Autocompletado con IA, Chat con PDFs y citas instantáneas.',
+                logoAlt: 'Ing AI',
                 fullName: 'Nombre Completo',
                 fullNamePlaceholder: 'Alex Ejemplo',
                 email: 'Correo Electrónico',
@@ -5939,6 +5945,7 @@ export const translations = {
             login: {
                 title: 'Se connecter à Ing AI',
                 description: 'Utilisez l\'Éditeur, les Projets et les Citations avec votre équipe.',
+                logoAlt: 'Ing AI',
                 email: 'E-mail',
                 emailPlaceholder: 'nom@exemple.com',
                 password: 'Mot de passe',
@@ -5961,6 +5968,7 @@ export const translations = {
             signup: {
                 title: 'Créer un Compte Ing AI',
                 description: 'Activez l\'Autocomplétion IA, le Chat PDF et les citations instantanées.',
+                logoAlt: 'Ing AI',
                 fullName: 'Nom Complet',
                 fullNamePlaceholder: 'Alex Exemple',
                 email: 'E-mail',
@@ -7519,6 +7527,7 @@ export const translations = {
             login: {
                 title: 'Bei Ing AI anmelden',
                 description: 'Nutze Editor, Projekte und Zitationen mit deinem Team.',
+                logoAlt: 'Ing AI',
                 email: 'E-Mail',
                 emailPlaceholder: 'name@example.com',
                 password: 'Passwort',
@@ -7541,6 +7550,7 @@ export const translations = {
             signup: {
                 title: 'Konto bei Ing AI erstellen',
                 description: 'Aktiviere KI-Autocomplete, PDF-Chat und sofortige Zitationen.',
+                logoAlt: 'Ing AI',
                 fullName: 'Vollständiger Name',
                 fullNamePlaceholder: 'Alex Muster',
                 email: 'E-Mail',

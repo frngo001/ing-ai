@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useEditorRef } from 'platejs/react';
 import { ReactEditor } from 'slate-react';
 import { Range } from 'slate';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { type RealtimePresence } from '@/hooks/use-document-realtime';
@@ -93,7 +93,7 @@ function RemoteCursor({ user, editor }: { user: RealtimePresence; editor: any })
     const color = user.color || '#3b82f6';
 
     return (
-        <motion.div
+        <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -114,7 +114,7 @@ function RemoteCursor({ user, editor }: { user: RealtimePresence; editor: any })
                 />
             ))}
             {caretRect && (
-                <motion.div
+                <m.div
                     className="absolute w-[2px] z-20"
                     initial={{ x: caretRect.left, y: caretRect.top, height: caretRect.height || 20 }}
                     animate={{ x: caretRect.left, y: caretRect.top, height: caretRect.height || 20 }}
@@ -128,7 +128,7 @@ function RemoteCursor({ user, editor }: { user: RealtimePresence; editor: any })
                         backgroundColor: color,
                     }}
                 >
-                    <motion.div
+                    <m.div
                         className="absolute top-0 left-0 -translate-y-full flex items-center gap-1.5 px-2 py-0.5 rounded-t-md rounded-br-md shadow-lg backdrop-blur-sm z-30"
                         style={{
                             backgroundColor: color,
@@ -145,7 +145,7 @@ function RemoteCursor({ user, editor }: { user: RealtimePresence; editor: any })
                         <span className="text-[11px] font-semibold text-white whitespace-nowrap drop-shadow-sm">
                             {user.userName}
                         </span>
-                    </motion.div>
+                    </m.div>
 
                     {/* Pulsing effect for the caret head */}
                     <div
@@ -157,8 +157,8 @@ function RemoteCursor({ user, editor }: { user: RealtimePresence; editor: any })
                             style={{ backgroundColor: color }}
                         />
                     </div>
-                </motion.div>
+                </m.div>
             )}
-        </motion.div>
+        </m.div>
     );
 }

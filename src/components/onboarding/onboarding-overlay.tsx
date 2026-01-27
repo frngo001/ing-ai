@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import type { TargetRect } from '@/lib/stores/onboarding-types'
 
 interface OnboardingOverlayProps {
@@ -27,7 +27,7 @@ export function OnboardingOverlay({
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -49,7 +49,7 @@ export function OnboardingOverlay({
                   {/* White background = visible overlay */}
                   <rect width="100%" height="100%" fill="white" />
                   {/* Black rect = transparent cutout */}
-                  <motion.rect
+                  <m.rect
                     initial={{
                       x: targetRect.x - padding,
                       y: targetRect.y - padding,
@@ -86,7 +86,7 @@ export function OnboardingOverlay({
 
           {/* Highlight ring around target */}
           {targetRect && !showFullOverlay && (
-            <motion.div
+            <m.div
               initial={{
                 left: targetRect.x - padding,
                 top: targetRect.y - padding,
@@ -110,7 +110,7 @@ export function OnboardingOverlay({
               style={{ boxShadow: '0 0 0 9999px transparent' }}
             />
           )}
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   )

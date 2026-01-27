@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { m, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
 import { Check, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 interface LoginTransitionProps {
   isVisible: boolean;
@@ -13,7 +13,7 @@ interface LoginTransitionProps {
 // Partikel-Komponente für Erfolgs-Animation
 function Particle({ delay, x, y }: { delay: number; x: number; y: number }) {
   return (
-    <motion.div
+    <m.div
       className="absolute h-2 w-2 rounded-full bg-emerald-400"
       initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
       animate={{
@@ -60,12 +60,12 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
     progressInterval = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const newProgress = Math.min(100, (elapsed / duration) * 100);
-      
+
       // Easing-Funktion für smooth progress
       const eased = newProgress < 50
         ? newProgress * newProgress * 0.02
         : 1 - Math.pow(2, -10 * (newProgress / 100));
-      
+
       const finalProgress = Math.min(100, eased * 100);
       setProgress(finalProgress);
       progressSpring.set(finalProgress);
@@ -99,18 +99,20 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
     };
   }, [isVisible, onComplete, progressSpring]);
 
-  // Generiere Partikel-Positionen
-  const particles = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    delay: i * 0.05,
-    x: (Math.random() - 0.5) * 200,
-    y: (Math.random() - 0.5) * 200,
-  }));
+  // Generiere Partikel-Positionen einmalig
+  const particles = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      delay: i * 0.05,
+      x: (Math.random() - 0.5) * 200,
+      y: (Math.random() - 0.5) * 200,
+    }));
+  }, []);
 
   return (
     <AnimatePresence mode="wait">
       {isVisible && (
-        <motion.div
+        <m.div
           className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -118,7 +120,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           {/* Animated background mit mehreren Layern */}
-          <motion.div
+          <m.div
             className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-cyan-500/20"
             animate={{
               backgroundPosition: ["0% 0%", "100% 100%"],
@@ -135,7 +137,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
           />
 
           {/* Zusätzlicher Gradient-Layer für mehr Tiefe */}
-          <motion.div
+          <m.div
             className="absolute inset-0 bg-gradient-to-tr from-transparent via-emerald-500/5 to-transparent"
             animate={{
               rotate: [0, 360],
@@ -148,7 +150,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
           />
 
           {/* Mehrere Glowing Orbs mit unterschiedlichen Größen */}
-          <motion.div
+          <m.div
             className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-emerald-500/15 blur-3xl"
             animate={{
               scale: [1, 1.3, 1],
@@ -162,7 +164,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
               ease: "easeInOut",
             }}
           />
-          <motion.div
+          <m.div
             className="absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full bg-teal-500/15 blur-3xl"
             animate={{
               scale: [1.2, 1, 1.2],
@@ -177,7 +179,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
               delay: 1,
             }}
           />
-          <motion.div
+          <m.div
             className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-2xl"
             animate={{
               scale: [1, 1.5, 1],
@@ -194,12 +196,12 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
           {/* Main content */}
           <div className="relative z-10 flex flex-col items-center gap-8">
             {/* Logo mit erweiterten Animationen */}
-            <motion.div
+            <m.div
               className="relative h-32 w-32"
               initial={{ scale: 0.5, opacity: 0, rotate: -180 }}
-              animate={{ 
-                scale: 1, 
-                opacity: 1, 
+              animate={{
+                scale: 1,
+                opacity: 1,
                 rotate: 0,
                 y: showCheck ? -20 : 0,
               }}
@@ -209,7 +211,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
               }}
             >
               {/* Mehrere Glow-Ringe */}
-              <motion.div
+              <m.div
                 className="absolute inset-0 rounded-full bg-emerald-500/30 blur-2xl"
                 animate={{
                   scale: [1, 1.4, 1],
@@ -221,7 +223,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                   ease: "easeInOut",
                 }}
               />
-              <motion.div
+              <m.div
                 className="absolute inset-0 rounded-full bg-teal-500/20 blur-xl"
                 animate={{
                   scale: [1.2, 1.6, 1.2],
@@ -244,15 +246,15 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                   priority
                 />
               </div>
-            </motion.div>
+            </m.div>
 
             {/* Success checkmark mit Ripple-Effekt */}
             <AnimatePresence>
               {showCheck && (
-                <motion.div className="relative">
+                <m.div className="relative">
                   {/* Ripple-Effekte */}
                   {[0, 1, 2].map((i) => (
-                    <motion.div
+                    <m.div
                       key={i}
                       className="absolute inset-0 rounded-full border-2 border-emerald-400"
                       initial={{ scale: 0.8, opacity: 0.8 }}
@@ -267,13 +269,13 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                       }}
                     />
                   ))}
-                  
+
                   {/* Checkmark Container */}
-                  <motion.div
+                  <m.div
                     initial={{ scale: 0, opacity: 0, rotate: -180 }}
-                    animate={{ 
-                      scale: 1, 
-                      opacity: 1, 
+                    animate={{
+                      scale: 1,
+                      opacity: 1,
                       rotate: 0,
                     }}
                     exit={{ scale: 0, opacity: 0 }}
@@ -284,7 +286,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                     }}
                     className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-2xl shadow-emerald-500/50"
                   >
-                    <motion.div
+                    <m.div
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={{ pathLength: 1, opacity: 1 }}
                       transition={{
@@ -294,10 +296,10 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                       }}
                     >
                       <Check className="h-10 w-10" strokeWidth={3.5} />
-                    </motion.div>
-                    
+                    </m.div>
+
                     {/* Glow-Effekt */}
-                    <motion.div
+                    <m.div
                       className="absolute inset-0 rounded-full bg-emerald-400 blur-xl"
                       animate={{
                         opacity: [0.5, 0.8, 0.5],
@@ -309,13 +311,13 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                         ease: "easeInOut",
                       }}
                     />
-                  </motion.div>
+                  </m.div>
 
                   {/* Partikel-Effekt */}
                   <AnimatePresence>
                     {showParticles && (
                       <div className="absolute inset-0">
-                        {particles.map((particle) => (
+                        {particles.map((particle: any) => (
                           <Particle
                             key={particle.id}
                             delay={particle.delay}
@@ -326,12 +328,12 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                       </div>
                     )}
                   </AnimatePresence>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
             {/* Loading/Success text mit smooth transitions */}
-            <motion.div
+            <m.div
               className="flex flex-col items-center gap-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -339,7 +341,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
             >
               <AnimatePresence mode="wait">
                 {!showSuccess ? (
-                  <motion.div
+                  <m.div
                     key="loading"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -347,7 +349,7 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                     transition={{ duration: 0.3 }}
                     className="flex flex-col items-center gap-2"
                   >
-                    <motion.h2
+                    <m.h2
                       className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent"
                       animate={{
                         opacity: [0.7, 1, 0.7],
@@ -359,8 +361,8 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                       }}
                     >
                       Wird geladen...
-                    </motion.h2>
-                    <motion.p
+                    </m.h2>
+                    <m.p
                       className="text-muted-foreground text-sm"
                       animate={{
                         opacity: [0.5, 0.8, 0.5],
@@ -372,10 +374,10 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                       }}
                     >
                       Bereite deine Arbeitsumgebung vor
-                    </motion.p>
-                  </motion.div>
+                    </m.p>
+                  </m.div>
                 ) : (
-                  <motion.div
+                  <m.div
                     key="success"
                     initial={{ opacity: 0, y: 10, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -386,12 +388,12 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                     }}
                     className="flex flex-col items-center gap-2"
                   >
-                    <motion.h2
+                    <m.h2
                       className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent flex items-center gap-2"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
-                      <motion.span
+                      <m.span
                         animate={{ rotate: [0, 360] }}
                         transition={{
                           duration: 2,
@@ -400,42 +402,42 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                         }}
                       >
                         <Sparkles className="h-6 w-6 text-emerald-500" />
-                      </motion.span>
+                      </m.span>
                       Erfolgreich eingeloggt!
-                    </motion.h2>
-                    <motion.p
+                    </m.h2>
+                    <m.p
                       className="text-muted-foreground text-sm"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 0.8 }}
                       transition={{ delay: 0.2 }}
                     >
                       Weiterleitung zum Editor...
-                    </motion.p>
-                  </motion.div>
+                    </m.p>
+                  </m.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </m.div>
 
             {/* Verbesserte Progress bar mit Glow */}
-            <motion.div
+            <m.div
               className="relative h-2 w-80 overflow-hidden rounded-full bg-muted/50 backdrop-blur-sm"
               initial={{ opacity: 0, scaleX: 0.8 }}
-              animate={{ 
+              animate={{
                 opacity: showCheck ? 0 : 1,
                 scaleX: showCheck ? 0.8 : 1,
               }}
               transition={{ duration: 0.3 }}
             >
               {/* Progress fill mit Gradient und Glow */}
-              <motion.div
+              <m.div
                 className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"
-                style={{ 
+                style={{
                   width: progressSpring,
                 }}
                 transition={{ duration: 0.1 }}
               >
                 {/* Glow-Effekt auf Progress */}
-                <motion.div
+                <m.div
                   className="absolute inset-0 rounded-full bg-white/40 blur-sm"
                   animate={{
                     opacity: [0.3, 0.6, 0.3],
@@ -446,10 +448,10 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                     ease: "easeInOut",
                   }}
                 />
-              </motion.div>
-              
+              </m.div>
+
               {/* Shimmer-Effekt */}
-              <motion.div
+              <m.div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                 animate={{
                   x: ["-100%", "100%"],
@@ -462,11 +464,11 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                 }}
                 style={{ width: "40%" }}
               />
-              
+
               {/* Glow am Ende der Progress-Bar */}
-              <motion.div
+              <m.div
                 className="absolute inset-y-0 rounded-full bg-emerald-400 blur-md"
-                style={{ 
+                style={{
                   left: progressSpring,
                   width: "20px",
                   marginLeft: "-10px",
@@ -481,9 +483,9 @@ export function LoginTransition({ isVisible, onComplete }: LoginTransitionProps)
                   ease: "easeInOut",
                 }}
               />
-            </motion.div>
+            </m.div>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { DottedGlowBackground } from '@/components/ui/dotted-glow-background'
@@ -201,7 +201,7 @@ export function OnboardingTooltip({
   return (
     <AnimatePresence>
       {isVisible && mainStep && subStep && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1, x, y }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -364,7 +364,7 @@ export function OnboardingTooltip({
               </div>
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   )

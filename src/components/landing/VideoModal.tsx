@@ -1,6 +1,6 @@
 
 import * as React from "react"
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { X } from "lucide-react";
 
 export interface FeatureVideo {
@@ -26,14 +26,14 @@ export default function VideoModal({
     if (!video.youtubeId && !video.videoSrc) return null;
 
     return (
-        <motion.div
+        <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/90 backdrop-blur-sm"
             onClick={onClose}
         >
-            <motion.div
+            <m.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
@@ -72,7 +72,7 @@ export default function VideoModal({
                         <h3 className="text-xl font-semibold text-white">{video.title}</h3>
                     </div>
                 )}
-            </motion.div>
-        </motion.div>
+            </m.div>
+        </m.div>
     );
 }

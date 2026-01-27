@@ -1,6 +1,6 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, m } from "framer-motion"
 import { X } from "lucide-react"
 
 interface InterruptPromptProps {
@@ -12,7 +12,7 @@ export function InterruptPrompt({ isOpen, close }: InterruptPromptProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <m.div
           initial={{ top: 0, filter: "blur(5px)" }}
           animate={{
             top: -40,
@@ -34,7 +34,7 @@ export function InterruptPrompt({ isOpen, close }: InterruptPromptProps) {
           >
             <X className="h-3 w-3" />
           </button>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   )

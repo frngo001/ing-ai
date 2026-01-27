@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { motion } from 'motion/react';
+import { m } from 'framer-motion';
 
 type ShineProps = React.ComponentProps<'div'> & {
   color?: string;
@@ -167,7 +167,7 @@ const Shine = ({
   ]);
 
   const overlayElement = (
-    <motion.div
+    <m.div
       initial="initial"
       animate={animateState}
       variants={{

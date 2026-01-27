@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState, useMemo } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, m } from "framer-motion"
 import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X, ChevronsDown } from "lucide-react"
 import { omit } from "remeda"
 
@@ -427,7 +427,7 @@ function FileUploadOverlay({ isDragging, dropFilesHere }: FileUploadOverlayProps
   return (
     <AnimatePresence>
       {isDragging && (
-        <motion.div
+        <m.div
           className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center space-x-2 rounded-xl border border-dashed border-border bg-background text-sm text-muted-foreground"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -437,7 +437,7 @@ function FileUploadOverlay({ isDragging, dropFilesHere }: FileUploadOverlayProps
         >
           <Paperclip className="h-4 w-4" />
           <span>{dropFilesHere}</span>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   )
@@ -471,7 +471,7 @@ interface TranscribingOverlayProps {
 
 function TranscribingOverlay({ transcribingAudio }: TranscribingOverlayProps) {
   return (
-    <motion.div
+    <m.div
       className="flex h-full w-full flex-col items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -480,7 +480,7 @@ function TranscribingOverlay({ transcribingAudio }: TranscribingOverlayProps) {
     >
       <div className="relative">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <motion.div
+        <m.div
           className="absolute inset-0 h-8 w-8 animate-pulse rounded-full bg-primary/20"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1.2, opacity: 1 }}
@@ -495,7 +495,7 @@ function TranscribingOverlay({ transcribingAudio }: TranscribingOverlayProps) {
       <p className="mt-4 text-sm font-medium text-muted-foreground">
         {transcribingAudio}
       </p>
-    </motion.div>
+    </m.div>
   )
 }
 
@@ -509,7 +509,7 @@ function RecordingPrompt({ isVisible, onStopRecording, clickToStopRecording }: R
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.div
+        <m.div
           initial={{ top: 0, filter: "blur(5px)" }}
           animate={{
             top: -40,
@@ -527,7 +527,7 @@ function RecordingPrompt({ isVisible, onStopRecording, clickToStopRecording }: R
             <Info className="mr-2 h-3 w-3" />
             {clickToStopRecording}
           </span>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   )

@@ -1,13 +1,13 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { m } from 'framer-motion';
 import Image from 'next/image';
 
 export function EditorLoading() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-background">
       <div className="flex flex-col items-center justify-center gap-4">
-        <motion.div
+        <m.div
           initial={{ opacity: 0.5, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{
@@ -26,10 +26,10 @@ export function EditorLoading() {
             className="object-contain"
             priority
           />
-        </motion.div>
+        </m.div>
         <div className="flex items-center gap-2">
           {[0, 1, 2].map((index) => (
-            <motion.div
+            <m.div
               key={index}
               className="h-2 w-2 rounded-full bg-primary"
               animate={{

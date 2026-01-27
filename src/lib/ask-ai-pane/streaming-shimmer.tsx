@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, m } from "framer-motion"
 
 import { ShimmeringText } from "@/components/ui/shimmering-text"
 import { useLanguage } from "@/lib/i18n/use-language"
@@ -27,7 +27,7 @@ export function StreamingShimmer() {
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div
+      <m.div
         key={currentIndex}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -35,7 +35,7 @@ export function StreamingShimmer() {
         transition={{ duration: 0.3 }}
       >
         <ShimmeringText text={streamingPhrases[currentIndex]} />
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   )
 }

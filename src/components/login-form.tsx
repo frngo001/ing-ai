@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -89,7 +89,7 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
   return (
     <>
       <LoginTransition isVisible={showTransition} onComplete={handleTransitionComplete} />
-      <motion.div
+      <m.div
         className={cn("flex flex-col gap-6", className)}
         initial={{ opacity: 1, scale: 1 }}
         animate={{
@@ -230,7 +230,7 @@ export function LoginForm({ className, nextPath = "/editor", ...props }: LoginFo
           </Link>{" "}
           zu.
         </FieldDescription>
-      </motion.div>
+      </m.div>
     </>
   );
 }

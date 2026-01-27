@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRef, useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/ui/section";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
@@ -65,7 +65,7 @@ function TutorialCard({
     }, [tutorial.description, authorPrefix, language])
 
     return (
-        <motion.div
+        <m.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -104,7 +104,7 @@ function TutorialCard({
                     {displayDescription}
                 </p>
             </div>
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -198,7 +198,7 @@ export function TutorialsSection() {
             <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 md:gap-10 mb-8 md:mb-12">
-                    <motion.div
+                    <m.div
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
@@ -213,7 +213,7 @@ export function TutorialsSection() {
                         <p className="text-muted-foreground text-xs md:text-lg leading-relaxed">
                             {t('landing.tutorials.description')}
                         </p>
-                    </motion.div>
+                    </m.div>
 
                     {/* Navigation Buttons */}
                     <div className="hidden md:flex gap-3">
@@ -249,12 +249,12 @@ export function TutorialsSection() {
                     {/* Loading State */}
                     {isLoading && (
                         <div className="flex items-center justify-center py-20">
-                            <motion.div
+                            <m.div
                                 animate={{ rotate: 360 }}
                                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                             >
                                 <Loader2 className="w-8 h-8 text-muted-foreground" />
-                            </motion.div>
+                            </m.div>
                         </div>
                     )}
 
@@ -286,7 +286,7 @@ export function TutorialsSection() {
                 </div>
 
                 {/* CTA & Footer Context */}
-                <motion.div
+                <m.div
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -317,7 +317,7 @@ export function TutorialsSection() {
                             <div key={i} className="h-1.5 w-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800" />
                         ))}
                     </div>
-                </motion.div>
+                </m.div>
             </div>
         </Section>
     );

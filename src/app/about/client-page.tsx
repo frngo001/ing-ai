@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Marquee } from '@/components/ui/marquee'
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/scroll-reveal'
-import { motion, useMotionValue, useSpring, useTransform, useInView } from 'framer-motion'
+import { m, useMotionValue, useSpring, useTransform, useInView } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import Glow from '@/components/ui/glow'
 import {
@@ -75,23 +75,23 @@ function AnimatedCounter({
     }, [isInView, value, motionValue, delay])
 
     return (
-        <motion.div
+        <m.div
             ref={ref}
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: delay * 0.1 }}
             className="space-y-2"
         >
-            <motion.p
+            <m.p
                 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent"
                 initial={{ scale: 0.5 }}
                 animate={isInView ? { scale: 1 } : { scale: 0.5 }}
                 transition={{ duration: 0.4, delay: delay * 0.1 + 0.2, type: "spring", stiffness: 200 }}
             >
                 {displayValue}{suffix}
-            </motion.p>
+            </m.p>
             <p className="text-sm text-muted-foreground">{label}</p>
-        </motion.div>
+        </m.div>
     )
 }
 
@@ -433,7 +433,7 @@ function GrowthChart() {
                 {[0, 1, 2, 3, 4, 5].map((i) => {
                     const y = padding.top + (i / 5) * innerHeight
                     return (
-                        <motion.line
+                        <m.line
                             key={i}
                             x1={padding.left}
                             y1={y}
@@ -454,7 +454,7 @@ function GrowthChart() {
                     const y = padding.top + (i / 5) * innerHeight
                     const value = Math.round((5 - i) * (maxUsers / 5))
                     return (
-                        <motion.text
+                        <m.text
                             key={i}
                             x={padding.left - 10}
                             y={y + 4}
@@ -465,12 +465,12 @@ function GrowthChart() {
                             transition={{ duration: 0.5, delay: 0.2 + i * 0.05 }}
                         >
                             {value}M
-                        </motion.text>
+                        </m.text>
                     )
                 })}
 
                 {/* Area fill */}
-                <motion.path
+                <m.path
                     d={areaPath}
                     fill="url(#areaGradient)"
                     initial={{ opacity: 0 }}
@@ -479,7 +479,7 @@ function GrowthChart() {
                 />
 
                 {/* Animated line */}
-                <motion.path
+                <m.path
                     d={linePath}
                     fill="none"
                     stroke="url(#lineGradient)"
@@ -496,7 +496,7 @@ function GrowthChart() {
                 {points.map((point, i) => (
                     <g key={point.year}>
                         {/* Vertical line to point */}
-                        <motion.line
+                        <m.line
                             x1={point.x}
                             y1={padding.top + innerHeight}
                             x2={point.x}
@@ -510,7 +510,7 @@ function GrowthChart() {
                         />
 
                         {/* Outer glow circle */}
-                        <motion.circle
+                        <m.circle
                             cx={point.x}
                             cy={point.y}
                             r="12"
@@ -521,7 +521,7 @@ function GrowthChart() {
                         />
 
                         {/* Data point */}
-                        <motion.circle
+                        <m.circle
                             cx={point.x}
                             cy={point.y}
                             r="6"
@@ -538,7 +538,7 @@ function GrowthChart() {
                         />
 
                         {/* Value label above point */}
-                        <motion.text
+                        <m.text
                             x={point.x}
                             y={point.y - 20}
                             textAnchor="middle"
@@ -548,10 +548,10 @@ function GrowthChart() {
                             transition={{ duration: 0.4, delay: 1 + i * 0.15 }}
                         >
                             {point.label}
-                        </motion.text>
+                        </m.text>
 
                         {/* Year label below */}
-                        <motion.text
+                        <m.text
                             x={point.x}
                             y={padding.top + innerHeight + 25}
                             textAnchor="middle"
@@ -561,13 +561,13 @@ function GrowthChart() {
                             transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
                         >
                             {point.year}
-                        </motion.text>
+                        </m.text>
                     </g>
                 ))}
             </svg>
 
             {/* Legend */}
-            <motion.div
+            <m.div
                 className="flex justify-center gap-8 mt-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
@@ -581,7 +581,7 @@ function GrowthChart() {
                     <div className="w-3 h-3 rounded-full bg-primary" />
                     <span className="text-sm text-muted-foreground">{t('pages.about.growth.legend.dataPoints')}</span>
                 </div>
-            </motion.div>
+            </m.div>
         </div>
     )
 }

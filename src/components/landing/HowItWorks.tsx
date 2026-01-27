@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react"
-import { motion, useInView } from "framer-motion";
+import { m, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { Badge } from "@/components/ui/badge";
@@ -63,51 +63,51 @@ function UploadVisual({ isInView }: { isInView: boolean }) {
     return (
         <div className="space-y-2 relative">
             {/* Drop zone */}
-            <motion.div
+            <m.div
                 initial={{ opacity: 0 }}
                 animate={isInView ? { opacity: 1 } : {}}
                 className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg p-4 mb-3 text-center"
             >
-                <motion.div
+                <m.div
                     animate={isInView ? { y: [0, -5, 0] } : {}}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     className="text-sm text-neutral-400"
                 >
                     {visuals.dragFiles}
-                </motion.div>
-            </motion.div>
+                </m.div>
+            </m.div>
 
             {visuals.files.map((file, i) => (
-                <motion.div
+                <m.div
                     key={file.name}
                     initial={{ opacity: 0, x: -30, scale: 0.9 }}
                     animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
                     transition={{ delay: 0.3 + i * 0.15, duration: 0.4, ease: "easeOut" }}
                     className="flex items-center gap-3 p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700"
                 >
-                    <motion.div
+                    <m.div
                         initial={{ scale: 0 }}
                         animate={isInView ? { scale: 1 } : {}}
                         transition={{ delay: 0.5 + i * 0.15, type: "spring", stiffness: 200 }}
                         className="w-9 h-9 rounded bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center text-xs font-bold text-white dark:text-neutral-900"
                     >
                         PDF
-                    </motion.div>
+                    </m.div>
                     <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
                             {file.name}
                         </div>
                         <div className="text-xs text-neutral-400">{file.size}</div>
                     </div>
-                    <motion.div
+                    <m.div
                         initial={{ scale: 0 }}
                         animate={isInView ? { scale: 1 } : {}}
                         transition={{ delay: 0.7 + i * 0.15, type: "spring" }}
                         className="w-5 h-5 rounded-full bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center"
                     >
                         <span className="text-[10px] text-white dark:text-neutral-900">✓</span>
-                    </motion.div>
-                </motion.div>
+                    </m.div>
+                </m.div>
             ))}
         </div>
     );
@@ -134,13 +134,13 @@ function OutlineVisual({ isInView }: { isInView: boolean }) {
     return (
         <div className="space-y-1.5">
             {sections.map((section, i) => (
-                <motion.div
+                <m.div
                     key={section.title}
                     initial={{ opacity: 0, height: 0 }}
                     animate={isInView ? { opacity: 1, height: "auto" } : {}}
                     transition={{ delay: 0.2 + i * 0.1, duration: 0.3 }}
                 >
-                    <motion.div
+                    <m.div
                         whileHover={{ x: 4 }}
                         onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}
                         className={cn(
@@ -151,10 +151,10 @@ function OutlineVisual({ isInView }: { isInView: boolean }) {
                         )}
                     >
                         <span className="text-sm font-medium">{section.title}</span>
-                    </motion.div>
+                    </m.div>
 
                     {/* Subsections */}
-                    <motion.div
+                    <m.div
                         initial={false}
                         animate={{
                             height: expandedIndex === i && section.subsections.length > 0 ? "auto" : 0,
@@ -164,7 +164,7 @@ function OutlineVisual({ isInView }: { isInView: boolean }) {
                         className="overflow-hidden ml-4"
                     >
                         {section.subsections.map((sub, j) => (
-                            <motion.div
+                            <m.div
                                 key={sub}
                                 initial={{ x: -10, opacity: 0 }}
                                 animate={expandedIndex === i ? { x: 0, opacity: 1 } : {}}
@@ -172,10 +172,10 @@ function OutlineVisual({ isInView }: { isInView: boolean }) {
                                 className="px-3 py-1.5 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 border-l-2 border-neutral-200 dark:border-neutral-700 mt-1"
                             >
                                 {sub}
-                            </motion.div>
+                            </m.div>
                         ))}
-                    </motion.div>
-                </motion.div>
+                    </m.div>
+                </m.div>
             ))}
         </div>
     );
@@ -203,7 +203,7 @@ function WriteVisual({ isInView }: { isInView: boolean }) {
                     <span className="text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-0.5 rounded">
                         {typedSuggestion}
                         {!isComplete && (
-                            <motion.span
+                            <m.span
                                 animate={{ opacity: [1, 0] }}
                                 transition={{ duration: 0.5, repeat: Infinity }}
                                 className="inline-block w-0.5 h-4 bg-neutral-400 ml-0.5 align-middle"
@@ -213,20 +213,20 @@ function WriteVisual({ isInView }: { isInView: boolean }) {
                 </div>
             </div>
 
-            <motion.div
+            <m.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 0.3 }}
                 className="flex items-center justify-between"
             >
                 <div className="flex items-center gap-2">
-                    <motion.kbd
+                    <m.kbd
                         animate={isComplete ? { scale: [1, 1.1, 1] } : {}}
                         transition={{ duration: 0.3, repeat: isComplete ? Infinity : 0, repeatDelay: 2 }}
                         className="px-2 py-1 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded text-[10px] font-mono font-bold"
                     >
                         Tab
-                    </motion.kbd>
+                    </m.kbd>
                     <span className="text-xs text-neutral-400">{visuals.accept}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -235,10 +235,10 @@ function WriteVisual({ isInView }: { isInView: boolean }) {
                     </kbd>
                     <span className="text-xs text-neutral-400">{visuals.reject}</span>
                 </div>
-            </motion.div>
+            </m.div>
 
             {/* Citation indicator */}
-            <motion.div
+            <m.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={isComplete ? { opacity: 1, scale: 1 } : {}}
                 transition={{ delay: 0.2 }}
@@ -246,7 +246,7 @@ function WriteVisual({ isInView }: { isInView: boolean }) {
             >
                 <div className="w-2 h-2 rounded-full bg-neutral-900 dark:bg-neutral-100" />
                 <span className="text-[10px] text-neutral-500">{visuals.citationAdded}</span>
-            </motion.div>
+            </m.div>
         </div>
     );
 }
@@ -275,7 +275,7 @@ function ExportVisual({ isInView }: { isInView: boolean }) {
         <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
                 {visuals.formats.map((format, i) => (
-                    <motion.div
+                    <m.div
                         key={format.name}
                         initial={{ opacity: 0, y: 20 }}
                         animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -306,35 +306,35 @@ function ExportVisual({ isInView }: { isInView: boolean }) {
                         )}>
                             {format.desc}
                         </div>
-                    </motion.div>
+                    </m.div>
                 ))}
             </div>
 
             {/* Export progress */}
-            <motion.div
+            <m.div
                 initial={{ opacity: 0 }}
                 animate={selected ? { opacity: 1 } : { opacity: 0 }}
                 className="space-y-2"
             >
                 <div className="flex items-center justify-between text-xs">
                     <span className="text-neutral-500">{visuals.exporting} {selected}...</span>
-                    <motion.span
+                    <m.span
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="text-neutral-900 dark:text-neutral-100 font-medium"
                     >
                         100%
-                    </motion.span>
+                    </m.span>
                 </div>
                 <div className="h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-                    <motion.div
+                    <m.div
                         initial={{ width: 0 }}
                         animate={selected ? { width: "100%" } : { width: 0 }}
                         transition={{ duration: 1.5, ease: "easeOut" }}
                         className="h-full bg-neutral-900 dark:bg-neutral-100 rounded-full"
                     />
                 </div>
-            </motion.div>
+            </m.div>
         </div>
     );
 }
@@ -367,7 +367,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
     const isInView = useInView(ref, { once: true, margin: "-100px" });
 
     return (
-        <motion.div
+        <m.div
             ref={ref}
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -389,22 +389,22 @@ function StepCard({ step, index }: { step: Step; index: number }) {
 
                 {/* Text Content */}
                 <div className="flex-1">
-                    <motion.h3
+                    <m.h3
                         initial={{ opacity: 0, x: -20 }}
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
                         transition={{ delay: 0.1 }}
                         className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-1.5 md:mb-2"
                     >
                         {step.title}
-                    </motion.h3>
-                    <motion.p
+                    </m.h3>
+                    <m.p
                         initial={{ opacity: 0 }}
                         animate={isInView ? { opacity: 1 } : {}}
                         transition={{ delay: 0.2 }}
                         className="text-sm md:text-base text-neutral-500 dark:text-neutral-400 leading-relaxed"
                     >
                         {step.description}
-                    </motion.p>
+                    </m.p>
                 </div>
             </div>
 
@@ -415,7 +415,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
             )}>
                 <StepVisual type={step.visual} isInView={isInView} />
             </div>
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -517,7 +517,7 @@ export function HowItWorks() {
                         <div className="absolute left-0 right-0 top-1/2 h-px bg-neutral-200 dark:bg-neutral-800" />
                         <div className="flex justify-between relative">
                             {steps.map((step, i) => (
-                                <motion.div
+                                <m.div
                                     key={step.number}
                                     initial={{ scale: 0 }}
                                     whileInView={{ scale: 1 }}
@@ -526,7 +526,7 @@ export function HowItWorks() {
                                     className="w-10 h-10 rounded-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-center font-bold text-sm z-10"
                                 >
                                     {step.number}
-                                </motion.div>
+                                </m.div>
                             ))}
                         </div>
                     </div>

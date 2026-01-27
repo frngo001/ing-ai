@@ -10,7 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useLanguage } from '@/lib/i18n/use-language'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 
 export default function BlogPage() {
   const { t, language } = useLanguage()
@@ -79,7 +79,7 @@ export default function BlogPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 max-w-7xl mx-auto min-h-[50vh]">
             <AnimatePresence mode="popLayout">
               {filteredPosts.map((post) => (
-                <motion.div
+                <m.div
                   key={post.id}
                   layout
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -126,7 +126,7 @@ export default function BlogPage() {
                       </CardContent>
                     </Card>
                   </Link>
-                </motion.div>
+                </m.div>
               ))}
             </AnimatePresence>
             {filteredPosts.length === 0 && (

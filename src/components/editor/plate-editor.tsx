@@ -15,7 +15,7 @@ import {
 import type { TEquationElement } from '@platejs/utils';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
 import { Plate, type PlateEditor, usePlateEditor, usePluginOption, usePlateState } from 'platejs/react';
-import { motion } from 'motion/react';
+import { m } from 'framer-motion';
 import Image from 'next/image';
 
 import { FilePenLine, Plus, Loader2 } from 'lucide-react';
@@ -713,7 +713,7 @@ export function PlateEditor({
                       )}
                     >
                       <div className="flex flex-col items-center justify-center gap-4">
-                        <motion.div
+                        <m.div
                           initial={{ opacity: 0.5, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{
@@ -724,10 +724,10 @@ export function PlateEditor({
                           }}
                           className="relative h-34 w-34"
                         >
-                        </motion.div>
+                        </m.div>
                         <div className="flex items-center gap-2">
                           {[0, 1, 2].map((index) => (
-                            <motion.div
+                            <m.div
                               key={index}
                               className="h-2 w-2 rounded-full bg-primary"
                               animate={{
