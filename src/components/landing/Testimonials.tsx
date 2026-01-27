@@ -54,7 +54,7 @@ function TestimonialCard({
             )}
         >
             {/* Content */}
-            <blockquote className="text-[11px] sm:text-sm text-foreground/90 leading-relaxed mb-2.5 sm:mb-4">
+            <blockquote className="text-xs sm:text-sm text-foreground/90 leading-relaxed mb-2.5 sm:mb-4">
                 {content}
             </blockquote>
 
@@ -68,15 +68,15 @@ function TestimonialCard({
                             loading="lazy"
                         />
                     )}
-                    <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-[9px] sm:text-xs font-semibold">
+                    <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-[10px] sm:text-xs font-semibold">
                         {avatar}
                     </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                    <figcaption className="text-[11px] sm:text-sm font-semibold text-foreground">
+                    <figcaption className="text-xs sm:text-sm font-semibold text-foreground">
                         {name}
                     </figcaption>
-                    <p className="text-[9px] sm:text-xs text-muted-foreground">{handle}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{handle}</p>
                 </div>
             </div>
         </figure>
@@ -123,13 +123,13 @@ export function Testimonials() {
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <ScrollReveal className="text-center mb-6 md:mb-16 space-y-2 md:space-y-4">
-                        <Badge variant="outline" className="mb-2 md:mb-4 text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                        <Badge variant="outline" className="mb-2 md:mb-4 text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                             {t('landing.testimonials.badge')}
                         </Badge>
                         <h2 className="text-xl md:text-5xl font-bold tracking-tight mb-2 md:mb-4">
                             {t('landing.testimonials.title')}
                         </h2>
-                        <p className="text-muted-foreground text-xs md:text-lg max-w-2xl mx-auto px-2">
+                        <p className="text-muted-foreground text-sm md:text-lg max-w-2xl mx-auto px-2">
                             {t('landing.testimonials.description')}
                         </p>
                     </ScrollReveal>

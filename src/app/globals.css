@@ -753,7 +753,7 @@ body {
   }
 
   .blog-content p {
-    @apply leading-relaxed text-foreground/90 mb-6 text-sm md:text-base;
+    @apply leading-relaxed text-foreground/90 mb-6 text-base;
   }
 
   .blog-content ul {

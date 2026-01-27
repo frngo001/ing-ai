@@ -98,7 +98,7 @@ export function Footer() {
                                     />
                                 </div>
                             </Link>
-                            <p className="text-[10px] md:text-sm text-muted-foreground mb-5 md:mb-6 max-w-xs leading-relaxed">
+                            <p className="text-xs md:text-sm text-muted-foreground mb-5 md:mb-6 max-w-xs leading-relaxed">
                                 {t('landing.footer.description')}
                             </p>
                             <div className="flex space-x-3 md:space-x-4">
@@ -118,7 +118,7 @@ export function Footer() {
                         {/* Produkt */}
                         <div>
                             <h3 className="font-semibold mb-3 md:mb-4 text-xs md:text-base text-foreground">{footerLinks.produkt.title}</h3>
-                            <ul className="space-y-2 md:space-y-3 text-[11px] md:text-sm text-muted-foreground">
+                            <ul className="space-y-2 md:space-y-3 text-xs md:text-sm text-muted-foreground">
                                 {footerLinks.produkt.links.map((link) => (
                                     <li key={link.label}>
                                         <Link href={link.href} className="hover:text-foreground transition-colors">
@@ -132,7 +132,7 @@ export function Footer() {
                         {/* Ressourcen */}
                         <div>
                             <h3 className="font-semibold mb-3 md:mb-4 text-xs md:text-base text-foreground">{footerLinks.ressourcen.title}</h3>
-                            <ul className="space-y-2 md:space-y-3 text-[11px] md:text-sm text-muted-foreground">
+                            <ul className="space-y-2 md:space-y-3 text-xs md:text-sm text-muted-foreground">
                                 {footerLinks.ressourcen.links.map((link) => (
                                     <li key={link.label}>
                                         <Link href={link.href} className="hover:text-foreground transition-colors">
@@ -146,7 +146,7 @@ export function Footer() {
                         {/* Unternehmen */}
                         <div>
                             <h3 className="font-semibold mb-3 md:mb-4 text-xs md:text-base text-foreground">{footerLinks.unternehmen.title}</h3>
-                            <ul className="space-y-2 md:space-y-3 text-[11px] md:text-sm text-muted-foreground">
+                            <ul className="space-y-2 md:space-y-3 text-xs md:text-sm text-muted-foreground">
                                 {footerLinks.unternehmen.links.map((link) => (
                                     <li key={link.label}>
                                         <Link href={link.href} className="hover:text-foreground transition-colors">
@@ -160,7 +160,7 @@ export function Footer() {
                         {/* Rechtliches */}
                         <div>
                             <h3 className="font-semibold mb-3 md:mb-4 text-xs md:text-base text-foreground">{footerLinks.rechtliches.title}</h3>
-                            <ul className="space-y-2 md:space-y-3 text-[11px] md:text-sm text-muted-foreground">
+                            <ul className="space-y-2 md:space-y-3 text-xs md:text-sm text-muted-foreground">
                                 {footerLinks.rechtliches.links.map((link) => (
                                     <li key={link.label}>
                                         <Link href={link.href} className="hover:text-foreground transition-colors">
@@ -184,7 +184,7 @@ export function Footer() {
                     </div>
 
                     {/* Bottom Bar */}
-                    <div className="border-t border-border pt-6 md:pt-8 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4 text-[10px] md:text-sm text-muted-foreground">
+                    <div className="border-t border-border pt-6 md:pt-8 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4 text-xs md:text-sm text-muted-foreground">
                         <p>© {new Date().getFullYear()} {siteConfig.name}. {t('landing.footer.copyright')}</p>
                         <div className="flex items-center gap-4 md:gap-6 relative z-50">
                             <Link href="/privacy" className="hover:text-foreground transition-colors">

@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
         hostname: "i.pravatar.cc",
       },
     ],
+    formats: ['image/avif', 'image/webp'],
   },
 };
 

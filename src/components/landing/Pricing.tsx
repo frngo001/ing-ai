@@ -83,7 +83,7 @@ function PricingCard({
       {/* Popular badge */}
       {plan.popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-          <Badge className="bg-primary text-primary-foreground shadow-lg shadow-primary/25 px-4 py-1 text-[10px] uppercase tracking-wider font-bold">
+          <Badge className="bg-primary text-primary-foreground shadow-lg shadow-primary/25 px-4 py-1 text-[10px] md:text-xs uppercase tracking-wider font-bold">
             {t('landing.pricing.plans.pro.popular')}
           </Badge>
         </div>
@@ -102,10 +102,10 @@ function PricingCard({
           </div>
           <div>
             <h3 className="text-sm md:text-lg font-bold tracking-tight">{plan.name}</h3>
-            {plan.highlight && <p className="text-[9px] uppercase tracking-widest text-primary font-bold">{t('landing.pricing.badge')}</p>}
+            {plan.highlight && <p className="text-[10px] uppercase tracking-widest text-primary font-bold">{t('landing.pricing.badge')}</p>}
           </div>
         </div>
-        <p className="text-[11px] md:text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm md:text-sm text-muted-foreground leading-relaxed">
           {plan.description}
         </p>
       </div>
@@ -117,17 +117,17 @@ function PricingCard({
             {price === 0 ? t('landing.pricing.free') : `€${price}`}
           </span>
           {price > 0 && (
-            <span className="text-muted-foreground font-medium text-[10px] md:text-xs">{t('landing.pricing.perMonth')}</span>
+            <span className="text-muted-foreground font-medium text-xs md:text-xs">{t('landing.pricing.perMonth')}</span>
           )}
         </div>
         <div className="mt-1.5 h-6">
           {isYearly && savings > 0 && (
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[9px] font-bold">
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[10px] font-bold">
               {savings}% {t('landing.pricing.saved')}
             </Badge>
           )}
           {!isYearly && price > 0 && (
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
               {t('landing.pricing.monthlyBilling')}
             </p>
           )}
@@ -154,7 +154,7 @@ function PricingCard({
 
       {/* Features */}
       <div className="space-y-3.5">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
           {t('landing.pricing.features')}
         </p>
         <ul className="space-y-2.5">
@@ -257,7 +257,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <Badge variant="outline" className="px-2.5 py-1 md:px-4 md:py-1.5 rounded-full border-primary/20 bg-primary/5 text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold text-primary mb-3">
+            <Badge variant="outline" className="px-2.5 py-1 md:px-4 md:py-1.5 rounded-full border-primary/20 bg-primary/5 text-[10px] md:text-[10px] uppercase tracking-[0.2em] font-bold text-primary mb-3">
               {t('landing.pricing.badge')}
             </Badge>
             <h2 className="text-lg md:text-4xl lg:text-5xl font-extrabold tracking-tight mb-2 md:mb-6 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">

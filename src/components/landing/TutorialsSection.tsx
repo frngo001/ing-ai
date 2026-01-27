@@ -88,7 +88,7 @@ function TutorialCard({
                 />
                 {/* Duration Badge */}
                 {tutorial.duration !== "N/A" && (
-                    <div className="absolute bottom-3 right-3 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded-md text-[10px] font-medium text-white pointer-events-none">
+                    <div className="absolute bottom-3 right-3 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded-md text-xs font-medium text-white pointer-events-none">
                         {tutorial.duration}
                     </div>
                 )}
@@ -96,10 +96,10 @@ function TutorialCard({
 
             {/* Content */}
             <div className="flex flex-col pr-2">
-                <h3 className="text-[13px] md:text-base font-semibold tracking-tight text-foreground mb-0.5 md:mb-1 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                <h3 className="text-[15px] md:text-base font-semibold tracking-tight text-foreground mb-0.5 md:mb-1 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                     {tutorial.title}
                 </h3>
-                <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
+                <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
                     {displayDescription}
                 </p>
             </div>
@@ -203,7 +203,7 @@ export function TutorialsSection() {
                         viewport={{ once: true }}
                         className="max-w-2xl"
                     >
-                        <Badge variant="secondary" className="mb-3 md:mb-4 text-[8px] md:text-[10px] uppercase tracking-wider font-semibold">
+                        <Badge variant="secondary" className="mb-3 md:mb-4 text-[10px] md:text-[10px] uppercase tracking-wider font-semibold">
                             {t('landing.tutorials.badge')}
                         </Badge>
                         <h2 className="text-xl md:text-4xl font-bold tracking-tight mb-3 md:mb-4 text-foreground">
@@ -303,7 +303,7 @@ export function TutorialsSection() {
                             href="https://youtube.com/@ingai"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group inline-flex items-center text-[10px] md:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            className="group inline-flex items-center text-xs md:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {t('landing.tutorials.watchAll')}
                             <ChevronRight className="ml-0.5 md:ml-1 h-3 w-3 md:h-4 md:w-4 transition-transform group-hover:translate-x-1" />

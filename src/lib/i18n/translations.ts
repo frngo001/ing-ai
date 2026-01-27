@@ -3,6 +3,55 @@ export const translations = {
         metadata: {
             title: 'Ing AI Editor - AI Writing Assistant for Thesis, Research Papers & Academic Writing',
             description: 'Ing AI is the leading AI-powered editor for academic writing. Write your thesis, research paper, or academic essay with intelligent AI assistance. Automatic citation management, literature research & plagiarism check. Start free!',
+            keywords: [
+                'AI Writing Assistant',
+                'Academic Writing AI',
+                'Thesis Writing Tool',
+                'Research Paper AI',
+                'Citation Management',
+                'Literature Research',
+                'Plagiarism Check',
+                'Scientific Writing',
+                'AI Essay Writer',
+                'Academic Paper Editor',
+                'Ing AI',
+                'Ing AI Editor',
+                'Quillbot Alternative',
+                'Paperpal Alternative',
+                'Better than Jenni AI',
+                'Free Citation Generator',
+                'Turnitin Checker Free',
+                'AI Writing Tool',
+                'Thesis Writer'
+            ],
+            login: {
+                title: 'Login - Ing AI',
+                description: 'Login to your Ing AI account and continue writing.'
+            },
+            signup: {
+                title: 'Sign Up - Ing AI',
+                description: 'Create a free Ing AI account and start writing better academic papers.'
+            },
+            changelog: {
+                title: 'Changelog - Ing AI',
+                description: 'See what\'s new in Ing AI. Updates, new features and improvements.'
+            },
+            contact: {
+                title: 'Contact Us - Ing AI',
+                description: 'Get in touch with the Ing AI team. We are here to help.'
+            },
+            privacy: {
+                title: 'Privacy Policy - Ing AI',
+                description: 'Read our privacy policy to understand how we handle your data.'
+            },
+            terms: {
+                title: 'Terms of Service - Ing AI',
+                description: 'Read our terms of service governing the use of Ing AI.'
+            },
+            about: {
+                title: 'About Us - Ing AI',
+                description: 'Learn more about Ing AI and our mission to improve academic writing.'
+            }
         },
         common: {
             save: 'Save',
@@ -2068,6 +2117,48 @@ export const translations = {
         metadata: {
             title: 'Ing AI Editor - Asistente de Escritura con IA',
             description: 'Ing AI es el editor líder con IA para escritura académica. Escribe tu tesis, trabajos de investigación o ensayos académicos con asistencia inteligente de IA. Gestión automática de citas, investigación de literatura y verificación de plagio. ¡Comienza gratis!',
+            keywords: [
+                'Asistente de Escritura IA',
+                'Escritura Académica IA',
+                'Herramienta Tesis',
+                'Investigación Académica',
+                'Gestión de Citas',
+                'Investigación Bibliográfica',
+                'Detector de Plagio',
+                'Redacción Científica',
+                'Editor de Ensayos IA',
+                'Corrector de Textos Académicos',
+                'Ing AI',
+                'Ing AI Editor'
+            ],
+            login: {
+                title: 'Iniciar Sesión - Ing AI',
+                description: 'Inicia sesión en tu cuenta de Ing AI y continúa escribiendo.'
+            },
+            signup: {
+                title: 'Registrarse - Ing AI',
+                description: 'Crea una cuenta gratuita de Ing AI y comienza a escribir mejores trabajos académicos.'
+            },
+            changelog: {
+                title: 'Registro de Cambios - Ing AI',
+                description: 'Mira lo nuevo en Ing AI. Actualizaciones, nuevas funciones y mejoras.'
+            },
+            contact: {
+                title: 'Contacto - Ing AI',
+                description: 'Ponte en contacto con el equipo de Ing AI. Estamos aquí para ayudar.'
+            },
+            privacy: {
+                title: 'Política de Privacidad - Ing AI',
+                description: 'Lee nuestra política de privacidad para entender cómo manejamos tus datos.'
+            },
+            terms: {
+                title: 'Términos y Condiciones - Ing AI',
+                description: 'Lee nuestros términos y condiciones que rigen el uso de Ing AI.'
+            },
+            about: {
+                title: 'Sobre Nosotros - Ing AI',
+                description: 'Conoce más sobre Ing AI y nuestra misión de mejorar la escritura académica.'
+            }
         },
         common: {
             save: 'Guardar',
@@ -4097,6 +4188,48 @@ export const translations = {
         metadata: {
             title: 'Ing AI Editor - Assistant d\'écriture alimenté par l\'IA',
             description: 'Ing AI est l\'éditeur IA de premier plan pour l\'écriture académique. Rédigez votre thèse, vos articles de recherche ou vos essais académiques avec une assistance IA intelligente. Gestion automatique des citations, recherche documentaire et vérification du plagiat. Commencez gratuitement!',
+            keywords: [
+                'Assistant d\'écriture IA',
+                'Rédaction Académique IA',
+                'Outil Thèse',
+                'Recherche Scientifique',
+                'Gestion des Citations',
+                'Recherche Documentaire',
+                'Vérificateur de Plagiat',
+                'Écriture Scientifique',
+                'Rédacteur d\'Essai IA',
+                'Éditeur de Papier Académique',
+                'Ing AI',
+                'Ing AI Editor'
+            ],
+            login: {
+                title: 'Connexion - Ing AI',
+                description: 'Connectez-vous à votre compte Ing AI et continuez à écrire.'
+            },
+            signup: {
+                title: 'S\'inscrire - Ing AI',
+                description: 'Créez un compte Ing AI gratuit et commencez à écrire de meilleurs travaux académiques.'
+            },
+            changelog: {
+                title: 'Journal des Modifications - Ing AI',
+                description: 'Découvrez les nouveautés d\'Ing AI. Mises à jour, nouvelles fonctionnalités et améliorations.'
+            },
+            contact: {
+                title: 'Contact - Ing AI',
+                description: 'Contactez l\'équipe Ing AI. Nous sommes là pour vous aider.'
+            },
+            privacy: {
+                title: 'Politique de Confidentialité - Ing AI',
+                description: 'Lisez notre politique de confidentialité pour comprendre comment nous traitons vos données.'
+            },
+            terms: {
+                title: 'Conditions Générales - Ing AI',
+                description: 'Lisez nos conditions générales régissant l\'utilisation d\'Ing AI.'
+            },
+            about: {
+                title: 'À Propos - Ing AI',
+                description: 'En savoir plus sur Ing AI et notre mission d\'améliorer l\'écriture académique.'
+            }
         },
         common: {
             save: 'Enregistrer',
@@ -6126,6 +6259,60 @@ export const translations = {
         metadata: {
             title: 'Ing AI Editor - KI Schreibassistent für Bachelorarbeit & Wissenschaftliches Schreiben',
             description: 'Ing AI ist der führende KI-Editor für akademisches Schreiben. Schreibe deine Bachelorarbeit, Hausarbeit oder wissenschaftliche Arbeit mit intelligenter KI-Unterstützung. Automatische Zitiervorschläge, Literaturrecherche & Plagiatsprüfung. Kostenlos starten!',
+            keywords: [
+                'KI Schreibassistent',
+                'Bachelorarbeit schreiben',
+                'Hausarbeit schreiben',
+                'Wissenschaftliches Schreiben',
+                'KI Schreiben',
+                'Akademisches Schreiben KI',
+                'Zitierverwaltung',
+                'Literaturrecherche',
+                'Plagiatsprüfung',
+                'Bachelorarbeit Gliederung KI',
+                'Masterarbeit KI Unterstützung',
+                'Ghostwriter Alternative',
+                'Texte umschreiben wissenschaftlich',
+                'Quellen finden KI',
+                'Ing AI',
+                'Ing AI Editor',
+                'Quillbot Alternative Deutsch',
+                'Paperpal Alternative',
+                'Jenni AI Alternative',
+                'Beste KI für Bachelorarbeit',
+                'Hausarbeit schreiben lassen KI',
+                'Plagiatsprüfung kostenlos',
+                'Ghostwriter KI',
+                'Zitiergenerator'
+            ],
+            login: {
+                title: 'Anmelden - Ing AI',
+                description: 'Melde dich bei deinem Ing AI Konto an und schreibe weiter.'
+            },
+            signup: {
+                title: 'Registrieren - Ing AI',
+                description: 'Erstelle ein kostenloses Ing AI Konto und schreibe bessere akademische Arbeiten.'
+            },
+            changelog: {
+                title: 'Änderungsprotokoll - Ing AI',
+                description: 'Sieh dir an, was neu bei Ing AI ist. Updates, neue Funktionen und Verbesserungen.'
+            },
+            contact: {
+                title: 'Kontakt - Ing AI',
+                description: 'Kontaktiere das Ing AI Team. Wir sind hier um zu helfen.'
+            },
+            privacy: {
+                title: 'Datenschutzerklärung - Ing AI',
+                description: 'Lies unsere Datenschutzerklärung, um zu verstehen, wie wir deine Daten verarbeiten.'
+            },
+            terms: {
+                title: 'AGB - Ing AI',
+                description: 'Lies unsere Allgemeinen Geschäftsbedingungen für die Nutzung von Ing AI.'
+            },
+            about: {
+                title: 'Über Uns - Ing AI',
+                description: 'Erfahre mehr über Ing AI und unsere Mission, akademisches Schreiben zu verbessern.'
+            }
         },
         common: {
             save: 'Speichern',
@@ -7687,9 +7874,9 @@ export const translations = {
             },
             hero: {
                 badge: 'Ing AI v1.0 - Jetzt verfügbar',
-                title: 'Akademisches Schreiben,',
-                titleHighlight: 'revolutioniert',
-                subtitle: 'Der intelligenteste KI-Schreibassistent für akademische Arbeiten. Schreibe schneller, zitiere sofort und überwinde jede Schreibblockade.',
+                title: 'KI-Schreibassistent für',
+                titleHighlight: 'Bachelorarbeit & Wissenschaft',
+                subtitle: 'Der führende KI-Editor für akademische Arbeiten. Schreibe deine Bachelorarbeit, Hausarbeit oder Dissertation schneller mit intelligenter Unterstützung.',
                 socialProof: {
                     users: '100+',
                     label: 'Studenten und Forscher',

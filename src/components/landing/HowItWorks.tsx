@@ -65,7 +65,7 @@ function UploadVisual({ isInView }: { isInView: boolean }) {
                 <motion.div
                     animate={isInView ? { y: [0, -5, 0] } : {}}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="text-xs text-neutral-400"
+                    className="text-sm text-neutral-400"
                 >
                     {visuals.dragFiles}
                 </motion.div>
@@ -83,15 +83,15 @@ function UploadVisual({ isInView }: { isInView: boolean }) {
                         initial={{ scale: 0 }}
                         animate={isInView ? { scale: 1 } : {}}
                         transition={{ delay: 0.5 + i * 0.15, type: "spring", stiffness: 200 }}
-                        className="w-9 h-9 rounded bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center text-[10px] font-bold text-white dark:text-neutral-900"
+                        className="w-9 h-9 rounded bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center text-xs font-bold text-white dark:text-neutral-900"
                     >
                         PDF
                     </motion.div>
                     <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
+                        <div className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
                             {file.name}
                         </div>
-                        <div className="text-[10px] text-neutral-400">{file.size}</div>
+                        <div className="text-xs text-neutral-400">{file.size}</div>
                     </div>
                     <motion.div
                         initial={{ scale: 0 }}
@@ -163,7 +163,7 @@ function OutlineVisual({ isInView }: { isInView: boolean }) {
                                 initial={{ x: -10, opacity: 0 }}
                                 animate={expandedIndex === i ? { x: 0, opacity: 1 } : {}}
                                 transition={{ delay: j * 0.1 }}
-                                className="px-3 py-1.5 text-xs text-neutral-500 dark:text-neutral-400 border-l-2 border-neutral-200 dark:border-neutral-700 mt-1"
+                                className="px-3 py-1.5 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 border-l-2 border-neutral-200 dark:border-neutral-700 mt-1"
                             >
                                 {sub}
                             </motion.div>
@@ -387,7 +387,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
                         initial={{ opacity: 0, x: -20 }}
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
                         transition={{ delay: 0.1 }}
-                        className="text-base md:text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-1.5 md:mb-2"
+                        className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-1.5 md:mb-2"
                     >
                         {step.title}
                     </motion.h3>
@@ -395,7 +395,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
                         initial={{ opacity: 0 }}
                         animate={isInView ? { opacity: 1 } : {}}
                         transition={{ delay: 0.2 }}
-                        className="text-xs md:text-base text-neutral-500 dark:text-neutral-400 leading-relaxed"
+                        className="text-sm md:text-base text-neutral-500 dark:text-neutral-400 leading-relaxed"
                     >
                         {step.description}
                     </motion.p>
@@ -488,13 +488,13 @@ export function HowItWorks() {
 
             <div className="container px-4 mx-auto">
                 <ScrollReveal className="text-center max-w-2xl mx-auto mb-8 md:mb-16 space-y-3">
-                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                    <Badge variant="outline" className="text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         {t('landing.howItWorks.badge')}
                     </Badge>
-                    <h2 className="text-lg md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 px-4">
+                    <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 px-4">
                         {t('landing.howItWorks.title')}
                     </h2>
-                    <p className="text-xs md:text-base text-neutral-500 dark:text-neutral-400 px-4">
+                    <p className="text-sm md:text-base text-neutral-500 dark:text-neutral-400 px-4">
                         {t('landing.howItWorks.description')}
                     </p>
                 </ScrollReveal>

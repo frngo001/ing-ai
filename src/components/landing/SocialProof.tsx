@@ -42,7 +42,7 @@ export default function SocialProof() {
         <section className="pt-0 pb-8 md:pb-16 border-y border-neutral-200/60 dark:border-neutral-900/50 bg-gradient-to-b from-muted to-muted/50 dark:from-background dark:to-background overflow-hidden">
             <div className="container mx-auto px-4">
                 <ScrollReveal>
-                    <p className="text-[10px] md:text-sm font-medium text-muted-foreground mb-6 md:mb-10 uppercase tracking-widest text-center">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground mb-6 md:mb-10 uppercase tracking-widest text-center">
                         {t('landing.socialProof.title')}
                     </p>
                 </ScrollReveal>

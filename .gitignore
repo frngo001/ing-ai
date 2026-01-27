@@ -46,6 +46,7 @@ next-env.d.ts
 
 # Gemini 
 .gemini/
+.gemini*/
 
 # OPENCODE
 
@@ -62,6 +63,7 @@ library.bib
 CLAUDE.md
 .agent/
 .cursor/
+claude */
 # plan 
 plan.md
 ENV_TEMPLATE

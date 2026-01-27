@@ -110,7 +110,7 @@ export function SignupForm({ className, nextPath = "/editor", ...props }: Signup
                 <Link href="/" className="relative h-28 w-28">
                   <Image
                     src="/logos/logosApp/ing_AI.png"
-                    alt="Ing AI"
+                    alt={t('auth.signup.logoAlt') || "Ing AI"}
                     fill
                     sizes="112px"
                     className="object-contain"

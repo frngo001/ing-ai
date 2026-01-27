@@ -86,7 +86,7 @@ export function BlogSection() {
                     <h2 className="text-lg md:text-4xl font-bold tracking-tight px-4">
                         {t('landing.blog.title')}
                     </h2>
-                    <p className="text-muted-foreground text-xs md:text-lg max-w-2xl mx-auto px-4">
+                    <p className="text-muted-foreground text-sm md:text-lg max-w-2xl mx-auto px-4">
                         {t('landing.blog.description')}
                     </p>
                 </div>

@@ -55,9 +55,9 @@ export default function Hero() {
           <div className="animate-appear bg-background/50 backdrop-blur-sm rounded-full">
             <Link href="/auth/login" aria-label={heroContent.badge}>
               <Announcement movingBorder className="px-2 py-0 h-5 md:h-6">
-                <AnnouncementTitle className="gap-1 text-[10px] md:text-[11px] font-medium">
+                <AnnouncementTitle className="gap-1 text-xs md:text-[11px] font-medium">
                   <span className="text-muted-foreground">{heroContent.badge}</span>
-                  <ArrowRight className="size-2 text-muted-foreground" aria-hidden="true" />
+                  <ArrowRight className="size-3 md:size-2 text-muted-foreground" aria-hidden="true" />
                 </AnnouncementTitle>
               </Announcement>
             </Link>
@@ -71,7 +71,7 @@ export default function Hero() {
             </span>
           </h1>
           {/* Subtext */}
-          <p className="text-xs animate-appear text-muted-foreground max-w-[840px] font-medium text-balance opacity-0 delay-100 sm:text-base lg:text-xl">
+          <p className="text-sm animate-appear text-muted-foreground max-w-[840px] font-medium text-balance opacity-0 delay-100 sm:text-base lg:text-xl">
             {heroContent.subtitle}
           </p>
 
@@ -89,15 +89,15 @@ export default function Hero() {
                       alt={`User ${i}`}
                       loading="lazy"
                     />
-                    <AvatarFallback className="bg-muted text-[9px] sm:text-xs">U{i}</AvatarFallback>
+                    <AvatarFallback className="bg-muted text-[10px] sm:text-xs">U{i}</AvatarFallback>
                   </Avatar>
                 ))}
               </div>
               <div className="flex flex-col">
-                <p className="text-[9px] sm:text-xs font-semibold text-foreground leading-tight">
+                <p className="text-[10px] sm:text-xs font-semibold text-foreground leading-tight">
                   <span className="text-primary font-bold">{heroContent.socialProof.users}</span> {heroContent.socialProof.label}
                 </p>
-                <p className="text-[8px] sm:text-[10px] text-muted-foreground leading-tight">
+                <p className="text-[10px] sm:text-[10px] text-muted-foreground leading-tight">
                   {heroContent.socialProof.trust}
                 </p>
               </div>

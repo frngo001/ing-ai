@@ -50,7 +50,7 @@ export function CTASection() {
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.1 }}
                                 >
-                                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                                    <Badge variant="outline" className="text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                                         {t('landing.cta.badge')}
                                     </Badge>
                                 </motion.div>
@@ -74,7 +74,7 @@ export function CTASection() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.3 }}
-                                    className="text-xs md:text-lg text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto"
+                                    className="text-sm md:text-lg text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto"
                                 >
                                     {t('landing.cta.description')}
                                 </motion.p>
@@ -111,7 +111,7 @@ export function CTASection() {
                                     transition={{ delay: 0.5 }}
                                     className="pt-2 md:pt-4"
                                 >
-                                    <p className="text-[10px] md:text-sm text-neutral-400 dark:text-neutral-500">
+                                    <p className="text-xs md:text-sm text-neutral-400 dark:text-neutral-500">
                                         {t('landing.cta.trustSignals')}
                                     </p>
                                 </motion.div>

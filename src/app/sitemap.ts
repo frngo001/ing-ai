@@ -115,5 +115,49 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   ]
 
-  return [...staticPages, ...blogPages, ...vorlagenPages, ...glossarPages, ...zitationsstilePages]
+  // Comparison Pages - High value for competitor keywords
+  const comparisonPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/compare/quillbot`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/compare/paperpal`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/compare/jenni-ai`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    }
+  ]
+
+  // Use Case Pages - High intent for specific tasks
+  const useCasePages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/use-cases/bachelorarbeit-schreiben-lassen-ki`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/use-cases/hausarbeit-schreiben-ki`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/use-cases/essay-writer-ai`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    }
+  ]
+
+  return [...staticPages, ...blogPages, ...vorlagenPages, ...glossarPages, ...zitationsstilePages, ...comparisonPages, ...useCasePages]
 }

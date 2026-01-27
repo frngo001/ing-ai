@@ -96,13 +96,13 @@ export function Features() {
             <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
             <div className="container px-4 mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-8 space-y-3">
-                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                    <Badge variant="outline" className="text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         Funktionen
                     </Badge>
-                    <h2 className="text-lg md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70 px-4">
+                    <h2 className="text-2xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70 px-4">
                         Alles was du zum schneller Schreiben brauchst
                     </h2>
-                    <p className="text-xs md:text-lg text-muted-foreground px-4">
+                    <p className="text-sm md:text-lg text-muted-foreground px-4">
                         Leistungsstarke Tools, entwickelt für Studierende und Forscher.
                     </p>
                 </div>
@@ -113,14 +113,14 @@ export function Features() {
                             key={index}
                             className={`bg-card/50 backdrop-blur-sm border-border hover:border-primary/50 transition-all duration-300 group ${feature.className} dark:bg-neutral-900/40 dark:hover:border-primary/40 dark:hover:shadow-lg dark:hover:shadow-primary/5`}
                         >
-                            <CardHeader className="p-3.5 sm:p-6">
-                                <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2.5 md:mb-4 group-hover:bg-primary/20 transition-colors">
-                                    <feature.icon className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                            <CardHeader className="p-4 sm:p-6">
+                                <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3 md:mb-4 group-hover:bg-primary/20 transition-colors">
+                                    <feature.icon className="w-5 h-5 md:w-5 md:h-5 text-primary" />
                                 </div>
-                                <CardTitle className="text-base md:text-xl">{feature.title}</CardTitle>
+                                <CardTitle className="text-lg md:text-xl">{feature.title}</CardTitle>
                             </CardHeader>
-                            <CardContent className="p-3.5 sm:p-6 pt-0 sm:pt-0">
-                                <p className="text-[11px] md:text-sm text-muted-foreground leading-relaxed">
+                            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                                <p className="text-sm md:text-sm text-muted-foreground leading-relaxed">
                                     {feature.description}
                                 </p>
                             </CardContent>

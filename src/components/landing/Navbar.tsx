@@ -66,7 +66,7 @@ function Logo() {
       <div className="relative h-10 w-10 sm:h-16 sm:w-16 md:h-20 md:w-20">
         <Image
           src="/logos/logosApp/ing_AI.png"
-          alt="Ing AI"
+          alt="Ing AI Logo"
           fill
           sizes="(max-width: 640px) 40px, (max-width: 768px) 64px, 80px"
           className="object-contain"

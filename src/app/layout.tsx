@@ -9,8 +9,6 @@ import { AnalyticsProvider } from '@/components/analytics-provider'
 import { translations, type Language } from '@/lib/i18n/translations'
 import { getLanguageForServer } from '@/lib/i18n/server-language'
 import { siteConfig } from '@/config/site'
-import { StructuredData } from '@/components/seo/structured-data'
-
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -42,48 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(siteConfig.url),
     title: t.title,
     description: t.description,
-    keywords: [
-      // Primary Keywords (DE)
-      'KI Schreibassistent',
-      'Bachelorarbeit schreiben',
-      'Hausarbeit schreiben',
-      'Wissenschaftliches Schreiben',
-      'KI Schreiben',
-      'Akademisches Schreiben KI',
-
-      // Primary Keywords (EN)
-      'AI Writing Assistant',
-      'Academic Writing AI',
-      'Thesis Writing Tool',
-      'Research Paper AI',
-
-      // Feature Keywords
-      'Zitierverwaltung',
-      'Citation Management',
-      'Literaturrecherche',
-      'Literature Research',
-      'Plagiatsprüfung',
-      'Plagiarism Check',
-
-      // Long-Tail Keywords (DE)
-      'Bachelorarbeit mit KI schreiben',
-      'Hausarbeit KI Hilfe',
-      'Wissenschaftliche Texte verbessern',
-      'Automatische Quellenangabe',
-      'KI Tool für akademisches Schreiben',
-
-      // Product & Brand (CRITICAL for brand searches)
-      'Ing AI',
-      'Ing AI Editor',
-      'Ing AI Schreibassistent',
-      'Ing AI Tool',
-      'Ing.AI',
-      'IngAI',
-      'AI Editor',
-      'Text Editor',
-      'Document Editor',
-      'Research Tool',
-    ],
+    keywords: [...(t.keywords || []), 'Ing AI', 'Ing AI Editor', 'AI Writing Assistant', 'Scientific Writing'] as string[],
     robots: {
       index: true,
       follow: true,
@@ -137,6 +94,8 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+import { SoftwareApplicationSchema } from '@/components/seo/structured-data'
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -151,9 +110,9 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://i.pravatar.cc" />
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
-        <StructuredData />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <SoftwareApplicationSchema />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

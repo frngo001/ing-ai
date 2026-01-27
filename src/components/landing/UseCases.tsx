@@ -124,13 +124,13 @@ export function UseCases() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <ScrollReveal className="mb-8 md:mb-16 text-center max-w-2xl mx-auto space-y-3">
-                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
+                    <Badge variant="outline" className="text-[10px] md:text-[10px] uppercase tracking-wider font-medium text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800">
                         {t('landing.useCases.badge')}
                     </Badge>
                     <h2 className="text-lg font-bold tracking-tight sm:text-4xl text-neutral-900 dark:text-neutral-100">
                         {t('landing.useCases.title')}
                     </h2>
-                    <p className="text-xs md:text-base text-neutral-500 dark:text-neutral-400 px-4">
+                    <p className="text-sm md:text-base text-neutral-500 dark:text-neutral-400 px-4">
                         {t('landing.useCases.description')}
                     </p>
                 </ScrollReveal>
