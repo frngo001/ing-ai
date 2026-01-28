@@ -120,7 +120,7 @@ export function Testimonials() {
     return (
         <section
             id="testimonials"
-            className="py-8 md:py-24 bg-muted dark:bg-neutral-900 relative overflow-hidden"
+            className="py-8 md:py-24 bg-background relative overflow-hidden"
         >
             {/* Background decoration */}
             <div className="absolute inset-0 -z-10">
@@ -149,8 +149,8 @@ export function Testimonials() {
                 {/* Marquee Area - Full Width */}
                 <div className="relative flex flex-col gap-4 sm:gap-6 md:gap-8 w-full">
                     {/* Seamless Gradient overlays at screen edges */}
-                    <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-[10%] min-w-[40px] md:w-[20%] z-20 bg-gradient-to-r from-muted dark:from-neutral-900 to-transparent" />
-                    <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-[10%] min-w-[40px] md:w-[20%] z-20 bg-gradient-to-l from-muted dark:from-neutral-900 to-transparent" />
+                    <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-[10%] min-w-[40px] md:w-[20%] z-20 bg-gradient-to-r from-background to-transparent" />
+                    <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-[10%] min-w-[40px] md:w-[20%] z-20 bg-gradient-to-l from-background to-transparent" />
 
                     <Marquee pauseOnHover className="[--duration:50s]">
                         {firstRow.map((testimonial, index) => (
